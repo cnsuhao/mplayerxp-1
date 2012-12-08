@@ -11,15 +11,6 @@ extern int sdl_forcegl;
 //extern char *sdl_adriver;
 #endif
 
-extern int   network_prefer_ipv4;
-extern char *network_username;
-extern char *network_password;
-extern int   network_bandwidth;
-extern char *network_useragent;
-extern int   network_ipv4_only_proxy;
-extern int   network_cookies_enabled;
-extern char *cookies_file;
-
 extern af_cfg_t af_cfg; // Configuration for audio filters
 extern vf_cfg_t vf_cfg; // Configuration for audio filters
 
@@ -42,19 +33,19 @@ static const config_t xpcore_config[]={
 
 #ifdef HAVE_STREAMING
 static const config_t net_config[]={
-	{"ipv4", &network_prefer_ipv4, CONF_TYPE_FLAG, 0, 0, 1, "forces mplayerxp to use IPv4 protocol over network"},
+	{"ipv4", &net_conf.prefer_ipv4, CONF_TYPE_FLAG, 0, 0, 1, "forces mplayerxp to use IPv4 protocol over network"},
 #ifdef HAVE_AF_INET6
-	{"ipv6", &network_prefer_ipv4, CONF_TYPE_FLAG, 0, 1, 0, "forces mplayerxp to use IPv6 protocol over network"},
+	{"ipv6", &net_conf.prefer_ipv4, CONF_TYPE_FLAG, 0, 1, 0, "forces mplayerxp to use IPv6 protocol over network"},
 #else
 	{"ipv6", "MPlayerXP was compiled without IPv6 support.\n", CONF_TYPE_PRINT, 0, 0, 0, NULL},
 #endif /* HAVE_AF_INET6 */
-	{"ipv4-only-proxy", &network_ipv4_only_proxy, CONF_TYPE_FLAG, 0, 0, 1, "skip the proxy for IPv6 addresses"},
-	{"user", &network_username, CONF_TYPE_STRING, 0, 0, 0, "specifies username for HTTP authentication"},
-	{"passwd", &network_password, CONF_TYPE_STRING, 0, 0, 0, "specifies password for HTTP authentication"},
-	{"bandwidth", &network_bandwidth, CONF_TYPE_INT, CONF_MIN, 0, 0, "specifies the maximum bandwidth for network streaming"},
-	{"user-agent", &network_useragent, CONF_TYPE_STRING, 0, 0, 0, "specifies string as user agent for HTTP streaming"},
-	{"cookies", &network_cookies_enabled, CONF_TYPE_FLAG, 0, 0, 1, "send cookies when making HTTP requests"},
-	{"cookies-file", &cookies_file, CONF_TYPE_STRING, 0, 0, 0, "Read HTTP cookies from file"},
+	{"ipv4-only-proxy", &net_conf.ipv4_only_proxy, CONF_TYPE_FLAG, 0, 0, 1, "skip the proxy for IPv6 addresses"},
+	{"user", &net_conf.username, CONF_TYPE_STRING, 0, 0, 0, "specifies username for HTTP authentication"},
+	{"passwd", &net_conf.password, CONF_TYPE_STRING, 0, 0, 0, "specifies password for HTTP authentication"},
+	{"bandwidth", &net_conf.bandwidth, CONF_TYPE_INT, CONF_MIN, 0, 0, "specifies the maximum bandwidth for network streaming"},
+	{"user-agent", &net_conf.useragent, CONF_TYPE_STRING, 0, 0, 0, "specifies string as user agent for HTTP streaming"},
+	{"cookies", &net_conf.cookies_enabled, CONF_TYPE_FLAG, 0, 0, 1, "send cookies when making HTTP requests"},
+	{"cookies-file", &net_conf.cookies_file, CONF_TYPE_STRING, 0, 0, 0, "Read HTTP cookies from file"},
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
 #endif

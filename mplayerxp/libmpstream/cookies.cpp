@@ -21,11 +21,10 @@ using namespace mpxp;
 
 #include "cookies.h"
 #include "http.h"
+#include "network.h"
 #include "stream_msg.h"
 
 #define MAX_COOKIES 20
-
-char *cookies_file = NULL;
 
 typedef struct cookie_list_type {
     char *name;
@@ -184,8 +183,8 @@ static struct cookie_list_type *load_cookies(void)
 
     char *homedir;
 
-    if (cookies_file)
-	return load_cookies_from(cookies_file, list);
+    if (net_conf.cookies_file)
+	return load_cookies_from(net_conf.cookies_file, list);
 
     homedir = getenv("HOME");
     if (!homedir)

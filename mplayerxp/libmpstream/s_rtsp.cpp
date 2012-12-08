@@ -137,7 +137,6 @@ MPXP_Rc Rtsp_Stream_Interface::start()
     return MPXP_Ok;
 }
 
-extern int network_bandwidth;
 extern int index_mode;
 MPXP_Rc Rtsp_Stream_Interface::open(const char *filename,unsigned flags)
 {
@@ -149,7 +148,7 @@ MPXP_Rc Rtsp_Stream_Interface::open(const char *filename,unsigned flags)
     networking = new_networking();
     if (!networking) return MPXP_False;
 
-    networking->bandwidth = network_bandwidth;
+    networking->bandwidth = net_conf.bandwidth;
     url = url_new (filename);
     networking->url = check4proxies (url);
 

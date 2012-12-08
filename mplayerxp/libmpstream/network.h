@@ -30,6 +30,24 @@ namespace mpxp {
     struct libinput_t;
     class Tcp;
 }
+
+struct net_config_t {
+    public:
+	net_config_t();
+	virtual ~net_config_t();
+
+	char*	username;
+	char*	password;
+	int	bandwidth;
+	int	cookies_enabled;
+	char*	cookies_file;
+	char*	useragent;
+/* IPv6 options */
+	int	prefer_ipv4;
+	int	ipv4_only_proxy;
+};
+extern net_config_t net_conf;
+
 enum networking_status {
     networking_stopped_e,
     networking_playing_e

@@ -49,15 +49,19 @@ using namespace mpxp;
 #include "stream_msg.h"
 
 /* Variables for the command line option -user, -passwd & -bandwidth */
-char*	network_username=NULL;
-char*	network_password=NULL;
-int	network_bandwidth=0;
-int	network_cookies_enabled = 0;
-char*	network_useragent=NULL;
-
-/* IPv6 options */
-int	network_prefer_ipv4 = 1;
-int	network_ipv4_only_proxy = 0;
+net_config_t::net_config_t()
+	    :username(NULL),
+	    password(NULL),
+	    bandwidth(0),
+	    cookies_enabled(0),
+	    cookies_file(NULL),
+	    useragent(NULL),
+	    prefer_ipv4(1),
+	    ipv4_only_proxy(0)
+{
+}
+net_config_t::~net_config_t() {}
+net_config_t net_conf;
 
 static const struct {
     const char *mime_type;
@@ -138,7 +142,7 @@ check4proxies( URL_t *url ) {
 			}
 
 #ifdef HAVE_AF_INET6
-			if (network_ipv4_only_proxy && (gethostbyname(url->hostname)==NULL)) {
+			if (net_conf.ipv4_only_proxy && (gethostbyname(url->hostname)==NULL)) {
 				MSG_WARN(
 					"Could not find resolve remote hostname for AF_INET. Trying without proxy.\n");
 				return url_out;
@@ -188,9 +192,9 @@ MPXP_Rc http_send_request(Tcp& tcp, URL_t *url, off_t pos ) {
 	else
 	    snprintf(str, 256, "Host: %s", server_url->hostname );
 	http_set_field( http_hdr, str);
-	if (network_useragent)
+	if (net_conf.useragent)
 	{
-	    snprintf(str, 256, "User-Agent: %s", network_useragent);
+	    snprintf(str, 256, "User-Agent: %s", net_conf.useragent);
 	    http_set_field(http_hdr, str);
 	}
 	else
@@ -204,7 +208,7 @@ MPXP_Rc http_send_request(Tcp& tcp, URL_t *url, off_t pos ) {
 	    http_set_field(http_hdr, str);
 	}
 
-	if (network_cookies_enabled) cookies_set( http_hdr, server_url->hostname, server_url->url );
+	if (net_conf.cookies_enabled) cookies_set( http_hdr, server_url->hostname, server_url->url );
 
 	http_set_field( http_hdr, "Connection: closed");
 	http_add_basic_authentication( http_hdr, url->username, url->password );
@@ -298,8 +302,8 @@ http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry) {
 	} else {
 		MSG_INFO("Authentication required\n");
 	}
-	if( network_username ) {
-		url->username = mp_strdup(network_username);
+	if( net_conf.username ) {
+		url->username = mp_strdup(net_conf.username);
 		if( url->username==NULL ) {
 			MSG_FATAL(MSGTR_OutOfMemory);
 			return -1;
@@ -308,8 +312,8 @@ http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry) {
 		MSG_ERR(MSGTR_ConnAuthFailed);
 		return -1;
 	}
-	if( network_password ) {
-		url->password = mp_strdup(network_password);
+	if( net_conf.password ) {
+		url->password = mp_strdup(net_conf.password);
 		if( url->password==NULL ) {
 			MSG_FATAL(MSGTR_OutOfMemory);
 			return -1;
@@ -696,7 +700,7 @@ MPXP_Rc realrtsp_networking_start( Tcp& tcp, networking_t *networking ) {
 	sprintf(mrl,"rtsp://%s:%i/%s",networking->url->hostname,port,file);
 	rtsp = rtsp_session_start(tcp,&mrl, file,
 			networking->url->hostname, port, &redirected,
-			network_bandwidth,networking->url->username,
+			net_conf.bandwidth,networking->url->username,
 			networking->url->password);
 
 	if ( redirected == 1 ) {
@@ -761,7 +765,7 @@ MPXP_Rc networking_start(Tcp& tcp,networking_t* networking, URL_t *url) {
     rc = MPXP_False;
 
     // Get the bandwidth available
-    networking->bandwidth = network_bandwidth;
+    networking->bandwidth = net_conf.bandwidth;
 
     // For RTP streams, we usually don't know the stream type until we open it.
     if( !strcasecmp( networking->url->protocol, "rtp")) {

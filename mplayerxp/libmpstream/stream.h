@@ -13,6 +13,7 @@ using namespace mpxp;
 #include "network.h"
 #endif
 
+struct networking_t;
 namespace mpxp {
     struct libinput_t;
     enum {
