@@ -122,10 +122,10 @@ static Opaque* rawvideo_open(Demuxer* demuxer) {
 
 static int rawvideo_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
 
-  if(stream_eof(demuxer->stream)) return 0;
+  if(demuxer->stream->eof()) return 0;
   if(ds!=demuxer->video) return 0;
 
-  ds->read_packet(demuxer->stream,priv.imgsize,0,stream_tell(demuxer->stream),DP_KEYFRAME);
+  ds->read_packet(demuxer->stream,priv.imgsize,0,demuxer->stream->tell(),DP_KEYFRAME);
 
   return 1;
 }
@@ -134,10 +134,10 @@ static void rawvideo_seek(Demuxer *demuxer,const seek_args_t* seeka){
   Stream* s = demuxer->stream;
   off_t pos;
 
-  pos =(seeka->flags & DEMUX_SEEK_SET)?demuxer->movi_start:stream_tell(s);
+  pos =(seeka->flags & DEMUX_SEEK_SET)?demuxer->movi_start:s->tell();
   pos+=(seeka->flags&DEMUX_SEEK_PERCENTS?demuxer->movi_end-demuxer->movi_start:(priv.fps*priv.imgsize))*seeka->secs;
   pos/=priv.imgsize;
-  stream_seek(s,pos*priv.imgsize);
+  s->seek(pos*priv.imgsize);
 //  printf("demux_rawvideo: streamtell=%d\n",(int)stream_tell(demuxer->stream));
 }
 

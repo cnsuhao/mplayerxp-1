@@ -88,19 +88,19 @@ static int pva_sync(Demuxer * demuxer)
 	  */
 
 
-	for(count=0 ; count<PVA_MAX_VIDEO_PACK_LEN && !stream_eof(demuxer->stream) && !priv->just_synced ; count++)
+	for(count=0 ; count<PVA_MAX_VIDEO_PACK_LEN && !demuxer->stream->eof() && !priv->just_synced ; count++)
 	{
 		buffer[0]=buffer[1];
 		buffer[1]=buffer[2];
 		buffer[2]=buffer[3];
 		buffer[3]=buffer[4];
-		buffer[4]=stream_read_char(demuxer->stream);
+		buffer[4]=demuxer->stream->read_char();
 		/*
 		 * Check for a PVA packet beginning sequence: we check both the "AV" word at the
 		 * very beginning and the "0x55" reserved byte (which is unused and set to 0x55 by spec)
 		 */
 		if(buffer[0]=='A' && buffer[1] == 'V' && buffer[4] == 0x55) priv->just_synced=1;
-		//printf("demux_pva: pva_sync(): current offset= %ld\n",stream_tell(demuxer->stream));
+		//printf("demux_pva: pva_sync(): current offset= %ld\n",demuxer->stream->tell());
 	}
 	if(priv->just_synced)
 	{
@@ -117,7 +117,7 @@ static MPXP_Rc pva_probe(Demuxer * demuxer)
 {
     uint8_t buffer[5]={0,0,0,0,0};
     MSG_V("Checking for PVA\n");
-    stream_read(demuxer->stream,buffer,5);
+    demuxer->stream->read(buffer,5);
     if(buffer[0]=='A' && buffer[1] == 'V' && buffer[4] == 0x55) {
 	MSG_DBG2("Success: PVA\n");
 	demuxer->file_format=Demuxer::Type_PVA;
@@ -135,8 +135,8 @@ static Opaque* pva_open (Demuxer * demuxer)
 
     pva_priv_t* priv;
 
-    stream_reset(demuxer->stream);
-    stream_seek(demuxer->stream,0);
+    demuxer->stream->reset();
+    demuxer->stream->seek(0);
 
     priv=new(zeromem) pva_priv_t;
     demuxer->flags|=Demuxer::Seekable;
@@ -228,12 +228,12 @@ static int pva_demux(Demuxer * demux,Demuxer_Stream *__ds)
 					dp=new(zeromem) Demuxer_Packet(current_payload.size);
 					dp->pts=priv->last_video_pts;
 					dp->flags=DP_NONKEYFRAME;
-					l=stream_read(demux->stream,dp->buffer(),current_payload.size);
+					l=demux->stream->read(dp->buffer(),current_payload.size);
 					dp->resize(l);
 					demux->video->add_packet(dp);
 				} else {
 					//printf("Skipping %u video bytes\n",current_payload.size);
-					stream_skip(demux->stream,current_payload.size);
+					demux->stream->skip(current_payload.size);
 				}
 				break;
 			case MAINAUDIOSTREAM:
@@ -256,13 +256,13 @@ static int pva_demux(Demuxer * demux,Demuxer_Stream *__ds)
 					int l;
 					dp=new(zeromem) Demuxer_Packet(current_payload.size);
 					dp->pts=priv->last_audio_pts;
-					if(current_payload.offset != stream_tell(demux->stream))
-						stream_seek(demux->stream,current_payload.offset);
-					l=stream_read(demux->stream,dp->buffer(),current_payload.size);
+					if(current_payload.offset != demux->stream->tell())
+						demux->stream->seek(current_payload.offset);
+					l=demux->stream->read(dp->buffer(),current_payload.size);
 					dp->resize(l);
 					demux->audio->add_packet(dp);
 				} else {
-					stream_skip(demux->stream,current_payload.size);
+					demux->stream->skip(current_payload.size);
 				}
 				break;
 		}
@@ -288,12 +288,12 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 		return 0;
 	}
 
-	d->filepos=stream_tell(d->stream);
+	d->filepos=d->stream->tell();
 
 
 
 
-	if(stream_eof(d->stream))
+	if(d->stream->eof())
 	{
 		MSG_V("demux_pva: pva_get_payload() detected stream->eof!!!\n");
 		return 0;
@@ -312,7 +312,7 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 		payload->size = priv->video_size_after_prebytes;
 		payload->pts = priv->video_pts_after_prebytes;
 		payload->is_packet_start = 1;
-		payload->offset = stream_tell(d->stream);
+		payload->offset = d->stream->tell();
 		payload->type = VIDEOSTREAM;
 		priv->prebytes_delivered = 0;
 		return 1;
@@ -320,12 +320,12 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 #endif
 	if(!priv->just_synced)
 	{
-		if(stream_read_word(d->stream) != (('A'<<8)|'V'))
+		if(d->stream->read_word() != (('A'<<8)|'V'))
 		{
-			MSG_V("demux_pva: pva_get_payload() missed a SyncWord at %ld!! Trying to sync...\n",stream_tell(d->stream));
+			MSG_V("demux_pva: pva_get_payload() missed a SyncWord at %ld!! Trying to sync...\n",d->stream->tell());
 			if(!pva_sync(d))
 			{
-				if (!stream_eof(d->stream))
+				if (!d->stream->eof())
 				{
 					MSG_ERR("demux_pva: couldn't sync! (broken file?)");
 				}
@@ -340,14 +340,14 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 	}
 	else
 	{
-		payload->type=stream_read_char(d->stream);
-		stream_skip(d->stream,2); //counter and reserved
+		payload->type=d->stream->read_char();
+		d->stream->skip(2); //counter and reserved
 	}
-	flags=stream_read_char(d->stream);
+	flags=d->stream->read_char();
 	payload->is_packet_start=flags & 0x10;
-	pack_size=le2me_16(stream_read_word(d->stream));
-	MSG_DBG2("demux_pva::pva_get_payload(): pack_size=%u field read at offset %lu\n",pack_size,stream_tell(d->stream)-2);
-	pva_payload_start=stream_tell(d->stream);
+	pack_size=le2me_16(d->stream->read_word());
+	MSG_DBG2("demux_pva::pva_get_payload(): pack_size=%u field read at offset %lu\n",pack_size,d->stream->tell()-2);
+	pva_payload_start=d->stream->tell();
 	next_offset=pva_payload_start+pack_size;
 
 
@@ -364,20 +364,20 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 #ifdef DEMUX_PVA_MULTIDEC_HACK
 	if(payload->type==MAINAUDIOSTREAM)
 	{
-		stream_read(d->stream,buffer,3);
+		d->stream->read(buffer,3);
 		if(buffer[0]==0x00 && buffer[1]==0x00 && buffer[2]==0x01 && !payload->is_packet_start)
 		{
 			MSG_V("demux_pva: suspecting non signaled audio PES packet start. Maybe file by MultiDec?\n");
 			payload->is_packet_start=1;
 		}
-		stream_seek(d->stream,stream_tell(d->stream)-3);
+		d->stream->seek(d->stream->tell()-3);
 	}
 #endif
 
 
 	if(!payload->is_packet_start)
 	{
-		payload->offset=stream_tell(d->stream);
+		payload->offset=d->stream->tell();
 		payload->size=pack_size;
 	}
 	else
@@ -385,7 +385,7 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 		switch(payload->type)
 		{
 			case VIDEOSTREAM:
-				payload->pts=(float)(le2me_32(stream_read_dword(d->stream)))/90000;
+				payload->pts=(float)(le2me_32(d->stream->read_dword()))/90000;
 				//printf("Video PTS: %f\n",payload->pts);
 				if((flags&0x03)
 #ifdef PVA_NEW_PREBYTES_CODE
@@ -395,11 +395,11 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 				{
 #ifndef PVA_NEW_PREBYTES_CODE
 					dp=new_demux_packet(flags&0x03);
-					stream_read(d->stream,dp->buffer,flags & 0x03); //read PreBytes
+					d->stream->read(dp->buffer,flags & 0x03); //read PreBytes
 					ds_add_packet(d->video,dp);
 #else
 					//printf("Delivering prebytes. Setting prebytes_delivered.");
-					payload->offset=stream_tell(d->stream);
+					payload->offset=d->stream->tell();
 					payload->size = flags & 0x03;
 					priv->video_pts_after_prebytes = payload->pts;
 					priv->video_size_after_prebytes = pack_size - 4 - (flags & 0x03);
@@ -412,18 +412,18 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 
 
 				//now we are at real beginning of payload.
-				payload->offset=stream_tell(d->stream);
+				payload->offset=d->stream->tell();
 				//size is pack_size minus PTS size minus PreBytes size.
 				payload->size=pack_size - 4 - (flags & 0x03);
 				break;
 			case MAINAUDIOSTREAM:
-				stream_skip(d->stream,3); //FIXME properly parse PES header.
-				//printf("StreamID in audio PES header: 0x%2X\n",stream_read_char(d->stream));
-				stream_skip(d->stream,4);
+				d->stream->skip(3); //FIXME properly parse PES header.
+				//printf("StreamID in audio PES header: 0x%2X\n",d->stream->read_char());
+				d->stream->skip(4);
 
-				buffer[255]=stream_read_char(d->stream);
-				pes_head_len=stream_read_char(d->stream);
-				stream_read(d->stream,buffer,pes_head_len);
+				buffer[255]=d->stream->read_char();
+				pes_head_len=d->stream->read_char();
+				d->stream->read(buffer,pes_head_len);
 				if(!(buffer[255]&0x80)) //PES header does not contain PTS.
 				{
 					MSG_V("Audio PES packet does not contain PTS. (pes_head_len=%d)\n",pes_head_len);
@@ -454,8 +454,8 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 						payload->pts=(float)le2me_64(temp_pts)/90000;
 					}
 				}
-				payload->offset=stream_tell(d->stream);
-				payload->size=pack_size-stream_tell(d->stream)+pva_payload_start;
+				payload->offset=d->stream->tell();
+				payload->size=pack_size-d->stream->tell()+pva_payload_start;
 				break;
 		}
 	}
@@ -478,10 +478,10 @@ static void pva_seek(Demuxer * demuxer,const seek_args_t* seeka)
 	 * If the calculated SOF offset is negative, seek to the beginning of the file.
 	 */
 
-	dest_offset=(seeka->flags&DEMUX_SEEK_SET?demuxer->movi_start:stream_tell(demuxer->stream))+seeka->secs*total_bitrate;
+	dest_offset=(seeka->flags&DEMUX_SEEK_SET?demuxer->movi_start:demuxer->stream->tell())+seeka->secs*total_bitrate;
 	if(dest_offset<0) dest_offset=0;
 
-	stream_seek(demuxer->stream,dest_offset);
+	demuxer->stream->seek(dest_offset);
 
 	if(!pva_sync(demuxer)) { MSG_V("demux_pva: Couldn't seek!\n"); return ; }
 

@@ -73,8 +73,8 @@ static void demux_demuxers_seek(Demuxer *demuxer,const seek_args_t* seeka) {
 
   seek_args_t seek_p = { seeka->secs, 1 };
 
-  stream_set_eof(priv->ad->stream,0);
-  stream_set_eof(priv->sd->stream,0);
+  priv->ad->stream->eof(0);
+  priv->sd->stream->eof(0);
 
   // Seek video
   priv->vd->seek(seeka);

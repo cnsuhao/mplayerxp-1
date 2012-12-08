@@ -36,15 +36,15 @@ static int demux_rw_seek(struct SDL_RWops *context, int offset, int whence)
 		newpos = offset;
 		break;
 	case SEEK_CUR:
-		newpos = stream_tell(demux->stream)+offset;
+		newpos = demux->stream->tell()+offset;
 		break;
 	case SEEK_END:
 		newpos = -1; /* TODO !!!*/
 		MSG_ERR("demux_bmp: unsupported syscall\n");
 		break;
     }
-    stream_reset(demux->stream);
-    stream_seek(demux->stream,newpos);
+    demux->stream->reset();
+    demux->stream->seek(newpos);
     return newpos;
 }
 
@@ -52,7 +52,7 @@ static int demux_rw_read(struct SDL_RWops *context, any_t*ptr, int size, int max
 {
     int retval;
     Demuxer *demux = reinterpret_cast<Demuxer*>(context->hidden.unknown.data1);
-    retval = stream_read(demux->stream,ptr,size*maxnum);
+    retval = demux->stream->read(ptr,size*maxnum);
     return retval;
 }
 
@@ -87,7 +87,7 @@ static SDL_Surface *img;
 static MPXP_Rc bmp_probe(Demuxer *demuxer)
 {
     demux_dup_rw_stream(demuxer,&my_rw);
-    stream_reset(demuxer->stream);
+    demuxer->stream->reset();
     img = IMG_Load_RW(&my_rw,0);
     if(img) demuxer->file_format=Demuxer::Type_BMP;
     return img ? MPXP_Ok : MPXP_False;

@@ -43,8 +43,8 @@ void dump_stream(Stream *stream)
   FILE *f;
   const char *ext,*name;
   MP_UNIT("dumpstream");
-  stream_reset(stream);
-  stream_seek(stream,stream->start_pos());
+  stream->reset();
+  stream->seek(stream->start_pos());
   ext=".ext";
   if(!port)
   {
@@ -62,8 +62,8 @@ void dump_stream(Stream *stream)
     exit_player(MSGTR_Exit_error);
   }
   MSG_INFO("Dumping stream to %s\n",name);
-  while(!stream_eof(stream)){
-      len=stream_read(stream,buf,4096);
+  while(!stream->eof()){
+      len=stream->read(buf,4096);
       if(len>0) fwrite(buf,len,1,f);
   }
   fclose(f);
@@ -91,10 +91,6 @@ struct dump_priv_t : public Opaque {
 	float		vtimer;
 	libinput_t*	libinput;
 };
-
-void __FASTCALL__ dump_stream_event_handler(Stream *s,const stream_packet_t*sp)
-{
-}
 
 /*
     returns: 0 - nothing interested

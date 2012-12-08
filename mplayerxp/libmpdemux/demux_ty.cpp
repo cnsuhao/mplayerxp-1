@@ -119,7 +119,7 @@ static int ty_tmf_filetoparts( Demuxer *demux, TiVoInfo *tivo )
 {
    int     parts = 0;
 
-   stream_seek(demux->stream, 0);
+   demux->stream->seek( 0);
 
    MSG_DBG3("Dumping tar contents\n" );
    while (!demux->stream->eof())
@@ -130,7 +130,7 @@ static int ty_tmf_filetoparts( Demuxer *demux, TiVoInfo *tivo )
       char    *sizestr;
       int     size;
       off_t   skip;
-      if (stream_read(demux->stream, header, 512) < 512)
+      if (demux->stream->read( header, 512) < 512)
       {
 	 MSG_DBG3("Read bad\n" );
 	 break;
@@ -152,7 +152,7 @@ static int ty_tmf_filetoparts( Demuxer *demux, TiVoInfo *tivo )
 	    break;
 	 }
 	 tivo->tmfparts[ parts ].fileSize = size;
-	 tivo->tmfparts[ parts ].startOffset = stream_tell(demux->stream);
+	 tivo->tmfparts[ parts ].startOffset = demux->stream->tell();
 	 tivo->tmfparts[ parts ].chunks = size / CHUNKSIZE;
 	 MSG_DBG3(
 	   "tmf_filetoparts(): index %d, chunks %d\n"
@@ -166,9 +166,9 @@ static int ty_tmf_filetoparts( Demuxer *demux, TiVoInfo *tivo )
 
       // size rounded up to blocks
       skip = (size + 511) & ~511;
-      stream_skip(demux->stream, skip);
+      demux->stream->skip( skip);
    }
-   stream_reset(demux->stream);
+   demux->stream->reset();
    tivo->tmf_totalparts = parts;
    MSG_DBG3(
       "tmf_filetoparts(): No More Part Files %d\n", parts );
@@ -202,12 +202,12 @@ static int tmf_load_chunk( Demuxer *demux, TiVoInfo *tivo,
 
    fileoffset = tmf_filetooffset(tivo, readChunk);
 
-   if (fileoffset == -1 || !stream_seek(demux->stream, fileoffset)) {
+   if (fileoffset == -1 || !demux->stream->seek( fileoffset)) {
       MSG_ERR( "Read past EOF()\n" );
       return 0;
    }
-   count = stream_read( demux->stream, buff, CHUNKSIZE );
-   demux->filepos = stream_tell( demux->stream );
+   count = demux->stream->read( buff, CHUNKSIZE );
+   demux->filepos = demux->stream->tell( );
 
    MSG_DBG3( "tmf_load_chunk() count %x\n",
 	   count );
@@ -386,9 +386,9 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 	 tivo->readHeader = 1;
 
 	 filePos = demux->filepos;
-	 stream_seek( demux->stream, 0 );
+	 demux->stream->seek( 0 );
 
-	 readSize = stream_read( demux->stream, chunk, CHUNKSIZE );
+	 readSize = demux->stream->read( chunk, CHUNKSIZE );
 
 	 if ( memcmp( chunk, TMF_SIG, sizeof( TMF_SIG ) ) == 0 )
 	 {
@@ -416,8 +416,8 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 
 		  if ( offset + CHUNKSIZE < demux->stream->end_pos() )
 		  {
-		     stream_seek( demux->stream, offset );
-		     readSize = stream_read( demux->stream, chunk, CHUNKSIZE );
+		     demux->stream->seek( offset );
+		     readSize = demux->stream->read( chunk, CHUNKSIZE );
 		  }
 	       }
 	       else
@@ -443,8 +443,8 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 
 	 if ( demux->stream->start_pos() > 0 )
 	    filePos = demux->stream->start_pos();
-	 stream_seek( demux->stream, filePos );
-	 demux->filepos = stream_tell( demux->stream );
+	 demux->stream->seek( filePos );
+	 demux->filepos = demux->stream->tell( );
 	 tivo->whichChunk = filePos / CHUNKSIZE;
       }
       demux->movi_start = 0;
@@ -461,9 +461,9 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
    MSG_DBG3(
       "ty:file end_pos   %"PRIx64"\n", (int64_t)demux->stream->end_pos());
    MSG_DBG3(
-      "\nty:wanted current offset %"PRIx64"\n", (int64_t)stream_tell( demux->stream ) );
+      "\nty:wanted current offset %"PRIx64"\n", (int64_t)demux->stream->tell( ) );
 
-   if ( tivo->size > 0 && stream_tell( demux->stream ) > tivo->size )
+   if ( tivo->size > 0 && demux->stream->tell( ) > tivo->size )
    {
 	 demux->stream->eof(1);
 	 return 0;
@@ -478,12 +478,12 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 	 int whichChunk = demux->filepos / CHUNKSIZE;
 	 if ( demux->filepos % CHUNKSIZE > CHUNKSIZE / 2 )
 	    whichChunk++;
-	 stream_seek( demux->stream, whichChunk * CHUNKSIZE );
+	 demux->stream->seek( whichChunk * CHUNKSIZE );
       }
 
-      demux->filepos = stream_tell( demux->stream );
+      demux->filepos = demux->stream->tell( );
       tivo->whichChunk = demux->filepos / CHUNKSIZE;
-      readSize = stream_read( demux->stream, chunk, CHUNKSIZE );
+      readSize = demux->stream->read( chunk, CHUNKSIZE );
       if ( readSize != CHUNKSIZE )
 	 return 0;
    }
@@ -499,7 +499,7 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
    } while (be2me_32(*((uint32_t*)chunk)) == TIVO_PES_FILEID);
 
    MSG_DBG3(
-      "\nty:actual current offset %"PRIx64"\n", stream_tell( demux->stream ) -
+      "\nty:actual current offset %"PRIx64"\n", demux->stream->tell( ) -
       CHUNKSIZE );
 
 
@@ -740,7 +740,7 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 	 return 0;
    }
 
-   demux->filepos = stream_tell( demux->stream );
+   demux->filepos = demux->stream->tell( );
 
    return 1;
 }
@@ -761,7 +761,7 @@ static void ty_seek( Demuxer *demuxer, const seek_args_t* seeka )
       tivo->lastVideoPTS = -1;
    //
    //================= seek in MPEG ==========================
-   demuxer->filepos = stream_tell( demuxer->stream );
+   demuxer->filepos = demuxer->stream->tell( );
 
    newpos = ( seeka->flags & 1 ) ? demuxer->movi_start : demuxer->filepos;
 
@@ -786,7 +786,7 @@ static void ty_seek( Demuxer *demuxer, const seek_args_t* seeka )
 
    tivo->whichChunk = newpos / CHUNKSIZE;
 
-   stream_seek( demuxer->stream, newpos );
+   demuxer->stream->seek( newpos );
 
    // re-sync video:
    videobuf_code_len = 0; // reset ES stream buffer

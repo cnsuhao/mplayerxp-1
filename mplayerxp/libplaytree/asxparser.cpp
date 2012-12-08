@@ -503,7 +503,7 @@ static play_tree_t* __FASTCALL__ asx_parse_entryref(libinput_t* libinput,ASX_Par
     return NULL;
   }
   stream=new(zeromem) Stream;
-  if(stream->open(libinput,href,&f,NULL)!=MPXP_Ok) {
+  if(stream->open(libinput,href,&f)!=MPXP_Ok) {
     MSG_WARN("Can't open playlist %s\n",href);
     delete stream;
     return NULL;

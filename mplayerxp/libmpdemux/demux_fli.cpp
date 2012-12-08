@@ -61,7 +61,7 @@ static int fli_demux(Demuxer *demuxer,Demuxer_Stream *__ds){
   // fetch the frame from the file
   // first, position the file properly since ds_read_packet() doesn't
   // seem to do it, even though it takes a file offset as a parameter
-  stream_seek(demuxer->stream, frames->filepos[frames->current_frame]);
+  demuxer->stream->seek( frames->filepos[frames->current_frame]);
   demuxer->video->read_packet(demuxer->stream,
 			    frames->frame_size[frames->current_frame],
 			    frames->current_frame/sh_video->fps,
@@ -77,8 +77,8 @@ static int fli_demux(Demuxer *demuxer,Demuxer_Stream *__ds){
 
 static MPXP_Rc fli_probe(Demuxer* demuxer){
   unsigned magic_number;
-  demuxer->movi_end = stream_skip(demuxer->stream,4);
-  magic_number = stream_read_word_le(demuxer->stream);
+  demuxer->movi_end = demuxer->stream->skip(4);
+  magic_number = demuxer->stream->read_word_le();
   if ((magic_number != 0xAF11) && (magic_number != 0xAF12)) return MPXP_False;
   demuxer->file_format=Demuxer::Type_FLI;
   return MPXP_Ok;
@@ -94,17 +94,17 @@ static Opaque* fli_open(Demuxer* demuxer){
   unsigned char * header;
 
   // go back to the beginning
-  stream_reset(demuxer->stream);
-  stream_seek(demuxer->stream, 0);
+  demuxer->stream->reset( );
+  demuxer->stream->seek( 0);
 
   header = new unsigned char[sizeof(BITMAPINFOHEADER) + 128];
-  stream_read(demuxer->stream, header + sizeof(BITMAPINFOHEADER), 128);
-  stream_seek(demuxer->stream, 0);
+  demuxer->stream->read( header + sizeof(BITMAPINFOHEADER), 128);
+  demuxer->stream->seek( 0);
 
   demuxer->movi_start = 128;
-  demuxer->movi_end = stream_read_dword_le(demuxer->stream);
+  demuxer->movi_end = demuxer->stream->read_dword_le();
 
-  magic_number = stream_read_word_le(demuxer->stream);
+  magic_number = demuxer->stream->read_word_le();
 
   if ((magic_number != 0xAF11) && (magic_number != 0xAF12))
   {
@@ -116,7 +116,7 @@ static Opaque* fli_open(Demuxer* demuxer){
   }
 
   // fetch the number of frames
-  frames->num_frames = stream_read_word_le(demuxer->stream);
+  frames->num_frames = demuxer->stream->read_word_le();
   frames->current_frame = 0;
 
   // allocate enough entries for the indices
@@ -138,8 +138,8 @@ static Opaque* fli_open(Demuxer* demuxer){
   // custom fourcc for internal MPlayer use
   sh_video->fourcc = mmioFOURCC('F', 'L', 'I', 'C');
 
-  sh_video->src_w = stream_read_word_le(demuxer->stream);
-  sh_video->src_h = stream_read_word_le(demuxer->stream);
+  sh_video->src_w = demuxer->stream->read_word_le();
+  sh_video->src_h = demuxer->stream->read_word_le();
 
   // pass extradata to codec
   sh_video->bih = (BITMAPINFOHEADER*)header;
@@ -151,10 +151,10 @@ static Opaque* fli_open(Demuxer* demuxer){
   sh_video->bih->biHeight=sh_video->src_h;
   sh_video->bih->biSizeImage=sh_video->bih->biWidth*sh_video->bih->biHeight;
   // skip the video depth and flags
-  stream_skip(demuxer->stream, 4);
+  demuxer->stream->skip( 4);
 
   // get the speed
-  speed = stream_read_word_le(demuxer->stream);
+  speed = demuxer->stream->read_word_le();
   if (speed == 0)
     speed = 1;
   if (magic_number == 0xAF11)
@@ -162,14 +162,14 @@ static Opaque* fli_open(Demuxer* demuxer){
   sh_video->fps = 1000.0f / speed;
 
   // build the frame index
-  stream_seek(demuxer->stream, demuxer->movi_start);
+  demuxer->stream->seek( demuxer->movi_start);
   frame_number = 0;
-  while ((!stream_eof(demuxer->stream)) && (frame_number < frames->num_frames))
+  while ((!demuxer->stream->eof()) && (frame_number < frames->num_frames))
   {
-    frames->filepos[frame_number] = stream_tell(demuxer->stream);
-    frame_size = stream_read_dword_le(demuxer->stream);
-    magic_number = stream_read_word_le(demuxer->stream);
-    stream_skip(demuxer->stream, frame_size - 6);
+    frames->filepos[frame_number] = demuxer->stream->tell();
+    frame_size = demuxer->stream->read_dword_le();
+    magic_number = demuxer->stream->read_word_le();
+    demuxer->stream->skip( frame_size - 6);
 
     // if this chunk has the right magic number, index it
     if ((magic_number == 0xF1FA) || (magic_number == 0xF5FA))

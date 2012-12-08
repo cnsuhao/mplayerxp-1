@@ -270,7 +270,7 @@ y4m_xtag_list_t *y4m_fi_xtags(y4m_frame_info_t *fi);
  ************************************************************************/
 
 /* read len bytes from fd into buf */
-ssize_t y4m_read(Stream *s, char *buf, size_t len);
+ssize_t y4m_read(Stream& s, char *buf, size_t len);
 
 #if 0
 /* write len bytes from fd into buf */
@@ -291,7 +291,7 @@ ssize_t y4m_write(int fd, char *buf, size_t len);
 int y4m_parse_stream_tags(char *s, y4m_stream_info_t *i);
 
 /* read a stream header from file descriptor fd */
-int y4m_read_stream_header(Stream *s, y4m_stream_info_t *i);
+int y4m_read_stream_header(Stream& s, y4m_stream_info_t *i);
 
 #if 0
 /* write a stream header to file descriptor fd */
@@ -309,7 +309,7 @@ int y4m_write_stream_header(int fd,  y4m_stream_info_t *i);
  ************************************************************************/
 
 /* read a frame header from file descriptor fd */
-int y4m_read_frame_header(Stream *s, y4m_frame_info_t *i);
+int y4m_read_frame_header(Stream& s, y4m_frame_info_t *i);
 
 #if 0
 /* write a frame header to file descriptor fd */
@@ -318,7 +318,7 @@ int y4m_write_frame_header(int fd, y4m_frame_info_t *i);
 
 /* read a complete frame (header + data)
    o yuv[3] points to three buffers, one each for Y, U, V planes */
-int y4m_read_frame(Stream *s, y4m_stream_info_t *si,
+int y4m_read_frame(Stream& s, y4m_stream_info_t *si,
 		   y4m_frame_info_t *fi, unsigned char *yuv[3]);
 
 #if 0

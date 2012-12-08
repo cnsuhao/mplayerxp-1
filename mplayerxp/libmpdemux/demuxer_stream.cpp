@@ -79,7 +79,7 @@ void Demuxer_Stream::add_packet(Demuxer_Packet* dp){
 
 void Demuxer_Stream::read_packet(Stream *stream,int len,float _pts,off_t _pos,dp_flags_e _flags){
     Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
-    len=stream_read(stream,dp->buffer(),len);
+    len=stream->read(dp->buffer(),len);
     dp->resize(len);
     dp->pts=_pts; //(float)pts/90000.0f;
     dp->pos=_pos;

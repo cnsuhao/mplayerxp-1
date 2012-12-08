@@ -126,8 +126,8 @@ void Demuxer::_init(Stream *_stream,int a_id,int v_id,int s_id)
   audio=new(zeromem) Demuxer_Stream(this,a_id);
   video=new(zeromem) Demuxer_Stream(this,v_id);
   sub=new(zeromem) Demuxer_Stream(this,s_id);
-  stream_reset(_stream);
-  stream_seek(_stream,stream->start_pos());
+  _stream->reset();
+  _stream->seek(stream->start_pos());
 }
 
 Demuxer::Demuxer()
@@ -317,8 +317,8 @@ MPXP_Rc Demuxer::open()
 	}
 	MSG_V("Forcing %s ... ",drv->name);
 	/* don't remove it from loop!!! (for initializing) */
-	stream_reset(stream);
-	stream_seek(stream,stream->start_pos());
+	stream->reset();
+	stream->seek(stream->start_pos());
 	if(drv->probe(this)!=MPXP_Ok) {
 	    MSG_ERR("Can't probe stream with driver: '%s'\n",demux_conf.type);
 	    goto err_exit;
@@ -330,8 +330,8 @@ again:
     for(;ddrivers[i]!=&demux_null;i++) {
 	MSG_V("Probing %s ... ",ddrivers[i]->name);
 	/* don't remove it from loop!!! (for initializing) */
-	stream_reset(stream);
-	stream_seek(stream,stream->start_pos());
+	stream->reset();
+	stream->seek(stream->start_pos());
 	if(ddrivers[i]->probe(this)==MPXP_Ok) {
 	    MSG_V("OK\n");
 	    dpriv.driver = ddrivers[i];
@@ -374,7 +374,7 @@ Demuxer* Demuxer::open(Stream *vs,int audio_id,int video_id,int dvdsub_id){
 
   if(demux_conf.audio_stream) {
     as = new(zeromem) Stream();
-    if(as->open(libinput,demux_conf.audio_stream,&afmt,NULL)!=MPXP_Ok) {
+    if(as->open(libinput,demux_conf.audio_stream,&afmt)!=MPXP_Ok) {
       MSG_ERR("Can't open audio stream: %s\n",demux_conf.audio_stream);
       delete as;
       return NULL;
@@ -382,7 +382,7 @@ Demuxer* Demuxer::open(Stream *vs,int audio_id,int video_id,int dvdsub_id){
   }
   if(demux_conf.sub_stream) {
     ss = new(zeromem) Stream();
-    if(ss->open(libinput,demux_conf.sub_stream,&sfmt,NULL)!=MPXP_Ok) {
+    if(ss->open(libinput,demux_conf.sub_stream,&sfmt)!=MPXP_Ok) {
       MSG_ERR("Can't open subtitles stream: %s\n",demux_conf.sub_stream);
       delete ss;
       return NULL;
@@ -439,7 +439,7 @@ int Demuxer::seek(const seek_args_t* seeka){
     if(sh_audio) { audio->free_packs(); sh_audio->a_buffer_len=0;}
     video->free_packs();
 
-    stream_set_eof(stream,0); // clear eof flag
+    stream->eof(0); // clear eof flag
     video->eof=0;
     audio->eof=0;
     video->prev_pts=0;

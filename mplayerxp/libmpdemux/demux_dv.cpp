@@ -82,7 +82,7 @@ static MPXP_Rc dv_probe(Demuxer *demuxer)
 
    MSG_V("Checking for DV\n");
 
-   bytes_read=stream_read(demuxer->stream,tmp_buffer,DV_PAL_FRAME_SIZE);
+   bytes_read=demuxer->stream->read(tmp_buffer,DV_PAL_FRAME_SIZE);
    if ((bytes_read!=DV_PAL_FRAME_SIZE) && (bytes_read!=DV_NTSC_FRAME_SIZE))
       return MPXP_False;
 
@@ -112,10 +112,10 @@ static int dv_demux(Demuxer *demuxer, Demuxer_Stream *ds)
    // fetch the frame from the file
    // first, position the file properly since ds_read_packet() doesn't
    // seem to do it, even though it takes a file offset as a parameter
-   stream_seek(demuxer->stream, frames->current_filepos);
+   demuxer->stream->seek(frames->current_filepos);
 
    Demuxer_Packet* dp_video=new(zeromem) Demuxer_Packet(frames->frame_size);
-   bytes_read=stream_read(demuxer->stream,dp_video->buffer(),frames->frame_size);
+   bytes_read=demuxer->stream->read(dp_video->buffer(),frames->frame_size);
    if (bytes_read<frames->frame_size)
       return 0;
    dp_video->pts=frames->current_frame/sh_video->fps;
@@ -145,11 +145,11 @@ static Opaque* dv_open(Demuxer* demuxer)
    MSG_V("demux_open_rawdv() end_pos %" PRId64"\n",(int64_t)demuxer->stream->end_pos());
 
    // go back to the beginning
-   stream_reset(demuxer->stream);
-   stream_seek(demuxer->stream, 0);
+   demuxer->stream->reset();
+   demuxer->stream->seek(0);
 
    //get the first frame
-   stream_read(demuxer->stream, dv_frame, DV_PAL_FRAME_SIZE);
+   demuxer->stream->read( dv_frame, DV_PAL_FRAME_SIZE);
 
    //read params from this frame
    dv_decoder=dv_decoder_new(TRUE,TRUE,FALSE);
@@ -220,8 +220,8 @@ static Opaque* dv_open(Demuxer* demuxer)
 
 //       sh_audio->context=(any_t*)dv_decoder;
     }
-    stream_reset(demuxer->stream);
-    stream_seek(demuxer->stream, 0);
+    demuxer->stream->reset();
+    demuxer->stream->seek(0);
     dv_decoder_free(dv_decoder);  //we keep this in the context of both stream headers
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return frames;

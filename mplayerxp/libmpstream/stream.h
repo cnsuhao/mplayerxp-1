@@ -31,14 +31,11 @@ namespace mpxp {
 	int len;	/**< length of buffer */
     };
 
-    struct Stream;
-    typedef void (* __FASTCALL__ stream_callback)(Stream *s,const stream_packet_t*);
-
     enum {
 	STREAM_PIN=RND_NUMBER2+RND_CHAR3
     };
 
-    struct cache_vars_s;
+    struct cache_vars_t;
     class Stream_Interface;
     struct stream_interface_info_t;
     /** Stream description */
@@ -50,18 +47,19 @@ namespace mpxp {
 		Type_Seekable	=0x00000002, /**< Stream is seekable (resides on local filesystem). */
 		Type_Memory	=0x00000004, /**< Stream is memory cache (doesn't provide seek/read functionality). */
 		Type_Text	=0x00000008, /**< Stream is non-media stream (redirector, playlist, ...). */
-		Type_DS		=0x00000010, /**< Stream is mapped on the other demuxer. */
-		Type_RawAudio	=0x00000020, /**< Stream contains raw audio without headers. */
-		Type_RawVideo	=0x00000040, /**< Stream contains raw video without headers. */
-		Type_Program	=0x00000080, /**< Stream contains program (non-media) headers (VCD,DVD,http,...) */
-		Type_Menu	=0x00000100, /**< Stream contains DVD menu... */
+		Type_RawAudio	=0x00000010, /**< Stream contains raw audio without headers. */
+		Type_RawVideo	=0x00000020, /**< Stream contains raw video without headers. */
+		Type_Program	=0x00000040, /**< Stream contains program (non-media) headers (VCD,DVD,http,...) */
+		Type_Menu	=0x00000080, /**< Stream contains DVD menu... */
 	    };
 	    Stream(type_e type=Stream::Type_Unknown);
 	    virtual ~Stream();
 
-	    virtual MPXP_Rc	open(libinput_t*libinput,const char* filename,int* file_format,stream_callback event_handler);
+	    virtual MPXP_Rc	open(libinput_t*libinput,const char* filename,int* file_format);
+	    virtual int		read(any_t* mem,int total);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
+	    virtual int		skip(off_t len);
 	    virtual off_t	tell() const;
 	    virtual void	close();
 	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
@@ -78,15 +76,20 @@ namespace mpxp {
 	    virtual unsigned	sector_size() const; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
 	    virtual float	stream_pts() const;	/**< PTS correction for idiotics DVD's discontinuities */
 
+	    virtual int		read_char();
+	    virtual unsigned	read_word();
+	    virtual unsigned	read_dword();
+	    virtual unsigned	read_word_le();
+	    virtual unsigned	read_dword_le();
+	    virtual uint64_t	read_qword();
+	    virtual uint64_t	read_qword_le();
+	    virtual unsigned	read_int24();
+	    uint32_t		read_fourcc() { return read_dword_le(); }
+
 	    char		antiviral_hole[RND_CHAR3];
 	    unsigned		pin;		/**< personal identification number */
 	    int			file_format;	/**< detected file format (by http:// protocol for example) */
-	    unsigned int	buf_pos; /**< position whitin of small cache */
-	    unsigned int	buf_len; /**< length of small cache */
-	    unsigned char*	buffer;/**< buffer of small cache */
-	    struct cache_vars_s*cache_data;	/**< large cache */
 	    const stream_interface_info_t* driver_info;
-	    stream_callback	event_handler;  /**< callback for streams which provide events */
 	private:
 	    Stream_Interface*	driver; /**< low-level stream driver */
 	    Opaque*		priv;	/**< private data used by stream driver */
@@ -102,38 +105,93 @@ namespace mpxp {
     inline Stream::type_e operator&=(Stream::type_e a, Stream::type_e b) { return (a=static_cast<Stream::type_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
     inline Stream::type_e operator^=(Stream::type_e a, Stream::type_e b) { return (a=static_cast<Stream::type_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
-    int stream_enable_cache(Stream *stream,libinput_t* libinput,int size,int min,int prefill);
-    void stream_disable_cache(Stream *stream);
+    struct Memory_Stream : public Stream {
+	public:
+	    Memory_Stream(const unsigned char* data,unsigned len);
+	    virtual ~Memory_Stream();
 
-/* this block describes interface to non-cache stream functions */
-    extern int __FASTCALL__ nc_stream_read_cbuffer(Stream *s);
-    extern int __FASTCALL__ nc_stream_seek_long(Stream *s,off_t pos);
-    extern int __FASTCALL__ nc_stream_read_char(Stream *s);
-    extern int __FASTCALL__ nc_stream_read(Stream *s,any_t* mem,int total);
-    extern off_t __FASTCALL__ nc_stream_tell(Stream *s);
-    extern int __FASTCALL__ nc_stream_seek(Stream *s,off_t pos);
-    extern int __FASTCALL__ nc_stream_skip(Stream *s,off_t len);
+	    virtual int		read(any_t* mem,int total);
+	    virtual off_t	tell() const;
+	    virtual off_t	seek(off_t pos);
+	    virtual int		skip(off_t len);
+	    virtual int		eof() const;
+	    virtual void	eof(int eof);
+	    virtual void	reset();
 
-/* this block describes interface to cache/non-cache stream functions */
-    extern int __FASTCALL__ stream_read_char(Stream *s);
-    extern int __FASTCALL__ stream_read(Stream *s,any_t* mem,int total);
-    extern off_t __FASTCALL__ stream_tell(Stream *s);
-    extern int __FASTCALL__ stream_seek(Stream *s,off_t pos);
-    extern int __FASTCALL__ stream_skip(Stream *s,off_t len);
-    extern int __FASTCALL__ stream_eof(Stream *s);
-    extern void __FASTCALL__ stream_set_eof(Stream *s,int eof);
+	    virtual int		read_char();
+	    virtual unsigned	read_word();
+	    virtual unsigned	read_dword();
+	    virtual unsigned	read_word_le();
+	    virtual unsigned	read_dword_le();
+	    virtual uint64_t	read_qword();
+	    virtual uint64_t	read_qword_le();
+	    virtual unsigned	read_int24();
 
-    void __FASTCALL__ stream_reset(Stream *s);
-    Stream* __FASTCALL__ new_memory_stream(const unsigned char* data,int len);
+	    virtual off_t	start_pos() const;	/**< real start of stream (without internet's headers) */
+	    virtual off_t	end_pos() const;	/**< real end of stream (media may be not fully filled) */
+	    virtual unsigned	sector_size() const; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
+	private:
+	    unsigned		_len;
+	    uint8_t*		buffer;
+    };
 
-    extern unsigned int __FASTCALL__ stream_read_word(Stream *s);
-    extern unsigned int __FASTCALL__ stream_read_dword(Stream *s);
-    extern unsigned int __FASTCALL__ stream_read_word_le(Stream *s);
-    extern unsigned int __FASTCALL__ stream_read_dword_le(Stream *s);
-    extern uint64_t     __FASTCALL__ stream_read_qword(Stream *s);
-    extern uint64_t     __FASTCALL__ stream_read_qword_le(Stream *s);
-    extern unsigned int __FASTCALL__ stream_read_int24(Stream *s);
-    static inline uint32_t stream_read_fourcc(Stream* s) { return stream_read_dword_le(s); }
+    struct Buffered_Stream : public Stream {
+	public:
+	    Buffered_Stream(Stream::type_e type=Stream::Type_Unknown);
+	    virtual ~Buffered_Stream();
+
+	    virtual MPXP_Rc	open(libinput_t*libinput,const char* filename,int* file_format);
+	    virtual off_t	seek_long(off_t pos);
+	    virtual int		read(any_t* mem,int total);
+	    virtual int		read(stream_packet_t * sp);
+	    virtual off_t	tell() const;
+	    virtual off_t	seek(off_t pos);
+	    virtual int		skip(off_t len);
+
+	    virtual int		read_char();
+	    virtual unsigned	read_word();
+	    virtual unsigned	read_dword();
+	    virtual unsigned	read_word_le();
+	    virtual unsigned	read_dword_le();
+	    virtual uint64_t	read_qword();
+	    virtual uint64_t	read_qword_le();
+	    virtual unsigned	read_int24();
+	private:
+	    off_t		file_pos() const { return pos()-buf_len; }
+	    int			read_cbuffer();
+	    unsigned int	buf_pos; /**< position whitin of small cache */
+	    unsigned int	buf_len; /**< length of small cache */
+	    unsigned char*	buffer;/**< buffer of small cache */
+    };
+
+    struct Cached_Stream : public Buffered_Stream {
+	public:
+	    Cached_Stream(Stream::type_e type=Stream::Type_Unknown);
+	    virtual ~Cached_Stream();
+
+	    virtual int		enable_cache(libinput_t* libinput,int size,int min,int prefill);
+	    virtual void	disable_cache();
+
+	    virtual int		read(any_t* mem,int total);
+	    virtual int		read(stream_packet_t * sp);
+	    virtual off_t	tell() const;
+	    virtual off_t	seek(off_t pos);
+	    virtual int		skip(off_t len);
+	    virtual int		eof() const;
+	    virtual void	eof(int eof);
+	    virtual void	reset();
+
+	    virtual int		read_char();
+	    virtual unsigned	read_word();
+	    virtual unsigned	read_dword();
+	    virtual unsigned	read_word_le();
+	    virtual unsigned	read_dword_le();
+	    virtual uint64_t	read_qword();
+	    virtual uint64_t	read_qword_le();
+	    virtual unsigned	read_int24();
+	private:
+	    cache_vars_t*	cache_data;	/**< large cache */
+    };
 
 /*
     Stream control definitions

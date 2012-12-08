@@ -132,9 +132,9 @@ static int mpxp_read(any_t*opaque, unsigned char *buf, int size){
     Stream* stream=reinterpret_cast<Stream*>(opaque);
     int ret;
 
-    if(stream_eof(stream)) //needed?
+    if(stream->eof()) //needed?
 	return -1;
-    ret=stream_read(stream, buf, size);
+    ret=stream->read(buf, size);
 
     MSG_DBG2("%d=mp_read(%p, %p, %d), eof:%d\n", ret, stream, buf, size, stream->eof());
     return ret;
@@ -144,15 +144,15 @@ static int64_t mpxp_seek(any_t*opaque, int64_t pos, int whence){
     Stream* stream=reinterpret_cast<Stream*>(opaque);
     MSG_DBG2("mpxp_seek(%p, %d, %d)\n", stream, (int)pos, whence);
     if(whence == SEEK_CUR)
-	pos +=stream_tell(stream);
+	pos +=stream->tell();
     else if(whence == SEEK_END)
 	pos += stream->end_pos();
     else if(whence != SEEK_SET)
 	return -1;
 
     if(pos<stream->end_pos() && stream->eof())
-	stream_reset(stream);
-    if(stream_seek(stream, pos)==0)
+	stream->reset();
+    if(stream->seek( pos)==0)
 	return -1;
 
     return pos;
@@ -194,7 +194,7 @@ static MPXP_Rc lavf_probe(Demuxer *demuxer){
     else if(mp_conf.verbose) av_log_set_level(AV_LOG_VERBOSE);
     else av_log_set_level(AV_LOG_INFO);
 
-    if(stream_read(demuxer->stream, buf, PROBE_BUF_SIZE)!=PROBE_BUF_SIZE) {
+    if(demuxer->stream->read( buf, PROBE_BUF_SIZE)!=PROBE_BUF_SIZE) {
 	delete demuxer->priv;
 	return MPXP_False;
     }
@@ -234,7 +234,7 @@ static Opaque* lavf_open(Demuxer *demuxer){
     int err,i,g;
     char mp_filename[256]="mpxp:";
     char err_buff[256];
-    stream_seek(demuxer->stream, 0);
+    demuxer->stream->seek( 0);
 
     strncpy(mp_filename + 5, "foobar.dummy", sizeof(mp_filename)-5);
 
@@ -422,9 +422,9 @@ static int lavf_demux(Demuxer *demux, Demuxer_Stream *dsds){
     int id;
     MSG_DBG2("lavf_demux()\n");
 
-    demux->filepos=stream_tell(demux->stream);
+    demux->filepos=demux->stream->tell();
 
-    if(stream_eof(demux->stream)){
+    if(demux->stream->eof()){
 //        demuxre->stream->eof=1;
 	return 0;
     }

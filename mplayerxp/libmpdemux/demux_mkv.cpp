@@ -119,14 +119,14 @@ ebml_read_id (Stream *s, int *length)
   int i, len_mask = 0x80;
   uint32_t id;
 
-  for (i=0, id=stream_read_char (s); i<4 && !(id & len_mask); i++)
+  for (i=0, id=s->read_char(); i<4 && !(id & len_mask); i++)
     len_mask >>= 1;
   if (i >= 4)
     return EBML_ID_INVALID;
   if (length)
     *length = i + 1;
   while (i--)
-    id = (id << 8) | stream_read_char (s);
+    id = (id << 8) | s->read_char();
   return id;
 }
 
@@ -187,7 +187,7 @@ ebml_read_length (Stream *s, int *length)
   int i, j, num_ffs = 0, len_mask = 0x80;
   uint64_t len;
 
-  for (i=0, len=stream_read_char (s); i<8 && !(len & len_mask); i++)
+  for (i=0, len=s->read_char(); i<8 && !(len & len_mask); i++)
     len_mask >>= 1;
   if (i >= 8)
     return EBML_UINT_INVALID;
@@ -198,7 +198,7 @@ ebml_read_length (Stream *s, int *length)
     num_ffs++;
   while (i--)
     {
-      len = (len << 8) | stream_read_char (s);
+      len = (len << 8) | s->read_char();
       if ((len & 0xFF) == 0xFF)
 	num_ffs++;
     }
@@ -223,7 +223,7 @@ ebml_read_uint (Stream *s, uint64_t *length)
     *length = len + l;
 
   while (len--)
-    value = (value << 8) | stream_read_char (s);
+    value = (value << 8) | s->read_char();
 
   return value;
 }
@@ -245,12 +245,12 @@ ebml_read_int (Stream *s, uint64_t *length)
     *length = len + l;
 
   len--;
-  l = stream_read_char (s);
+  l = s->read_char();
   if (l & 0x80)
     value = -1;
   value = (value << 8) | l;
   while (len--)
-    value = (value << 8) | stream_read_char (s);
+    value = (value << 8) | s->read_char();
 
   return value;
 }
@@ -271,7 +271,7 @@ ebml_read_float (Stream *s, uint64_t *length)
     case 4:
       {
 	union {uint32_t i; float f;} u;
-	u.i = stream_read_dword (s);
+	u.i = s->read_dword();
 	value = u.f;
 	break;
       }
@@ -279,7 +279,7 @@ ebml_read_float (Stream *s, uint64_t *length)
     case 8:
       {
 	union {uint64_t i; double d;} u;
-	u.i = stream_read_qword (s);
+	u.i = s->read_qword();
 	value = u.d;
 	break;
       }
@@ -287,7 +287,7 @@ ebml_read_float (Stream *s, uint64_t *length)
     case 10:
       {
 	union {uint8_t data[10]; long double ld;} u;
-	if (stream_read (s, u.data, 10) != 10)
+	if (s->read( u.data, 10) != 10)
 	  return EBML_FLOAT_INVALID;
 	value = be2me_ldbl(u.ld);
 	break;
@@ -320,7 +320,7 @@ ebml_read_ascii (Stream *s, uint64_t *length)
     *length = len + l;
 
   str = (char *) mp_malloc (len+1);
-  if (stream_read(s, str, len) != (int) len)
+  if (s->read( str, len) != (int) len)
     {
       delete str;
       return NULL;
@@ -354,7 +354,7 @@ ebml_read_skip (Stream *s, uint64_t *length)
   if (length)
     *length = len + l;
 
-  stream_skip(s, len);
+  s->skip( len);
 
   return 0;
 }
@@ -1191,7 +1191,7 @@ demux_mkv_read_trackencodings (Demuxer *demuxer, mkv_track_t *track)
 			    case MATROSKA_ID_CONTENTCOMPSETTINGS:
 			      l = ebml_read_length (s, &i);
 			      e.comp_settings = new uint8_t[l];
-			      stream_read (s, e.comp_settings, l);
+			      s->read( e.comp_settings, l);
 			      e.comp_settings_len = l;
 			      l += i;
 			      break;
@@ -1515,7 +1515,7 @@ demux_mkv_read_trackentry (Demuxer *demuxer)
 	    if (num > std::numeric_limits<size_t>::max() - 1000) return 0;
 	    l = x + num;
 	    track->private_data = mp_malloc (num + LZO_INPUT_PADDING);
-	    if (stream_read(s, track->private_data, num) != (int) num)
+	    if (s->read( track->private_data, num) != (int) num)
 	      goto err_out;
 	    track->private_size = num;
 	    MSG_V( "[mkv] |  + CodecPrivate, length "
@@ -1629,7 +1629,7 @@ demux_mkv_read_cues (Demuxer *demuxer)
     ebml_read_skip (s, NULL);
     return 0;
   }
-  off = stream_tell (s);
+  off = s->tell();
   for (i=0; i<mkv_d->parsed_cues_num; i++)
     if (mkv_d->parsed_cues[i] == off)
       {
@@ -1943,7 +1943,7 @@ demux_mkv_read_attachments (Demuxer *demuxer)
 			l = x + num;
 			delete data;
 			data = new char [num];
-			if (stream_read(s, data, num) != (int) num)
+			if (s->read( data, num) != (int) num)
 			{
 			  delete data;
 			  return 0;
@@ -2001,7 +2001,7 @@ demux_mkv_read_seekhead (Demuxer *demuxer)
   int i, il, res = 0;
   off_t off;
 
-  off = stream_tell (s);
+  off = s->tell();
   for (i=0; i<mkv_d->parsed_seekhead_num; i++)
     if (mkv_d->parsed_seekhead[i] == off)
       {
@@ -2016,7 +2016,7 @@ demux_mkv_read_seekhead (Demuxer *demuxer)
   MSG_V( "[mkv] /---- [ parsing seek head ] ---------\n");
   length = ebml_read_length (s, NULL);
   /* off now holds the position of the next element after the seek head. */
-  off = stream_tell (s) + length;
+  off = s->tell() + length;
   while (length > 0 && !res)
     {
 
@@ -2070,8 +2070,8 @@ demux_mkv_read_seekhead (Demuxer *demuxer)
 	  ((mkv_d->segment_start + seek_pos) >= (uint64_t)demuxer->movi_end))
 	continue;
 
-      saved_pos = stream_tell (s);
-      if (!stream_seek (s, mkv_d->segment_start + seek_pos))
+      saved_pos = s->tell();
+      if (!s->seek( mkv_d->segment_start + seek_pos))
 	res = 1;
       else
 	{
@@ -2102,17 +2102,17 @@ demux_mkv_read_seekhead (Demuxer *demuxer)
 	      }
 	}
 
-      stream_seek (s, saved_pos);
+      s->seek( saved_pos);
     }
   if (res)
     {
       /* If there was an error then try to skip this seek head. */
-      if (stream_seek (s, off))
+      if (s->seek( off))
 	res = 0;
     }
   else
   if (length > 0)
-     stream_seek (s, stream_tell (s) + length);
+     s->seek( s->tell() + length);
   MSG_V( "[mkv] \\---- [ parsing seek head ] ---------\n");
   return res;
 }
@@ -2259,7 +2259,7 @@ demux_mkv_open_video (Demuxer *demuxer, mkv_track_t *track, int vid)
 	  // copy type1 and type2 info from rv properties
 	  memcpy(dst, &type1, 4);
 	  memcpy(dst+4, &type2, 4);
-	  stream_read(demuxer->stream, dst+8, cnt);
+	  demuxer->stream->read( dst+8, cnt);
 	  track->realmedia = 1;
 
 #ifdef USE_QTX_CODECS
@@ -2791,7 +2791,7 @@ static MPXP_Rc mkv_probe(Demuxer *demuxer)
     Stream *s = demuxer->stream;
     int version;
     char *str;
-    stream_seek(s, s->start_pos());
+    s->seek( s->start_pos());
     str = ebml_read_header (s, &version);
     if (str == NULL || strcmp (str, "matroska") || version > 1) {
 	MSG_DBG2( "[mkv] no head found\n");
@@ -2809,7 +2809,7 @@ static Opaque* mkv_open(Demuxer *demuxer)
   int i, version, cont = 0;
   char *str;
 
-  stream_seek(s, s->start_pos());
+  s->seek( s->start_pos());
   str = ebml_read_header (s, &version);
   if (str == NULL || strcmp (str, "matroska") || version > 2) {
       MSG_DBG2( "[mkv] no head found\n");
@@ -2831,7 +2831,7 @@ static Opaque* mkv_open(Demuxer *demuxer)
   mkv_d = new(zeromem) mkv_demuxer_t;
   demuxer->priv = mkv_d;
   mkv_d->tc_scale = 1000000;
-  mkv_d->segment_start = stream_tell (s);
+  mkv_d->segment_start = s->tell();
   mkv_d->parsed_cues = new off_t;
   mkv_d->parsed_seekhead = new off_t;
 
@@ -2875,15 +2875,15 @@ static Opaque* mkv_open(Demuxer *demuxer)
 	    MSG_V( "[mkv] |+ found cluster, headers are "
 		    "parsed completely :)\n");
 	    /* get the first cluster timecode */
-	    p = stream_tell(s);
+	    p = s->tell();
 	    l = ebml_read_length (s, NULL);
 	    while (ebml_read_id (s, NULL) != MATROSKA_ID_CLUSTERTIMECODE)
 	      {
 		ebml_read_skip (s, NULL);
-		if (stream_tell (s) >= p + l)
+		if (s->tell() >= p + l)
 		  break;
 	      }
-	    if (stream_tell (s) < p + l)
+	    if (s->tell() < p + l)
 	      {
 		uint64_t num = ebml_read_uint (s, NULL);
 		if (num == EBML_UINT_INVALID)
@@ -2891,7 +2891,7 @@ static Opaque* mkv_open(Demuxer *demuxer)
 		mkv_d->first_tc = num * mkv_d->tc_scale / 1000000.0;
 		mkv_d->has_first_tc = 1;
 	      }
-	    stream_seek (s, p - 4);
+	    s->seek( p - 4);
 	    cont = 1;
 	    break;
 	  }
@@ -3703,8 +3703,8 @@ static int mkv_demux (Demuxer *demuxer, Demuxer_Stream *ds)
 		  delete block;
 		  if (block_length > std::numeric_limits<size_t>::max()- LZO_INPUT_PADDING) return 0;
 		  block = new uint8_t[block_length + LZO_INPUT_PADDING];
-		  demuxer->filepos = stream_tell (s);
-		  if (stream_read (s,block,block_length) != (int) block_length)
+		  demuxer->filepos = s->tell();
+		  if (s->read(block,block_length) != (int) block_length)
 		  {
 		    delete block;
 		    return 0;
@@ -3777,8 +3777,8 @@ static int mkv_demux (Demuxer *demuxer, Demuxer_Stream *ds)
 		    int res;
 		    block_length = ebml_read_length (s, &tmp);
 		    block = new uint8_t[block_length];
-		    demuxer->filepos = stream_tell (s);
-		    if (stream_read (s,block,block_length) != (int) block_length)
+		    demuxer->filepos = s->tell();
+		    if (s->read(block,block_length) != (int) block_length)
 		    {
 		      delete block;
 		      return 0;
@@ -3808,7 +3808,7 @@ static int mkv_demux (Demuxer *demuxer, Demuxer_Stream *ds)
 
       if (ebml_read_id (s, &il) != MATROSKA_ID_CLUSTER)
 	return 0;
-      add_cluster_position(mkv_d, stream_tell(s)-il);
+      add_cluster_position(mkv_d, s->tell()-il);
       mkv_d->cluster_size = ebml_read_length (s, NULL);
     }
 
@@ -3841,17 +3841,17 @@ static void mkv_seek (Demuxer *demuxer,const seek_args_t* seeka)
 	  max_pos = mkv_d->cluster_positions[mkv_d->num_cluster_pos-1];
 	  if (target_filepos > max_pos)
 	    {
-	      if ((off_t) max_pos > stream_tell (s))
-		stream_seek (s, max_pos);
+	      if ((off_t) max_pos > s->tell())
+		s->seek( max_pos);
 	      else
-		stream_seek (s, stream_tell (s) + mkv_d->cluster_size);
+		s->seek( s->tell() + mkv_d->cluster_size);
 	      /* parse all the clusters upto target_filepos */
-	      while (!s->eof() && stream_tell(s) < (off_t) target_filepos)
+	      while (!s->eof() && s->tell() < (off_t) target_filepos)
 		{
 		  switch (ebml_read_id (s, &i))
 		    {
 		    case MATROSKA_ID_CLUSTER:
-		      add_cluster_position(mkv_d, (uint64_t) stream_tell(s)-i);
+		      add_cluster_position(mkv_d, (uint64_t) s->tell()-i);
 		      break;
 
 		    case MATROSKA_ID_CUES:
@@ -3861,7 +3861,7 @@ static void mkv_seek (Demuxer *demuxer,const seek_args_t* seeka)
 		  ebml_read_skip (s, NULL);
 		}
 	      if (s->eof())
-		stream_reset(s);
+		s->reset();
 	    }
 
 	  if (mkv_d->indexes == NULL)
@@ -3884,7 +3884,7 @@ static void mkv_seek (Demuxer *demuxer,const seek_args_t* seeka)
 		    }
 		}
 	      mkv_d->cluster_size = mkv_d->blockgroup_size = 0;
-	      stream_seek (s, cluster_pos);
+	      s->seek( cluster_pos);
 	    }
 	}
       else
@@ -3925,7 +3925,7 @@ static void mkv_seek (Demuxer *demuxer,const seek_args_t* seeka)
 	  if (_index)  /* We've found an entry. */
 	    {
 	      mkv_d->cluster_size = mkv_d->blockgroup_size = 0;
-	      stream_seek (s, _index->filepos);
+	      s->seek( _index->filepos);
 	    }
 	}
 
@@ -3966,7 +3966,7 @@ static void mkv_seek (Demuxer *demuxer,const seek_args_t* seeka)
 	return;
 
       mkv_d->cluster_size = mkv_d->blockgroup_size = 0;
-      stream_seek (s, _index->filepos);
+      s->seek( _index->filepos);
 
       if (demuxer->video->id >= 0)
 	mkv_d->v_skip_to_keyframe = 1;

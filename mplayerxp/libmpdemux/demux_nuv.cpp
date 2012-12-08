@@ -75,7 +75,7 @@ static void nuv_seek ( Demuxer *demuxer, const seek_args_t* seeka )
 	float start_time = MAX_TIME;
 	float target_time = start_time + seeka->secs * 1000; /* target_time, start_time are ms, rel_seek_secs s */
 
-	orig_pos = stream_tell ( demuxer->stream );
+	orig_pos = demuxer->stream->tell( );
 
 	if ( seeka->secs > 0 )
 	{
@@ -84,7 +84,7 @@ static void nuv_seek ( Demuxer *demuxer, const seek_args_t* seeka )
 
 		while(current_time < target_time )
 		{
-			if ((unsigned)stream_read ( demuxer->stream, (char*)& rtjpeg_frameheader, sizeof ( rtjpeg_frameheader ) ) < sizeof(rtjpeg_frameheader))
+			if ((unsigned)demuxer->stream->read( (char*)& rtjpeg_frameheader, sizeof ( rtjpeg_frameheader ) ) < sizeof(rtjpeg_frameheader))
 				return; /* EOF */
 			le2me_rtframeheader(&rtjpeg_frameheader);
 
@@ -106,8 +106,8 @@ static void nuv_seek ( Demuxer *demuxer, const seek_args_t* seeka )
 
 				current_time = rtjpeg_frameheader.timecode;
 
-				curr_pos = stream_tell ( demuxer->stream );
-				stream_seek ( demuxer->stream, curr_pos + rtjpeg_frameheader.packetlength );
+				curr_pos = demuxer->stream->tell( );
+				demuxer->stream->seek( curr_pos + rtjpeg_frameheader.packetlength );
 
 				/* Adjust current sequence pointer */
 			}
@@ -122,8 +122,8 @@ static void nuv_seek ( Demuxer *demuxer, const seek_args_t* seeka )
 				current_time = rtjpeg_frameheader.timecode;
 
 
-				curr_pos = stream_tell ( demuxer->stream );
-				stream_seek ( demuxer->stream, curr_pos + rtjpeg_frameheader.packetlength );
+				curr_pos = demuxer->stream->tell( );
+				demuxer->stream->seek( curr_pos + rtjpeg_frameheader.packetlength );
 			}
 		}
 	}
@@ -147,7 +147,7 @@ static void nuv_seek ( Demuxer *demuxer, const seek_args_t* seeka )
 		{
 			p = p->next;
 		}
-		stream_seek ( demuxer->stream, p->offset );
+		demuxer->stream->seek( p->offset );
 		priv->current_video_frame = p->frame;
 	}
 }
@@ -160,8 +160,8 @@ static int nuv_demux( Demuxer *demuxer, Demuxer_Stream *__ds )
 	nuv_priv_t* priv = static_cast<nuv_priv_t*>(demuxer->priv);
 	int want_audio = (demuxer->audio)&&(demuxer->audio->id!=-2);
 
-	demuxer->filepos = orig_pos = stream_tell ( demuxer->stream );
-	if ((unsigned)stream_read ( demuxer->stream, (char*)& rtjpeg_frameheader, sizeof ( rtjpeg_frameheader ) ) < sizeof(rtjpeg_frameheader))
+	demuxer->filepos = orig_pos = demuxer->stream->tell( );
+	if ((unsigned)demuxer->stream->read( (char*)& rtjpeg_frameheader, sizeof ( rtjpeg_frameheader ) ) < sizeof(rtjpeg_frameheader))
 	    return 0; /* EOF */
 	le2me_rtframeheader(&rtjpeg_frameheader);
 
@@ -186,7 +186,7 @@ static int nuv_demux( Demuxer *demuxer, Demuxer_Stream *__ds )
 		priv->current_position->next = NULL;
 	    }
 	    /* put RTjpeg tables, Video info to video buffer */
-	    stream_seek ( demuxer->stream, orig_pos );
+	    demuxer->stream->seek( orig_pos );
 	    demuxer->video->read_packet ( demuxer->stream, rtjpeg_frameheader.packetlength + 12,
 		    rtjpeg_frameheader.timecode*0.001, orig_pos, DP_NONKEYFRAME);
 
@@ -203,8 +203,8 @@ static int nuv_demux( Demuxer *demuxer, Demuxer_Stream *__ds )
 			rtjpeg_frameheader.timecode*0.001, orig_pos + 12, DP_NONKEYFRAME);
 	    } else {
 	      /* skip audio block */
-		stream_seek ( demuxer->stream,
-			    stream_tell ( demuxer->stream )
+		demuxer->stream->seek(
+			    demuxer->stream->tell( )
 			    + rtjpeg_frameheader.packetlength );
 	    }
 	}
@@ -224,10 +224,10 @@ static Opaque* nuv_open ( Demuxer* demuxer )
 
 
 	/* Go to the start */
-	stream_reset(demuxer->stream);
-	stream_seek(demuxer->stream, demuxer->stream->start_pos());
+	demuxer->stream->reset();
+	demuxer->stream->seek(demuxer->stream->start_pos());
 
-	stream_read ( demuxer->stream, (char*)& rtjpeg_fileheader, sizeof(rtjpeg_fileheader) );
+	demuxer->stream->read( (char*)& rtjpeg_fileheader, sizeof(rtjpeg_fileheader) );
 	le2me_rtfileheader(&rtjpeg_fileheader);
 
 	/* no video */
@@ -291,7 +291,7 @@ static Opaque* nuv_open ( Demuxer* demuxer )
 	priv->index_list = (nuv_position_t*) mp_malloc(sizeof(nuv_position_t));
 	priv->index_list->frame = 0;
 	priv->index_list->time = 0;
-	priv->index_list->offset = stream_tell ( demuxer->stream );
+	priv->index_list->offset = demuxer->stream->tell( );
 	priv->index_list->next = NULL;
 	priv->current_position = priv->index_list;
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
@@ -303,11 +303,11 @@ static MPXP_Rc nuv_probe ( Demuxer* demuxer )
     struct nuv_signature ns;
 
     /* Store original position */
-    off_t orig_pos = stream_tell(demuxer->stream);
+    off_t orig_pos = demuxer->stream->tell();
 
     MSG_V( "Checking for NuppelVideo\n" );
 
-    stream_read(demuxer->stream,(char*)&ns,sizeof(ns));
+    demuxer->stream->read((char*)&ns,sizeof(ns));
 
     if ( strncmp ( ns.finfo, "NuppelVideo", 12 ) )
 	return MPXP_False; /* Not a NuppelVideo file */
@@ -315,7 +315,7 @@ static MPXP_Rc nuv_probe ( Demuxer* demuxer )
 	return MPXP_False; /* Wrong version NuppelVideo file */
 
     /* Return to original position */
-    stream_seek ( demuxer->stream, orig_pos );
+    demuxer->stream->seek( orig_pos );
     demuxer->file_format=Demuxer::Type_NUV;
     return MPXP_Ok;
 }

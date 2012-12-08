@@ -133,21 +133,21 @@ off_t list_end=0;
 priv->idx_size=0;
 priv->audio_streams=0;
 while(1){
-  int id=stream_read_dword_le(demuxer->stream);
+  int id=demuxer->stream->read_dword_le();
   unsigned chunksize,size2;
   static int last_fccType=0;
   const char* hdr=NULL;
   int infot;
   //
-  if(stream_eof(demuxer->stream)) break;
+  if(demuxer->stream->eof()) break;
   //
   if(id==mmioFOURCC('L','I','S','T')){
-    unsigned len=stream_read_dword_le(demuxer->stream);   // list size
-    id=stream_read_dword_le(demuxer->stream);             // list type
+    unsigned len=demuxer->stream->read_dword_le();   // list size
+    id=demuxer->stream->read_dword_le();             // list type
     MSG_DBG2("LIST %.4s  len=%u\n",(char *) &id,len);
     if(len >= 4) {
 	len -= 4;
-	list_end=stream_tell(demuxer->stream)+((len+1)&(~1));
+	list_end=demuxer->stream->tell()+((len+1)&(~1));
     } else {
 	MSG_WARN("** empty list?!\n");
 	list_end = 0;
@@ -155,18 +155,18 @@ while(1){
     MSG_DBG2("list_end=0x%X\n",(int)list_end);
     if(id==listtypeAVIMOVIE){
       // found MOVI header
-      if(!demuxer->movi_start) demuxer->movi_start=stream_tell(demuxer->stream);
-      demuxer->movi_end=stream_tell(demuxer->stream)+len;
+      if(!demuxer->movi_start) demuxer->movi_start=demuxer->stream->tell();
+      demuxer->movi_end=demuxer->stream->tell()+len;
       MSG_V("Found movie at 0x%X - 0x%X\n",(int)demuxer->movi_start,(int)demuxer->movi_end);
       if(demuxer->stream->end_pos()>demuxer->movi_end) demuxer->movi_end=demuxer->stream->end_pos();
       if(index_mode==-2 || index_mode==2 || index_mode==0)
 	break; // reading from non-seekable source (stdin) or forced index or no index forced
-      if(list_end>0) stream_seek(demuxer->stream,list_end); // skip movi
+      if(list_end>0) demuxer->stream->seek(list_end); // skip movi
       list_end=0;
     }
     continue;
   }
-  size2=stream_read_dword_le(demuxer->stream);
+  size2=demuxer->stream->read_dword_le();
   MSG_V("CHUNK %.4s  len=%u\n",(char *) &id,size2);
   chunksize=(size2+1)&(~1);
   infot=-1;
@@ -250,7 +250,7 @@ while(1){
     case mmioFOURCC('I','D','I','T'): hdr="Digitization Time";break;
 
     case ckidAVIMAINHDR:          // read 'avih'
-      stream_read(demuxer->stream,(char*) &avih,std::min((unsigned long)size2,sizeof(avih)));
+      demuxer->stream->read((char*) &avih,std::min((unsigned long)size2,sizeof(avih)));
       le2me_MainAVIHeader(&avih); // swap to machine endian
       chunksize-=std::min((unsigned long)size2,sizeof(avih));
       demuxer->movi_length=avih.dwTotalFrames;
@@ -258,7 +258,7 @@ while(1){
       break;
     case ckidSTREAMHEADER: {      // read 'strh'
       AVIStreamHeader h;
-      stream_read(demuxer->stream,(char*) &h,std::min((unsigned long)size2,sizeof(h)));
+      demuxer->stream->read((char*) &h,std::min((unsigned long)size2,sizeof(h)));
       le2me_AVIStreamHeader(&h);  // swap to machine endian
       chunksize-=std::min((unsigned long)size2,sizeof(h));
       ++stream_id;
@@ -290,12 +290,12 @@ while(1){
       chunksize-=24;
       memcpy(s->fcc, "indx", 4);
       s->dwSize = size2;
-      s->wLongsPerEntry = stream_read_word_le(demuxer->stream);
-      s->bIndexSubType = stream_read_char(demuxer->stream);
-      s->bIndexType = stream_read_char(demuxer->stream);
-      s->nEntriesInUse = stream_read_dword_le(demuxer->stream);
-      *(uint32_t *)s->dwChunkId = stream_read_dword_le(demuxer->stream);
-      stream_read(demuxer->stream, (char *)s->dwReserved, 3*4);
+      s->wLongsPerEntry = demuxer->stream->read_word_le();
+      s->bIndexSubType = demuxer->stream->read_char();
+      s->bIndexType = demuxer->stream->read_char();
+      s->nEntriesInUse = demuxer->stream->read_dword_le();
+      *(uint32_t *)s->dwChunkId = demuxer->stream->read_dword_le();
+      demuxer->stream->read( (char *)s->dwReserved, 3*4);
       memset(s->dwReserved, 0, 3*4);
 
       print_avisuperindex_chunk(s);
@@ -307,10 +307,10 @@ while(1){
       // now the real index of indices
       for (i=0; i<s->nEntriesInUse; i++) {
 	  chunksize-=16;
-	  s->aIndex[i].qwOffset = stream_read_dword_le(demuxer->stream) & 0xffffffff;
-	  s->aIndex[i].qwOffset |= ((uint64_t)stream_read_dword_le(demuxer->stream) & 0xffffffff)<<32;
-	  s->aIndex[i].dwSize = stream_read_dword_le(demuxer->stream);
-	  s->aIndex[i].dwDuration = stream_read_dword_le(demuxer->stream);
+	  s->aIndex[i].qwOffset = demuxer->stream->read_dword_le() & 0xffffffff;
+	  s->aIndex[i].qwOffset |= ((uint64_t)demuxer->stream->read_dword_le() & 0xffffffff)<<32;
+	  s->aIndex[i].dwSize = demuxer->stream->read_dword_le();
+	  s->aIndex[i].dwDuration = demuxer->stream->read_dword_le();
 	  MSG_DBG2("ODML (%.4s): [%d] 0x%016llx 0x%04lx %ld\n",
 		  (s->dwChunkId), i,
 		  (uint64_t)s->aIndex[i].qwOffset, s->aIndex[i].dwSize, s->aIndex[i].dwDuration);
@@ -321,7 +321,7 @@ while(1){
       if(last_fccType==streamtypeVIDEO){
 	sh_video->bih=(BITMAPINFOHEADER*)mp_mallocz((chunksize<sizeof(BITMAPINFOHEADER))?sizeof(BITMAPINFOHEADER):chunksize);
 	MSG_V("found 'bih', %u bytes of %d\n",chunksize,sizeof(BITMAPINFOHEADER));
-	stream_read(demuxer->stream,(char*) sh_video->bih,chunksize);
+	demuxer->stream->read((char*) sh_video->bih,chunksize);
 	le2me_BITMAPINFOHEADER(sh_video->bih);  // swap to machine endian
 	// fixup MS-RLE header (seems to be broken for <256 color files)
 	if(sh_video->bih->biCompression<=1 && sh_video->bih->biSize==40)
@@ -374,7 +374,7 @@ while(1){
 	unsigned wf_size = chunksize<sizeof(WAVEFORMATEX)?sizeof(WAVEFORMATEX):chunksize;
 	sh_audio->wf=(WAVEFORMATEX*)mp_mallocz(wf_size);
 	MSG_V("found 'wf', %d bytes of %d\n",chunksize,sizeof(WAVEFORMATEX));
-	stream_read(demuxer->stream,(char*) sh_audio->wf,chunksize);
+	demuxer->stream->read((char*) sh_audio->wf,chunksize);
 	le2me_WAVEFORMATEX(sh_audio->wf);
 	if (sh_audio->wf->cbSize != 0 &&
 	    wf_size < sizeof(WAVEFORMATEX)+sh_audio->wf->cbSize) {
@@ -390,7 +390,7 @@ while(1){
     case mmioFOURCC('v', 'p', 'r', 'p'): {
 	VideoPropHeader* vprp = (VideoPropHeader*)mp_malloc(chunksize);
 	unsigned int i;
-	stream_read(demuxer->stream, (any_t*)vprp, chunksize);
+	demuxer->stream->read( (any_t*)vprp, chunksize);
 	le2me_VideoPropHeader(vprp);
 	chunksize -= sizeof(*vprp)-sizeof(vprp->FieldInfo);
 	chunksize /= sizeof(VIDEO_FIELD_DESC);
@@ -410,22 +410,22 @@ while(1){
     }
     case mmioFOURCC('d', 'm', 'l', 'h'): {
 	// dmlh 00 00 00 04 frms
-	unsigned int total_frames = stream_read_dword_le(demuxer->stream);
+	unsigned int total_frames = demuxer->stream->read_dword_le();
 	MSG_V("Found ODML header %lu frames %lu\n", chunksize, total_frames);
-	stream_skip(demuxer->stream, chunksize-4);
+	demuxer->stream->skip( chunksize-4);
 	chunksize = 0;
     }
     break;
     case ckidAVINEWINDEX:
-    if(demuxer->movi_end>stream_tell(demuxer->stream))
-	demuxer->movi_end=stream_tell(demuxer->stream); // fixup movi-end
+    if(demuxer->movi_end>demuxer->stream->tell())
+	demuxer->movi_end=demuxer->stream->tell(); // fixup movi-end
     if(index_mode && !priv->is_odml){
       int i;
       priv->idx_size=size2>>4;
       MSG_V("Reading INDEX block, %d chunks for %ld frames\n",
 	priv->idx_size,avih.dwTotalFrames);
       priv->idx=(AVIINDEXENTRY*)mp_malloc(priv->idx_size<<4);
-      stream_read(demuxer->stream,(char*)priv->idx,priv->idx_size<<4);
+      demuxer->stream->read((char*)priv->idx,priv->idx_size<<4);
       for (i = 0; i < priv->idx_size; i++) {	// swap index to machine endian
 	AVIINDEXENTRY *entry=(AVIINDEXENTRY*)priv->idx + i;
 	le2me_AVIINDEXENTRY(entry);
@@ -445,7 +445,7 @@ while(1){
 	unsigned riff_type;
 
 	MSG_V( "additional RIFF header...\n");
-	riff_type = stream_read_dword_le(demuxer->stream);
+	riff_type = demuxer->stream->read_dword_le();
 	if(riff_type != mmioFOURCC('A','V','I','X'))
 	    MSG_WARN("** warning: this is no AVIX header..\n");
 	else {
@@ -462,7 +462,7 @@ while(1){
 	break;
     }
     case ckidAVIPADDING:
-	stream_skip(demuxer->stream, chunksize);
+	demuxer->stream->skip( chunksize);
 	chunksize = 0;
 	break;
   }
@@ -473,7 +473,7 @@ while(1){
     else {
       char buf[256];
       int len=(size2<250)?size2:250;
-      stream_read(demuxer->stream,buf,len);
+      demuxer->stream->read(buf,len);
       chunksize-=len;
       buf[len]=0;
       MSG_V("%-10s: %s\n",hdr,buf);
@@ -482,14 +482,14 @@ while(1){
     }
   }
   MSG_DBG2("list_end=0x%X  pos=0x%X  chunksize=0x%X  next=0x%X\n",
-      (int)list_end, (int)stream_tell(demuxer->stream),
-      chunksize, (int)chunksize+stream_tell(demuxer->stream));
-  if(list_end>0 && chunksize+stream_tell(demuxer->stream)>list_end){
+      (int)list_end, (int)demuxer->stream->tell(),
+      chunksize, (int)chunksize+demuxer->stream->tell());
+  if(list_end>0 && chunksize+demuxer->stream->tell()>list_end){
       MSG_V("Broken chunk?  chunksize=%d  (id=%.4s)\n",chunksize,(char *) &id);
-      stream_seek(demuxer->stream,list_end);
+      demuxer->stream->seek(list_end);
       list_end=0;
   } else
-  if(chunksize>0) stream_skip(demuxer->stream,chunksize); else
+  if(chunksize>0) demuxer->stream->skip(chunksize); else
   if((int)chunksize<0) MSG_WARN("chunksize=%u  (id=%.4s)\n",chunksize,(char *) &id);
 
 }
@@ -517,12 +517,12 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
 
     // read the standard indices
     for (cx = &priv->suidx[0], i=0; i<priv->suidx_size; cx++, i++) {
-	stream_reset(demuxer->stream);
+	demuxer->stream->reset();
 	for (j=0; j<cx->nEntriesInUse; j++) {
 	    int ret1, ret2;
 	    memset(&cx->stdidx[j], 0, 32);
-	    ret1 = stream_seek(demuxer->stream, (off_t)cx->aIndex[j].qwOffset);
-	    ret2 = stream_read(demuxer->stream, (char *)&cx->stdidx[j], 32);
+	    ret1 = demuxer->stream->seek( (off_t)cx->aIndex[j].qwOffset);
+	    ret2 = demuxer->stream->read( (char *)&cx->stdidx[j], 32);
 	    if (ret2 != 32 || cx->stdidx[j].nEntriesInUse==0) {
 		// this is a broken file (probably incomplete) let the standard
 		// gen_index routine handle this
@@ -536,7 +536,7 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
 	    print_avistdindex_chunk(&cx->stdidx[j]);
 	    priv->idx_size += cx->stdidx[j].nEntriesInUse;
 	    cx->stdidx[j].aIndex = new avistdindex_entry[cx->stdidx[j].nEntriesInUse];
-	    stream_read(demuxer->stream, (char *)cx->stdidx[j].aIndex,
+	    demuxer->stream->read( (char *)cx->stdidx[j].aIndex,
 		    cx->stdidx[j].nEntriesInUse*sizeof(avistdindex_entry));
 	    for (k=0;k<cx->stdidx[j].nEntriesInUse; k++)
 		le2me_avistdindex_entry(&cx->stdidx[j].aIndex[k]);
@@ -581,7 +581,7 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
     {
 	uint32_t id;
 	uint32_t db = 0;
-	stream_reset (demuxer->stream);
+	demuxer->stream->reset();
 
 	// find out the video stream id. I have seen files with 01db.
 	for (idx = &((AVIINDEXENTRY *)priv->idx)[0], i=0; i<priv->idx_size; i++, idx++){
@@ -597,8 +597,8 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
 	    if (!(idx->dwFlags & AVIIF_KEYFRAME) && idx->ckid == db) break;
 	}
 	if (i<priv->idx_size && db) {
-	    stream_seek(demuxer->stream, avi_idx_offset(idx));
-	    id = stream_read_dword_le(demuxer->stream);
+	    demuxer->stream->seek( avi_idx_offset(idx));
+	    id = demuxer->stream->read_dword_le();
 	    if (id && id != db) // index fcc and real fcc differ? fix it.
 		for (idx = &((AVIINDEXENTRY *)priv->idx)[0], i=0; i<priv->idx_size; i++, idx++){
 		    if (!(idx->dwFlags & AVIIF_KEYFRAME) && idx->ckid == db)
@@ -666,8 +666,8 @@ if (index_file_load) {
 /* Generate indexes */
 if(index_mode>=2 || (priv->idx_size==0 && index_mode==1)){
   // build index for file:
-  stream_reset(demuxer->stream);
-  stream_seek(demuxer->stream,demuxer->movi_start);
+  demuxer->stream->reset();
+  demuxer->stream->seek(demuxer->movi_start);
 
   priv->idx_pos=0;
   priv->idx_size=0;
@@ -679,15 +679,15 @@ if(index_mode>=2 || (priv->idx_size==0 && index_mode==1)){
     off_t skip;
     AVIINDEXENTRY* idx;
     unsigned int c;
-    demuxer->filepos=stream_tell(demuxer->stream);
+    demuxer->filepos=demuxer->stream->tell();
     if(demuxer->filepos>=demuxer->movi_end && demuxer->movi_start<demuxer->movi_end) break;
-    id=stream_read_dword_le(demuxer->stream);
-    len=stream_read_dword_le(demuxer->stream);
+    id=demuxer->stream->read_dword_le();
+    len=demuxer->stream->read_dword_le();
     if(id==mmioFOURCC('L','I','S','T') || id==mmioFOURCC('R', 'I', 'F', 'F')){
-      id=stream_read_dword_le(demuxer->stream); // list or RIFF type
+      id=demuxer->stream->read_dword_le(); // list or RIFF type
       continue;
     }
-    if(stream_eof(demuxer->stream)) break;
+    if(demuxer->stream->eof()) break;
     if(!id || avi_stream_id(id)==100) goto skip_chunk; // bad ID (or padding?)
 
     if(priv->idx_pos>=priv->idx_size){
@@ -703,13 +703,13 @@ if(index_mode>=2 || (priv->idx_size==0 && index_mode==1)){
     idx->dwChunkOffset=(unsigned long)demuxer->filepos;
     idx->dwChunkLength=len;
 
-    c=stream_read_dword(demuxer->stream);
+    c=demuxer->stream->read_dword();
 
     // Fix keyframes for DivX files:
     if(idxfix_divx)
       if(avi_stream_id(id)==idxfix_videostream){
 	switch(idxfix_divx){
-	    case 3: c=stream_read_dword(demuxer->stream)<<5; //skip 32+5 bits for m$mpeg4v1
+	    case 3: c=demuxer->stream->read_dword()<<5; //skip 32+5 bits for m$mpeg4v1
 	    case 1: if(c&0x40000000) idx->dwFlags&=~AVIIF_KEYFRAME;break; // divx 3
 	    case 2: if(c==0x1B6) idx->dwFlags&=~AVIIF_KEYFRAME;break; // divx 4
 	}
@@ -732,7 +732,7 @@ if(index_mode>=2 || (priv->idx_size==0 && index_mode==1)){
     MSG_DBG2("%08X %08X %.4s %08X %X\n",(unsigned int)demuxer->filepos,id,(char *) &id,(int)c,(unsigned int) idx->dwFlags);
 skip_chunk:
     skip=(len+1)&(~1UL); // total bytes in this chunk
-    stream_seek(demuxer->stream,8+demuxer->filepos+skip);
+    demuxer->stream->seek(8+demuxer->filepos+skip);
   }
   priv->idx_size=priv->idx_pos;
   MSG_INFO("Indexed are generated for %ul chunks\n",priv->idx_size);
@@ -888,7 +888,7 @@ static int demux_avi_read_packet(Demuxer *demux,Demuxer_Stream *ds,unsigned int 
 
   }
 
-//  len=stream_read_dword_le(demux->stream);
+//  len=demux->stream->read_dword_le();
   skip=(len+1)&(~1); // total bytes in this chunk
 
   if(ds){
@@ -898,7 +898,7 @@ static int demux_avi_read_packet(Demuxer *demux,Demuxer_Stream *ds,unsigned int 
   }
   if(skip){
     MSG_DBG2("DEMUX_AVI: Skipping %d bytes from packet %04X\n",skip,id);
-    stream_skip(demux->stream,skip);
+    demux->stream->skip(skip);
   }
   return ds?1:0;
 }
@@ -922,7 +922,7 @@ do{
 
     idx=&((AVIINDEXENTRY *)priv->idx)[priv->idx_pos++];
 
-    //stream_seek(demux->stream,idx.dwChunkOffset);
+    //demux->stream->seek(idx.dwChunkOffset);
     //  pos-4,idx->dwChunkLength,idx->dwFlags);
     if(idx->dwFlags&AVIIF_LIST){
       // LIST
@@ -943,10 +943,10 @@ do{
       MSG_V("Warning! pos=0x%X  idx.pos=0x%X  diff=%d   \n",demux->filepos,pos,pos-demux->filepos);
     }
 #endif
-    stream_seek(demux->stream,pos);
-    demux->filepos=stream_tell(demux->stream);
-    id=stream_read_dword_le(demux->stream);
-    if(stream_eof(demux->stream)) return 0; // EOF!
+    demux->stream->seek(pos);
+    demux->filepos=demux->stream->tell();
+    id=demux->stream->read_dword_le();
+    if(demux->stream->eof()) return 0; // EOF!
 
     if(id!=idx->ckid){
       MSG_V("ChunkID mismatch! raw=%.4s idx=%.4s  \n",(char *)&id,(char *)&idx->ckid);
@@ -955,7 +955,7 @@ do{
       else
 	  if(!valid_fourcc(id)) continue; // drop chunk if both id and idx bad
     }
-    len=stream_read_dword_le(demux->stream);
+    len=demux->stream->read_dword_le();
 //    if((len&(~1))!=(idx->dwChunkLength&(~1))){
 //    if((len)!=(idx->dwChunkLength)){
     if((len!=idx->dwChunkLength)&&((len+1)!=idx->dwChunkLength)){
@@ -965,17 +965,17 @@ do{
     }
     if(!(idx->dwFlags&AVIIF_KEYFRAME)) flags=DP_NONKEYFRAME;
   } else {
-    demux->filepos=stream_tell(demux->stream);
+    demux->filepos=demux->stream->tell();
     if(demux->filepos>=demux->movi_end && demux->movi_end>demux->movi_start && (demux->flags & Demuxer::Seekable)){
-	stream_set_eof(demux->stream,1);
+	demux->stream->eof(1);
 	return 0;
     }
-    id=stream_read_dword_le(demux->stream);
-    len=stream_read_dword_le(demux->stream);
-    if(stream_eof(demux->stream)) return 0; // EOF!
+    id=demux->stream->read_dword_le();
+    len=demux->stream->read_dword_le();
+    if(demux->stream->eof()) return 0; // EOF!
 
     if(id==mmioFOURCC('L','I','S','T') || id==mmioFOURCC('R', 'I', 'F', 'F')){
-      id=stream_read_dword_le(demux->stream); // list or RIFF type
+      id=demux->stream->read_dword_le(); // list or RIFF type
       continue;
     }
   }
@@ -1018,7 +1018,7 @@ do{
   dp_flags_e flags=DP_KEYFRAME;
   AVIINDEXENTRY *idx=NULL;
   int idx_pos=0;
-  demux->filepos=stream_tell(demux->stream);
+  demux->filepos=demux->stream->tell();
 
   if(ds==demux->video) idx_pos=priv->idx_pos_v++; else
   if(ds==demux->audio) idx_pos=priv->idx_pos_a++; else
@@ -1048,11 +1048,11 @@ do{
       MSG_V("Warning! pos=0x%X  idx.pos=0x%X  diff=%d   \n",demux->filepos,pos,pos-demux->filepos);
     }
 #endif
-    stream_seek(demux->stream,pos);
+    demux->stream->seek(pos);
 
-    id=stream_read_dword_le(demux->stream);
+    id=demux->stream->read_dword_le();
 
-    if(stream_eof(demux->stream)) return 0;
+    if(demux->stream->eof()) return 0;
 
     if(id!=idx->ckid){
       MSG_V("ChunkID mismatch! raw=%.4s idx=%.4s  \n",(char *)&id,(char *)&idx->ckid);
@@ -1061,7 +1061,7 @@ do{
       else
 	  if(!valid_fourcc(id)) continue; // drop chunk if both id and idx bad
     }
-    len=stream_read_dword_le(demux->stream);
+    len=demux->stream->read_dword_le();
     if((len!=idx->dwChunkLength)&&((len+1)!=idx->dwChunkLength)){
       MSG_V("ChunkSize mismatch! raw=%d idx=%ld  \n",len,idx->dwChunkLength);
       if(len>0x200000 && idx->dwChunkLength>0x200000) continue; // both values bad :(
@@ -1089,28 +1089,28 @@ off_t *fpos=NULL;
   if(ds==demux->audio) fpos=&priv->idx_pos_a; else
   return 0;
 
-  stream_seek(demux->stream,fpos[0]);
+  demux->stream->seek(fpos[0]);
 
 do{
 
-  demux->filepos=stream_tell(demux->stream);
+  demux->filepos=demux->stream->tell();
   if(demux->filepos>=demux->movi_end && (demux->movi_end>demux->movi_start)){
 	  ds->eof=1;
 	  return 0;
   }
-  if(stream_eof(demux->stream)) return 0;
+  if(demux->stream->eof()) return 0;
 
-  id=stream_read_dword_le(demux->stream);
-  len=stream_read_dword_le(demux->stream);
+  id=demux->stream->read_dword_le();
+  len=demux->stream->read_dword_le();
 
   if(id==mmioFOURCC('L','I','S','T')){
-      id=stream_read_dword_le(demux->stream);      // list type
+      id=demux->stream->read_dword_le();      // list type
       continue;
   }
 
   if(id==mmioFOURCC('R','I','F','F')){
       MSG_V("additional RIFF header...\n");
-      id=stream_read_dword_le(demux->stream);      // "AVIX"
+      id=demux->stream->read_dword_le();      // "AVIX"
       continue;
   }
 
@@ -1120,11 +1120,11 @@ do{
   } else {
     // skip it!
     int skip=(len+1)&(~1); // total bytes in this chunk
-    stream_skip(demux->stream,skip);
+    demux->stream->skip(skip);
   }
 
 } while(ret!=1);
-  fpos[0]=stream_tell(demux->stream);
+  fpos[0]=demux->stream->tell();
   return 1;
 }
 
@@ -1152,8 +1152,8 @@ static Opaque* avi_open(Demuxer* demuxer){
       demuxer->video->id=-1; // autodetect
   }
 
-  stream_reset(demuxer->stream);
-  stream_seek(demuxer->stream,demuxer->movi_start);
+  demuxer->stream->reset();
+  demuxer->stream->seek(demuxer->movi_start);
   priv->idx_pos=0;
   priv->idx_pos_a=0;
   priv->idx_pos_v=0;
@@ -1473,9 +1473,9 @@ static MPXP_Rc avi_probe(Demuxer *demuxer)
 {
   uint32_t riff,id;
 
-  riff = stream_read_dword_le(demuxer->stream);
-  stream_read_dword_le(demuxer->stream); /*filesize */
-  id=stream_read_dword_le(demuxer->stream); /* "AVI " */
+  riff = demuxer->stream->read_dword_le();
+  demuxer->stream->read_dword_le(); /*filesize */
+  id=demuxer->stream->read_dword_le(); /* "AVI " */
   demuxer->file_format=Demuxer::Type_AVI;
   if(riff == mmioFOURCC('R','I','F','F') && id == formtypeAVI) return MPXP_Ok;
   if(riff == mmioFOURCC('O','N','2',' ') && id == formtypeON2) return MPXP_Ok;

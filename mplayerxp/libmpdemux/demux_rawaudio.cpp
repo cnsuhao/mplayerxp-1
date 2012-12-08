@@ -79,16 +79,16 @@ static Opaque* rawaudio_open(Demuxer* demuxer) {
 static int rawaudio_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   int l = sh_audio->wf->nAvgBytesPerSec;
-  off_t spos = stream_tell(demuxer->stream);
+  off_t spos = demuxer->stream->tell();
 
-  if(stream_eof(demuxer->stream)) return 0;
+  if(demuxer->stream->eof()) return 0;
 
   Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(l);
   dp->pts = spos / (float)(sh_audio->wf->nAvgBytesPerSec);
   dp->pos = spos;
   dp->flags=DP_NONKEYFRAME;
 
-  l=stream_read(demuxer->stream,dp->buffer(),l);
+  l=demuxer->stream->read(dp->buffer(),l);
   dp->resize(l);
   ds->add_packet(dp);
 
@@ -100,10 +100,10 @@ static void rawaudio_seek(Demuxer *demuxer,const seek_args_t* seeka){
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   off_t base,pos;
 
-  base = (seeka->flags & DEMUX_SEEK_SET) ? demuxer->movi_start : stream_tell(s);
+  base = (seeka->flags & DEMUX_SEEK_SET) ? demuxer->movi_start : s->tell();
   pos=base+(seeka->flags&DEMUX_SEEK_PERCENTS?demuxer->movi_end-demuxer->movi_start:sh_audio->i_bps)*seeka->secs;
   pos -= (pos % (sh_audio->nch * afmt2bps(sh_audio->afmt)));
-  stream_seek(s,pos);
+  s->seek(pos);
 }
 
 static void rawaudio_close(Demuxer* demuxer) { UNUSED(demuxer); }

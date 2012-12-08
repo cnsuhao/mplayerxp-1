@@ -79,11 +79,11 @@ static struct mpg_stat_s {
  int num_mp3audio_packets;
 }mpg_stat;
 
-static unsigned int read_mpeg_timestamp(Stream *s,int c){
+static unsigned int read_mpeg_timestamp(Stream* s,int c){
   int d,e;
   unsigned int pts;
-  d=stream_read_word(s);
-  e=stream_read_word(s);
+  d=s->read_word();
+  e=s->read_word();
   if( ((c&1)!=1) || ((d&1)!=1) || ((e&1)!=1) ){
     bad_pts:
     return MPGPES_BAD_PTS;
@@ -104,19 +104,19 @@ static int parse_psm(Demuxer *demux, int len) {
   if(! len)
     return 0;
 
-  c = stream_read_char(demux->stream);
+  c = demux->stream->read_char();
   if(! (c & 0x80)) {
-    stream_skip(demux->stream, len - 1);  //not yet valid, discard
+    demux->stream->skip( len - 1);  //not yet valid, discard
     return 0;
   }
-  stream_skip(demux->stream, 1);
-  prog_len = stream_read_word(demux->stream);		//length of program descriptors
-  stream_skip(demux->stream, prog_len);			//.. that we ignore
-  es_map_len = stream_read_word(demux->stream);		//length of elementary streams map
+  demux->stream->skip( 1);
+  prog_len = demux->stream->read_word();		//length of program descriptors
+  demux->stream->skip( prog_len);			//.. that we ignore
+  es_map_len = demux->stream->read_word();		//length of elementary streams map
   es_map_len = std::min(es_map_len, len - prog_len - 8);	//sanity check
   while(es_map_len > 0) {
-    type = stream_read_char(demux->stream);
-    id = stream_read_char(demux->stream);
+    type = demux->stream->read_char();
+    id = demux->stream->read_char();
     if(id >= 0xB0 && id <= 0xEF && priv) {
       int idoffset = id - 0xB0;
       switch(type) {
@@ -146,12 +146,12 @@ static int parse_psm(Demuxer *demux, int len) {
       }
       MSG_DBG2("PSM ES, id=0x%x, type=%x, stype: %x\n", id, type, priv->es_map[idoffset]);
     }
-    plen = stream_read_word(demux->stream);		//length of elementary stream descriptors
+    plen = demux->stream->read_word();		//length of elementary stream descriptors
     plen = std::min(plen, es_map_len);			//sanity check
-    stream_skip(demux->stream, plen);			//skip descriptors for now
+    demux->stream->skip( plen);			//skip descriptors for now
     es_map_len -= 4 + plen;
   }
-  stream_skip(demux->stream, 4);			//skip crc32
+  demux->stream->skip( 4);			//skip crc32
   return 1;
 }
 
@@ -208,7 +208,7 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
 //}
 
 //  if(id==0x1BA) return -1;
-  len=stream_read_word(demux->stream);
+  len=demux->stream->read_word();
   MSG_DBG3("PACKET len=%d\n",len);
   if(id<0x1BC || id>=0x1F0 || id==0x1BE || id==0x1BF || id==0x1BA)
   {
@@ -229,13 +229,13 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
   }
 
   while(len>0){   // Skip stuFFing bytes
-    c=stream_read_char(demux->stream);--len;
+    c=demux->stream->read_char();--len;
     if(c!=0xFF)break;
   }
   if((c>>6)==1){  // Read (skip) STD scale & size value
-    d=((c&0x1F)<<8)|stream_read_char(demux->stream);
+    d=((c&0x1F)<<8)|demux->stream->read_char();
     len-=2;
-    c=stream_read_char(demux->stream);
+    c=demux->stream->read_char();
   }
   // Read System-1 stream timestamps:
   if((c>>4)==2){
@@ -244,7 +244,7 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
   } else
   if((c>>4)==3){
     pts=read_mpeg_timestamp(demux->stream,c);
-    c=stream_read_char(demux->stream);
+    c=demux->stream->read_char();
     if((c>>4)!=1) pts=0;
     dts=read_mpeg_timestamp(demux->stream,c);
     len-=4+1+4;
@@ -255,29 +255,29 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
     // System-2 (.VOB) stream:
     if((c>>4)&3) MSG_WARN("Encrypted VOB found! That should never happens");
 
-    c=stream_read_char(demux->stream); pts_flags=c>>6;
-    c=stream_read_char(demux->stream); hdrlen=c;
+    c=demux->stream->read_char(); pts_flags=c>>6;
+    c=demux->stream->read_char(); hdrlen=c;
     len-=2;
     MSG_DBG3("  hdrlen=%d  (len=%d)",hdrlen,len);
     if(hdrlen>len){ MSG_V("demux_mpg: invalid header length  \n"); return -1;}
     if(pts_flags==2 && hdrlen>=5){
-      c=stream_read_char(demux->stream);
+      c=demux->stream->read_char();
       pts=read_mpeg_timestamp(demux->stream,c);
       len-=5;hdrlen-=5;
     } else
     if(pts_flags==3 && hdrlen>=10){
-      c=stream_read_char(demux->stream);
+      c=demux->stream->read_char();
       pts=read_mpeg_timestamp(demux->stream,c);
-      c=stream_read_char(demux->stream);
+      c=demux->stream->read_char();
       dts=read_mpeg_timestamp(demux->stream,c);
       len-=10;hdrlen-=10;
     }
     len-=hdrlen;
-    if(hdrlen>0) stream_skip(demux->stream,hdrlen); // skip header bytes
+    if(hdrlen>0) demux->stream->skip(hdrlen); // skip header bytes
 
     //============== DVD Audio sub-stream ======================
     if(id==0x1BD){
-      int aid=stream_read_char(demux->stream);--len;
+      int aid=demux->stream->read_char();--len;
       if(len<3) return -1; // invalid audio packet
 
       // AID:
@@ -310,9 +310,9 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
 	ds=demux->audio;
 	if(!ds->sh) ds->sh=demux->get_sh_audio(aid);
 	// READ Packet: Skip additional audio header data:
-	c=stream_read_char(demux->stream);//num of frames
-	type=stream_read_char(demux->stream);//startpos hi
-	type=(type<<8)|stream_read_char(demux->stream);//startpos lo
+	c=demux->stream->read_char();//num of frames
+	type=demux->stream->read_char();//startpos hi
+	type=(type<<8)|demux->stream->read_char();//startpos lo
 	len-=3;
 	if((aid&0xE0)==0xA0 && len>=3){
 	  unsigned char* hdr;
@@ -324,13 +324,13 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
 	  hdr=((sh_audio_t*)(ds->sh))->codecdata;
 	  // read LPCM header:
 	  // emphasis[1], mute[1], rvd[1], frame number[5]:
-	  hdr[0]=stream_read_char(demux->stream);
+	  hdr[0]=demux->stream->read_char();
 //          printf(" [%01X:%02d]",c>>5,c&31);
 	  // quantization[2],freq[2],rvd[1],channels[3]
-	  hdr[1]=stream_read_char(demux->stream);
+	  hdr[1]=demux->stream->read_char();
 //          printf("[%01X:%01X] ",c>>4,c&15);
 	  // dynamic range control (0x80=off):
-	  hdr[2]=stream_read_char(demux->stream);
+	  hdr[2]=demux->stream->read_char();
 //          printf("[%02X] ",c);
 	  len-=3;
 	  if(len<=0) MSG_V("End of packet while searching for PCM header\n");
@@ -402,14 +402,14 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
     {
 	Demuxer_Packet* dp=ds->asf_packet;
 	dp->resize(dp->length()+len);
-	stream_read(demux->stream,dp->buffer()+dp->length(),len);
+	demux->stream->read(dp->buffer()+dp->length(),len);
     }
     else
     {
 	sh_video_t *sh;
 	if(ds->asf_packet) ds->add_packet(ds->asf_packet);
 	Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
-	len=stream_read(demux->stream,dp->buffer(),len);
+	len=demux->stream->read(dp->buffer(),len);
 	dp->resize(len);
 	dp->pts=pts/90000.0f;
 	if(ds==demux->video)	sh=(sh_video_t *)ds->sh;
@@ -428,14 +428,14 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
     return 1;
   }
   MSG_DBG2("DEMUX_MPG: Skipping %d data bytes from packet %04X\n",len,id);
-  if(len<=2356) stream_skip(demux->stream,len);
+  if(len<=2356) demux->stream->skip(len);
   return 0;
 }
 
 static int mpges_demux(Demuxer *demux,Demuxer_Stream *__ds){
   /* Elementary video stream */
-  if(stream_eof(demux->stream)) return 0;
-  demux->filepos=stream_tell(demux->stream);
+  if(demux->stream->eof()) return 0;
+  demux->filepos=demux->stream->tell();
   demux->video->read_packet(demux->stream,STREAM_BUFFER_SIZE,0,demux->filepos,DP_NONKEYFRAME);
   return 1;
 }
@@ -450,13 +450,13 @@ static int mpgps_demux(Demuxer *demux,Demuxer_Stream *__ds){
 
 // System stream
 do{
-  demux->filepos=stream_tell(demux->stream);
-  head=stream_read_dword(demux->stream);
+  demux->filepos=demux->stream->tell();
+  head=demux->stream->read_dword();
   if((head&0xFFFFFF00)!=0x100){
    // sync...
    demux->filepos-=skipped;
    while(1){
-    int c=stream_read_char(demux->stream);
+    int c=demux->stream->read_char();
     if(c<0) break; //EOF
     head<<=8;
     if(head!=0x100){
@@ -470,7 +470,7 @@ do{
    }
    demux->filepos+=skipped;
   }
-  if(stream_eof(demux->stream)) break;
+  if(demux->stream->eof()) break;
   // sure: head=0x000001XX
   MSG_DBG2("*** head=0x%X\n",head);
   if(demux->synced==0){
@@ -489,7 +489,7 @@ do{
       ret=demux_mpg_read_packet(demux,head);
       if(!ret)
 	if(--max_packs==0){
-	  stream_set_eof(demux->stream,1);
+	  demux->stream->eof(1);
 	  MSG_ERR(MSGTR_DoesntContainSelectedStream);
 	  return 0;
 	}
@@ -524,19 +524,19 @@ do{
     if( ( (mpg_stat.num_elementary_packets100>50 && mpg_stat.num_elementary_packets101>50) ||
 	  (mpg_stat.num_elementary_packetsPES>50) ) && skipped>4000000){
 	MSG_V("sync_mpeg_ps: seems to be ES/PES stream...\n");
-	stream_set_eof(demux->stream,1);
+	demux->stream->eof(1);
 	break;
     }
     if(mpg_stat.num_mp3audio_packets>100 && mpg_stat.num_elementary_packets100<10){
 	MSG_V("sync_mpeg_ps: seems to be MP3 stream...\n");
-	stream_set_eof(demux->stream,1);
+	demux->stream->eof(1);
 	break;
     }
 #endif
   }
 } while(ret!=1);
   MSG_DBG2("demux: %d bad bytes skipped\n",skipped);
-  if(stream_eof(demux->stream)){
+  if(demux->stream->eof()){
     MSG_V("MPEG Stream reached EOF\n");
     return 0;
   }
@@ -570,7 +570,7 @@ static void mpgps_seek(Demuxer *demuxer,const seek_args_t* seeka){
 #else
 	newpos&=~(STREAM_BUFFER_SIZE-1);  /* sector boundary */
 #endif
-	stream_seek(demuxer->stream,newpos);
+	demuxer->stream->seek(newpos);
 
 	// re-sync video:
 	videobuf_code_len=0; // reset ES stream buffer
@@ -647,21 +647,21 @@ static MPXP_Rc mpgps_probe(Demuxer*demuxer)
     mpg_d = new(zeromem) mpg_demuxer_t;
     demuxer->priv = mpg_d;
 
-    code = stream_read_dword_le(demuxer->stream);
+    code = demuxer->stream->read_dword_le();
     if(code == mmioFOURCC('R','I','F','F')) {
-	stream_read_dword_le(demuxer->stream); /*filesize */
-	id=stream_read_dword_le(demuxer->stream); /* "CDXA" */
+	demuxer->stream->read_dword_le(); /*filesize */
+	id=demuxer->stream->read_dword_le(); /* "CDXA" */
 	if(id == mmioFOURCC('C','D','X','A')) {
 	    MSG_V("RIFF CDXA has been found\n");
-	    id=stream_read_dword_le(demuxer->stream); /* "fmt " */
+	    id=demuxer->stream->read_dword_le(); /* "fmt " */
 	    if(id == mmioFOURCC('f','m','t',' ')) {
-		tmp=stream_read_dword_le(demuxer->stream); /* "head len" */
-		stream_skip(demuxer->stream,tmp);
-		id=stream_read_dword_le(demuxer->stream); /* "data" */
+		tmp=demuxer->stream->read_dword_le(); /* "head len" */
+		demuxer->stream->skip(tmp);
+		id=demuxer->stream->read_dword_le(); /* "data" */
 		if(id == mmioFOURCC('d','a','t','a')) {
-		    stream_read_dword(demuxer->stream); /* size of data */
-		    code=stream_read_dword_le(demuxer->stream);
-		    while((bswap_32(code) & 0xffffff00) != 0x100) code=stream_read_dword_le(demuxer->stream);
+		    demuxer->stream->read_dword(); /* size of data */
+		    code=demuxer->stream->read_dword_le();
+		    while((bswap_32(code) & 0xffffff00) != 0x100) code=demuxer->stream->read_dword_le();
 		}
 		else { delete mpg_d; return MPXP_False; }
 	    }
@@ -673,18 +673,18 @@ static MPXP_Rc mpgps_probe(Demuxer*demuxer)
     code = bswap_32(code);
     /* test stream only if stream is started from 0000001XX */
     if ((code & 0xffffff00) == 0x100) {
-	stream_seek(demuxer->stream,demuxer->stream->start_pos());
+	demuxer->stream->seek(demuxer->stream->start_pos());
 	memset(&mpg_stat,0,sizeof(struct mpg_stat_s));
 
 	while(pes>=0){
 	    /* try to pre-detect PES:*/
-	    tmppos=stream_tell(demuxer->stream);
-	    tmp=stream_read_dword(demuxer->stream);
+	    tmppos=demuxer->stream->tell();
+	    tmp=demuxer->stream->read_dword();
 	    if(tmp==0x1E0 || tmp==0x1C0){
-		tmp=stream_read_word(demuxer->stream);
+		tmp=demuxer->stream->read_word();
 		if(tmp>1 && tmp<=2048) pes=0; /* demuxer->synced=3; // PES...*/
 	    }
-	    stream_seek(demuxer->stream,tmppos);
+	    demuxer->stream->seek(tmppos);
 
 	    if(!pes) demuxer->synced=3; /* hack! */
 
@@ -763,7 +763,7 @@ static MPXP_Rc mpgps_probe(Demuxer*demuxer)
 		if(!demuxer->get_sh_video()) demuxer->new_sh_video();
 		if(demuxer->video->id==-1) demuxer->video->id=0;
 		demuxer->video->sh=demuxer->get_sh_video();
-		stream_seek(demuxer->stream,demuxer->stream->start_pos());
+		demuxer->stream->seek(demuxer->stream->start_pos());
 		return mpges_demux(demuxer,demuxer->video)?MPXP_Ok:MPXP_False;
 	} else {
 	    /*

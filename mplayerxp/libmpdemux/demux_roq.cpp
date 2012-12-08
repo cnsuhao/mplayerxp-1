@@ -59,11 +59,11 @@ struct roq_data_t : public Opaque {
 //  84 10 FF FF FF FF xx xx
 static MPXP_Rc roq_probe(Demuxer *demuxer)
 {
-    stream_reset(demuxer->stream);
-    stream_seek(demuxer->stream, demuxer->stream->start_pos());
+    demuxer->stream->reset();
+    demuxer->stream->seek( demuxer->stream->start_pos());
 
-    if ((stream_read_dword(demuxer->stream) == 0x8410FFFF) &&
-	((stream_read_dword(demuxer->stream) & 0xFFFF0000) == 0xFFFF0000)) {
+    if ((demuxer->stream->read_dword() == 0x8410FFFF) &&
+	((demuxer->stream->read_dword() & 0xFFFF0000) == 0xFFFF0000)) {
 	demuxer->file_format=Demuxer::Type_ROQ;
 	return MPXP_Ok;
     } else return MPXP_False;
@@ -84,7 +84,7 @@ static int roq_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
   roq_chunk = roq_data->chunks[roq_data->current_chunk];
 
   // make sure we're at the right place in the stream and fetch the chunk
-  stream_seek(demuxer->stream, roq_chunk.chunk_offset);
+  demuxer->stream->seek( roq_chunk.chunk_offset);
 
   if (roq_chunk.chunk_type == CHUNK_TYPE_AUDIO)
     demuxer->audio->read_packet(demuxer->stream, roq_chunk.chunk_size,
@@ -118,13 +118,13 @@ static Opaque* roq_open(Demuxer* demuxer)
   roq_data->chunks = NULL;
 
   // position the stream and start traversing
-  stream_seek(demuxer->stream, demuxer->stream->start_pos()+6);
-  fps = stream_read_word_le(demuxer->stream);
-  while (!stream_eof(demuxer->stream))
+  demuxer->stream->seek( demuxer->stream->start_pos()+6);
+  fps = demuxer->stream->read_word_le();
+  while (!demuxer->stream->eof())
   {
-    chunk_id = stream_read_word_le(demuxer->stream);
-    chunk_size = stream_read_dword_le(demuxer->stream);
-    chunk_arg = stream_read_word_le(demuxer->stream);
+    chunk_id = demuxer->stream->read_word_le();
+    chunk_size = demuxer->stream->read_dword_le();
+    chunk_arg = demuxer->stream->read_word_le();
 
     // this is the only useful header info in the file
     if (chunk_id == RoQ_INFO)
@@ -133,7 +133,7 @@ static Opaque* roq_open(Demuxer* demuxer)
       if (sh_video)
       {
 	MSG_WARN( "Found more than one RoQ_INFO chunk\n");
-	stream_skip(demuxer->stream, 8);
+	demuxer->stream->skip( 8);
       }
       else
       {
@@ -145,9 +145,9 @@ static Opaque* roq_open(Demuxer* demuxer)
 	// parent video demuxer stream
 	sh_video->ds = demuxer->video;
 
-	sh_video->src_w = stream_read_word_le(demuxer->stream);
-	sh_video->src_h = stream_read_word_le(demuxer->stream);
-	stream_skip(demuxer->stream, 4);
+	sh_video->src_w = demuxer->stream->read_word_le();
+	sh_video->src_h = demuxer->stream->read_word_le();
+	demuxer->stream->skip( 4);
 
 	// custom fourcc for internal MPlayer use
 	sh_video->fourcc = mmioFOURCC('R', 'o', 'Q', 'V');
@@ -189,7 +189,7 @@ static Opaque* roq_open(Demuxer* demuxer)
 	(roq_data->total_chunks + 1) * sizeof (roq_chunk_t));
       roq_data->chunks[roq_data->total_chunks].chunk_type = CHUNK_TYPE_AUDIO;
       roq_data->chunks[roq_data->total_chunks].chunk_offset =
-	stream_tell(demuxer->stream) - 8;
+	demuxer->stream->tell() - 8;
       roq_data->chunks[roq_data->total_chunks].chunk_size = chunk_size + 8;
       roq_data->chunks[roq_data->total_chunks].running_audio_sample_count =
 	roq_data->total_audio_sample_count;
@@ -200,7 +200,7 @@ static Opaque* roq_open(Demuxer* demuxer)
       roq_data->total_audio_sample_count +=
 	(chunk_size / sh_audio->wf->nChannels);
 
-      stream_skip(demuxer->stream, chunk_size);
+      demuxer->stream->skip( chunk_size);
       roq_data->total_chunks++;
     }
     else if ((chunk_id == RoQ_QUAD_CODEBOOK) ||
@@ -212,12 +212,12 @@ static Opaque* roq_open(Demuxer* demuxer)
 	(roq_data->total_chunks + 1) * sizeof (roq_chunk_t));
       roq_data->chunks[roq_data->total_chunks].chunk_type = CHUNK_TYPE_VIDEO;
       roq_data->chunks[roq_data->total_chunks].chunk_offset =
-	stream_tell(demuxer->stream) - 8;
+	demuxer->stream->tell() - 8;
       roq_data->chunks[roq_data->total_chunks].chunk_size = chunk_size + 8;
       roq_data->chunks[roq_data->total_chunks].video_chunk_number =
 	roq_data->total_video_chunks++;
 
-      stream_skip(demuxer->stream, chunk_size);
+      demuxer->stream->skip( chunk_size);
       roq_data->total_chunks++;
     }
     else if ((chunk_id == RoQ_QUAD_VQ) && (last_chunk_id == RoQ_QUAD_CODEBOOK))
@@ -225,9 +225,9 @@ static Opaque* roq_open(Demuxer* demuxer)
       // if it's a quad VQ chunk following a codebook chunk, extend the last
       // chunk
       roq_data->chunks[roq_data->total_chunks - 1].chunk_size += (chunk_size + 8);
-      stream_skip(demuxer->stream, chunk_size);
+      demuxer->stream->skip( chunk_size);
     }
-    else if (!stream_eof(demuxer->stream))
+    else if (!demuxer->stream->eof())
     {
 	MSG_WARN( "Unknown RoQ chunk ID: %04X\n", chunk_id);
     }
@@ -243,7 +243,7 @@ static Opaque* roq_open(Demuxer* demuxer)
     sh_audio->wf->nBlockAlign = largest_audio_chunk * 2;
 
     roq_data->current_chunk = 0;
-    stream_reset(demuxer->stream);
+    demuxer->stream->reset();
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return roq_data;
 }

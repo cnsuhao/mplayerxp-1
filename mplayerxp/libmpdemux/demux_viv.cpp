@@ -147,7 +147,7 @@ static void vivo_parse_text_header(Demuxer *demux, int header_len)
     buf = new char [header_len];
     opt = new char [header_len];
     param = new char [header_len];
-    stream_read(demux->stream, buf, header_len);
+    demux->stream->read( buf, header_len);
     i=0;
     while(i<header_len && buf[i]==0x0D && buf[i+1]==0x0A) i+=2; // skip empty lines
 
@@ -158,7 +158,7 @@ static void vivo_parse_text_header(Demuxer *demux, int header_len)
 	if (sscanf(token, "%[^:]:%[^\n]", opt, param) != 2)
 	{
 	    MSG_V( "viv_text_header_parser: bad line: '%s' at ~%p\n",
-		token, stream_tell(demux->stream));
+		token, demux->stream->tell());
 	    break;
 	}
 	MSG_DBG3( "token: '%s' (%d bytes/%d bytes left)\n",
@@ -279,14 +279,14 @@ static MPXP_Rc vivo_probe(Demuxer* demuxer){
     int c;
     char buf[2048+256];
     vivo_priv_t* priv;
-    int orig_pos = stream_tell(demuxer->stream);
+    int orig_pos = demuxer->stream->tell();
 
     MSG_V("Checking for VIVO\n");
 
-    c=stream_read_char(demuxer->stream);
+    c=demuxer->stream->read_char();
     if(c==-256) return MPXP_False;
     len=0;
-    while((c=stream_read_char(demuxer->stream))>=0x80){
+    while((c=demuxer->stream->read_char())>=0x80){
 	len+=0x80*(c-0x80);
 	if(len>1024) return MPXP_False;
     }
@@ -303,7 +303,7 @@ static MPXP_Rc vivo_probe(Demuxer* demuxer){
 	return MPXP_False;
 #else
     /* this is enought for check (for now) */
-    stream_read(demuxer->stream,buf,len);
+    demuxer->stream->read(buf,len);
     buf[len]=0;
 
     // parse header:
@@ -313,10 +313,10 @@ static MPXP_Rc vivo_probe(Demuxer* demuxer){
 #endif
 
 #if 0
-    c=stream_read_char(demuxer->stream);
+    c=demuxer->stream->read_char();
     if(c) return MPXP_False;
     len2=0;
-    while((c=stream_read_char(demuxer->stream))>=0x80){
+    while((c=demuxer->stream->read_char())>=0x80){
 	len2+=0x80*(c-0x80);
 	if(len+len2>2048) return MPXP_False;
     }
@@ -325,8 +325,8 @@ static MPXP_Rc vivo_probe(Demuxer* demuxer){
     stream_skip(demuxer->stream,len2);
 //    stream_read(demuxer->stream,buf+len,len2);
 #endif
-//    c=stream_read_char(demuxer->stream);
-    stream_seek(demuxer->stream, orig_pos);
+//    c=demuxer->stream->read_char();
+    demuxer->stream->seek( orig_pos);
     demuxer->file_format=Demuxer::Type_VIVO;
     return MPXP_Ok;
 }
@@ -343,9 +343,9 @@ static int vivo_demux(Demuxer *demux,Demuxer_Stream *__ds){
   int len=0;
   int seq;
   int prefix=0;
-  demux->filepos=stream_tell(demux->stream);
+  demux->filepos=demux->stream->tell();
 
-  c=stream_read_char(demux->stream);
+  c=demux->stream->read_char();
   if (c == -256) /* EOF */
     return 0;
   if (c == 0x82)
@@ -353,41 +353,41 @@ static int vivo_demux(Demuxer *demux,Demuxer_Stream *__ds){
       /* ok, this works, but pts calculating from header is required! */
 #warning "Calculate PTS from picture header!"
       prefix = 1;
-      c = stream_read_char(demux->stream);
+      c = demux->stream->read_char();
       MSG_DBG2("packet 0x82(pos=%llu) chunk=%x\n",
-	stream_tell(demux->stream), c);
+	demux->stream->tell(), c);
   }
   switch(c&0xF0){
   case 0x00: // header - skip it!
   {
-      len=stream_read_char(demux->stream);
-      if(len>=0x80) len=0x80*(len-0x80)+stream_read_char(demux->stream);
+      len=demux->stream->read_char();
+      if(len>=0x80) len=0x80*(len-0x80)+demux->stream->read_char();
       MSG_DBG2("vivo extra header: %d bytes\n",len);
 #ifdef TEXTPARSE_ALL
 {
       int pos;
       /* also try to parse all headers */
-      pos = stream_tell(demux->stream);
+      pos = demux->stream->tell();
       vivo_parse_text_header(demux, len);
-      stream_seek(demux->stream, pos);
+      demux->stream->seek( pos);
 }
 #endif
       break;
   }
   case 0x10:  // video packet
       if (prefix == 1)
-	len = stream_read_char(demux->stream);
+	len = demux->stream->read_char();
       else
 	len=128;
       ds=demux->video;
       break;
   case 0x20:  // video packet
-      len=stream_read_char(demux->stream);
+      len=demux->stream->read_char();
       ds=demux->video;
       break;
   case 0x30:  // audio packet
       if (prefix == 1)
-	len = stream_read_char(demux->stream);
+	len = demux->stream->read_char();
       else
 	len=40;	/* 40kbps */
       ds=demux->audio;
@@ -395,7 +395,7 @@ static int vivo_demux(Demuxer *demux,Demuxer_Stream *__ds){
       break;
   case 0x40:  // audio packet
       if (prefix == 1)
-	len = stream_read_char(demux->stream);
+	len = demux->stream->read_char();
       else
 	len=24;	/* 24kbps */
       ds=demux->audio;
@@ -403,12 +403,12 @@ static int vivo_demux(Demuxer *demux,Demuxer_Stream *__ds){
       break;
   default:
       MSG_WARN("VIVO - unknown ID found: %02X at pos %lu contact author!\n",
-	c, stream_tell(demux->stream));
+	c, demux->stream->tell());
       return 0;
   }
 
   if(!ds || ds->id<-1){
-      if(len) stream_skip(demux->stream,len);
+      if(len) demux->stream->skip(len);
       return 1;
   }
 
@@ -424,7 +424,7 @@ static int vivo_demux(Demuxer *demux,Demuxer_Stream *__ds){
 	Demuxer_Packet* dp=ds->asf_packet;
 	dp->resize(dp->length()+len);
 	//memcpy(dp->buffer+dp->len,data,len);
-	stream_read(demux->stream,dp->buffer()+dp->length(),len);
+	demux->stream->read(dp->buffer()+dp->length(),len);
 	MSG_DBG3("data appended! %d+%d\n",dp->length(),len);
 	// we are ready now.
 	if((c&0xF0)==0x20) --ds->asf_seq; // hack!
@@ -434,7 +434,7 @@ static int vivo_demux(Demuxer *demux,Demuxer_Stream *__ds){
     // create new packet:
       Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
       //memcpy(dp->buffer,data,len);
-      len=stream_read(demux->stream,dp->buffer(),len);
+      len=demux->stream->read(dp->buffer(),len);
       dp->resize(len);
       dp->pts=audio_rate?((float)audio_pos/(float)audio_rate):0;
       dp->flags=DP_NONKEYFRAME;

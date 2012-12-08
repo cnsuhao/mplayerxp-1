@@ -44,7 +44,7 @@ static MPXP_Rc vqf_probe(Demuxer* demuxer)
     char buf[12];
     Stream *s;
     s = demuxer->stream;
-    stream_read(s,buf,12);
+    s->read(buf,12);
     if(memcmp(buf,"TWIN",4)==0) return MPXP_Ok; /*version: 97012000*/
     return MPXP_False;
 }
@@ -68,20 +68,20 @@ static Opaque* vqf_open(Demuxer* demuxer) {
   sh_audio->afmt = bps2afmt(2);
   w->wBitsPerSample = 8*afmt2bps(sh_audio->afmt);
   w->cbSize = 0;
-  stream_reset(s);
-  stream_seek(s,0);
-  stream_read(s,hi->ID,12); /* fourcc+version_id */
+  s->reset();
+  s->seek(0);
+  s->read(hi->ID,12); /* fourcc+version_id */
   while(1)
   {
     char chunk_id[4];
     unsigned chunk_size;
-    hi->size=chunk_size=stream_read_dword(s); /* include itself */
-    stream_read(s,chunk_id,4);
+    hi->size=chunk_size=s->read_dword(); /* include itself */
+    s->read(chunk_id,4);
     if(*((uint32_t *)&chunk_id[0])==mmioFOURCC('C','O','M','M'))
     {
 	char buf[chunk_size-8];
 	unsigned i,subchunk_size;
-	if(stream_read(s,buf,chunk_size-8)!=chunk_size-8) return NULL;
+	if(s->read(buf,chunk_size-8)!=chunk_size-8) return NULL;
 	i=0;
 	subchunk_size=be2me_32(*((uint32_t *)&buf[0]));
 	hi->channelMode=be2me_32(*((uint32_t *)&buf[4]));
@@ -167,7 +167,7 @@ static Opaque* vqf_open(Demuxer* demuxer) {
     else
     if(*((uint32_t *)&chunk_id[0])==mmioFOURCC('D','A','T','A'))
     {
-	demuxer->movi_start=stream_tell(s);
+	demuxer->movi_start=s->tell();
 	demuxer->movi_end=demuxer->movi_start+chunk_size-8;
 	MSG_V("Found data at %llX size %llu\n",demuxer->movi_start,demuxer->movi_end);
 	/* Done! play it */
@@ -176,14 +176,14 @@ static Opaque* vqf_open(Demuxer* demuxer) {
     else
     {
 	MSG_V("Unhandled chunk '%c%c%c%c' %lu bytes\n",((char *)&chunk_id)[0],((char *)&chunk_id)[1],((char *)&chunk_id)[2],((char *)&chunk_id)[3],chunk_size);
-	stream_skip(s,chunk_size-8); /*unknown chunk type */
+	s->skip(chunk_size-8); /*unknown chunk type */
     }
   }
 
   demuxer->movi_length = (demuxer->movi_end-demuxer->movi_start)/w->nAvgBytesPerSec;
   demuxer->audio->sh = sh_audio;
   sh_audio->ds = demuxer->audio;
-  stream_seek(s,demuxer->movi_start);
+  s->seek(demuxer->movi_start);
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return demuxer;
 }
@@ -191,10 +191,10 @@ static Opaque* vqf_open(Demuxer* demuxer) {
 static int vqf_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   int l = sh_audio->wf->nAvgBytesPerSec;
-  off_t spos = stream_tell(demuxer->stream);
+  off_t spos = demuxer->stream->tell();
   Demuxer_Packet*  dp;
 
-  if(stream_eof(demuxer->stream))
+  if(demuxer->stream->eof())
     return 0;
 
   dp = new(zeromem) Demuxer_Packet(l);
@@ -202,7 +202,7 @@ static int vqf_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
   dp->pos = spos;
   dp->flags = DP_NONKEYFRAME;
 
-  l=stream_read(demuxer->stream,dp->buffer(),l);
+  l=demuxer->stream->read(dp->buffer(),l);
   dp->resize(l);
   ds->add_packet(dp);
 
@@ -214,10 +214,10 @@ static void vqf_seek(Demuxer *demuxer,const seek_args_t* seeka){
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   off_t base,pos;
 
-  base = (seeka->flags&DEMUX_SEEK_SET) ? demuxer->movi_start : stream_tell(s);
+  base = (seeka->flags&DEMUX_SEEK_SET) ? demuxer->movi_start : s->tell();
   pos=base+(seeka->flags&DEMUX_SEEK_PERCENTS?demuxer->movi_end-demuxer->movi_start:sh_audio->i_bps)*seeka->secs;
   pos -= (pos % (sh_audio->nch * afmt2bps(sh_audio->afmt)));
-  stream_seek(s,pos);
+  s->seek(pos);
 }
 
 static void vqf_close(Demuxer* demuxer) { UNUSED(demuxer); }

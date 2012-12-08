@@ -64,20 +64,20 @@ static int nsv_demux ( Demuxer *demuxer,Demuxer_Stream* __ds )
 
     // if the audio/video chunk has no new header the first 2 bytes will be discarded 0xBEEF
     // or rather 0xEF 0xBE
-    stream_read(demuxer->stream,hdr,7);
-    if(stream_eof(demuxer->stream)) return 0;
+    demuxer->stream->read(hdr,7);
+    if(demuxer->stream->eof()) return 0;
     // sometimes instead of 0xBEEF as described for the next audio/video chunk we get
     // a whole new header
 
-    MSG_DBG2("demux_nsv: %08X %08X\n",hdr[0]<<8|hdr[1],stream_tell(demuxer->stream));
+    MSG_DBG2("demux_nsv: %08X %08X\n",hdr[0]<<8|hdr[1],demuxer->stream->tell());
     switch(hdr[0]<<8|hdr[1]) {
 	case 0x4E53:
 	    if(hdr[2]==0x56 && hdr[3]==0x73){
 		// NSVs
 		// get the header since there is no more metaheader after the first one
 		// there is no more need to skip that
-		stream_read(demuxer->stream,hdr+7,17-7);
-		stream_read(demuxer->stream,hdr,7);
+		demuxer->stream->read(hdr+7,17-7);
+		demuxer->stream->read(hdr,7);
 	    }
 	    break;
 
@@ -95,7 +95,7 @@ static int nsv_demux ( Demuxer *demuxer,Demuxer_Stream* __ds )
     else
 	priv->v_pts = priv->video_pack_no;
 
-    demuxer->filepos=stream_tell(demuxer->stream);
+    demuxer->filepos=demuxer->stream->tell();
 
 
     MSG_DBG2("demux_nsv: %08X: %02X %02X | %02X %02X %02X | %02X %02X  \n",
@@ -105,11 +105,11 @@ static int nsv_demux ( Demuxer *demuxer,Demuxer_Stream* __ds )
     videolen=(hdr[2]>>4)|(hdr[3]<<4)|(hdr[4]<<0xC);
     //check if we got extra data like subtitles here
     if( (hdr[2]&0x0f) != 0x0 ) {
-	stream_read( demuxer->stream, aux, 6);
+	demuxer->stream->read( aux, 6);
 
 	i_aux = aux[0]|aux[1]<<8;
 	// We skip this extra data
-	stream_skip( demuxer->stream, i_aux );
+	demuxer->stream->skip( i_aux );
 	i_aux+=6;
 	videolen -= i_aux;
     }
@@ -124,7 +124,7 @@ static int nsv_demux ( Demuxer *demuxer,Demuxer_Stream* __ds )
 	    demuxer->video->read_packet(demuxer->stream,videolen,priv->v_pts,demuxer->filepos,DP_NONKEYFRAME);
     }
     else
-	stream_skip(demuxer->stream,videolen);
+	demuxer->stream->skip(videolen);
 
     // read audio:
     audiolen=(hdr[5])|(hdr[6]<<8);
@@ -134,7 +134,7 @@ static int nsv_demux ( Demuxer *demuxer,Demuxer_Stream* __ds )
 	demuxer->audio->read_packet(demuxer->stream,audiolen,priv->v_pts,demuxer->filepos+videolen,DP_NONKEYFRAME);
     }
     else
-	stream_skip(demuxer->stream,audiolen);
+	demuxer->stream->skip(audiolen);
 
     ++priv->video_pack_no;
 
@@ -158,8 +158,8 @@ static Opaque* nsv_open( Demuxer* demuxer )
       /* disable seeking yet to be fixed*/
     demuxer->flags &= ~(Demuxer::Seekable);
 
-    stream_read(demuxer->stream,hdr,4);
-    if(stream_eof(demuxer->stream)) return 0;
+    demuxer->stream->read(hdr,4);
+    if(demuxer->stream->eof()) return 0;
 
     /*** if we detected the file to be nsv and there was neither eof nor a header
     **** that means that its most likely a shoutcast stream so we will need to seek
@@ -167,29 +167,29 @@ static Opaque* nsv_open( Demuxer* demuxer )
     if(!(hdr[0]==0x4E && hdr[1]==0x53 && hdr[2]==0x56)){
 	// todo: replace this with a decent string search algo
 	while(1){
-	    stream_read(demuxer->stream,hdr,1);
-	    if(stream_eof(demuxer->stream))
+	    demuxer->stream->read(hdr,1);
+	    if(demuxer->stream->eof())
 		return 0;
 	    if(hdr[0]!=0x4E)
 		continue;
 
-	    stream_read(demuxer->stream,hdr+1,1);
+	    demuxer->stream->read(hdr+1,1);
 
-	    if(stream_eof(demuxer->stream))
+	    if(demuxer->stream->eof())
 		return 0;
 	    if(hdr[1]!=0x53)
 		continue;
 
-	    stream_read(demuxer->stream,hdr+2,1);
+	    demuxer->stream->read(hdr+2,1);
 
-	    if(stream_eof(demuxer->stream))
+	    if(demuxer->stream->eof())
 		return 0;
 	    if(hdr[2]!=0x56)
 		continue;
 
-	    stream_read(demuxer->stream,hdr+3,1);
+	    demuxer->stream->read(hdr+3,1);
 
-	    if(stream_eof(demuxer->stream))
+	    if(demuxer->stream->eof())
 		return 0;
 	    if(hdr[3]!=0x73)
 		continue;
@@ -201,17 +201,17 @@ static Opaque* nsv_open( Demuxer* demuxer )
 	// NSV header!
 	if(hdr[3]==0x73){
 	    // NSVs
-	    stream_read(demuxer->stream,hdr+4,17-4);
+	    demuxer->stream->read(hdr+4,17-4);
 	}
 
 	if(hdr[3]==0x66){
 	    // NSVf
-	    int len=stream_read_dword_le(demuxer->stream);
+	    int len=demuxer->stream->read_dword_le();
 	    // TODO: parse out metadata!!!!
-	    stream_skip(demuxer->stream,len-8);
+	    demuxer->stream->skip(len-8);
 
 	    // NSVs
-	    stream_read(demuxer->stream,hdr,17);
+	    demuxer->stream->read(hdr,17);
 	}
 
 	// dummy debug message
@@ -266,7 +266,7 @@ static Opaque* nsv_open( Demuxer* demuxer )
 	    if((priv->v_format==mmioFOURCC('V','P','6','1')) ||
 	       (priv->v_format==mmioFOURCC('V','P','6','2')) ||
 	       (priv->v_format==mmioFOURCC('V','P','3','1'))) {
-		stream_read(demuxer->stream,buf,10);
+		demuxer->stream->read(buf,10);
 		if (((((priv->v_format>>16) & 0xff) == '6') && ((buf[8]&0x0e)!=0x06)) ||
 		    ((((priv->v_format>>16) & 0xff) == '3') && (buf[8]!=0x00 || buf[9]!=0x08))) {
 		    MSG_V("demux_nsv: searching %.4s keyframe...\n", (char*)&priv->v_format);
@@ -275,20 +275,20 @@ static Opaque* nsv_open( Demuxer* demuxer )
 			MSG_DBG2("demux_nsv: %.4s block skip.\n", (char*)&priv->v_format);
 			videolen=(buf[2]>>4)|(buf[3]<<4)|(buf[4]<<0xC);
 			audiolen=(buf[5])|(buf[6]<<8);
-			stream_skip(demuxer->stream, videolen+audiolen-3);
-			stream_read(demuxer->stream,buf,10);
-			if(stream_eof(demuxer->stream)) return 0;
+			demuxer->stream->skip( videolen+audiolen-3);
+			demuxer->stream->read(buf,10);
+			if(demuxer->stream->eof()) return 0;
 			if(buf[0]==0x4E){
 			    MSG_DBG2("demux_nsv: Got NSVs block.\n");
-			    stream_skip(demuxer->stream,7);
-			    stream_read(demuxer->stream,buf,10);
+			    demuxer->stream->skip(7);
+			    demuxer->stream->read(buf,10);
 			}
 		    }
 		}
 
 		// data starts 10 bytes before current pos but later
 		// we seek 17 backwards
-		stream_skip(demuxer->stream,7);
+		demuxer->stream->skip(7);
 	    }
 
 	switch(priv->fps){
@@ -314,7 +314,7 @@ static Opaque* nsv_open( Demuxer* demuxer )
     }
 
     // seek to start of NSV header
-    stream_seek(demuxer->stream,stream_tell(demuxer->stream)-17);
+    demuxer->stream->seek(demuxer->stream->tell()-17);
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return priv;
 }
@@ -324,17 +324,17 @@ static MPXP_Rc nsv_probe ( Demuxer* demuxer )
     unsigned int id;
 
     /* Store original position */
-//  off_t orig_pos = stream_tell(demuxer->stream);
+//  off_t orig_pos = demuxer->stream->tell();
 
     MSG_V("Checking for Nullsoft Streaming Video\n" );
 
     //---- check NSVx header:
-    id=stream_read_dword_le(demuxer->stream);
+    id=demuxer->stream->read_dword_le();
     if(id!=mmioFOURCC('N','S','V','f') && id!=mmioFOURCC('N','S','V','s'))
 	return MPXP_False; // not an NSV file
 
-    stream_reset(demuxer->stream); // clear EOF
-    stream_seek(demuxer->stream,demuxer->stream->start_pos());
+    demuxer->stream->reset(); // clear EOF
+    demuxer->stream->seek(demuxer->stream->start_pos());
 
     return MPXP_Ok;
 }

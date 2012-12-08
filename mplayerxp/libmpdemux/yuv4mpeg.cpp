@@ -65,12 +65,12 @@ int y4m_allow_unknown_tags(int yn) {
  *************************************************************************/
 
 
-ssize_t y4m_read(Stream *s, char *buf, size_t len)
+ssize_t y4m_read(Stream& s, char *buf, size_t len)
 {
    ssize_t n;
 
    while (len > 0) {
-     n = stream_read(s, buf, len);
+     n = s.read(buf, len);
      if (n <= 0) {
        /* return amount left to read */
        if (n == 0)
@@ -458,7 +458,7 @@ static int y4m_parse_frame_tags(char *s, y4m_frame_info_t *i)
  *************************************************************************/
 
 
-int y4m_read_stream_header(Stream *s, y4m_stream_info_t *i)
+int y4m_read_stream_header(Stream& s, y4m_stream_info_t *i)
 {
    char line[Y4M_LINE_MAX];
    char *p;
@@ -523,7 +523,7 @@ int y4m_write_stream_header(int fd, y4m_stream_info_t *i)
  *
  *************************************************************************/
 
-int y4m_read_frame_header(Stream *s, y4m_frame_info_t *i)
+int y4m_read_frame_header(Stream& s, y4m_frame_info_t *i)
 {
   char line[Y4M_LINE_MAX];
   char *p;
@@ -592,7 +592,7 @@ int y4m_write_frame_header(int fd, y4m_frame_info_t *i)
  *
  *************************************************************************/
 
-int y4m_read_frame(Stream *s, y4m_stream_info_t *si,
+int y4m_read_frame(Stream& s, y4m_stream_info_t *si,
 		   y4m_frame_info_t *fi, unsigned char *yuv[3])
 {
   int err;

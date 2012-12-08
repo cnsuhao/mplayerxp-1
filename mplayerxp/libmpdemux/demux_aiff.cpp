@@ -45,7 +45,7 @@ static MPXP_Rc aiff_probe(Demuxer* demuxer)
   char buf[12];
   Stream *s;
   s = demuxer->stream;
-  stream_read(s,buf,12);
+  s->read(buf,12);
   if(*((uint32_t *)&buf[0])==mmioFOURCC('F','O','R','M') && *((uint32_t *)&buf[8])==mmioFOURCC('A','I','F','F')) return MPXP_Ok;
   if(*((uint32_t *)&buf[0])==mmioFOURCC('F','O','R','M') && *((uint32_t *)&buf[8])==mmioFOURCC('A','I','F','C')) return MPXP_Ok;
   return MPXP_False;
@@ -70,16 +70,16 @@ static Opaque* aiff_open(Demuxer* demuxer) {
   sh_audio->afmt = bps2afmt(2);
   w->wBitsPerSample = 8*afmt2bps(sh_audio->afmt);
   w->cbSize = 0;
-  stream_reset(s);
-  stream_seek(s,8);
-  if(stream_read(s,preamble,4)!=4) return NULL;
+  s->reset();
+  s->seek(8);
+  if(s->read(preamble,4)!=4) return NULL;
   if(*((uint32_t *)&preamble[0])==mmioFOURCC('A','I','F','C')) priv->verc=1;
   demuxer->movi_start=0;
   while(1)
   {
     unsigned frames=0;
     int chunk_size;
-    if(stream_read(s,preamble,8)!=8) break;
+    if(s->read(preamble,8)!=8) break;
     chunk_size=be2me_32(*((uint32_t *)&preamble[4]));
     MSG_V("Got preamble: %c%c%c%c\n",preamble[0],preamble[1],preamble[2],preamble[3]);
     if(*((uint32_t *)&preamble[0])==mmioFOURCC('F','V','E','R'))
@@ -89,7 +89,7 @@ static Opaque* aiff_open(Demuxer* demuxer) {
 	    MSG_V("Wrong length of VFER chunk %lu\n",be2me_32(*((uint32_t *)&preamble[4])));
 	    return NULL;
 	}
-	if(stream_read(s,preamble,4)!=4) return NULL;
+	if(s->read(preamble,4)!=4) return NULL;
 	if(be2me_32(*((uint32_t *)&preamble[0])) == 0xA2805140)	priv->verc=1;
 	else
 	{
@@ -107,7 +107,7 @@ static Opaque* aiff_open(Demuxer* demuxer) {
 	    MSG_V("Invalid COMM length %u\n",chunk_size);
 	    return NULL;
 	}
-	if(stream_read(s,buf,chunk_size)!=chunk_size) return NULL;
+	if(s->read(buf,chunk_size)!=chunk_size) return NULL;
 	w->nChannels = sh_audio->nch = be2me_16(*((uint16_t *)&buf[0]));
 	frames=be2me_32(*((uint32_t *)&buf[2]));
 	w->wBitsPerSample = be2me_16(*((uint16_t *)&buf[6]));
@@ -128,51 +128,51 @@ static Opaque* aiff_open(Demuxer* demuxer) {
     if(*((uint32_t *)&preamble[0])==mmioFOURCC('S','S','N','D') ||
        *((uint32_t *)&preamble[0])==mmioFOURCC('A','P','C','M'))
     {
-	demuxer->movi_start=stream_tell(s)+8;
+	demuxer->movi_start=s->tell()+8;
 	demuxer->movi_end=demuxer->movi_start+chunk_size;
 	if(priv->verc && (chunk_size&1)) chunk_size++;
-	stream_skip(s,chunk_size);
+	s->skip(chunk_size);
     }
     else
     if(*((uint32_t *)&preamble[0])==mmioFOURCC('N','A','M','E'))
     {
 	char buf[chunk_size+1];
-	stream_read(s,buf,chunk_size);
+	s->read(buf,chunk_size);
 	buf[chunk_size]=0;
 	demuxer->info().add(INFOT_NAME, buf);
-	if(priv->verc && (chunk_size&1)) stream_read_char(s);
+	if(priv->verc && (chunk_size&1)) s->read_char();
     }
     else
     if(*((uint32_t *)&preamble[0])==mmioFOURCC('A','U','T','H'))
     {
 	char buf[chunk_size+1];
-	stream_read(s,buf,chunk_size);
+	s->read(buf,chunk_size);
 	buf[chunk_size]=0;
 	demuxer->info().add(INFOT_AUTHOR, buf);
-	if(priv->verc && (chunk_size&1)) stream_read_char(s);
+	if(priv->verc && (chunk_size&1)) s->read_char();
     }
     else
     if(*((uint32_t *)&preamble[0])==mmioFOURCC('(','c',')',' '))
     {
 	char buf[chunk_size+1];
-	stream_read(s,buf,chunk_size);
+	s->read(buf,chunk_size);
 	buf[chunk_size]=0;
 	demuxer->info().add(INFOT_COPYRIGHT, buf);
-	if(priv->verc && (chunk_size&1)) stream_read_char(s);
+	if(priv->verc && (chunk_size&1)) s->read_char();
     }
     else
     if(*((uint32_t *)&preamble[0])==mmioFOURCC('A','N','N','O'))
     {
 	char buf[chunk_size+1];
-	stream_read(s,buf,chunk_size);
+	s->read(buf,chunk_size);
 	buf[chunk_size]=0;
 	demuxer->info().add(INFOT_DESCRIPTION, buf);
-	if(priv->verc && (chunk_size&1)) stream_read_char(s);
+	if(priv->verc && (chunk_size&1)) s->read_char();
     }
     else
     {
 	if(priv->verc && (chunk_size&1)) chunk_size++;
-	stream_skip(s,chunk_size); /*unknown chunk type */
+	s->skip(chunk_size); /*unknown chunk type */
     }
   }
   if(!w->nAvgBytesPerSec) { MSG_V("COMM chunk not found\n"); return NULL; /* memleak here!!! */}
@@ -180,16 +180,16 @@ static Opaque* aiff_open(Demuxer* demuxer) {
   demuxer->movi_length = (demuxer->movi_end-demuxer->movi_start)/w->nAvgBytesPerSec;
   demuxer->audio->sh = sh_audio;
   sh_audio->ds = demuxer->audio;
-  stream_seek(s,demuxer->movi_start);
+  s->seek(demuxer->movi_start);
   return priv;
 }
 
 static int aiff_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   int l = sh_audio->wf->nAvgBytesPerSec;
-  off_t spos = stream_tell(demuxer->stream);
+  off_t spos = demuxer->stream->tell();
 
-  if(stream_eof(demuxer->stream))
+  if(demuxer->stream->eof())
     return 0;
 
   Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(l);
@@ -197,7 +197,7 @@ static int aiff_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
   dp->pos = spos;
   dp->flags = DP_NONKEYFRAME;
 
-  l=stream_read(demuxer->stream,dp->buffer(),l);
+  l=demuxer->stream->read(dp->buffer(),l);
   dp->resize(l);
   ds->add_packet(dp);
 
@@ -209,10 +209,10 @@ static void aiff_seek(Demuxer *demuxer,const seek_args_t* seeka){
   sh_audio_t* sh_audio = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
   off_t base,pos;
 
-  base = (seeka->flags&DEMUX_SEEK_SET) ? demuxer->movi_start : stream_tell(s);
+  base = (seeka->flags&DEMUX_SEEK_SET) ? demuxer->movi_start : s->tell();
   pos=base+(seeka->flags&DEMUX_SEEK_PERCENTS?(demuxer->movi_end - demuxer->movi_start):sh_audio->i_bps)*seeka->secs;
   pos -= (pos % (sh_audio->nch * afmt2bps(sh_audio->afmt)));
-  stream_seek(s,pos);
+  s->seek(pos);
 }
 
 static void aiff_close(Demuxer* demuxer)

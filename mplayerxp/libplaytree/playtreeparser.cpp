@@ -48,7 +48,7 @@ static char* __FASTCALL__ play_tree_parser_get_line(play_tree_parser_t* p) {
     p->iter = p->buffer;
   }
 
-  if(stream_eof(p->stream) && (p->buffer_end == 0 || p->iter[0] == '\0'))
+  if(p->stream->eof() && (p->buffer_end == 0 || p->iter[0] == '\0'))
     return NULL;
 
   while(1) {
@@ -61,8 +61,8 @@ static char* __FASTCALL__ play_tree_parser_get_line(play_tree_parser_t* p) {
       resize = 0;
     }
 
-    if(p->buffer_size - p->buffer_end > 1 && !stream_eof(p->stream)) {
-      r = stream_read(p->stream,p->buffer + p->buffer_end,p->buffer_size - p->buffer_end - 1);
+    if(p->buffer_size - p->buffer_end > 1 && !p->stream->eof()) {
+      r = p->stream->read(p->buffer + p->buffer_end,p->buffer_size - p->buffer_end - 1);
       if(r > 0) {
 	p->buffer_end += r;
 	p->buffer[p->buffer_end] = '\0';
@@ -71,7 +71,7 @@ static char* __FASTCALL__ play_tree_parser_get_line(play_tree_parser_t* p) {
 
     end = strchr(p->iter,'\n');
     if(!end) {
-      if(stream_eof(p->stream)) {
+      if(p->stream->eof()) {
 	end = p->buffer + p->buffer_end;
 	break;
       }
@@ -367,7 +367,7 @@ play_tree_t* parse_playlist_file(libinput_t*libinput,const char* file) {
   MSG_V("Parsing playlist file %s...\n",file);
   ff=0;
   stream = new(zeromem) Stream;
-  stream->open(libinput,file,&ff,NULL);
+  stream->open(libinput,file,&ff);
   stream->type(Stream::Type_Text);
   ret = parse_playtree(libinput,stream);
   delete stream;

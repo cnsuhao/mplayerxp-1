@@ -33,34 +33,35 @@ namespace mpxp {
 #define CPF_EMPTY	0x00000001UL
 #define CPF_EOF		0x80000000UL
 #define CPF_DONE	0x40000000UL /* special case for dvd packets to exclude them from sending again */
-typedef struct cache_packet_s
+struct cache_packet_t
 {
     off_t filepos;  /* some nav-packets have length so we need to know real pos of data packet */
     unsigned state; /* consists from of CPF_* */
     stream_packet_t sp;
     pthread_mutex_t cp_mutex;
-}cache_packet_t;
+};
 
-typedef struct cache_vars_s {
-  unsigned first;	/* index of the first packet */
-  unsigned last;	/* index of the last packet */
-  unsigned buffer_size; /* size of the allocated buffer memory (for statistic only) */
-  unsigned sector_size; /* size of a single sector (2048/2324) */
-  unsigned npackets;	/* number of packets in cache */
-  int back_size;	/* for backward seek */
-  int prefill;		/* min prefill bytes if cache is empty. TODO: remove */
-  int eof;
-  /* reader's pointers: */
-  off_t read_filepos;
-  Stream* stream; /* parent stream */
-  /* thread related stuff */
-  int in_fill;
-  pthread_mutex_t mutex;
-  mpxp_thread_t*  pth;
-  /* for optimization: */
-  cache_packet_t *packets;
-  char * mem;
-} cache_vars_t;
+struct cache_vars_t {
+    public:
+	unsigned	first;	/* index of the first packet */
+	unsigned	last;	/* index of the last packet */
+	unsigned	buffer_size; /* size of the allocated buffer memory (for statistic only) */
+	unsigned	sector_size; /* size of a single sector (2048/2324) */
+	unsigned	npackets;	/* number of packets in cache */
+	int		back_size;	/* for backward seek */
+	int		prefill;		/* min prefill bytes if cache is empty. TODO: remove */
+	int		eof;
+	/* reader's pointers: */
+	off_t read_filepos;
+	Cached_Stream* stream; /* parent stream */
+	/* thread related stuff */
+	int in_fill;
+	pthread_mutex_t mutex;
+	mpxp_thread_t*  pth;
+	/* for optimization: */
+	cache_packet_t *packets;
+	char* mem;
+};
 
 #if 0
 #define MSG_CH MSG_V
@@ -267,63 +268,6 @@ static any_t*cache2_routine(any_t*arg)
     return arg;
 }
 
-int stream_enable_cache(Stream *stream,libinput_t* libinput,int size,int _min,int prefill){
-  int ss=stream->sector_size()>1?stream->sector_size():STREAM_BUFFER_SIZE;
-  cache_vars_t* c;
-
-  if (!(stream->type()&Stream::Type_Seekable)) {
-    // The stream has no 'fd' behind it, so is non-cacheable
-    MSG_WARN("\rThis stream is non-cacheable\n");
-    return 1;
-  }
-
-  if(size<32*1024) size=32*1024; // 32kb min
-  c=c2_cache_init(size,ss);
-  stream->cache_data=c;
-  if(!c) return 0;
-  c->stream=stream;
-  c->prefill=size*prefill;
-  c->read_filepos=stream->start_pos();
-
-  unsigned rc;
-  if((rc=xmp_register_thread(NULL,sig_cache2,cache2_routine,"cache2"))==UINT_MAX) return 0;
-  c->pth=mpxp_context().engine().xp_core->mpxp_threads[rc];
-  // wait until cache is filled at least prefill_init %
-  MSG_V("CACHE_PRE_INIT: %lld [%lld] %lld  pre:%d  eof:%d SS=%u \n",
-	START_FILEPOS(c),c->read_filepos,END_FILEPOS(c),_min,c->eof,ss);
-  while((c->read_filepos<START_FILEPOS(c) || END_FILEPOS(c)-c->read_filepos<_min)
-	&& !c->eof && CP_NEXT(c,c->last)!=c->first){
-	if(!(stream->type()&Stream::Type_Seekable))
-	MSG_STATUS("\rCache fill: %5.2f%% (%d bytes)    ",
-	    100.0*(float)(END_FILEPOS(c)-c->read_filepos)/(float)(c->buffer_size),
-	    END_FILEPOS(c)-c->read_filepos);
-	else
-	MSG_V("\rCache fill: %5.2f%% (%d bytes)    ",
-	    100.0*(float)(END_FILEPOS(c)-c->read_filepos)/(float)(c->buffer_size),
-	    END_FILEPOS(c)-c->read_filepos);
-	if(c->eof) break; // file is smaller than prefill size
-	if(mpdemux_check_interrupt(libinput,PREFILL_SLEEP_TIME))
-	  return 0;
-    }
-    MSG_STATUS("cache info: size=%u min=%u prefill=%u\n",size,_min,prefill);
-    return 1; // parent exits
-}
-
-void stream_disable_cache(Stream *st)
-{
-  cache_vars_t* c;
-  c=st->cache_data;
-  if(c) {
-    if(c->pth && c->pth->state==Pth_Run) {
-	c->pth->state=Pth_Canceling;
-	while(c->pth->state==Pth_Canceling && !was_killed) usleep(0);
-    }
-    delete c->packets;
-    delete c->mem;
-    delete c;
-  }
-}
-
 static int __FASTCALL__ c2_stream_fill_buffer(cache_vars_t* c)
 {
   MSG_DBG2( "c2_stream_fill_buffer\n");
@@ -387,13 +331,6 @@ static unsigned __FASTCALL__ c2_find_packet(cache_vars_t* c,off_t pos)
 	    !c->packets[retval].sp.type) ||
 	    (c->packets[retval].state&CPF_EOF))
 			break; /* packet is locked */
-	if(c->packets[retval].sp.type &&
-	   !(c->packets[retval].state&CPF_DONE) &&
-	   c->stream->event_handler)
-	{
-	   c->stream->event_handler(c->stream,&c->packets[retval].sp);
-	   c->packets[retval].state|=CPF_DONE;
-	}
 	CACHE2_PACKET_UNLOCK(retval);
 	CACHE2_LOCK(c);
 	retval=CP_NEXT(c,retval);
@@ -464,11 +401,6 @@ static unsigned c2_next_packet(cache_vars_t* c,unsigned cidx,int *len,unsigned *
 	    break;
 	}
 	if(!c->packets[cidx].sp.type) break; /* packet is locked */
-	if(!(c->packets[cidx].state&CPF_DONE) && c->stream->event_handler)
-	{
-	    c->stream->event_handler(c->stream,&c->packets[cidx].sp);
-	    c->packets[cidx].state|=CPF_DONE;
-	}
 	CACHE2_PACKET_UNLOCK(cidx);
     }
     c2_get_continious_mem(c,cidx,len,npackets);
@@ -567,105 +499,171 @@ static void __FASTCALL__ c2_stream_set_eof(cache_vars_t*c,int eof)
 /*
     main interface here!
 */
-int __FASTCALL__ stream_read(Stream *s,any_t* _mem,int total)
+Cached_Stream::Cached_Stream(Stream::type_e t)
+	    :Buffered_Stream(t)
+{
+}
+Cached_Stream::~Cached_Stream() {}
+
+int Cached_Stream::enable_cache(libinput_t* libinput,int size,int _min,int prefill){
+    int ss=sector_size()>1?sector_size():STREAM_BUFFER_SIZE;
+    cache_vars_t* c;
+
+    if (!(type()&Stream::Type_Seekable)) {
+	// The stream has no 'fd' behind it, so is non-cacheable
+	MSG_WARN("\rThis stream is non-cacheable\n");
+	return 1;
+    }
+
+    if(size<32*1024) size=32*1024; // 32kb min
+    c=c2_cache_init(size,ss);
+    cache_data=c;
+    if(!c) return 0;
+    c->stream=this;
+    c->prefill=size*prefill;
+    c->read_filepos=start_pos();
+
+    unsigned rc;
+    if((rc=xmp_register_thread(NULL,sig_cache2,cache2_routine,"cache2"))==UINT_MAX) return 0;
+    c->pth=mpxp_context().engine().xp_core->mpxp_threads[rc];
+    // wait until cache is filled at least prefill_init %
+    MSG_V("CACHE_PRE_INIT: %lld [%lld] %lld  pre:%d  eof:%d SS=%u \n",
+	START_FILEPOS(c),c->read_filepos,END_FILEPOS(c),_min,c->eof,ss);
+    while((c->read_filepos<START_FILEPOS(c) || END_FILEPOS(c)-c->read_filepos<_min)
+	&& !c->eof && CP_NEXT(c,c->last)!=c->first){
+	if(!(type()&Stream::Type_Seekable))
+	MSG_STATUS("\rCache fill: %5.2f%% (%d bytes)    ",
+	    100.0*(float)(END_FILEPOS(c)-c->read_filepos)/(float)(c->buffer_size),
+	    END_FILEPOS(c)-c->read_filepos);
+	else
+	MSG_V("\rCache fill: %5.2f%% (%d bytes)    ",
+	    100.0*(float)(END_FILEPOS(c)-c->read_filepos)/(float)(c->buffer_size),
+	    END_FILEPOS(c)-c->read_filepos);
+	if(c->eof) break; // file is smaller than prefill size
+	if(mpdemux_check_interrupt(libinput,PREFILL_SLEEP_TIME))
+	  return 0;
+    }
+    MSG_STATUS("cache info: size=%u min=%u prefill=%u\n",size,_min,prefill);
+    return 1; // parent exits
+}
+
+void Cached_Stream::disable_cache()
+{
+    cache_vars_t* c;
+    c=cache_data;
+    if(c) {
+	if(c->pth && c->pth->state==Pth_Run) {
+	    c->pth->state=Pth_Canceling;
+	    while(c->pth->state==Pth_Canceling && !was_killed) usleep(0);
+	}
+	delete c->packets;
+	delete c->mem;
+	delete c;
+    }
+}
+
+int Cached_Stream::read(stream_packet_t* sp) {
+    if(cache_data)	return c2_stream_read(cache_data,sp->buf,sp->len);
+    else		return Buffered_Stream::read(sp);
+}
+
+int Cached_Stream::read(any_t* _mem,int total)
 {
     char *mem = reinterpret_cast<char*>(_mem);
-    if(s->cache_data)	return c2_stream_read(s->cache_data,mem,total);
-    else		return nc_stream_read(s,mem,total);
+    if(cache_data)	return c2_stream_read(cache_data,mem,total);
+    else		return Buffered_Stream::read(mem,total);
 }
 
-int __FASTCALL__ stream_eof(Stream *s)
+int Cached_Stream::eof() const
 {
-    if(s->cache_data) return c2_stream_eof(s->cache_data);
-    else return s->eof();
+    if(cache_data)	return c2_stream_eof(cache_data);
+    else		return Buffered_Stream::eof();
 }
 
-void __FASTCALL__ stream_set_eof(Stream *s,int eof)
+void Cached_Stream::eof(int _e)
 {
-    if(!eof) stream_reset(s);
-    else
-    {
-	if(s->cache_data)	c2_stream_set_eof(s->cache_data,eof);
-	else			s->eof(eof);
+    if(!_e) reset();
+    else {
+	if(cache_data)	c2_stream_set_eof(cache_data,_e);
+	else		Buffered_Stream::eof(_e);
     }
 }
 
-int __FASTCALL__ stream_read_char(Stream *s)
+int Cached_Stream::read_char()
 {
-    if(s->cache_data)
-    {
+    if(cache_data) {
 	char retval;
-	c2_stream_read(s->cache_data,&retval,1);
-	return stream_eof(s)?-256:retval;
+	c2_stream_read(cache_data,&retval,1);
+	return eof()?-256:retval;
     }
-    else return nc_stream_read_char(s);
+    else return Buffered_Stream::read_char();
 }
 
-off_t __FASTCALL__ stream_tell(Stream *s)
+off_t Cached_Stream::tell() const
 {
-    if(s->cache_data)	return c2_stream_tell(s->cache_data);
-    else		return nc_stream_tell(s);
+    if(cache_data)	return c2_stream_tell(cache_data);
+    else		return Buffered_Stream::tell();
 }
 
-int __FASTCALL__ stream_seek(Stream *s,off_t pos)
+off_t Cached_Stream::seek(off_t _p)
 {
-    if(s->cache_data)	return c2_stream_seek(s->cache_data,pos);
-    else		return nc_stream_seek(s,pos);
+    if(cache_data)	return c2_stream_seek(cache_data,_p);
+    else		return Buffered_Stream::seek(_p);
 }
 
-int __FASTCALL__ stream_skip(Stream *s,off_t len)
+int Cached_Stream::skip(off_t len)
 {
-    if(s->cache_data)	return c2_stream_skip(s->cache_data,len);
-    else		return nc_stream_skip(s,len);
+    if(cache_data)	return c2_stream_skip(cache_data,len);
+    else		return Buffered_Stream::skip(len);
 }
 
-void __FASTCALL__ stream_reset(Stream *s)
+void Cached_Stream::reset()
 {
-    if(s->cache_data)	c2_stream_reset(s->cache_data);
-    else		s->reset();
+    if(cache_data)	c2_stream_reset(cache_data);
+    else		Buffered_Stream::reset();
 }
 
-unsigned int __FASTCALL__ stream_read_word(Stream *s){
+unsigned int Cached_Stream::read_word(){
   unsigned short retval;
-  stream_read(s,(char *)&retval,2);
+  read((char *)&retval,2);
   return me2be_16(retval);
 }
 
-unsigned int __FASTCALL__ stream_read_dword(Stream *s){
+unsigned int Cached_Stream::read_dword(){
   unsigned int retval;
-  stream_read(s,(char *)&retval,4);
+  read((char *)&retval,4);
   return me2be_32(retval);
 }
 
-uint64_t __FASTCALL__ stream_read_qword(Stream *s){
+uint64_t Cached_Stream::read_qword(){
   uint64_t retval;
-  stream_read(s,(char *)&retval,8);
+  read((char *)&retval,8);
   return me2be_64(retval);
 }
 
-unsigned int __FASTCALL__ stream_read_word_le(Stream *s){
+unsigned int Cached_Stream::read_word_le(){
   unsigned short retval;
-  stream_read(s,(char *)&retval,2);
+  read((char *)&retval,2);
   return me2le_16(retval);
 }
 
-unsigned int __FASTCALL__ stream_read_dword_le(Stream *s){
+unsigned int Cached_Stream::read_dword_le(){
   unsigned int retval;
-  stream_read(s,(char *)&retval,4);
+  read((char *)&retval,4);
   return me2le_32(retval);
 }
 
-uint64_t __FASTCALL__ stream_read_qword_le(Stream *s){
+uint64_t Cached_Stream::read_qword_le(){
   uint64_t retval;
-  stream_read(s,(char *)&retval,8);
+  read((char *)&retval,8);
   return me2le_64(retval);
 }
 
-unsigned int __FASTCALL__ stream_read_int24(Stream *s){
+unsigned int Cached_Stream::read_int24(){
   unsigned int y;
-  y = stream_read_char(s);
-  y=(y<<8)|stream_read_char(s);
-  y=(y<<8)|stream_read_char(s);
+  y = read_char();
+  y=(y<<8)|read_char();
+  y=(y<<8)|read_char();
   return y;
 }
 } // namespace mpxp

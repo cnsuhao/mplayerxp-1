@@ -124,12 +124,12 @@ static void __FASTCALL__ mpeg_free(mpeg_t *mpeg)
 
 static int __FASTCALL__ mpeg_eof(mpeg_t *mpeg)
 {
-    return stream_eof(mpeg->stream);
+    return mpeg->stream->eof();
 }
 
 static off_t __FASTCALL__ mpeg_tell(mpeg_t *mpeg)
 {
-    return stream_tell(mpeg->stream);
+    return mpeg->stream->tell();
 }
 
 static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
@@ -142,10 +142,10 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 
     mpeg->aid = -1;
     mpeg->packet_size = 0;
-    if (stream_read(mpeg->stream, buf, 4) != 4)
+    if (mpeg->stream->read( buf, 4) != 4)
 	return -1;
     while (memcmp(buf, wanted, sizeof(wanted)) != 0) {
-	c = stream_read_char(mpeg->stream);
+	c = mpeg->stream->read_char();
 	if (c < 0)
 	    return -1;
 	memmove(buf, buf + 1, 3);
@@ -155,7 +155,7 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
     case 0xb9:			/* System End Code */
 	break;
     case 0xba:			/* Packet start code */
-	c = stream_read_char(mpeg->stream);
+	c = mpeg->stream->read_char();
 	if (c < 0)
 	    return -1;
 	if ((c & 0xc0) == 0x40)
@@ -167,28 +167,28 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 	    return -1;
 	}
 	if (version == 4) {
-	    if (!stream_skip(mpeg->stream, 9))
+	    if (!mpeg->stream->skip( 9))
 		return -1;
 	}
 	else if (version == 2) {
-	    if (!stream_skip(mpeg->stream, 7))
+	    if (!mpeg->stream->skip( 7))
 		return -1;
 	}
 	else
 	    abort();
 	break;
     case 0xbd:			/* packet */
-	if (stream_read(mpeg->stream, buf, 2) != 2)
+	if (mpeg->stream->read( buf, 2) != 2)
 	    return -1;
 	len = buf[0] << 8 | buf[1];
 	idx = mpeg_tell(mpeg);
-	c = stream_read_char(mpeg->stream);
+	c = mpeg->stream->read_char();
 	if (c < 0)
 	    return -1;
 	if ((c & 0xC0) == 0x40) { /* skip STD scale & size */
-	    if (stream_read_char(mpeg->stream) < 0)
+	    if (mpeg->stream->read_char() < 0)
 		return -1;
-	    c = stream_read_char(mpeg->stream);
+	    c = mpeg->stream->read_char();
 	    if (c < 0)
 		return -1;
 	}
@@ -202,11 +202,11 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 	}
 	else if ((c & 0xc0) == 0x80) { /* System-2 (.VOB) stream */
 	    unsigned int pts_flags, hdrlen, dataidx;
-	    c = stream_read_char(mpeg->stream);
+	    c = mpeg->stream->read_char();
 	    if (c < 0)
 		return -1;
 	    pts_flags = c;
-	    c = stream_read_char(mpeg->stream);
+	    c = mpeg->stream->read_char();
 	    if (c < 0)
 		return -1;
 	    hdrlen = c;
@@ -217,7 +217,7 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 		return -1;
 	    }
 	    if ((pts_flags & 0xc0) == 0x80) {
-		if (stream_read(mpeg->stream, buf, 5) != 5)
+		if (mpeg->stream->read( buf, 5) != 5)
 		    return -1;
 		if (!(((buf[0] & 0xf0) == 0x20) && (buf[0] & 1) && (buf[2] & 1) &&  (buf[4] & 1))) {
 		    MSG_ERR( "vobsub PTS error: 0x%02x %02x%02x %02x%02x \n",
@@ -232,8 +232,8 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 		/* what's this? */
 		/* abort(); */
 	    }
-	    stream_seek(mpeg->stream, dataidx);
-	    mpeg->aid = stream_read_char(mpeg->stream);
+	    mpeg->stream->seek( dataidx);
+	    mpeg->aid = mpeg->stream->read_char();
 	    if (mpeg->aid < 0) {
 		MSG_ERR( "Bogus aid %d\n", mpeg->aid);
 		return -1;
@@ -252,7 +252,7 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 		mpeg->packet_size = 0;
 		return -1;
 	    }
-	    if ((unsigned)stream_read(mpeg->stream, mpeg->packet, mpeg->packet_size) != mpeg->packet_size) {
+	    if ((unsigned)mpeg->stream->read( mpeg->packet, mpeg->packet_size) != mpeg->packet_size) {
 		MSG_ERR("stream_read failure");
 		mpeg->packet_size = 0;
 		return -1;
@@ -261,19 +261,19 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 	}
 	break;
     case 0xbe:			/* Padding */
-	if (stream_read(mpeg->stream, buf, 2) != 2)
+	if (mpeg->stream->read( buf, 2) != 2)
 	    return -1;
 	len = buf[0] << 8 | buf[1];
-	if (len > 0 && !stream_skip(mpeg->stream, len))
+	if (len > 0 && !mpeg->stream->skip( len))
 	    return -1;
 	break;
     default:
 	if (0xc0 <= buf[3] && buf[3] < 0xf0) {
 	    /* MPEG audio or video */
-	    if (stream_read(mpeg->stream, buf, 2) != 2)
+	    if (mpeg->stream->read( buf, 2) != 2)
 		return -1;
 	    len = buf[0] << 8 | buf[1];
-	    if (len > 0 && !stream_skip(mpeg->stream, len))
+	    if (len > 0 && !mpeg->stream->skip( len))
 		return -1;
 
 	}

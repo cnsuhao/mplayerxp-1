@@ -383,13 +383,13 @@ static MPXP_Rc ts_probe(Demuxer * demuxer)
 
     MSG_V( "Checking for MPEG-TS...\n");
 
-    init_pos = stream_tell(demuxer->stream);
+    init_pos = demuxer->stream->tell();
     is_ts = 0;
     while(! done) {
 	i = 1;
 	c = 0;
 
-	while(((c=stream_read_char(demuxer->stream)) != 0x47)
+	while(((c=demuxer->stream->read_char()) != 0x47)
 		&& (c >= 0)
 		&& (i < MAX_CHECK_SIZE)
 		&& ! demuxer->stream->eof()
@@ -403,13 +403,13 @@ static MPXP_Rc ts_probe(Demuxer * demuxer)
 	    continue;
 	}
 
-	pos = stream_tell(demuxer->stream) - 1;
+	pos = demuxer->stream->tell() - 1;
 	buf[0] = c;
-	_read = stream_read(demuxer->stream, &buf[1], buf_size-1);
+	_read = demuxer->stream->read( &buf[1], buf_size-1);
 
 	if(_read < buf_size-1) {
 	    MSG_V( "COULDN'T READ ENOUGH DATA, EXITING TS_CHECK\n");
-	    stream_reset(demuxer->stream);
+	    demuxer->stream->reset();
 	    return MPXP_False;
 	}
 
@@ -426,7 +426,7 @@ static MPXP_Rc ts_probe(Demuxer * demuxer)
     }
 
     MSG_V( "TRIED UP TO POSITION %llu, FOUND %x, packet_size= %d, SEEMS A TS? %d\n", (uint64_t) pos, c, size, is_ts);
-    stream_seek(demuxer->stream, pos);
+    demuxer->stream->seek( pos);
 
     if(! is_ts) return MPXP_False;
 
@@ -646,12 +646,12 @@ static off_t ts_detect_streams(Demuxer *demuxer, tsdemux_init_t *param)
 
 	has_tables = 0;
 	memset(pes_priv1, 0, sizeof(pes_priv1));
-	init_pos = stream_tell(demuxer->stream);
+	init_pos = demuxer->stream->tell();
 	MSG_INFO( "PROBING UP TO %llu, PROG: %d\n", (uint64_t) param->probe, param->prog);
 	end_pos = init_pos + (param->probe ? param->probe : TS_MAX_PROBE_SIZE);
 	while(1)
 	{
-		pos = stream_tell(demuxer->stream);
+		pos = demuxer->stream->tell();
 		if(pos > end_pos || demuxer->stream->eof())
 			break;
 
@@ -732,7 +732,7 @@ static off_t ts_detect_streams(Demuxer *demuxer, tsdemux_init_t *param)
 
 			if((ret == 0) && chosen_pid)
 			{
-				ret = stream_tell(demuxer->stream);
+				ret = demuxer->stream->tell();
 			}
 
 			p = progid_for_pid(priv, es.pid, param->prog);
@@ -942,7 +942,7 @@ static Opaque* ts_open(Demuxer* demuxer)
 		demuxer->audio->id, demuxer->video->id, demuxer->sub->id);
 
 
-	stream_reset(demuxer->stream);
+	demuxer->stream->reset();
 
 	packet_size = ts_probe(demuxer);
 	if(!packet_size)
@@ -1032,8 +1032,8 @@ static Opaque* ts_open(Demuxer* demuxer)
 
 	start_pos = (start_pos <= priv->ts.packet_size ? 0 : start_pos - priv->ts.packet_size);
 	demuxer->movi_start = start_pos;
-	stream_reset(demuxer->stream);
-	stream_seek(demuxer->stream, start_pos);	//IF IT'S FROM A PIPE IT WILL FAIL, BUT WHO CARES?
+	demuxer->stream->reset();
+	demuxer->stream->seek( start_pos);	//IF IT'S FROM A PIPE IT WILL FAIL, BUT WHO CARES?
 
 
 	priv->last_pid = 8192;		//invalid pid
@@ -1055,7 +1055,7 @@ static Opaque* ts_open(Demuxer* demuxer)
 	for(i = 0; i < priv->pmt_cnt; i++)
 		priv->pmt[i].section.buffer_len = 0;
 
-    demuxer->filepos = stream_tell(demuxer->stream);
+    demuxer->filepos = demuxer->stream->tell();
     check_pin("demuxer",demuxer->pin,DEMUX_PIN);
     return priv;
 }
@@ -1490,7 +1490,7 @@ static int ts_sync(Stream *stream)
 
 	MSG_DBG2( "TS_SYNC \n");
 
-	while(((c=stream_read_char(stream)) != 0x47) && ! stream->eof());
+	while(((c=stream->read_char()) != 0x47) && ! stream->eof());
 
 	if(c == 0x47)
 		return c;
@@ -2614,12 +2614,12 @@ static int ts_parse(Demuxer *demuxer , ES_stream_t *es, unsigned char *packet, i
 		junk = priv->ts.packet_size - TS_PACKET_SIZE;
 		buf_size = priv->ts.packet_size - junk;
 
-		if(stream_eof(stream))
+		if(stream->eof())
 		{
 			if(! probe)
 			{
 				ts_dump_streams(priv);
-				demuxer->filepos = stream_tell(demuxer->stream);
+				demuxer->filepos = demuxer->stream->tell();
 			}
 
 			return 0;
@@ -2632,7 +2632,7 @@ static int ts_parse(Demuxer *demuxer , ES_stream_t *es, unsigned char *packet, i
 			return 0;
 		}
 
-		len = stream_read(stream, &packet[1], 3);
+		len = stream->read( &packet[1], 3);
 		if (len != 3)
 			return 0;
 		buf_size -= 4;
@@ -2661,7 +2661,7 @@ static int ts_parse(Demuxer *demuxer , ES_stream_t *es, unsigned char *packet, i
 		{
 			if(priv->keep_broken == 0)
 			{
-				stream_skip(stream, buf_size-1+junk);
+				stream->skip( buf_size-1+junk);
 				continue;
 			}
 
@@ -2673,36 +2673,36 @@ static int ts_parse(Demuxer *demuxer , ES_stream_t *es, unsigned char *packet, i
 
 		if((!is_start && !tss->is_synced) || ((pid > 1) && (pid < 16)) || (pid == 8191))		//invalid pid
 		{
-			stream_skip(stream, buf_size-1+junk);
+			stream->skip( buf_size-1+junk);
 			continue;
 		}
 
 		afc = (packet[3] >> 4) & 3;
 		if(! (afc % 2))	//no payload in this TS packet
 		{
-			stream_skip(stream, buf_size-1+junk);
+			stream->skip( buf_size-1+junk);
 			continue;
 		}
 
 		if(afc > 1)
 		{
 			int c;
-			c = stream_read_char(stream);
+			c = stream->read_char();
 			buf_size--;
 			if(c < 0 || c > 183)	//broken from the stream layer or invalid
 			{
-				stream_skip(stream, buf_size-1+junk);
+				stream->skip( buf_size-1+junk);
 				continue;
 			}
 
 			//c==0 is allowed!
 			if(c > 0)
 			{
-				rap_flag = (stream_read_char(stream) & 0x40) >> 6;
+				rap_flag = (stream->read_char() & 0x40) >> 6;
 				buf_size--;
 
 				c--;
-				stream_skip(stream, c);
+				stream->skip( c);
 				buf_size -= c;
 				if(buf_size == 0)
 					continue;
@@ -2804,7 +2804,7 @@ static int ts_parse(Demuxer *demuxer , ES_stream_t *es, unsigned char *packet, i
 				}
 				else
 				{
-					stream_skip(stream, buf_size+junk);
+					stream->skip( buf_size+junk);
 					continue;
 				}
 			}
@@ -2846,13 +2846,13 @@ static int ts_parse(Demuxer *demuxer , ES_stream_t *es, unsigned char *packet, i
 			p = &((*dp)->buffer()[*dp_offset]);
 		}
 
-		len = stream_read(stream, p, buf_size);
+		len = stream->read( p, buf_size);
 		if(len < buf_size)
 		{
 			MSG_DBG2("\r\nts_parse() couldn't read enough data: %d < %d\r\n", len, buf_size);
 			continue;
 		}
-		stream_skip(stream, junk);
+		stream->skip( junk);
 
 		if(pid  == 0)
 		{
@@ -2941,12 +2941,12 @@ static int ts_parse(Demuxer *demuxer , ES_stream_t *es, unsigned char *packet, i
 				MSG_DBG2("ts_parse, NEW pid=%d, PSIZE: %u, type=%X, start=%p, len=%d\n",
 					es->pid, es->payload_size, es->type, es->start, es->size);
 
-				demuxer->filepos = stream_tell(demuxer->stream) - es->size;
+				demuxer->filepos = demuxer->stream->tell() - es->size;
 
 				memmove(p, es->start, es->size);
 				*dp_offset += es->size;
 				(*dp)->flags = DP_NONKEYFRAME;
-				(*dp)->pos = stream_tell(demuxer->stream);
+				(*dp)->pos = demuxer->stream->tell();
 				(*dp)->pts = es->pts;
 
 				if(retv > 0)
@@ -3098,7 +3098,7 @@ static void ts_seek(Demuxer *demuxer,const seek_args_t* seeka)
 	newpos &= ~(STREAM_BUFFER_SIZE - 1);  /* sector boundary */
 #endif
 
-	stream_seek(demuxer->stream, newpos);
+	demuxer->stream->seek( newpos);
 	for(i = 0; i < 8192; i++)
 		if(priv->ts.pids[i] != NULL)
 			priv->ts.pids[i]->is_synced = 0;
