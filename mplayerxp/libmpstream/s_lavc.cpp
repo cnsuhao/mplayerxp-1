@@ -13,10 +13,10 @@ using namespace mpxp;
 namespace mpxp {
     class Lavs_Stream_Interface : public Stream_Interface {
 	public:
-	    Lavs_Stream_Interface();
+	    Lavs_Stream_Interface(libinput_t* libinput);
 	    virtual ~Lavs_Stream_Interface();
 
-	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -31,7 +31,9 @@ namespace mpxp {
 	    off_t end_pos;
     };
 
-Lavs_Stream_Interface::Lavs_Stream_Interface():ctx(NULL),end_pos(-1) {}
+Lavs_Stream_Interface::Lavs_Stream_Interface(libinput_t*libinput)
+			:Stream_Interface(libinput),
+			ctx(NULL),end_pos(-1) {}
 Lavs_Stream_Interface::~Lavs_Stream_Interface() {
     if(ctx) ffurl_close(ctx);
 }
@@ -64,12 +66,11 @@ MPXP_Rc Lavs_Stream_Interface::ctrl(unsigned cmd, any_t*arg)
 
 void Lavs_Stream_Interface::close() {}
 
-MPXP_Rc Lavs_Stream_Interface::open(libinput_t*libinput,const char *filename,unsigned flags)
+MPXP_Rc Lavs_Stream_Interface::open(const char *filename,unsigned flags)
 {
     int64_t _size;
 
     UNUSED(flags);
-    UNUSED(libinput);
     av_register_all();
     MSG_V("[lavc] Opening %s\n", filename);
 
@@ -84,7 +85,7 @@ Stream::type_e Lavs_Stream_Interface::type() const { return (ctx->is_streamed)?S
 off_t	Lavs_Stream_Interface::size() const { return end_pos; }
 off_t	Lavs_Stream_Interface::sector_size() const { return STREAM_BUFFER_SIZE; }
 
-static Stream_Interface* query_interface() { return new(zeromem) Lavs_Stream_Interface; }
+static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Lavs_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t lavs_stream =
 {

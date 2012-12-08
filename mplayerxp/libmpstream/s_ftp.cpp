@@ -27,10 +27,10 @@ using namespace mpxp;
 namespace mpxp {
     class Ftp_Stream_Interface : public Stream_Interface {
 	public:
-	    Ftp_Stream_Interface();
+	    Ftp_Stream_Interface(libinput_t* libinput);
 	    virtual ~Ftp_Stream_Interface();
 
-	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -52,7 +52,6 @@ namespace mpxp {
 	    int		port;
 	    const char*	filename;
 	    URL_t*	url;
-	    libinput_t* libinput;
 
 	    char*	cput,*cget;
 	    Tcp		tcp;
@@ -62,7 +61,9 @@ namespace mpxp {
 	    off_t	file_len;
     };
 
-Ftp_Stream_Interface::Ftp_Stream_Interface():tcp(-1) {}
+Ftp_Stream_Interface::Ftp_Stream_Interface(libinput_t* libinput)
+		    :Stream_Interface(libinput),
+		    tcp(libinput,-1) {}
 Ftp_Stream_Interface::~Ftp_Stream_Interface() {
     SendCmd("QUIT",NULL);
     if(buf) delete buf;
@@ -210,7 +211,7 @@ int Ftp_Stream_Interface::OpenPort() {
     }
     sscanf(par+1,"%u,%u,%u,%u,%u,%u",&num[0],&num[1],&num[2],&num[3],&num[4],&num[5]);
     snprintf(str,127,"%d.%d.%d.%d",num[0],num[1],num[2],num[3]);
-    tcp.open(libinput,str,(num[4]<<8)+num[5]);
+    tcp.open(str,(num[4]<<8)+num[5]);
 
     if(fd < 0) MSG_ERR("[ftp] failed to create data connection\n");
     return 1;
@@ -312,14 +313,13 @@ void Ftp_Stream_Interface::close() {
     if(tcp.established()) tcp.close();
 }
 
-MPXP_Rc Ftp_Stream_Interface::open(libinput_t*_libinput,const char *_filename,unsigned flags)
+MPXP_Rc Ftp_Stream_Interface::open(const char *_filename,unsigned flags)
 {
     int resp;
     char str[256],rsp_txt[256];
     char *uname;
 
     UNUSED(flags);
-    libinput=_libinput;
     if(!(uname=new char [strlen(_filename)+7])) return MPXP_False;
     strcpy(uname,"ftp://");
     strcat(uname,_filename);
@@ -339,7 +339,7 @@ MPXP_Rc Ftp_Stream_Interface::open(libinput_t*_libinput,const char *_filename,un
     MSG_V("FTP: Opening ~%s :%s @%s :%i %s\n",user,pass,host,port,filename);
 
     // Open the control connection
-    tcp.open(libinput,host,port);
+    tcp.open(host,port);
 
     if(!tcp.established()) {
 	url_free(url);
@@ -428,7 +428,7 @@ MPXP_Rc Ftp_Stream_Interface::ctrl(unsigned cmd,any_t*args) {
     return MPXP_Unknown;
 }
 
-static Stream_Interface* query_interface() { return new(zeromem) Ftp_Stream_Interface; }
+static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Ftp_Stream_Interface(libinput); }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */
 extern const stream_interface_info_t ftp_stream =

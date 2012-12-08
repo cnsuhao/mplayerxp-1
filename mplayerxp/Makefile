@@ -107,7 +107,7 @@ version.h:
 	./version.sh `$(CC) --version`
 	$(MAKE) dep
 
-dep:
+dep: version.h
 	$(CXX) -MM $(CXXFLAGS) $(SRCS) 1>.depend
 	$(DO_MAKE)
 

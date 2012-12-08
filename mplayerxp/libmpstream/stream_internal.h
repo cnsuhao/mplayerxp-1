@@ -10,7 +10,7 @@ namespace mpxp {
     /** Stream-driver interface */
     class Stream_Interface : public Opaque {
 	public:
-	    Stream_Interface() {}
+	    Stream_Interface(libinput_t*) {}
 	    virtual ~Stream_Interface() {}
 		/** Opens stream with given name
 		  * @param libinput	points libinput2
@@ -18,7 +18,7 @@ namespace mpxp {
 		  * @param filename	points MRL of stream (vcdnav://, file://, http://, ...)
 		  * @param flags	currently unused and filled as 0
 		**/
-	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags) = 0;
+	    virtual MPXP_Rc	open(const char *filename,unsigned flags) = 0;
 
 		/** Reads next packet from stream
 		  * @param _this	points structure which identifies stream
@@ -66,7 +66,7 @@ namespace mpxp {
     struct stream_interface_info_t {
 	const char*		mrl;	/**< MRL of stream driver */
 	const char*		descr;	/**< description of the driver */
-	Stream_Interface*	(*query_interface)();
+	Stream_Interface*	(*query_interface)(libinput_t*);
     };
 } // namespace mpxp
 #endif

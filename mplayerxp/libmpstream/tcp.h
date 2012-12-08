@@ -38,7 +38,7 @@ namespace mpxp {
 		Err_Port	=-1, /* unable to connect to a particular port */
 		Err_None	=0   /* no error */
 	    };
-	    Tcp(net_fd_t fd);
+	    Tcp(libinput_t* libinput,net_fd_t fd);
 	    Tcp(libinput_t* libinput,const char *host,int port,tcp_af_e af=Tcp::IP4);
 	    virtual ~Tcp();
 
@@ -49,13 +49,14 @@ namespace mpxp {
 	    virtual int		has_data(int timeout) const;
 	    virtual tcp_error_e	error() const;
 
-	    virtual void	open(libinput_t* libinput,const char *host,int port,tcp_af_e af=Tcp::IP4);
+	    virtual void	open(const char *host,int port,tcp_af_e af=Tcp::IP4);
 	    virtual int		read(uint8_t* buf,unsigned len,int flags=0);
 	    virtual int		write(const uint8_t* buf,unsigned len,int flags=0) const;
 	    virtual void	close();
 	private:
 	    net_fd_t	_fd;
 	    tcp_error_e	_error;
+	    libinput_t*	libinput;
     };
 } // namespace mpxp
 #endif /* TCP_H */

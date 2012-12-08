@@ -10,10 +10,10 @@ using namespace mpxp;
 namespace mpxp {
     class Null_Stream_Interface : public Stream_Interface {
 	public:
-	    Null_Stream_Interface();
+	    Null_Stream_Interface(libinput_t* libinput);
 	    virtual ~Null_Stream_Interface();
 
-	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -24,11 +24,10 @@ namespace mpxp {
 	    virtual off_t	sector_size() const;
     };
 
-Null_Stream_Interface::Null_Stream_Interface() {}
+Null_Stream_Interface::Null_Stream_Interface(libinput_t*libinput):Stream_Interface(libinput) {}
 Null_Stream_Interface::~Null_Stream_Interface() {}
 
-MPXP_Rc Null_Stream_Interface::open(libinput_t*libinput,const char *filename,unsigned flags) {
-    UNUSED(libinput);
+MPXP_Rc Null_Stream_Interface::open(const char *filename,unsigned flags) {
     UNUSED(filename);
     UNUSED(flags);
     return MPXP_False;
@@ -47,7 +46,7 @@ Stream::type_e Null_Stream_Interface::type() const { return Stream::Type_Stream;
 off_t	Null_Stream_Interface::size() const { return 0; }
 off_t	Null_Stream_Interface::sector_size() const { return 0; }
 
-static Stream_Interface* query_interface() { return new(zeromem) Null_Stream_Interface; }
+static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Null_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t null_stream =
 {

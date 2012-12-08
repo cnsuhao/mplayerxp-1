@@ -51,10 +51,10 @@ namespace mpxp {
 
     class DvdRead_Stream_Interface : public Stream_Interface {
 	public:
-	    DvdRead_Stream_Interface();
+	    DvdRead_Stream_Interface(libinput_t* libinput);
 	    virtual ~DvdRead_Stream_Interface();
 
-	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -111,10 +111,9 @@ namespace mpxp {
 	    off_t		_end_pos;
     };
 
-DvdRead_Stream_Interface::DvdRead_Stream_Interface()
-			:dvd_chapter(1),dvd_angle(1)
-{
-}
+DvdRead_Stream_Interface::DvdRead_Stream_Interface(libinput_t* libinput)
+			:Stream_Interface(libinput),
+			dvd_chapter(1),dvd_angle(1) {}
 DvdRead_Stream_Interface::~DvdRead_Stream_Interface() {}
 
 static const char * dvd_audio_stream_types[8] =
@@ -589,7 +588,7 @@ void DvdRead_Stream_Interface::close() {
     dvd_angle=1;
 }
 
-MPXP_Rc DvdRead_Stream_Interface::open(libinput_t*libinput,const char *filename,unsigned flags)
+MPXP_Rc DvdRead_Stream_Interface::open(const char *filename,unsigned flags)
 {
     UNUSED(flags);
     int dvd_title;
@@ -598,7 +597,6 @@ MPXP_Rc DvdRead_Stream_Interface::open(libinput_t*libinput,const char *filename,
     char param[256];
 
     last_title=-1;
-    UNUSED(libinput);
     if(strcmp(filename,"help") == 0 || strlen(filename)==10) {
 	MSG_HINT("Usage: dvdread://<@device>#<titleno>-<lasttitle>,<chapter>-<lastchapter>,<angle>\n");
 	return MPXP_False;
@@ -778,7 +776,7 @@ MPXP_Rc DvdRead_Stream_Interface::ctrl(unsigned cmd,any_t*args)
     return MPXP_False;
 }
 
-static Stream_Interface* query_interface() { return new(zeromem) DvdRead_Stream_Interface; }
+static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) DvdRead_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t dvdread_stream =
 {

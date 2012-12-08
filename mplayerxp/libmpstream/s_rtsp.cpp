@@ -29,10 +29,10 @@ using namespace mpxp;
 namespace mpxp {
     class Rtsp_Stream_Interface : public Stream_Interface {
 	public:
-	    Rtsp_Stream_Interface();
+	    Rtsp_Stream_Interface(libinput_t* libinput);
 	    virtual ~Rtsp_Stream_Interface();
 
-	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -46,16 +46,20 @@ namespace mpxp {
 
 	    networking_t*	networking;
 	    Tcp			tcp;
+	    libinput_t*		libinput;
     };
 
-Rtsp_Stream_Interface::Rtsp_Stream_Interface():tcp(-1) {}
+Rtsp_Stream_Interface::Rtsp_Stream_Interface(libinput_t* _libinput)
+			:Stream_Interface(_libinput),
+			tcp(_libinput,-1),
+			libinput(_libinput) {}
 Rtsp_Stream_Interface::~Rtsp_Stream_Interface() {}
 
 #define RTSP_DEFAULT_PORT 554
 
 int Rtsp_Stream_Interface::read(stream_packet_t*sp)
 {
-    return rtsp_session_read (reinterpret_cast<rtsp_session_t*>(networking->data), sp->buf, sp->len);
+    return rtsp_session_read (libinput,reinterpret_cast<rtsp_session_t*>(networking->data), sp->buf, sp->len);
 }
 
 off_t Rtsp_Stream_Interface::seek(off_t newpos) { return newpos; }
@@ -94,12 +98,12 @@ MPXP_Rc Rtsp_Stream_Interface::start()
     do {
 	redirected = 0;
 
-	tcp.open(networking->libinput,networking->url->hostname,
+	tcp.open(networking->url->hostname,
 		port = (networking->url->port ?
 			networking->url->port :
 			RTSP_DEFAULT_PORT));
 	if (!tcp.established() && !networking->url->port)
-	    tcp.open(networking->libinput,networking->url->hostname,
+	    tcp.open(networking->url->hostname,
 			port = 7070);
 	if (!tcp.established()) return MPXP_False;
 	file = networking->url->file;
@@ -137,14 +141,14 @@ MPXP_Rc Rtsp_Stream_Interface::start()
 
 extern int network_bandwidth;
 extern int index_mode;
-MPXP_Rc Rtsp_Stream_Interface::open(libinput_t* libinput,const char *filename,unsigned flags)
+MPXP_Rc Rtsp_Stream_Interface::open(const char *filename,unsigned flags)
 {
     URL_t *url;
     UNUSED(flags);
     if(strncmp(filename,"rtsp://",7)!=0) return MPXP_False;
 
     MSG_V("STREAM_RTSP, URL: %s\n", filename);
-    networking = new_networking(libinput);
+    networking = new_networking();
     if (!networking) return MPXP_False;
 
     networking->bandwidth = network_bandwidth;
@@ -166,7 +170,7 @@ Stream::type_e Rtsp_Stream_Interface::type() const { return Stream::Type_Stream;
 off_t	Rtsp_Stream_Interface::size() const { return 0; }
 off_t	Rtsp_Stream_Interface::sector_size() const { return 1; }
 
-static Stream_Interface* query_interface() { return new(zeromem) Rtsp_Stream_Interface; }
+static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Rtsp_Stream_Interface(libinput); }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */
 extern const stream_interface_info_t rtsp_stream =

@@ -20,10 +20,10 @@ using namespace mpxp;
 namespace mpxp {
     class Cdda_Stream_Interface : public Stream_Interface {
 	public:
-	    Cdda_Stream_Interface();
+	    Cdda_Stream_Interface(libinput_t* libinput);
 	    virtual ~Cdda_Stream_Interface();
 
-	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -39,14 +39,15 @@ namespace mpxp {
 	    track_t		track_idx;
     };
 
-Cdda_Stream_Interface::Cdda_Stream_Interface():track_idx(255) {}
+Cdda_Stream_Interface::Cdda_Stream_Interface(libinput_t* libinput)
+			:Stream_Interface(libinput),
+			track_idx(255) {}
 Cdda_Stream_Interface::~Cdda_Stream_Interface() {}
 
-MPXP_Rc Cdda_Stream_Interface::open(libinput_t*libinput,const char *filename,unsigned flags)
+MPXP_Rc Cdda_Stream_Interface::open(const char *filename,unsigned flags)
 {
     const char *param;
     char *device;
-    UNUSED(libinput);
     UNUSED(flags);
     if(strcmp(filename,"help") == 0) {
 	MSG_HINT("Usage: cdda://<@device><#trackno>\n");
@@ -114,7 +115,7 @@ MPXP_Rc Cdda_Stream_Interface::ctrl(unsigned cmd,any_t*args)
     return MPXP_False;
 }
 
-static Stream_Interface* query_cdda_interface() { return new(zeromem) Cdda_Stream_Interface; }
+static Stream_Interface* query_cdda_interface(libinput_t* libinput) { return new(zeromem) Cdda_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t cdda_stream =
 {
@@ -125,15 +126,19 @@ extern const stream_interface_info_t cdda_stream =
 
     class Cddb_Stream_Interface : public Cdda_Stream_Interface {
 	public:
-	    Cddb_Stream_Interface();
+	    Cddb_Stream_Interface(libinput_t* libinput);
 	    virtual ~Cddb_Stream_Interface();
 
-	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	private:
+	    libinput_t*		libinput;
     };
-Cddb_Stream_Interface::Cddb_Stream_Interface() {}
+Cddb_Stream_Interface::Cddb_Stream_Interface(libinput_t*_libinput)
+			:Cdda_Stream_Interface(_libinput),
+			libinput(_libinput) {}
 Cddb_Stream_Interface::~Cddb_Stream_Interface() {}
 
-MPXP_Rc Cddb_Stream_Interface::open(libinput_t*libinput,const char *filename,unsigned flags)
+MPXP_Rc Cddb_Stream_Interface::open(const char *filename,unsigned flags)
 {
 #ifdef HAVE_STREAMING
     const char *param;
@@ -153,7 +158,7 @@ MPXP_Rc Cddb_Stream_Interface::open(libinput_t*libinput,const char *filename,uns
 #endif
 }
 
-static Stream_Interface* query_cddb_interface() { return new(zeromem) Cddb_Stream_Interface; }
+static Stream_Interface* query_cddb_interface(libinput_t* libinput) { return new(zeromem) Cddb_Stream_Interface(libinput); }
 extern const stream_interface_info_t cddb_stream =
 {
     "cddb://",

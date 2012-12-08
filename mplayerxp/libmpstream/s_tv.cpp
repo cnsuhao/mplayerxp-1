@@ -581,10 +581,10 @@ int __FASTCALL__ tv_step_chanlist(tvi_handle_t *tvh)
 /* fill demux->video and demux->audio */
     class Tv_Stream_Interface : public Stream_Interface {
 	public:
-	    Tv_Stream_Interface();
+	    Tv_Stream_Interface(libinput_t* libinput);
 	    virtual ~Tv_Stream_Interface();
 
-	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -598,13 +598,12 @@ int __FASTCALL__ tv_step_chanlist(tvi_handle_t *tvh)
 	    tvi_handle_t*	priv;
     };
 
-Tv_Stream_Interface::Tv_Stream_Interface() { }
+Tv_Stream_Interface::Tv_Stream_Interface(libinput_t*libinput):Stream_Interface(libinput) {}
 Tv_Stream_Interface::~Tv_Stream_Interface() { delete priv; }
 
-MPXP_Rc Tv_Stream_Interface::open(libinput_t*libinput,const char *filename,unsigned flags)
+MPXP_Rc Tv_Stream_Interface::open(const char *filename,unsigned flags)
 {
     UNUSED(flags);
-    UNUSED(libinput);
     mrl_parse_params(filename,tvopts_conf);
     /* create tvi handler */
     if(!(priv = tv_begin())) goto tv_err;
@@ -665,7 +664,7 @@ Stream::type_e Tv_Stream_Interface::type() const { return Stream::Type_Stream; }
 off_t	Tv_Stream_Interface::size() const { return -1; }
 off_t	Tv_Stream_Interface::sector_size() const { return 0; }
 
-static Stream_Interface* query_interface() { return new(zeromem) Tv_Stream_Interface; }
+static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Tv_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t tv_stream =
 {

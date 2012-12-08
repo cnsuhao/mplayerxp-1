@@ -22,10 +22,10 @@ using namespace mpxp;
 namespace mpxp {
     class File_Stream_Interface : public Stream_Interface {
 	public:
-	    File_Stream_Interface();
+	    File_Stream_Interface(libinput_t* libinput);
 	    virtual ~File_Stream_Interface();
 
-	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -41,13 +41,14 @@ namespace mpxp {
 	    off_t end_pos;
     };
 
-File_Stream_Interface::File_Stream_Interface():fd(0),was_open(0),spos(0) {}
+File_Stream_Interface::File_Stream_Interface(libinput_t*l)
+			:Stream_Interface(l),
+			fd(0),was_open(0),spos(0) {}
 File_Stream_Interface::~File_Stream_Interface() {}
 
-MPXP_Rc File_Stream_Interface::open(libinput_t*libinput,const char *filename,unsigned flags)
+MPXP_Rc File_Stream_Interface::open(const char *filename,unsigned flags)
 {
     UNUSED(flags);
-    UNUSED(libinput);
     if(strcmp(filename,"-")==0) fd=0;
     else fd=::open(filename,O_RDONLY);
     if(fd<0) {
@@ -112,7 +113,7 @@ MPXP_Rc File_Stream_Interface::ctrl(unsigned cmd,any_t*args) {
     return MPXP_Unknown;
 }
 
-static Stream_Interface* query_file_interface() { return new(zeromem) File_Stream_Interface; }
+static Stream_Interface* query_file_interface(libinput_t* libinput) { return new(zeromem) File_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t file_stream =
 {
@@ -123,21 +124,20 @@ extern const stream_interface_info_t file_stream =
 
     class Stdin_Stream_Interface : public File_Stream_Interface {
 	public:
-	    Stdin_Stream_Interface();
+	    Stdin_Stream_Interface(libinput_t* libinput);
 	    virtual ~Stdin_Stream_Interface();
 
-	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
     };
 
-Stdin_Stream_Interface::Stdin_Stream_Interface() {}
+Stdin_Stream_Interface::Stdin_Stream_Interface(libinput_t*l):File_Stream_Interface(l) {}
 Stdin_Stream_Interface::~Stdin_Stream_Interface() {}
-MPXP_Rc Stdin_Stream_Interface::open(libinput_t*libinput,const char *filename,unsigned flags) {
-    UNUSED(libinput);
+MPXP_Rc Stdin_Stream_Interface::open(const char *filename,unsigned flags) {
     UNUSED(filename);
-    return File_Stream_Interface::open(NULL,"-",flags);
+    return File_Stream_Interface::open("-",flags);
 }
 
-static Stream_Interface* query_stdin_interface() { return new(zeromem) Stdin_Stream_Interface; }
+static Stream_Interface* query_stdin_interface(libinput_t* libinput) { return new(zeromem) Stdin_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t stdin_stream =
 {

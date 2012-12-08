@@ -132,9 +132,9 @@ MPXP_Rc		Stream::open(libinput_t*libinput,const char* filename,int* ff,stream_ca
 	mrl_len=strlen(sdrivers[i]->mrl);
 	if(strncmp(filename,sdrivers[i]->mrl,mrl_len)==0||sdrivers[i]->mrl[0]=='*') {
 	    MSG_V("Opening %s ... ",sdrivers[i]->mrl);
-	    Stream_Interface* drv = sdrivers[i]->query_interface();
+	    Stream_Interface* drv = sdrivers[i]->query_interface(libinput);
 	    if(sdrivers[i]->mrl[0]=='*') mrl_len=0;
-	    if(drv->open(libinput,&filename[mrl_len],0)==MPXP_Ok) {
+	    if(drv->open(&filename[mrl_len],0)==MPXP_Ok) {
 		MSG_V("OK\n");
 		*ff = file_format;
 		driver_info=sdrivers[i];
@@ -147,9 +147,9 @@ MPXP_Rc		Stream::open(libinput_t*libinput,const char* filename,int* ff,stream_ca
 	    MSG_V("False\n");
 	}
     }
-    Stream_Interface* file_drv = file_stream.query_interface();
+    Stream_Interface* file_drv = file_stream.query_interface(libinput);
     /* Last hope if not mrl specified */
-    if(file_drv->open(libinput,filename,0)) {
+    if(file_drv->open(filename,0)) {
 	*ff = file_format;
 	driver_info=&file_stream;
 	driver=file_drv;

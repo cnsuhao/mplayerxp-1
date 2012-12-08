@@ -28,10 +28,10 @@ using namespace mpxp;
 namespace mpxp {
     class Udp_Stream_Interface : public Stream_Interface {
 	public:
-	    Udp_Stream_Interface();
+	    Udp_Stream_Interface(libinput_t* libinput);
 	    virtual ~Udp_Stream_Interface();
 
-	    virtual MPXP_Rc	open(libinput_t* libinput,const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -48,7 +48,10 @@ namespace mpxp {
 	    Tcp			tcp;
     };
 
-Udp_Stream_Interface::Udp_Stream_Interface():udp(-1),tcp(-1) {}
+Udp_Stream_Interface::Udp_Stream_Interface(libinput_t* libinput)
+			:Stream_Interface(libinput),
+			udp(-1),
+			tcp(libinput,-1) {}
 Udp_Stream_Interface::~Udp_Stream_Interface() {}
 
 int Udp_Stream_Interface::read(stream_packet_t*sp)
@@ -89,12 +92,12 @@ MPXP_Rc Udp_Stream_Interface::start ()
 }
 
 extern int network_bandwidth;
-MPXP_Rc Udp_Stream_Interface::open(libinput_t* libinput,const char *filename,unsigned flags)
+MPXP_Rc Udp_Stream_Interface::open(const char *filename,unsigned flags)
 {
     URL_t *url;
     UNUSED(flags);
     MSG_V("STREAM_UDP, URL: %s\n", filename);
-    networking = new_networking(libinput);
+    networking = new_networking();
     if (!networking) return MPXP_False;
 
     networking->bandwidth = network_bandwidth;
@@ -119,7 +122,7 @@ Stream::type_e Udp_Stream_Interface::type() const { return Stream::Type_Stream; 
 off_t	Udp_Stream_Interface::size() const { return 0; }
 off_t	Udp_Stream_Interface::sector_size() const { return 1; }
 
-static Stream_Interface* query_interface() { return new(zeromem) Udp_Stream_Interface; }
+static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Udp_Stream_Interface(libinput); }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */
 extern const stream_interface_info_t rtsp_stream =

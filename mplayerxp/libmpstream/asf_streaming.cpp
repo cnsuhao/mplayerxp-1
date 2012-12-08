@@ -749,7 +749,7 @@ static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
 	} else {
 	    if( url->port==0 ) url->port = 80;
 	}
-	tcp.open(networking->libinput, url->hostname, url->port, Tcp::IP4);
+	tcp.open(url->hostname, url->port, Tcp::IP4);
 	if( !tcp.established()) return MPXP_False;
 
 	http_hdr = asf_http_request( networking );

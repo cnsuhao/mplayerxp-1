@@ -94,13 +94,12 @@ static const struct {
     { "misc/ultravox", Demuxer::Type_NSV}
 };
 
-networking_t* new_networking(libinput_t*libinput) {
+networking_t* new_networking() {
     networking_t *networking = new(zeromem) networking_t;
     if( networking==NULL ) {
 	MSG_FATAL(MSGTR_OutOfMemory);
 	return NULL;
     }
-    networking->libinput=libinput;
     return networking;
 }
 
@@ -166,11 +165,10 @@ check4proxies( URL_t *url ) {
 	return url_out;
 }
 
-Tcp* http_send_request(libinput_t* libinput, URL_t *url, off_t pos ) {
+MPXP_Rc http_send_request(Tcp& tcp, URL_t *url, off_t pos ) {
 	HTTP_header_t *http_hdr;
 	URL_t *server_url;
 	char str[256];
-	Tcp* tcp=NULL;
 	int ret;
 	int proxy = 0;		// Boolean
 
@@ -215,17 +213,19 @@ Tcp* http_send_request(libinput_t* libinput, URL_t *url, off_t pos ) {
 
 	if( proxy ) {
 		if( url->port==0 ) url->port = 8080;			// Default port for the proxy server
-		tcp = new Tcp(libinput, url->hostname, url->port, Tcp::IP4);
+		tcp.close();
+		tcp.open(url->hostname, url->port, Tcp::IP4);
 		url_free( server_url );
 		server_url = NULL;
 	} else {
 		if( server_url->port==0 ) server_url->port = 80;	// Default port for the web server
-		tcp = new Tcp(libinput, server_url->hostname, server_url->port, Tcp::IP4);
+		tcp.close();
+		tcp.open(server_url->hostname, server_url->port, Tcp::IP4);
 	}
-	if(!tcp->established()) goto err_out;
+	if(!tcp.established()) goto err_out;
 	MSG_DBG2("Request: [%s]\n", http_hdr->buffer );
 
-	ret = tcp->write((uint8_t*)(http_hdr->buffer), http_hdr->buffer_size);
+	ret = tcp.write((uint8_t*)(http_hdr->buffer), http_hdr->buffer_size);
 	if( ret!=(int)http_hdr->buffer_size ) {
 		MSG_ERR("Error while sending HTTP request: didn't sent all the request\n");
 		goto err_out;
@@ -233,13 +233,12 @@ Tcp* http_send_request(libinput_t* libinput, URL_t *url, off_t pos ) {
 
 	http_free( http_hdr );
 
-	return tcp;
+	return MPXP_Ok;
 err_out:
-	if (tcp) delete tcp;
 	http_free(http_hdr);
 	if (proxy && server_url)
 		url_free(server_url);
-	return NULL;
+	return MPXP_False;
 }
 
 HTTP_header_t* http_read_response( Tcp& tcp ) {
@@ -323,13 +322,9 @@ http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry) {
 
 off_t http_seek(Tcp& tcp, networking_t *networking, off_t pos ) {
     HTTP_header_t *http_hdr = NULL;
-    Tcp* other_tcp;
 
     tcp.close();
-    other_tcp = http_send_request(networking->libinput, networking->url, pos );
-    if(! other_tcp->established() ) return 0;
-    tcp=*other_tcp;
-    delete other_tcp;
+    if(http_send_request(tcp,networking->url, pos)==MPXP_Ok) return 0;
 
     http_hdr = http_read_response(tcp);
 
@@ -398,7 +393,7 @@ static MPXP_Rc autodetectProtocol(networking_t *networking, Tcp& tcp) {
 #endif
 	// HTTP based protocol
 	if( !strcasecmp(url->protocol, "http") || !strcasecmp(url->protocol, "http_proxy") ) {
-	    tcp = *http_send_request(networking->libinput, url, 0 );
+	    http_send_request(tcp, url, 0 );
 	    if(!tcp.established()) goto err_out;
 
 	    http_hdr = http_read_response(tcp);
@@ -565,7 +560,7 @@ MPXP_Rc nop_networking_start(Tcp& tcp,networking_t* networking ) {
     MPXP_Rc ret;
 
     if( !tcp.established() ) {
-	tcp = *http_send_request(networking->libinput, networking->url,0);
+	http_send_request(tcp, networking->url,0);
 	if( !tcp.established() ) return MPXP_False;
 	http_hdr = http_read_response(tcp);
 	if( http_hdr==NULL ) return MPXP_False;
@@ -655,7 +650,7 @@ pnm_networking_read(Tcp& tcp, char *buffer, int size, networking_t *stream_ctrl 
 MPXP_Rc pnm_networking_start(Tcp& tcp,networking_t *networking ) {
     pnm_t *pnm;
 
-    tcp.open(networking->libinput, networking->url->hostname,
+    tcp.open(networking->url->hostname,
 	    networking->url->port ? networking->url->port : 7070);
     if(!tcp.established()) return MPXP_False;
 

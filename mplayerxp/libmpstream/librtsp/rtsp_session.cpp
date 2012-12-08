@@ -219,7 +219,7 @@ rtsp_session_t *rtsp_session_start(Tcp& tcp, char **mrl, char *path, char *host,
   return rtsp_session;
 }
 
-int rtsp_session_read (rtsp_session_t *self, char *data, int len) {
+int rtsp_session_read (libinput_t* libinput,rtsp_session_t *self, char *data, int len) {
 
   if (self->real_session) {
   int to_copy=len;
@@ -267,7 +267,7 @@ int rtsp_session_read (rtsp_session_t *self, char *data, int len) {
   else if (self->rtp_session)
   {
     int l = 0;
-    Tcp tcp(self->rtp_session->rtp_socket);
+    Tcp tcp(libinput,self->rtp_session->rtp_socket);
 
     l = read_rtp_from_server (tcp, data, len);
     /* send RTSP and RTCP keepalive  */

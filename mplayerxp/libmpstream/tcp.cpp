@@ -51,7 +51,7 @@ static const char *af2String(Tcp::tcp_af_e af) {
 // return -2 for fatal error, like unable to resolve name, connection timeout...
 // return -1 is unable to connect to a particular port
 
-void Tcp::open(libinput_t* libinput,const char *host, int port, tcp_af_e af) {
+void Tcp::open(const char *host, int port, tcp_af_e af) {
     socklen_t err_len;
     int ret,count = 0;
     fd_set set;
@@ -224,16 +224,18 @@ void Tcp::open(libinput_t* libinput,const char *host, int port, tcp_af_e af) {
     }
 }
 
-Tcp::Tcp(libinput_t* libinput,const char *host,int port,tcp_af_e af)
+Tcp::Tcp(libinput_t* _libinput,const char *host,int port,tcp_af_e af)
     :_fd(-1),
-    _error(Tcp::Err_None)
+    _error(Tcp::Err_None),
+    libinput(_libinput)
 {
-    open(libinput,host,port,af);
+    open(host,port,af);
 }
 
-Tcp::Tcp(net_fd_t fd)
+Tcp::Tcp(libinput_t* _libinput,net_fd_t fd)
     :_fd(fd),
-    _error(Tcp::Err_None)
+    _error(Tcp::Err_None),
+    libinput(_libinput)
 {
 }
 

@@ -517,7 +517,7 @@ MPXP_Rc asf_mmst_networking_start(Tcp& tcp, networking_t *networking)
     path=unescpath;
 
     if( url1->port==0 ) url1->port=1755;
-    tcp.open(networking->libinput, url1->hostname, url1->port, Tcp::IP4);
+    tcp.open(url1->hostname, url1->port, Tcp::IP4);
     if( !tcp.established()) {
 	delete path;
 	return MPXP_False;

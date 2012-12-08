@@ -144,7 +144,7 @@ unsigned long __FASTCALL__ cddb_discid(int tot_trks) {
 int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parser)(HTTP_header_t*,cddb_data_t*), cddb_data_t *cddb_data) {
 	char request[4096];
 	int ret = 0;
-	Tcp* tcp;
+	Tcp tcp(cddb_data->libinput,-1);
 	URL_t *url;
 	HTTP_header_t *http_hdr;
 
@@ -159,16 +159,14 @@ int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parser)(HTTP
 		return -1;
 	}
 
-	tcp = http_send_request(cddb_data->libinput,url,0);
-	if( !tcp ) {
+	if(http_send_request(tcp,url,0)!=MPXP_Ok) {
 		MSG_ERR("failed to send the http request\n");
 		return -1;
 	}
 
-	http_hdr = http_read_response( *tcp );
+	http_hdr = http_read_response( tcp );
 	if( http_hdr==NULL ) {
 		MSG_ERR("Failed to read the http response\n");
-		delete tcp;
 		return -1;
 	}
 
@@ -188,7 +186,6 @@ int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parser)(HTTP
 
 	http_free( http_hdr );
 	url_free( url );
-	delete tcp;
 
 	return ret;
 }
@@ -494,7 +491,7 @@ void __FASTCALL__ cddb_create_hello(cddb_data_t *cddb_data) {
 		}
 		user_name = getenv("LOGNAME");
 	}
-	sprintf( cddb_data->cddb_hello, "&hello=%s+%s+%s", user_name, host_name, "MPlayerXP");
+	sprintf( cddb_data->cddb_hello, "&hello=%s+%s+%s+%s", user_name, host_name, "MPlayerXP", VERSION);
 }
 
 int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {
