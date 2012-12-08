@@ -55,6 +55,8 @@ namespace mpxp {
 	    Stream(type_e type=Stream::Type_Unknown);
 	    virtual ~Stream();
 
+	    static void		print_drivers();
+
 	    virtual MPXP_Rc	open(libinput_t*libinput,const char* filename,int* file_format);
 	    virtual int		read(any_t* mem,int total);
 	    virtual int		read(stream_packet_t * sp);
@@ -238,7 +240,5 @@ namespace mpxp {
 
 	SCTRL_EOF=10000
     };
-
-    void print_stream_drivers(void);
 } // namespace mpxp
 #endif // __STREAM_H

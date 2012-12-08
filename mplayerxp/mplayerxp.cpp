@@ -634,7 +634,7 @@ static void init_player( void )
 void show_help(void) {
     // no file/vcd/dvd -> show HELP:
     MSG_INFO("%s",help_text);
-    print_stream_drivers();
+    Stream::print_drivers();
     MSG_INFO("\nExample: mplayerxp -ao alsa:hw:0 -vo x11 your.avi\n"
 	     "Use --long-help option for full help\n");
 }
@@ -643,7 +643,7 @@ void show_long_help(void) {
     MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
     m_config_show_options(mpxp_context().mconfig);
     mp_input_print_binds(MPXPSys.libinput());
-    print_stream_drivers();
+    Stream::print_drivers();
     mpxp_context().video().output->print_help();
     ao_print_help();
     vf_help();

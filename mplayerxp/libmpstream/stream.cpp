@@ -225,7 +225,7 @@ unsigned int Stream::read_int24(){
   return y;
 }
 
-void print_stream_drivers( void )
+void Stream::print_drivers()
 {
     unsigned i;
     MSG_INFO("Available stream drivers:\n");

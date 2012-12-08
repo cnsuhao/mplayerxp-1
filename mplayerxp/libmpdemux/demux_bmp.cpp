@@ -212,7 +212,7 @@ struct bmp_image_t : public Opaque {
 // Check if a file is a BMP file depending on whether starts with 'BM'
 static MPXP_Rc bmp_probe(Demuxer *demuxer)
 {
-  if (stream_read_word(demuxer->stream) == (('B' << 8) | 'M'))
+  if (demuxer->stream->read_word() == (('B' << 8) | 'M'))
     return MPXP_Ok;
   else
     return MPXP_False;
@@ -225,8 +225,8 @@ static int bmp_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
 {
   bmp_image_t *bmp_image = static_cast<bmp_image_t*>(demuxer->priv);
 
-  stream_reset(demuxer->stream);
-  stream_seek(demuxer->stream, bmp_image->image_offset);
+  demuxer->stream->reset();
+  demuxer->stream->seek( bmp_image->image_offset);
   demuxer->video->read_packet(demuxer->stream, bmp_image->image_size,
     0, bmp_image->image_offset, DP_KEYFRAME);
   return 1;
@@ -240,12 +240,12 @@ static Opaque* bmp_open(Demuxer* demuxer)
   bmp_image_t *bmp_image;
 
   // go back to the beginning
-  stream_reset(demuxer->stream);
-  stream_seek(demuxer->stream, demuxer->stream->start_pos+2);
-  filesize = stream_read_dword_le(demuxer->stream);
-  stream_skip(demuxer->stream, 4);
-  data_offset = stream_read_word_le(demuxer->stream);
-  stream_skip(demuxer->stream, 2);
+  demuxer->stream->reset();
+  demuxer->stream->seek( demuxer->stream->start_pos()+2);
+  filesize = demuxer->stream->read_dword_le();
+  demuxer->stream->skip( 4);
+  data_offset = demuxer->stream->read_word_le();
+  demuxer->stream->skip( 2);
 
   // create a new video stream header
   sh_video = demuxer->new_sh_video();
@@ -260,19 +260,19 @@ static Opaque* bmp_open(Demuxer* demuxer)
   // load the BITMAPINFOHEADER
   // allocate size and take the palette table into account
   sh_video->bih = (BITMAPINFOHEADER *)mp_malloc(data_offset - 12);
-  sh_video->bih->biSize = stream_read_dword_le(demuxer->stream);
-  sh_video->bih->biWidth = stream_read_dword_le(demuxer->stream);
-  sh_video->bih->biHeight = stream_read_dword_le(demuxer->stream);
-  sh_video->bih->biPlanes = stream_read_word_le(demuxer->stream);
-  sh_video->bih->biBitCount = stream_read_word_le(demuxer->stream);
-  sh_video->bih->biCompression = stream_read_dword_le(demuxer->stream);
-  sh_video->bih->biSizeImage = stream_read_dword_le(demuxer->stream);
-  sh_video->bih->biXPelsPerMeter = stream_read_dword_le(demuxer->stream);
-  sh_video->bih->biYPelsPerMeter = stream_read_dword_le(demuxer->stream);
-  sh_video->bih->biClrUsed = stream_read_dword_le(demuxer->stream);
-  sh_video->bih->biClrImportant = stream_read_dword_le(demuxer->stream);
+  sh_video->bih->biSize = demuxer->stream->read_dword_le();
+  sh_video->bih->biWidth = demuxer->stream->read_dword_le();
+  sh_video->bih->biHeight = demuxer->stream->read_dword_le();
+  sh_video->bih->biPlanes = demuxer->stream->read_word_le();
+  sh_video->bih->biBitCount = demuxer->stream->read_word_le();
+  sh_video->bih->biCompression = demuxer->stream->read_dword_le();
+  sh_video->bih->biSizeImage = demuxer->stream->read_dword_le();
+  sh_video->bih->biXPelsPerMeter = demuxer->stream->read_dword_le();
+  sh_video->bih->biYPelsPerMeter = demuxer->stream->read_dword_le();
+  sh_video->bih->biClrUsed = demuxer->stream->read_dword_le();
+  sh_video->bih->biClrImportant = demuxer->stream->read_dword_le();
   // fetch the palette
-  stream_read(demuxer->stream, (unsigned char *)(sh_video->bih) + 40,
+  demuxer->stream->read( (unsigned char *)(sh_video->bih) + 40,
     sh_video->bih->biClrUsed * 4);
 
   // load the data
