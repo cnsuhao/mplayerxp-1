@@ -39,7 +39,6 @@ namespace mpxp {
     };
 
     struct cache_vars_s;
-    class Demuxer_Stream;
     class Stream_Interface;
     struct stream_interface_info_t;
     /** Stream description */
@@ -58,7 +57,6 @@ namespace mpxp {
 		Type_Menu	=0x00000100, /**< Stream contains DVD menu... */
 	    };
 	    Stream(type_e type=Stream::Type_Unknown);
-	    Stream(Demuxer_Stream* ds);
 	    virtual ~Stream();
 
 	    virtual MPXP_Rc	open(libinput_t*libinput,const char* filename,int* file_format,stream_callback event_handler);

@@ -98,12 +98,6 @@ Stream::Stream(Stream::type_e t)
     reset();
 }
 
-Stream::Stream(Demuxer_Stream* ds) {
-    _type=Stream::Type_DS;
-    driver=ds->demuxer->stream->driver;
-    priv = ds;
-}
-
 Stream::~Stream(){
     MSG_INFO("\n*** free_stream(drv:%s) called [errno: %s]***\n",driver_info->mrl,strerror(errno));
     if(driver) close();
