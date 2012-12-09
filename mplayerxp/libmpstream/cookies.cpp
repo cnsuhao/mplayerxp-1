@@ -160,7 +160,7 @@ static struct cookie_list_type *load_cookies_from(const char *filename,
 	char *cols[7];
 	if (parse_line(&ptr, cols)) {
 	    struct cookie_list_type *newc;
-	    newc = new cookie_list_t;
+	    newc = new(zeromem) cookie_list_t;
 	    newc->name = col_dup(cols[5]);
 	    newc->value = col_dup(cols[6]);
 	    newc->path = col_dup(cols[2]);

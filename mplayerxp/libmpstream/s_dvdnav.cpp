@@ -95,7 +95,7 @@ namespace mpxp {
 
 DvdNav_Stream_Interface::DvdNav_Stream_Interface(libinput_t* libinput)
 			:Stream_Interface(libinput),
-			hlev(*new dvdnav_highlight_event_t) {}
+			hlev(*new(zeromem) dvdnav_highlight_event_t) {}
 DvdNav_Stream_Interface::~DvdNav_Stream_Interface() {
     dvdnav_close(dvdnav);
     delete &hlev;

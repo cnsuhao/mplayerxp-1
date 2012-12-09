@@ -353,7 +353,7 @@ static int __FASTCALL__ packet_queue_ensure(packet_queue_t *queue, unsigned int 
 	    queue->packets_reserve *= 2;
 	}
 	else {
-	    queue->packets = new packet_t;
+	    queue->packets = new(zeromem) packet_t;
 	    if (queue->packets == NULL) {
 		MSG_ERR("mp_malloc failure");
 		return -1;

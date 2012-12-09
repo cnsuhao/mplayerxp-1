@@ -43,7 +43,7 @@ void mpxp_print_init(int verbose)
 {
     unsigned i;
     int _color[8]={0,4,2,6,1,5,3,7};
-    priv_t*priv=new priv_t;
+    priv_t*priv=new(zeromem) priv_t;
     mpxp_context().msg_priv=priv;
     memcpy(priv->_color,_color,sizeof(_color));
     pthread_mutex_init(&priv->mp_msg_mutex,NULL);

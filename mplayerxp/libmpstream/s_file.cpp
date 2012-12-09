@@ -61,7 +61,6 @@ MPXP_Rc File_Stream_Interface::open(const char *filename,unsigned flags)
     /* decreasing number of packet from 256 to 10 speedups cache2 from 3.27% to 1.26%
        with full speed 1.04% for -nocache */
     /* Note: Please locate sector_size changinf after all read/write operations of open() function */
-    spos = 0;
     return MPXP_Ok;
 }
 
@@ -69,31 +68,20 @@ Stream::type_e File_Stream_Interface::type() const { return (end_pos==-1)?Stream
 off_t	File_Stream_Interface::size() const { return end_pos; }
 off_t	File_Stream_Interface::sector_size() const { return STREAM_BUFFER_SIZE; }
 
-#ifndef TEMP_FAILURE_RETRY
-#define TEMP_FAILURE_RETRY(x) (x)
-#endif
-
 int File_Stream_Interface::read(stream_packet_t*sp)
 {
 /*
     Should we repeate read() again on these errno: `EAGAIN', `EIO' ???
 */
     sp->type=0;
-    sp->len = TEMP_FAILURE_RETRY(::read(fd,sp->buf,sp->len));
+    sp->len = ::read(fd,sp->buf,sp->len);
     if(sp->len>0) spos += sp->len;
     return sp->len;
 }
 
-# define TEMP_FAILURE_RETRY64(expression) \
-  (__extension__					\
-    ({ long long int __result;				\
-       do __result = (long long int) (expression);	\
-       while (__result == -1LL && errno == EINTR);	\
-       __result; }))
-
 off_t File_Stream_Interface::seek(off_t pos)
 {
-    spos=TEMP_FAILURE_RETRY64(::lseek(fd,pos,SEEK_SET));
+    spos=::lseek(fd,pos,SEEK_SET);
     return spos;
 }
 

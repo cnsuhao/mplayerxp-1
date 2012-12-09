@@ -755,7 +755,7 @@ static int pnm_get_stream_chunk(pnm_t *p) {
 // pnm_t *pnm_connect(const char *mrl) {
 pnm_t *pnm_connect(Tcp& tcp,const char *path) {
 
-  pnm_t *p=new pnm_t;
+  pnm_t *p=new(zeromem) pnm_t;
   int need_response=0;
 
   p->path=mp_strdup(path);

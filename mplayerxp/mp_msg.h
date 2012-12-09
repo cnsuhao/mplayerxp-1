@@ -1,6 +1,5 @@
 #ifndef __MP_MSG_H
 #define __MP_MSG_H 1
-
 #include "mplayerxp.h"
 
 /* TODO: more highlighted levels */
@@ -85,24 +84,26 @@ __always_inline int MSG_STATUS(const char* args,...) {
     return mpxp_printf((MSGL_STATUS<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
 __always_inline int MSG_V(const char* args,...) {
-    return mpxp_printf((MSGL_V<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
-}
-#ifdef MP_DEBUG
-__always_inline int MSG_DBG2(const char* args,...) {
-    return mpxp_printf((MSGL_DBG2<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
-}
-__always_inline int MSG_DBG3(const char* args,...) {
-    return mpxp_printf((MSGL_DBG3<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
-}
-__always_inline int MSG_DBG4(const char* args,...) {
-    return mpxp_printf((MSGL_DBG4<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
+    return mp_conf.verbose ?
+	mpxp_printf((MSGL_V<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ()):
+	0;
 }
 
-#else
-__always_inline int MSG_DBG2(const char* args,...) { return mpxp_print_dummy(args); }
-__always_inline int MSG_DBG3(const char* args,...) { return mpxp_print_dummy(args); }
-__always_inline int MSG_DBG4(const char* args,...) { return mpxp_print_dummy(args); }
-#endif
+__always_inline int MSG_DBG2(const char* args,...) {
+    return mp_conf.verbose>1 ?
+	mpxp_printf((MSGL_DBG2<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ()):
+	0;
+}
+__always_inline int MSG_DBG3(const char* args,...) {
+    return mp_conf.verbose>2 ?
+	mpxp_printf((MSGL_DBG3<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ()):
+	0;
+}
+__always_inline int MSG_DBG4(const char* args,...) {
+    return mp_conf.verbose>3 ?
+	mpxp_printf((MSGL_DBG4<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ()):
+	0;
+}
 #else // __va_arg_pack
 #ifdef __GNUC__
 #define mpxp_print(mod,lev, args... ) ((lev<(mp_conf.verbose+MSGL_V))?(mpxp_printf(((lev&0xF)<<28)|(mod&0x0FFFFFFF),## args)):(mpxp_print_dummy(args)))

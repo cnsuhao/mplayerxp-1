@@ -144,7 +144,7 @@ while(1){
   if(id==mmioFOURCC('L','I','S','T')){
     unsigned len=demuxer->stream->read_dword_le();   // list size
     id=demuxer->stream->read_dword_le();             // list type
-    MSG_DBG2("LIST %.4s  len=%u\n",(char *) &id,len);
+    MSG_DBG2("LIST '%.4s'  len=%u\n",(char *) &id,len);
     if(len >= 4) {
 	len -= 4;
 	list_end=demuxer->stream->tell()+((len+1)&(~1));
@@ -167,7 +167,7 @@ while(1){
     continue;
   }
   size2=demuxer->stream->read_dword_le();
-  MSG_V("CHUNK %.4s  len=%u\n",(char *) &id,size2);
+  MSG_V("CHUNK '%.4s' len=%u\n",(char *) &id,size2);
   chunksize=(size2+1)&(~1);
   infot=-1;
   switch(id){

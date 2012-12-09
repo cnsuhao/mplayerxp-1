@@ -56,6 +56,7 @@ static void my_callback(int signo)
 
 void init_signal_handling( void )
 {
+#if 0
   /*========= Catch terminate signals: ================*/
   /* terminate requests:*/
   signal(SIGTERM,my_callback); /* kill*/
@@ -70,6 +71,7 @@ void init_signal_handling( void )
   signal(SIGILL,my_callback);  /* illegal instruction */
   signal(SIGFPE,my_callback);  /* floating point exc. */
   signal(SIGABRT,my_callback); /* abort() */
+#endif
 #ifndef NDEBUG
     /* on many systems default coresize is 0.
        Enable any coresize here. */

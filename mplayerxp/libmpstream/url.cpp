@@ -66,7 +66,7 @@ url_new(const char* url) {
 	}
 
 	// Create the URL container
-	Curl = new URL_t;
+	Curl = new(zeromem) URL_t;
 	if( Curl==NULL ) {
 		MSG_FATAL("MemAllocFailed\n");
 		goto err_out;

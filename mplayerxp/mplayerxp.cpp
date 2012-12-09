@@ -336,11 +336,11 @@ void MPXPSystem::uninit_input() {
     }
 }
 void MPXPSystem::uninit_player(unsigned int mask){
-    Cached_Stream* stream=NULL;
+    Stream* stream=NULL;
     sh_audio_t* sh_audio=NULL;
     sh_video_t* sh_video=NULL;
     if(_demuxer) {
-	stream=static_cast<Cached_Stream*>(_demuxer->stream);
+	stream=static_cast<Stream*>(_demuxer->stream);
 	sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
 	sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     }
@@ -959,7 +959,7 @@ int MPXPSystem::init_vobsub(const char *filename) {
 }
 
 int MPXPSystem::handle_playlist(const char *filename) const {
-    Cached_Stream* stream=static_cast<Cached_Stream*>(_demuxer->stream);
+    Stream* stream=static_cast<Stream*>(_demuxer->stream);
     int eof=0;
     play_tree_t* entry;
     // Handle playlist
@@ -995,7 +995,7 @@ int MPXPSystem::handle_playlist(const char *filename) const {
 
 void MPXPSystem::init_dvd_nls() const {
 /* Add NLS support here */
-    Cached_Stream* stream=static_cast<Cached_Stream*>(_demuxer->stream);
+    Stream* stream=static_cast<Stream*>(_demuxer->stream);
     char *lang;
     if(!mp_conf.audio_lang) mp_conf.audio_lang=nls_get_screen_cp();
     MP_UNIT("dvd lang->id");
@@ -1022,7 +1022,7 @@ void MPXPSystem::print_stream_formats() const {
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     int fmt;
     char *c;
-    MSG_INFO("[Cached_Stream]:");
+    MSG_INFO("[Stream]:");
     if(sh_video) {
 	MSG_INFO("Video=");
 	if(sh_video->bih)fmt=sh_video->bih->biCompression;
@@ -1073,7 +1073,7 @@ void MPXPSystem::read_video_properties() const {
 
 void MPXPSystem::read_subtitles(const char *filename,int forced_subs_only,int stream_dump_type) {
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
-    Cached_Stream* stream=static_cast<Cached_Stream*>(_demuxer->stream);
+    Stream* stream=static_cast<Stream*>(_demuxer->stream);
     if (mp_conf.spudec_ifo) {
 	unsigned int palette[16], width, height;
 	MP_UNIT("spudec_init_vobsub");
@@ -1346,7 +1346,7 @@ void MPXPSystem::print_audio_status() const {
 
 #ifdef USE_OSD
 int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
-    Cached_Stream* stream=static_cast<Cached_Stream*>(_demuxer->stream);
+    Stream* stream=static_cast<Stream*>(_demuxer->stream);
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     int rc=0;
@@ -1416,7 +1416,7 @@ int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
 #endif
 
 int MPXPSystem::handle_input(seek_args_t* _seek,osd_args_t* osd,input_state_t* state) {
-    Cached_Stream* stream=static_cast<Cached_Stream*>(_demuxer->stream);
+    Stream* stream=static_cast<Stream*>(_demuxer->stream);
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     int v_bright=0;
     int v_cont=0;
@@ -1603,7 +1603,7 @@ For future:
 	    case MP_CMD_DVDNAV:
 		if(stream->ctrl(SCRTL_MPXP_CMD,(any_t*)cmd->args[0].v.i)==MPXP_Ok) {
 		    if(cmd->args[0].v.i!=MP_CMD_DVDNAV_SELECT) {
-			    stream->type(Cached_Stream::Type_Menu);
+			    stream->type(Stream::Type_Menu);
 			    state->need_repaint=1;
 		    }
 		    osd_function=OSD_DVDMENU;
@@ -1669,7 +1669,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     mpxp_init_antiviral_protection(1);
     mpxp_test_backtrace();
     int i;
-    Cached_Stream* stream=NULL;
+    Stream* stream=NULL;
     int stream_dump_type=0;
     input_state_t input_state = { 0, 0, 0 };
     char *ao_subdevice;
@@ -1686,7 +1686,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 
     // Yes, it really must be placed in stack or in very secret place
     PointerProtector<MPXPSecureKeys> ptr_protector;
-    secure_keys=ptr_protector.protect(new MPXPSecureKeys(10));
+    secure_keys=ptr_protector.protect(new(zeromem) MPXPSecureKeys(10));
 
     mpxp_init_structs();
     MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
@@ -1802,7 +1802,11 @@ play_next_file:
 
     if(stream_dump_type) mp_conf.s_cache_size=0;
     MP_UNIT("open_stream");
-    if(!input_state.after_dvdmenu) stream=new(zeromem) Cached_Stream;
+    // CACHE2: initial prefill: 20%  later: 5%  (should be set by -cacheopts)
+    if(!input_state.after_dvdmenu)
+	stream=(mp_conf.s_cache_size && !stream_dump_type)?
+		new(zeromem) Cached_Stream(MPXPSys.libinput(),mp_conf.s_cache_size*1024,mp_conf.s_cache_size*1024/5,mp_conf.s_cache_size*1024/20):
+		new(zeromem) Stream;
     if(stream->open(MPXPSys.libinput(),filename,&file_format)!=MPXP_Ok) { // error...
 	MSG_ERR("Can't open: %s\n",filename);
 	eof = MPXPSys.libmpdemux_was_interrupted(PT_NEXT_ENTRY);
@@ -1816,13 +1820,6 @@ play_next_file:
     }
 
     MP_UNIT(NULL);
-
-    // CACHE2: initial prefill: 20%  later: 5%  (should be set by -cacheopts)
-    if(mp_conf.s_cache_size && !stream_dump_type){
-	MP_UNIT("enable_cache");
-	if(!stream->enable_cache(MPXPSys.libinput(),mp_conf.s_cache_size*1024,mp_conf.s_cache_size*1024/5,mp_conf.s_cache_size*1024/20))
-	    if((eof = MPXPSys.libmpdemux_was_interrupted(PT_NEXT_ENTRY))) goto goto_next_file;
-    }
 
     // DUMP STREAMS:
     if(stream_dump_type==1) dump_stream(stream);

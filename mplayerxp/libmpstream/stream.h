@@ -59,7 +59,6 @@ namespace mpxp {
 
 	    virtual MPXP_Rc	open(libinput_t*libinput,const char* filename,int* file_format);
 	    virtual int		read(any_t* mem,int total);
-	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual int		skip(off_t len);
 	    virtual off_t	tell() const;
@@ -69,8 +68,6 @@ namespace mpxp {
 	    virtual void	reset();
 	    virtual void	type(type_e);/**< assign new propertie for the stream (see STREAMTYPE_ for detail) */
 	    virtual type_e	type();		/**< properties of the stream (see STREAMTYPE_ for detail) */
-	    virtual off_t	pos() const;	/**< SOF offset from begin of stream */
-	    virtual void	pos(off_t);	/**< SOF offset from begin of stream */
 	    virtual int		eof() const;	/**< indicates EOF */
 	    virtual void	eof(int);	/**< set EOF */
 	    virtual off_t	start_pos() const;	/**< real start of stream (without internet's headers) */
@@ -93,10 +90,10 @@ namespace mpxp {
 	    int			file_format;	/**< detected file format (by http:// protocol for example) */
 	    const stream_interface_info_t* driver_info;
 	private:
+	    int			read(stream_packet_t* sp);
 	    Stream_Interface*	driver; /**< low-level stream driver */
 	    Opaque*		priv;	/**< private data used by stream driver */
 	    type_e		_type;
-	    off_t		_pos;	/**< SOF offset from begin of stream */
 	    int			_eof;	/**< indicates EOF */
     };
     inline Stream::type_e operator~(Stream::type_e a) { return static_cast<Stream::type_e>(~static_cast<unsigned>(a)); }
@@ -120,77 +117,27 @@ namespace mpxp {
 	    virtual void	eof(int eof);
 	    virtual void	reset();
 
-	    virtual int		read_char();
-	    virtual unsigned	read_word();
-	    virtual unsigned	read_dword();
-	    virtual unsigned	read_word_le();
-	    virtual unsigned	read_dword_le();
-	    virtual uint64_t	read_qword();
-	    virtual uint64_t	read_qword_le();
-	    virtual unsigned	read_int24();
-
 	    virtual off_t	start_pos() const;	/**< real start of stream (without internet's headers) */
 	    virtual off_t	end_pos() const;	/**< real end of stream (media may be not fully filled) */
 	    virtual unsigned	sector_size() const; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
 	private:
+	    off_t		_pos;
 	    unsigned		_len;
 	    uint8_t*		buffer;
     };
 
-    struct Buffered_Stream : public Stream {
+    struct Cached_Stream : public Stream {
 	public:
-	    Buffered_Stream(Stream::type_e type=Stream::Type_Unknown);
-	    virtual ~Buffered_Stream();
-
-	    virtual MPXP_Rc	open(libinput_t*libinput,const char* filename,int* file_format);
-	    virtual off_t	seek_long(off_t pos);
-	    virtual int		read(any_t* mem,int total);
-	    virtual int		read(stream_packet_t * sp);
-	    virtual off_t	tell() const;
-	    virtual off_t	seek(off_t pos);
-	    virtual int		skip(off_t len);
-
-	    virtual int		read_char();
-	    virtual unsigned	read_word();
-	    virtual unsigned	read_dword();
-	    virtual unsigned	read_word_le();
-	    virtual unsigned	read_dword_le();
-	    virtual uint64_t	read_qword();
-	    virtual uint64_t	read_qword_le();
-	    virtual unsigned	read_int24();
-	private:
-	    off_t		file_pos() const { return pos()-buf_len; }
-	    int			read_cbuffer();
-	    unsigned int	buf_pos; /**< position whitin of small cache */
-	    unsigned int	buf_len; /**< length of small cache */
-	    unsigned char*	buffer;/**< buffer of small cache */
-    };
-
-    struct Cached_Stream : public Buffered_Stream {
-	public:
-	    Cached_Stream(Stream::type_e type=Stream::Type_Unknown);
+	    Cached_Stream(libinput_t* libinput,int size,int _min,int prefill,Stream::type_e type=Stream::Type_Unknown);
 	    virtual ~Cached_Stream();
 
-	    virtual int		enable_cache(libinput_t* libinput,int size,int min,int prefill);
-	    virtual void	disable_cache();
-
 	    virtual int		read(any_t* mem,int total);
-	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	tell() const;
 	    virtual off_t	seek(off_t pos);
 	    virtual int		skip(off_t len);
 	    virtual int		eof() const;
 	    virtual void	eof(int eof);
 	    virtual void	reset();
-
-	    virtual int		read_char();
-	    virtual unsigned	read_word();
-	    virtual unsigned	read_dword();
-	    virtual unsigned	read_word_le();
-	    virtual unsigned	read_dword_le();
-	    virtual uint64_t	read_qword();
-	    virtual uint64_t	read_qword_le();
-	    virtual unsigned	read_int24();
 	private:
 	    cache_vars_t*	cache_data;	/**< large cache */
     };
