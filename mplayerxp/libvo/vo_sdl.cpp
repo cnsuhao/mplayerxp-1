@@ -200,8 +200,8 @@ class SDL_VO_Interface : public VO_Interface {
 	const char*	parse_sub_device(const char *sd) const;
 
 
-	char		sdl_subdevice[100];
-	char		driver[8]; /* output driver used by sdl */
+	std::string	sdl_subdevice;
+	std::string	driver; /* output driver used by sdl */
 	unsigned	flags;
 	LocalPtr<Aspect>aspect;
 	SDL_Surface*	surface; /* SDL display surface */
@@ -273,8 +273,7 @@ SDL_VO_Interface::SDL_VO_Interface(const char *arg)
     const char* vidix_name=NULL;
     num_buffs = 1;
     surface = NULL;
-    sdl_subdevice[0]='\0';
-    if(arg) strcpy(sdl_subdevice,arg);
+    if(arg) sdl_subdevice=arg;
     if(arg) vidix_name = parse_sub_device(arg);
 #ifdef CONFIG_VIDIX
     if(vidix_name) {
@@ -324,9 +323,10 @@ static inline int findArrayEnd (SDL_Rect **array)
 
 void SDL_VO_Interface::sdl_open( )
 {
+    char drv[8];
     const SDL_VideoInfo *vidInfo = NULL;
     MSG_DBG3("SDL: Opening Plugin\n");
-    if(sdl_subdevice[0]) setenv("SDL_VIDEODRIVER", sdl_subdevice, 1);
+    if(!sdl_subdevice.empty()) setenv("SDL_VIDEODRIVER", sdl_subdevice.c_str(), 1);
 
     /* does the user want SDL to try and force Xv */
     if(sdl_forcexv)	setenv("SDL_VIDEO_X11_NODIRECTCOLOR", "1", 1);
@@ -349,10 +349,11 @@ void SDL_VO_Interface::sdl_open( )
     }
 
 #ifdef CONFIG_VIDIX
-    if(memcmp(sdl_subdevice,"vidix",5) != 0)
+    if(memcmp(sdl_subdevice.c_str(),"vidix",5) != 0)
 #endif
-    SDL_VideoDriverName(driver, 8);
-    MSG_OK("SDL: Using driver: %s\n", driver);
+    SDL_VideoDriverName(drv, 8);
+    driver=drv;
+    MSG_OK("SDL: Using driver: %s\n", driver.c_str());
     /* other default values */
 #ifdef SDL_NOHWSURFACE
     MSG_V("SDL: using software-surface\n");
@@ -682,11 +683,10 @@ MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t 
 	retval = set_fullmode(fullmode);
 	if(retval!=MPXP_Ok) return retval;
     } else {
-	if((strcmp(driver, "x11") == 0)
-	    ||(strcmp(driver, "windib") == 0)
-	    ||(strcmp(driver, "directx") == 0)
-	    ||((strcmp(driver, "aalib") == 0)
-	    && X)) {
+	if(driver=="x11"
+	    ||driver=="windib"
+	    ||driver=="directx"
+	    ||(driver=="aalib" && X)) {
 		MSG_V("SDL: setting windowed mode\n");
 		retval = set_video_mode(dstwidth, dstheight, bpp, sdlflags);
 		if(retval!=MPXP_Ok) return retval;

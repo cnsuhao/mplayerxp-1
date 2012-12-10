@@ -35,18 +35,20 @@ namespace mpxp {
 	    virtual off_t	sector_size() const;
 	    virtual std::string mime_type() const;
 	protected:
-	    cdda_priv*		priv;
+	    CDD_Interface*	priv;
 	private:
 	    track_t		track_idx;
     };
 
 Cdda_Stream_Interface::Cdda_Stream_Interface(libinput_t* libinput)
 			:Stream_Interface(libinput),
+			priv(new(zeromem) CDD_Interface),
 			track_idx(255) {}
-Cdda_Stream_Interface::~Cdda_Stream_Interface() {}
+Cdda_Stream_Interface::~Cdda_Stream_Interface() { delete priv; }
 
 MPXP_Rc Cdda_Stream_Interface::open(const char *filename,unsigned flags)
 {
+    MPXP_Rc rc;
     const char *param;
     char *device;
     UNUSED(flags);
@@ -55,38 +57,38 @@ MPXP_Rc Cdda_Stream_Interface::open(const char *filename,unsigned flags)
 	return MPXP_False;
     }
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
-    priv = open_cdda(device ? device : DEFAULT_CDROM_DEVICE,param);
+    rc = priv->open_cdda(device ? device : DEFAULT_CDROM_DEVICE,param);
     if(device) delete device;
-    return priv?MPXP_Ok:MPXP_False;
+    return rc;
 }
 
 Stream::type_e Cdda_Stream_Interface::type() const { return Stream::Type_RawAudio|Stream::Type_Seekable; }
-off_t	Cdda_Stream_Interface::start_pos() const { return cdda_start(priv); }
-off_t	Cdda_Stream_Interface::size() const { return cdda_size(priv); }
+off_t	Cdda_Stream_Interface::start_pos() const { return priv->start(); }
+off_t	Cdda_Stream_Interface::size() const { return priv->size(); }
 off_t	Cdda_Stream_Interface::sector_size() const { return CD_FRAMESIZE_RAW; }
 std::string Cdda_Stream_Interface::mime_type() const { return "audio/PCMA"; }
 
 int Cdda_Stream_Interface::read(stream_packet_t*sp)
 {
     sp->type=0;
-    sp->len=read_cdda(priv,sp->buf,&track_idx);
+    sp->len=priv->read(sp->buf,&track_idx);
     return sp->len;
 }
 
 off_t Cdda_Stream_Interface::seek(off_t pos)
 {
-    seek_cdda(priv,pos,&track_idx);
+    priv->seek(pos,&track_idx);
     return pos;
 }
 
 off_t Cdda_Stream_Interface::tell() const
 {
-    return tell_cdda(priv);
+    return priv->tell();
 }
 
 void Cdda_Stream_Interface::close()
 {
-    close_cdda(priv);
+    priv->close();
 }
 
 MPXP_Rc Cdda_Stream_Interface::ctrl(unsigned cmd,any_t*args)
@@ -99,7 +101,7 @@ MPXP_Rc Cdda_Stream_Interface::ctrl(unsigned cmd,any_t*args)
 	}
 	break;
 	case SCTRL_AUD_GET_CHANNELS:
-	    *(int *)args=cdio_cddap_track_channels(priv->cd, track_idx);
+	    *(int *)args=priv->channels(track_idx);
 	    if(*(int *)args<=0) *(int *)args=2;
 	    MSG_V("cdda channels: %u\n",*(int *)args);
 	    return MPXP_Ok;
@@ -152,9 +154,9 @@ MPXP_Rc Cddb_Stream_Interface::open(const char *filename,unsigned flags)
 	return MPXP_False;
     }
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
-    priv = open_cddb(libinput,device ? device : DEFAULT_CDROM_DEVICE,param);
+    retval = priv->open_cddb(libinput,device ? device : DEFAULT_CDROM_DEVICE,param);
     if(device) delete device;
-    return priv?MPXP_Ok:MPXP_False;
+    return retval;
 #else
     return MPXP_False;
 #endif

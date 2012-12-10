@@ -57,7 +57,7 @@ namespace mpxp {
 static cd_toc_t cdtoc[100];
 
 #if defined(__linux__)
-int read_toc(void) {
+static int read_toc(void) {
 	int drive = open("/dev/cdrom", O_RDONLY | O_NONBLOCK);
 	struct cdrom_tochdr tochdr;
 	struct cdrom_tocentry tocentry;
@@ -87,7 +87,7 @@ int read_toc(void) {
 }
 
 #elif defined(SYS_BSD)
-int read_toc(void) {
+static int read_toc(void) {
 	int drive = open("/dev/acd0c", O_RDONLY | O_NONBLOCK);
 	struct ioc_toc_header tochdr;
 	struct ioc_read_toc_single_entry tocentry;
@@ -117,7 +117,7 @@ int read_toc(void) {
 }
 #endif
 
-unsigned int __FASTCALL__ cddb_sum(int n) {
+static unsigned int __FASTCALL__ cddb_sum(int n) {
 	unsigned int ret;
 
 	ret = 0;
@@ -128,7 +128,7 @@ unsigned int __FASTCALL__ cddb_sum(int n) {
 	return ret;
 }
 
-unsigned long __FASTCALL__ cddb_discid(int tot_trks) {
+static unsigned long __FASTCALL__ cddb_discid(int tot_trks) {
 	unsigned int i, t = 0, n = 0;
 
 	i = 0;
@@ -141,7 +141,7 @@ unsigned long __FASTCALL__ cddb_discid(int tot_trks) {
 	return ((n % 0xff) << 24 | t << 8 | tot_trks);
 }
 
-int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parser)(HTTP_header_t*,cddb_data_t*), cddb_data_t *cddb_data) {
+static int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parser)(HTTP_header_t*,cddb_data_t*), cddb_data_t *cddb_data) {
 	char request[4096];
 	int ret = 0;
 	Tcp tcp(cddb_data->libinput,-1);
@@ -150,7 +150,7 @@ int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parser)(HTTP
 
 	if( reply_parser==NULL || command==NULL || cddb_data==NULL ) return -1;
 
-	sprintf( request, "http://%s/~cddb/cddb.cgi?cmd=%s%s&proto=%d", cddb_data->freedb_server, command, cddb_data->cddb_hello, cddb_data->freedb_proto_level );
+	sprintf( request, "http://%s/~cddb/cddb.cgi?cmd=%s%s&proto=%d", cddb_data->freedb_server, command, cddb_data->cddb_hello.c_str(), cddb_data->freedb_proto_level );
 	MSG_V("Request[%s]\n", request );
 
 	url = url_new(request);
@@ -190,7 +190,7 @@ int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parser)(HTTP
 	return ret;
 }
 
-int __FASTCALL__ cddb_read_cache(cddb_data_t *cddb_data) {
+static int __FASTCALL__ cddb_read_cache(cddb_data_t *cddb_data) {
 	char file_name[100];
 	struct stat stats;
 	int file_fd, ret;
@@ -214,7 +214,7 @@ int __FASTCALL__ cddb_read_cache(cddb_data_t *cddb_data) {
 		file_size = stats.st_size;
 	}
 
-	cddb_data->xmcd_file = (char*)mp_malloc(file_size);
+	cddb_data->xmcd_file = new char [file_size];
 	if( cddb_data->xmcd_file==NULL ) {
 		MSG_FATAL("Memory allocation failed\n");
 		close(file_fd);
@@ -232,7 +232,7 @@ int __FASTCALL__ cddb_read_cache(cddb_data_t *cddb_data) {
 	return 0;
 }
 
-int __FASTCALL__ cddb_write_cache(cddb_data_t *cddb_data) {
+static int __FASTCALL__ cddb_write_cache(cddb_data_t *cddb_data) {
 	// We have the file, save it for cache.
 	char file_name[100];
 	int file_fd;
@@ -321,80 +321,80 @@ static int cddb_read_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
 	return 0;
 }
 
-int __FASTCALL__ cddb_request_titles(cddb_data_t *cddb_data) {
-	char command[1024];
-	sprintf( command, "cddb+read+%s+%08lx", cddb_data->category, cddb_data->disc_id);
-	return cddb_http_request(command, cddb_read_parse, cddb_data);
+static int __FASTCALL__ cddb_request_titles(cddb_data_t *cddb_data) {
+    char command[1024];
+    sprintf( command, "cddb+read+%s+%08lx", cddb_data->category.c_str(), cddb_data->disc_id);
+    return cddb_http_request(command, cddb_read_parse, cddb_data);
 }
 
 static int cddb_query_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
-	char album_title[100];
-	char *ptr = NULL;
-	int ret, status;
+    char album_title[100];
+    char *ptr = NULL;
+    int ret, status;
 
-	ret = sscanf((char*)http_hdr->body, "%d ", &status);
-	if( ret!=1 ) {
+    ret = sscanf((char*)http_hdr->body, "%d ", &status);
+    if( ret!=1 ) {
+	MSG_ERR("Parse error\n");
+	return -1;
+    }
+
+    switch(status) {
+	case 200:
+	    // Found exact match
+	    ret = sscanf((char*)http_hdr->body, "%d %s %08lx %s", &status, cddb_data->category.c_str(), &(cddb_data->disc_id), album_title);
+	    if( ret!=4 ) {
 		MSG_ERR("Parse error\n");
 		return -1;
-	}
-
-	switch(status) {
-		case 200:
-			// Found exact match
-			ret = sscanf((char*)http_hdr->body, "%d %s %08lx %s", &status, cddb_data->category, &(cddb_data->disc_id), album_title);
-			if( ret!=4 ) {
-				MSG_ERR("Parse error\n");
-				return -1;
-			}
-			ptr = strstr((char*)http_hdr->body, album_title);
-			if( ptr!=NULL ) {
-				char *ptr2;
-				int len;
-				ptr2 = strstr(ptr, "\n");
-				if( ptr2==NULL ) {
-					len = (http_hdr->body_size)-(ptr-(char*)(http_hdr->body));
-				} else {
-					len = ptr2-ptr+1;
-				}
-				strncpy(album_title, ptr, len);
-				album_title[len-2]='\0';
-			}
-			MSG_V("Parse OK, found: %s\n", album_title);
-			return cddb_request_titles(cddb_data);
-		case 202:
-			// No match found
-			MSG_ERR("Album not found\n");
-			break;
-		case 210:
-			// Found exact matches, list follows
-			ptr = strstr((char*)http_hdr->body, "\n");
-			if( ptr==NULL ) {
-				MSG_ERR("Unable to find end of line\n");
-				return -1;
-			}
-			ptr++;
-			// We have a list of exact matches, so which one do
-			// we use? So let's take the first one.
-			ret = sscanf(ptr, "%s %08lx %s", cddb_data->category, &(cddb_data->disc_id), album_title);
-			if( ret!=3 ) {
-				MSG_ERR("Parse error\n");
-				return -1;
-			}
-			ptr = strstr((char*)http_hdr->body, album_title);
-			if( ptr!=NULL ) {
-				char *ptr2;
-				int len;
-				ptr2 = strstr(ptr, "\n");
-				if( ptr2==NULL ) {
-					len = (http_hdr->body_size)-(ptr-(char*)(http_hdr->body));
-				} else {
-					len = ptr2-ptr+1;
-				}
-				strncpy(album_title, ptr, len);
-				album_title[len-2]='\0';
-			}
-			MSG_V("Parse OK, found: %s\n", album_title);
-			return cddb_request_titles(cddb_data);
+	    }
+	    ptr = strstr((char*)http_hdr->body, album_title);
+	    if( ptr!=NULL ) {
+		char *ptr2;
+		int len;
+		ptr2 = strstr(ptr, "\n");
+		if( ptr2==NULL ) {
+		    len = (http_hdr->body_size)-(ptr-(char*)(http_hdr->body));
+		} else {
+		    len = ptr2-ptr+1;
+		}
+		strncpy(album_title, ptr, len);
+		album_title[len-2]='\0';
+	    }
+	    MSG_V("Parse OK, found: %s\n", album_title);
+	    return cddb_request_titles(cddb_data);
+	case 202:
+	    // No match found
+	    MSG_ERR("Album not found\n");
+	    break;
+	case 210:
+	    // Found exact matches, list follows
+	    ptr = strstr((char*)http_hdr->body, "\n");
+	    if( ptr==NULL ) {
+		MSG_ERR("Unable to find end of line\n");
+		return -1;
+	    }
+	    ptr++;
+	    // We have a list of exact matches, so which one do
+	    // we use? So let's take the first one.
+	    ret = sscanf(ptr, "%s %08lx %s", cddb_data->category.c_str(), &(cddb_data->disc_id), album_title);
+	    if( ret!=3 ) {
+		MSG_ERR("Parse error\n");
+		return -1;
+	    }
+	    ptr = strstr((char*)http_hdr->body, album_title);
+	    if( ptr!=NULL ) {
+		char *ptr2;
+		int len;
+		ptr2 = strstr(ptr, "\n");
+		if( ptr2==NULL ) {
+		    len = (http_hdr->body_size)-(ptr-(char*)(http_hdr->body));
+		} else {
+		    len = ptr2-ptr+1;
+		}
+		strncpy(album_title, ptr, len);
+		album_title[len-2]='\0';
+	    }
+	    MSG_V("Parse OK, found: %s\n", album_title);
+	    return cddb_request_titles(cddb_data);
 /*
 body=[210 Found exact matches, list follows (until terminating `.')
 misc c711930d Santana / Supernatural
@@ -402,99 +402,99 @@ rock c711930d Santana / Supernatural
 blues c711930d Santana / Supernatural
 .]
 */
-		case 211:
-			// Found inexact matches, list follows
-			MSG_WARN("No exact matches found, list follows\n");
-			break;
-		default:
-			MSG_ERR("Unhandled code\n");
-	}
-	return -1;
+	case 211:
+	    // Found inexact matches, list follows
+	    MSG_WARN("No exact matches found, list follows\n");
+	    break;
+	default:
+	    MSG_ERR("Unhandled code\n");
+    }
+    return -1;
 }
 
 static int cddb_proto_level_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
-	int max;
-	int ret, status;
-	char *ptr;
+    int max;
+    int ret, status;
+    char *ptr;
 
-	ret = sscanf((char*)http_hdr->body, "%d ", &status);
-	if( ret!=1 ) {
+    ret = sscanf((char*)http_hdr->body, "%d ", &status);
+    if( ret!=1 ) {
+	MSG_ERR("Parse error\n");
+	return -1;
+    }
+
+    switch(status) {
+	case 210:
+	    ptr = strstr((char*)http_hdr->body, "max proto:");
+	    if( ptr==NULL ) {
 		MSG_ERR("Parse error\n");
 		return -1;
-	}
-
-	switch(status) {
-		case 210:
-			ptr = strstr((char*)http_hdr->body, "max proto:");
-			if( ptr==NULL ) {
-				MSG_ERR("Parse error\n");
-				return -1;
-			}
-			ret = sscanf(ptr, "max proto: %d", &max);
-			if( ret!=1 ) {
-				MSG_ERR("Parse error\n");
-				return -1;
-			}
-			cddb_data->freedb_proto_level = max;
-			return 0;
-		default:
-			MSG_ERR("Unhandled code\n");
-	}
-	return -1;
+	    }
+	    ret = sscanf(ptr, "max proto: %d", &max);
+	    if( ret!=1 ) {
+		MSG_ERR("Parse error\n");
+		return -1;
+	    }
+	    cddb_data->freedb_proto_level = max;
+	    return 0;
+	default:
+	    MSG_ERR("Unhandled code\n");
+    }
+    return -1;
 }
 
-int __FASTCALL__ cddb_get_proto_level(cddb_data_t *cddb_data) {
-	return cddb_http_request("stat", cddb_proto_level_parse, cddb_data);
+static int __FASTCALL__ cddb_get_proto_level(cddb_data_t *cddb_data) {
+    return cddb_http_request("stat", cddb_proto_level_parse, cddb_data);
 }
 
 static int cddb_freedb_sites_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
-	int ret, status;
-	UNUSED(cddb_data);
-	ret = sscanf((char*)http_hdr->body, "%d ", &status);
-	if( ret!=1 ) {
-		MSG_ERR("Parse error\n");
-		return -1;
-	}
-
-	switch(status) {
-		case 210:
-			// Parse the sites
-			return 0;
-		case 401:
-			MSG_ERR("No sites information available\n");
-			break;
-		default:
-			MSG_ERR("Unhandled code\n");
-	}
+    int ret, status;
+    UNUSED(cddb_data);
+    ret = sscanf((char*)http_hdr->body, "%d ", &status);
+    if( ret!=1 ) {
+	MSG_ERR("Parse error\n");
 	return -1;
+    }
+
+    switch(status) {
+	case 210:
+	    // Parse the sites
+	    return 0;
+	case 401:
+	    MSG_ERR("No sites information available\n");
+	    break;
+	default:
+	    MSG_ERR("Unhandled code\n");
+    }
+    return -1;
 }
 
-int __FASTCALL__ cddb_get_freedb_sites(cddb_data_t *cddb_data) {
-	return cddb_http_request("sites", cddb_freedb_sites_parse, cddb_data);
+static int __FASTCALL__ cddb_get_freedb_sites(cddb_data_t *cddb_data) {
+    return cddb_http_request("sites", cddb_freedb_sites_parse, cddb_data);
 }
 
-void __FASTCALL__ cddb_create_hello(cddb_data_t *cddb_data) {
-	char host_name[51];
-	const char *user_name;
+static void __FASTCALL__ cddb_create_hello(cddb_data_t *cddb_data) {
+    char host_name[51];
+    const char *user_name;
 
-	if( cddb_data->anonymous ) {	// Default is anonymous
-		/* Note from Eduardo Pérez Ureta <eperez@it.uc3m.es> :
-		 * We don't send current user/host name in hello to prevent spam.
-		 * Software that sends this is considered spyware
-		 * that most people don't like.
-		 */
-		user_name = "anonymous";
-		strcpy(host_name, "localhost");
-	} else {
-		if( gethostname(host_name, 50)<0 ) {
-			strcpy(host_name, "localhost");
-		}
-		user_name = getenv("LOGNAME");
+    if( cddb_data->anonymous ) {	// Default is anonymous
+	/* Note from Eduardo Pérez Ureta <eperez@it.uc3m.es> :
+	 * We don't send current user/host name in hello to prevent spam.
+	 * Software that sends this is considered spyware
+	 * that most people don't like.
+	 */
+	user_name = "anonymous";
+	strcpy(host_name, "localhost");
+    } else {
+	if( gethostname(host_name, 50)<0 ) {
+	    strcpy(host_name, "localhost");
 	}
-	sprintf( cddb_data->cddb_hello, "&hello=%s+%s+%s+%s", user_name, host_name, "MPlayerXP", VERSION);
+	user_name = getenv("LOGNAME");
+    }
+    cddb_data->cddb_hello=std::string("&hello=")+user_name+"+"+host_name+"+"+"MPlayerXP"+"+"+VERSION;
 }
 
-int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {
+static int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {
 	char offsets[1024], command[1024];
 	char *ptr;
 	unsigned idx;
@@ -528,7 +528,7 @@ int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {
 	return 0;
 }
 
-MPXP_Rc __FASTCALL__ cddb_resolve(libinput_t*libinput,char **xmcd_file) {
+static MPXP_Rc __FASTCALL__ cddb_resolve(libinput_t*libinput,char **xmcd_file) {
     char cddb_cache_dir[] = DEFAULT_CACHE_DIR;
     char *home_dir = NULL;
     cddb_data_t cddb_data;
@@ -571,228 +571,183 @@ MPXP_Rc __FASTCALL__ cddb_resolve(libinput_t*libinput,char **xmcd_file) {
  *
  *******************************************************************************************************************/
 
-cd_info_t* __FASTCALL__ cd_info_new() {
-    cd_info_t *cd_info = NULL;
+CD_Info::CD_Info() {}
+CD_Info::~CD_Info() {
+    cd_track_t *cd_track, *cd_track_next;
+    cd_track_next = first;
+    while( cd_track_next!=NULL ) {
+	cd_track = cd_track_next;
+	cd_track_next = cd_track->next;
+	delete cd_track;
+    }
+}
 
-    cd_info = (cd_info_t*)mp_mallocz(sizeof(cd_info_t));
-    if( cd_info==NULL ) {
-	MSG_FATAL("Memory allocation failed\n");
-	return NULL;
+cd_track_t* CD_Info::add_track(const char *track_name,
+				unsigned int track_nb,
+				unsigned int _min,
+				unsigned int _sec,
+				unsigned int _msec,
+				unsigned long frame_begin,
+				unsigned long frame_length) {
+    cd_track_t *cd_track;
+
+    if( track_name==NULL ) return NULL;
+
+    cd_track = new(zeromem) cd_track_t;
+    if( cd_track==NULL ) {
+		MSG_FATAL("Memory allocation failed\n");
+		return NULL;
+    }
+    cd_track->name=track_name;
+    cd_track->track_nb = track_nb;
+    cd_track->min = _min;
+    cd_track->sec = _sec;
+    cd_track->msec = _msec;
+    cd_track->frame_begin = frame_begin;
+    cd_track->frame_length = frame_length;
+
+    if( first==NULL ) first = cd_track;
+    if( last!=NULL ) last->next = cd_track;
+
+    cd_track->prev = last;
+
+    last = cd_track;
+    current = cd_track;
+
+    nb_tracks++;
+
+    return cd_track;
+}
+
+cd_track_t* CD_Info::get_track(unsigned int track_nb) const {
+    cd_track_t *cd_track=NULL;
+
+    cd_track = first;
+    while( cd_track!=NULL ) {
+	if( cd_track->track_nb==track_nb ) return cd_track;
+	cd_track = cd_track->next;
+    }
+    return NULL;
+}
+
+void CD_Info::print() const {
+    cd_track_t *current_track;
+    MSG_INFO("================ CD INFO === start =========\n");
+    MSG_INFO(" artist=[%s]\n"
+	" album=[%s]\n"
+	" genre=[%s]\n"
+	" nb_tracks=%d\n"
+	" length= %2d:%02d.%02d\n"
+	, artist.c_str()
+	, album.c_str()
+	, genre.c_str()
+	, nb_tracks
+	, min, sec, msec);
+    current_track = first;
+    while( current_track!=NULL ) {
+	MSG_V("  #%2d %2d:%02d.%02d @ %7ld\t[%s] \n", current_track->track_nb, current_track->min, current_track->sec, current_track->msec, current_track->frame_begin, current_track->name.c_str());
+	current_track = current_track->next;
+    }
+    MSG_INFO("================ CD INFO ===  end  =========\n");
+}
+
+static char* __FASTCALL__ xmcd_parse_dtitle(CD_Info& cd_info,char *line) {
+    char *ptr, *album;
+    ptr = strstr(line, "DTITLE=");
+    if( ptr!=NULL ) {
+	ptr += 7;
+	album = strstr(ptr, "/");
+	if( album==NULL ) return NULL;
+	cd_info.album=album+2;
+	album--;
+	album[0] = '\0';
+	cd_info.artist=ptr;
+    }
+    return ptr;
+}
+
+char* __FASTCALL__ xmcd_parse_dgenre(CD_Info& cd_info,char *line) {
+    char *ptr;
+    ptr = strstr(line, "DGENRE=");
+    if( ptr!=NULL ) {
+	ptr += 7;
+	cd_info.genre=ptr;
+    }
+    return ptr;
+}
+
+static char* __FASTCALL__ xmcd_parse_ttitle(CD_Info& cd_info,char *line) {
+    unsigned int track_nb;
+    unsigned long sec, off;
+    char *ptr;
+    ptr = strstr(line, "TTITLE");
+    if( ptr!=NULL ) {
+	ptr += 6;
+	// Here we point to the track number
+	track_nb = atoi(ptr);
+	ptr = strstr(ptr, "=");
+	if( ptr==NULL ) return NULL;
+	ptr++;
+
+	sec = cdtoc[track_nb].frame;
+	off = cdtoc[track_nb+1].frame-sec+1;
+
+	cd_info.add_track( ptr, track_nb+1, (unsigned int)(off/(60*75)), (unsigned int)((off/75)%60), (unsigned int)(off%75), sec, off );
+    }
+    return ptr;
+}
+
+MPXP_Rc CD_Info::parse_xmcd(const char *_xmcd_file) {
+    int length, pos = 0;
+    char *ptr;
+    char *ptr2;
+    unsigned int audiolen;
+    if( _xmcd_file==NULL ) return MPXP_False;
+    char* xmcd_file = mp_strdup(_xmcd_file);
+
+    length = strlen(xmcd_file);
+    ptr = xmcd_file;
+    while( ptr!=NULL && pos<length ) {
+	// Read a line
+	ptr2 = ptr;
+	while( ptr2[0]!='\0' && ptr2[0]!='\r' && ptr2[0]!='\n' ) ptr2++;
+	if( ptr2[0]=='\0' ) break;
+	ptr2[0] = '\0';
+	// Ignore comments
+	if( ptr[0]!='#' ) {
+	    // Search for the album title
+	    if( xmcd_parse_dtitle(*this, ptr) );
+	    // Search for the genre
+	    else if( xmcd_parse_dgenre(*this, ptr) );
+	    // Search for a track title
+	    else if( xmcd_parse_ttitle(*this, ptr) ){}
+	}
+	if( ptr2[1]=='\n' ) ptr2++;
+	pos = (ptr2+1)-ptr;
+	ptr = ptr2+1;
     }
 
-    return cd_info;
+    audiolen = cdtoc[nb_tracks].frame-cdtoc[0].frame;
+    min  = (unsigned int)(audiolen/(60*75));
+    sec  = (unsigned int)((audiolen/75)%60);
+    msec = (unsigned int)(audiolen%75);
+    delete xmcd_file;
+
+    return MPXP_Ok;
 }
 
-void __FASTCALL__ cd_info_free(cd_info_t *cd_info) {
-	cd_track_t *cd_track, *cd_track_next;
-	if( cd_info==NULL ) return;
-	if( cd_info->artist!=NULL ) delete cd_info->artist;
-	if( cd_info->album!=NULL ) delete cd_info->album;
-	if( cd_info->genre!=NULL ) delete cd_info->genre;
-
-	cd_track_next = cd_info->first;
-	while( cd_track_next!=NULL ) {
-		cd_track = cd_track_next;
-		cd_track_next = cd_track->next;
-		if( cd_track->name!=NULL ) delete cd_track->name;
-		delete cd_track;
-	}
-}
-
-cd_track_t* __FASTCALL__ cd_info_add_track(cd_info_t *cd_info, char *track_name, unsigned int track_nb, unsigned int min, unsigned int sec, unsigned int msec, unsigned long frame_begin, unsigned long frame_length) {
-	cd_track_t *cd_track;
-
-	if( cd_info==NULL || track_name==NULL ) return NULL;
-
-	cd_track = (cd_track_t*)mp_mallocz(sizeof(cd_track_t));
-	if( cd_track==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		return NULL;
-	}
-	cd_track->name = (char*)mp_malloc(strlen(track_name)+1);
-	if( cd_track->name==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		delete cd_track;
-		return NULL;
-	}
-	strcpy(cd_track->name, track_name);
-	cd_track->track_nb = track_nb;
-	cd_track->min = min;
-	cd_track->sec = sec;
-	cd_track->msec = msec;
-	cd_track->frame_begin = frame_begin;
-	cd_track->frame_length = frame_length;
-
-	if( cd_info->first==NULL ) {
-		cd_info->first = cd_track;
-	}
-	if( cd_info->last!=NULL ) {
-		cd_info->last->next = cd_track;
-	}
-
-	cd_track->prev = cd_info->last;
-
-	cd_info->last = cd_track;
-	cd_info->current = cd_track;
-
-	cd_info->nb_tracks++;
-
-	return cd_track;
-}
-
-cd_track_t* __FASTCALL__ cd_info_get_track(cd_info_t *cd_info, unsigned int track_nb) {
-	cd_track_t *cd_track=NULL;
-
-	if( cd_info==NULL ) return NULL;
-
-	cd_track = cd_info->first;
-	while( cd_track!=NULL ) {
-		if( cd_track->track_nb==track_nb ) {
-			return cd_track;
-		}
-		cd_track = cd_track->next;
-	}
-	return NULL;
-}
-
-void __FASTCALL__ cd_info_debug(cd_info_t *cd_info) {
-	cd_track_t *current_track;
-	MSG_INFO("================ CD INFO === start =========\n");
-	if( cd_info==NULL ) {
-		MSG_INFO("cd_info is NULL\n");
-		return;
-	}
-	MSG_INFO(" artist=[%s]\n"
-		" album=[%s]\n"
-		" genre=[%s]\n"
-		" nb_tracks=%d\n"
-		" length= %2d:%02d.%02d\n"
-		, cd_info->artist
-		, cd_info->album
-		, cd_info->genre
-		, cd_info->nb_tracks
-		, cd_info->min, cd_info->sec, cd_info->msec);
-	current_track = cd_info->first;
-	while( current_track!=NULL ) {
-		MSG_V("  #%2d %2d:%02d.%02d @ %7ld\t[%s] \n", current_track->track_nb, current_track->min, current_track->sec, current_track->msec, current_track->frame_begin, current_track->name);
-		current_track = current_track->next;
-	}
-	MSG_INFO("================ CD INFO ===  end  =========\n");
-}
-
-char* __FASTCALL__ xmcd_parse_dtitle(cd_info_t *cd_info, char *line) {
-	char *ptr, *album;
-	ptr = strstr(line, "DTITLE=");
-	if( ptr!=NULL ) {
-		ptr += 7;
-		album = strstr(ptr, "/");
-		if( album==NULL ) return NULL;
-		cd_info->album = (char*)mp_malloc(strlen(album+2)+1);
-		if( cd_info->album==NULL ) {
-			return NULL;
-		}
-		strcpy( cd_info->album, album+2 );
-		album--;
-		album[0] = '\0';
-		cd_info->artist = (char*)mp_malloc(strlen(ptr)+1);
-		if( cd_info->artist==NULL ) {
-			return NULL;
-		}
-		strcpy( cd_info->artist, ptr );
-	}
-	return ptr;
-}
-
-char* __FASTCALL__ xmcd_parse_dgenre(cd_info_t *cd_info, char *line) {
-	char *ptr;
-	ptr = strstr(line, "DGENRE=");
-	if( ptr!=NULL ) {
-		ptr += 7;
-		cd_info->genre = (char*)mp_malloc(strlen(ptr)+1);
-		if( cd_info->genre==NULL ) {
-			return NULL;
-		}
-		strcpy( cd_info->genre, ptr );
-	}
-	return ptr;
-}
-
-char* __FASTCALL__ xmcd_parse_ttitle(cd_info_t *cd_info, char *line) {
-	unsigned int track_nb;
-	unsigned long sec, off;
-	char *ptr;
-	ptr = strstr(line, "TTITLE");
-	if( ptr!=NULL ) {
-		ptr += 6;
-		// Here we point to the track number
-		track_nb = atoi(ptr);
-		ptr = strstr(ptr, "=");
-		if( ptr==NULL ) return NULL;
-		ptr++;
-
-		sec = cdtoc[track_nb].frame;
-		off = cdtoc[track_nb+1].frame-sec+1;
-
-		cd_info_add_track( cd_info, ptr, track_nb+1, (unsigned int)(off/(60*75)), (unsigned int)((off/75)%60), (unsigned int)(off%75), sec, off );
-	}
-	return ptr;
-}
-
-cd_info_t* __FASTCALL__ cddb_parse_xmcd(char *xmcd_file) {
-	cd_info_t *cd_info = NULL;
-	int length, pos = 0;
-	char *ptr, *ptr2;
-	unsigned int audiolen;
-	if( xmcd_file==NULL ) return NULL;
-
-	cd_info = cd_info_new();
-	if( cd_info==NULL ) {
-		return NULL;
-	}
-
-	length = strlen(xmcd_file);
-	ptr = xmcd_file;
-	while( ptr!=NULL && pos<length ) {
-		// Read a line
-		ptr2 = ptr;
-		while( ptr2[0]!='\0' && ptr2[0]!='\r' && ptr2[0]!='\n' ) ptr2++;
-		if( ptr2[0]=='\0' ) {
-			break;
-		}
-		ptr2[0] = '\0';
-		// Ignore comments
-		if( ptr[0]!='#' ) {
-			// Search for the album title
-			if( xmcd_parse_dtitle(cd_info, ptr) );
-			// Search for the genre
-			else if( xmcd_parse_dgenre(cd_info, ptr) );
-			// Search for a track title
-			else if( xmcd_parse_ttitle(cd_info, ptr) ){}
-		}
-		if( ptr2[1]=='\n' ) ptr2++;
-		pos = (ptr2+1)-ptr;
-		ptr = ptr2+1;
-	}
-
-	audiolen = cdtoc[cd_info->nb_tracks].frame-cdtoc[0].frame;
-	cd_info->min  = (unsigned int)(audiolen/(60*75));
-	cd_info->sec  = (unsigned int)((audiolen/75)%60);
-	cd_info->msec = (unsigned int)(audiolen%75);
-
-	return cd_info;
-}
-
-cdda_priv* __FASTCALL__ open_cddb(libinput_t *libinput,const char *dev, const char *track) {
-    cd_info_t *cd_info = NULL;
+MPXP_Rc CDD_Interface::open_cddb(libinput_t *libinput,const char *dev, const char *track) {
     char *xmcd_file = NULL;
     MPXP_Rc ret;
 
     ret = cddb_resolve(libinput,&xmcd_file);
     if( ret==MPXP_False ) {
-	cd_info = cddb_parse_xmcd(xmcd_file);
+	CD_Info& cd_info = *new(zeromem) CD_Info;
+	if(cd_info.parse_xmcd(xmcd_file)==MPXP_Ok)
+	    cd_info.print();
 	delete xmcd_file;
-	cd_info_debug( cd_info );
-	return NULL;
+	delete &cd_info;
+	return ret;
     }
     return open_cdda(dev, track);
 }
