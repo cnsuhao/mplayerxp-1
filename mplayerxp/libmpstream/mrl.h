@@ -23,7 +23,6 @@ namespace mpxp {
   *				  x11://~username:passwd@localhost:8081#bpp=32
   * @see		mrl_parse_params
 **/
-    extern const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,char **port);
     extern const char *mrl_parse_line(const std::string& line,char **user,char **pass,char **ms,char **port);
 
     enum {
@@ -53,7 +52,6 @@ namespace mpxp {
   *			may want to use non-standard arguments for plugin.
   * @see		mrl_parse_line
 **/
-    extern const char *	mrl_parse_params(const char *param,const mrl_config_t * args);
     extern const char *	mrl_parse_params(const std::string& param,const mrl_config_t * args);
 } // namespace mpxp
 #endif

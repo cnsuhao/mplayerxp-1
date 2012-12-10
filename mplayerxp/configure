@@ -884,6 +884,8 @@ prog_alias="$prog_alias.$rsuf"
 fi
 
 CXXFLAGS=$CFLAGS
+
+./version.sh
 #############################################################################
 echo "Creating mp_config.mak"
 cat >> mp_config.mak << EOF

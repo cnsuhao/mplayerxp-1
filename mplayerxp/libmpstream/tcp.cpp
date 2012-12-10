@@ -51,7 +51,7 @@ static const char *af2String(Tcp::tcp_af_e af) {
 // return -2 for fatal error, like unable to resolve name, connection timeout...
 // return -1 is unable to connect to a particular port
 
-void Tcp::open(const char *host, int port, tcp_af_e af) {
+void Tcp::open(const std::string& host, int port, tcp_af_e af) {
     socklen_t err_len;
     int ret,count = 0;
     fd_set set;
@@ -72,7 +72,7 @@ void Tcp::open(const char *host, int port, tcp_af_e af) {
     struct timeval to;
 #endif
 
-    MSG_V("[tcp%s] Trying to resolv host '%s'\n", af2String(af), host);
+    MSG_V("[tcp%s] Trying to resolv host '%s'\n", af2String(af), host.c_str());
     _fd = ::socket(af==Tcp::IP4?AF_INET:AF_INET6, SOCK_STREAM, 0);
 
     if( _fd==-1 ) {
@@ -103,26 +103,26 @@ void Tcp::open(const char *host, int port, tcp_af_e af) {
 
     memset(&server_address, 0, sizeof(server_address));
 
-    MSG_V("[tcp%s] PreResolving Host '%s'\n",af2String(af), host);
+    MSG_V("[tcp%s] PreResolving Host '%s'\n",af2String(af), host.c_str());
 #ifndef HAVE_WINSOCK2
 #ifdef USE_ATON
-    if (::inet_aton(host, our_s_addr)!=1)
+    if (::inet_aton(host.c_str(), our_s_addr)!=1)
 #else
-    if (::inet_pton(af==Tcp::IP4?AF_INET:AF_INET6, host, our_s_addr)!=1)
+    if (::inet_pton(af==Tcp::IP4?AF_INET:AF_INET6, host.c_str(), our_s_addr)!=1)
 #endif
 #else
-    if (::inet_addr(host)==INADDR_NONE )
+    if (::inet_addr(host.c_str())==INADDR_NONE )
 #endif
     {
-	MSG_V("[tcp%s] Resolving Host '%s'\n",af2String(af), host);
+	MSG_V("[tcp%s] Resolving Host '%s'\n",af2String(af), host.c_str());
 
 #ifdef HAVE_GETHOSTBYNAME2
-	hp=(struct hostent*)::gethostbyname2( host, af==Tcp::IP4?AF_INET:AF_INET6 );
+	hp=(struct hostent*)::gethostbyname2( host.c_str(), af==Tcp::IP4?AF_INET:AF_INET6 );
 #else
-	hp=(struct hostent*)::gethostbyname( host );
+	hp=(struct hostent*)::gethostbyname( host.c_str() );
 #endif
 	if( hp==NULL ) {
-	    MSG_V("[tcp%s] Can't resolv: %s\n",af2String(af), host);
+	    MSG_V("[tcp%s] Can't resolv: %s\n",af2String(af), host.c_str());
 	    _error=Tcp::Err_Fatal;
 	    return;
 	}
@@ -131,7 +131,7 @@ void Tcp::open(const char *host, int port, tcp_af_e af) {
     }
 #ifdef HAVE_WINSOCK2
     else {
-	unsigned long addr = inet_addr(host);
+	unsigned long addr = inet_addr(host.c_str());
 	memcpy( our_s_addr, (any_t*)&addr, sizeof(addr) );
     }
 #endif
@@ -158,7 +158,7 @@ void Tcp::open(const char *host, int port, tcp_af_e af) {
 #else
     ::inet_ntop(af==Tcp::IP4?AF_INET:AF_INET6, our_s_addr, buf, 255);
 #endif
-    MSG_INFO("[tcp%s] Connecting to server: %s (%s:%i)\n",af2String(af),host,buf,port);
+    MSG_INFO("[tcp%s] Connecting to server: %s (%s:%i)\n",af2String(af),host.c_str(),buf,port);
 
     // Turn the socket as non blocking so we can timeout on the connection
 #ifndef HAVE_WINSOCK2
@@ -173,7 +173,7 @@ void Tcp::open(const char *host, int port, tcp_af_e af) {
 #else
 	if( (WSAGetLastError() != WSAEINPROGRESS) && (WSAGetLastError() != WSAEWOULDBLOCK) ) {
 #endif
-	    MSG_V("[tcp%s] Can't connect to server: %s\n",af2String(af),host);
+	    MSG_V("[tcp%s] Can't connect to server: %s\n",af2String(af),host.c_str());
 	    ::closesocket(_fd);
 	    _fd=-1;
 	    _error=Tcp::Err_Port;
@@ -224,7 +224,7 @@ void Tcp::open(const char *host, int port, tcp_af_e af) {
     }
 }
 
-Tcp::Tcp(libinput_t* _libinput,const char *host,int port,tcp_af_e af)
+Tcp::Tcp(libinput_t* _libinput,const std::string& host,int port,tcp_af_e af)
     :_fd(-1),
     _error(Tcp::Err_None),
     libinput(_libinput)

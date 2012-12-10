@@ -13,10 +13,11 @@ using namespace mpxp;
 #include <stdio.h>
 #endif
 namespace mpxp {
-const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,char **port)
+const char *mrl_parse_line(const std::string& _line,char **user,char **pass,char **ms,char **port)
 {
     unsigned ssize;
     const char *endp,*endl;
+    const char* line=_line.c_str();
     if(user) *user=NULL;
     if(pass) *pass=NULL;
     if(ms) *ms=NULL;
@@ -82,12 +83,7 @@ const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,ch
     return line;
 }
 
-const char *mrl_parse_line(const std::string& line,char **user,char **pass,char **ms,char **port)
-{
-    return mrl_parse_line(line.c_str(),user,pass,ms,port);
-}
-
-static void mrl_store_args(const char *arg,char *value, const mrl_config_t * args)
+static void mrl_store_args(const std::string& arg,char *value, const mrl_config_t * args)
 {
 #ifdef TEST_MRL
     printf("arg='%s' value='%s'\n",arg,value);
@@ -96,13 +92,10 @@ static void mrl_store_args(const char *arg,char *value, const mrl_config_t * arg
     unsigned i;
     int done=0;
     i=0;
-    while(arg!=NULL)
-    {
-	if(strcmp(arg,args[i].arg)==0)
-	{
+    while(args[i].arg!=NULL) {
+	if(arg==args[i].arg) {
 	    done=1;
-	    switch(args[i].type)
-	    {
+	    switch(args[i].type) {
 		case MRL_TYPE_PRINT:
 			MSG_INFO("%s", (char *)args[i].value);
 		default:
@@ -117,8 +110,7 @@ static void mrl_store_args(const char *arg,char *value, const mrl_config_t * arg
 			    *((int *)args[i].value)=args[i].min;
 			delete value;
 			break;
-		case MRL_TYPE_INT:
-		{
+		case MRL_TYPE_INT: {
 		    int result=atoi(value);
 		    delete value;
 		    if(result < args[i].min) result=args[i].min;
@@ -126,8 +118,7 @@ static void mrl_store_args(const char *arg,char *value, const mrl_config_t * arg
 		    *((int *)args[i].value)=result;
 		}
 		break;
-		case MRL_TYPE_FLOAT:
-		{
+		case MRL_TYPE_FLOAT: {
 		    int result=atof(value);
 		    delete value;
 		    if(result < args[i].min) result=args[i].min;
@@ -135,8 +126,7 @@ static void mrl_store_args(const char *arg,char *value, const mrl_config_t * arg
 		    *((float *)args[i].value)=result;
 		}
 		break;
-		case MRL_TYPE_STRING:
-		{
+		case MRL_TYPE_STRING: {
 		    char *p=reinterpret_cast<char*>(args[i].value);
 		    p=value;
 		    break;
@@ -146,22 +136,21 @@ static void mrl_store_args(const char *arg,char *value, const mrl_config_t * arg
 	}
 	i++;
     }
-    if(!done) MSG_WARN(" Can't handle argument: '%s'",arg);
+    if(!done) MSG_WARN(" Can't handle argument: '%s'",arg.c_str());
 }
 
 #define MRL_ARG_SEP ','
 
-const char * mrl_parse_params(const char *param, const mrl_config_t * args)
+const char * mrl_parse_params(const std::string& _param, const mrl_config_t * args)
 {
     const char *sep,*endp,*endl;
     char *arg=NULL,*value=NULL;
     unsigned ssize;
+    const char* param=_param.c_str();
     endl=param+strlen(param);
-    while(*param)
-    {
+    while(*param) {
 	sep=strchr(param,'=');
-	if(sep)
-	{
+	if(sep) {
 	    sep++;
 	    endp=strchr(sep,MRL_ARG_SEP);
 	    if(!endp) endp=endl;
@@ -184,10 +173,6 @@ const char * mrl_parse_params(const char *param, const mrl_config_t * args)
     if(arg) delete arg;
     if(value) delete value;
     return param;
-}
-const char * mrl_parse_params(const std::string& param, const mrl_config_t * args)
-{
-    return mrl_parse_params(param.c_str(),args);
 }
 } // namespace mpxp
 
