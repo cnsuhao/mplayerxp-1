@@ -27,7 +27,16 @@ using namespace mpxp;
 #include "stheader.h"
 #include "mplayerxp.h"
 
+extern const demuxer_driver_t demux_ac3;
 extern const demuxer_driver_t demux_aiff;
+extern const demuxer_driver_t demux_dca;
+extern const demuxer_driver_t demux_flac;
+extern const demuxer_driver_t demux_mp3;
+extern const demuxer_driver_t demux_musepack;
+extern const demuxer_driver_t demux_snd_au;
+extern const demuxer_driver_t demux_voc;
+extern const demuxer_driver_t demux_wav;
+
 extern const demuxer_driver_t demux_rawaudio;
 extern const demuxer_driver_t demux_rawvideo;
 extern const demuxer_driver_t demux_avi;
@@ -52,7 +61,6 @@ extern const demuxer_driver_t demux_mpxpav64;
 extern const demuxer_driver_t demux_mpgps;
 extern const demuxer_driver_t demux_mpgts;
 extern const demuxer_driver_t demux_ty;
-extern const demuxer_driver_t demux_audio;
 extern const demuxer_driver_t demux_lavf;
 extern const demuxer_driver_t demux_null;
 
@@ -84,7 +92,14 @@ static const demuxer_driver_t *ddrivers[] =
     &demux_mpxpav64,
     &demux_mpgps,
     &demux_aiff,
-    &demux_audio,
+    &demux_ac3,
+    &demux_dca,
+    &demux_flac,
+    &demux_mp3,
+    &demux_musepack,
+    &demux_snd_au,
+    &demux_voc,
+    &demux_wav,
     &demux_mpgts,
     &demux_ty,
     &demux_lavf,

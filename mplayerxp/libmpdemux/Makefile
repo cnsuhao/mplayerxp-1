@@ -14,19 +14,23 @@ endif
 
 CXXSRCS += mp3_hdr.cpp stheader.cpp mpeg_hdr.cpp aviprint.cpp parse_mp4.cpp parse_es.cpp
 CXXSRCS += yuv4mpeg.cpp yuv4mpeg_ratio.cpp sub_cc.cpp sub_ty.cpp
-CXXSRCS += demux_aiff.cpp \
+CXXSRCS += demux_ac3.cpp \
+           demux_aiff.cpp \
            demux_asf.cpp \
-           demux_audio.cpp \
            demux_avi.cpp \
            demux_bmp.cpp \
+           demux_dca.cpp \
            demux_demuxers.cpp \
+           demux_flac.cpp \
            demux_film.cpp \
            demux_fli.cpp \
            demux_lavf.cpp \
            demux_mkv.cpp \
            demux_mov.cpp \
+           demux_mp3.cpp \
            demux_mpg.cpp \
            demux_mpxp64.cpp \
+           demux_musepack.cpp \
            demux_nsv.cpp \
            demux_null.cpp \
            demux_nuv.cpp \
@@ -37,10 +41,13 @@ CXXSRCS += demux_aiff.cpp \
            demux_realaud.cpp \
            demux_roq.cpp \
            demux_smjpeg.cpp \
+           demux_snd_au.cpp \
            demux_ts.cpp \
            demux_ty.cpp \
            demux_viv.cpp \
+           demux_voc.cpp \
            demux_vqf.cpp \
+           demux_wav.cpp \
            demux_y4m.cpp
 ifeq ($(HAVE_LIBVORBIS),yes)
 CXXSRCS += demux_ogg.cpp
