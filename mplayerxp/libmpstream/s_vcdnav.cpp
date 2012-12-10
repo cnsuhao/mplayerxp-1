@@ -44,6 +44,7 @@ namespace mpxp {
 	    virtual off_t	start_pos() const;
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
+	    virtual std::string mime_type() const;
 	private:
 	    void		inc_lsn();
 
@@ -162,6 +163,7 @@ Stream::type_e VcdNav_Stream_Interface::type() const { return Stream::Type_Seeka
 off_t	VcdNav_Stream_Interface::start_pos() const { return start*sizeof(vcdsector_t); }
 off_t	VcdNav_Stream_Interface::size() const { return (start+total)*sizeof(vcdsector_t); }
 off_t	VcdNav_Stream_Interface::sector_size() const { return sizeof(vcdsector_t); }
+std::string VcdNav_Stream_Interface::mime_type() const { return "application/octet-stream"; }
 
 void VcdNav_Stream_Interface::inc_lsn()
 {

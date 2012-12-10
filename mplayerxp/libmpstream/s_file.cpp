@@ -34,6 +34,7 @@ namespace mpxp {
 	    virtual Stream::type_e type() const;
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
+	    virtual std::string mime_type() const;
 	private:
 	    int fd;
 	    int was_open;
@@ -67,6 +68,7 @@ MPXP_Rc File_Stream_Interface::open(const char *filename,unsigned flags)
 Stream::type_e File_Stream_Interface::type() const { return (end_pos==-1)?Stream::Type_Stream:Stream::Type_Seekable; }
 off_t	File_Stream_Interface::size() const { return end_pos; }
 off_t	File_Stream_Interface::sector_size() const { return STREAM_BUFFER_SIZE; }
+std::string File_Stream_Interface::mime_type() const { return "application/octet-stream"; }
 
 int File_Stream_Interface::read(stream_packet_t*sp)
 {

@@ -39,6 +39,7 @@ namespace mpxp {
 	    virtual Stream::type_e type() const;
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
+	    virtual std::string mime_type() const;
 	private:
 	    int			readline(char *buf,int max);
 	    int			readresp(char* rsp);
@@ -421,6 +422,7 @@ MPXP_Rc Ftp_Stream_Interface::open(const char *_filename,unsigned flags)
 Stream::type_e Ftp_Stream_Interface::type() const { return file_len?Stream::Type_Seekable:Stream::Type_Stream; }
 off_t	Ftp_Stream_Interface::size() const { return file_len; }
 off_t	Ftp_Stream_Interface::sector_size() const { return BUFSIZE; }
+std::string Ftp_Stream_Interface::mime_type() const { return "application/octet-stream"; }
 
 MPXP_Rc Ftp_Stream_Interface::ctrl(unsigned cmd,any_t*args) {
     UNUSED(cmd);

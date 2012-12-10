@@ -115,6 +115,7 @@ off_t		Stream::start_pos() const { return driver->start_pos(); }
 off_t		Stream::end_pos() const { return driver->size(); }
 unsigned	Stream::sector_size() const { return driver->sector_size(); }
 float		Stream::stream_pts() const { return driver->stream_pts(); }
+std::string	Stream::mime_type() const { return driver->mime_type(); }
 void		Stream::type(Stream::type_e t) { _type=t; }
 int		Stream::eof() const { return _eof; }
 void		Stream::eof(int e) { if(!e) reset(); _eof = e; }
@@ -275,5 +276,6 @@ int	Memory_Stream::skip(off_t len) { _pos+=len; return 1; }
 int	Memory_Stream::eof() const { return _pos>=_len; }
 void	Memory_Stream::eof(int e) { e?_pos=_len+1:_pos=0; }
 void	Memory_Stream::reset() { _pos=0; }
+std::string	Memory_Stream::mime_type() const { return "application/octet-stream"; }
 
 } //namespace mpxp

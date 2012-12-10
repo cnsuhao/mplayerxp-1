@@ -25,6 +25,7 @@ namespace mpxp {
 	    virtual Stream::type_e type() const;
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
+	    virtual std::string mime_type() const;
 	private:
 	    URLContext *ctx;
 	    off_t spos;
@@ -84,6 +85,7 @@ MPXP_Rc Lavs_Stream_Interface::open(const char *filename,unsigned flags)
 Stream::type_e Lavs_Stream_Interface::type() const { return (ctx->is_streamed)?Stream::Type_Stream:Stream::Type_Seekable; }
 off_t	Lavs_Stream_Interface::size() const { return end_pos; }
 off_t	Lavs_Stream_Interface::sector_size() const { return STREAM_BUFFER_SIZE; }
+std::string Lavs_Stream_Interface::mime_type() const { return "application/octet-stream"; }
 
 static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Lavs_Stream_Interface(libinput); }
 

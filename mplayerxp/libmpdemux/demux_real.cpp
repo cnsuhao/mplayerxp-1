@@ -946,12 +946,13 @@ static Opaque* real_open(Demuxer* demuxer)
 		tmps[tmp]=0;
 		if(!demuxer->info().get(INFOT_DESCRIPTION))
 		    demuxer->info().add( INFOT_DESCRIPTION, tmps);
+#if 0
 		tmp=demuxer->stream->read_char();
 		demuxer->stream->read(tmps,tmp);
 		tmps[tmp]=0;
 		if(!demuxer->info().get(INFOT_MIME))
 		    demuxer->info().add( INFOT_MIME, tmps);
-
+#endif
 		/* Type specific header */
 		codec_data_size = demuxer->stream->read_dword();
 		codec_pos = demuxer->stream->tell();

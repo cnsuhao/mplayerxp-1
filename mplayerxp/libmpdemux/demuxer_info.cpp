@@ -22,8 +22,7 @@ static const char *info_names[INFOT_MAX] =
     "WWW",
     "Mail",
     "Rating",
-    "Comments",
-    "Mime"
+    "Comments"
 };
 
 Demuxer_Info::Demuxer_Info() {}

@@ -7,6 +7,8 @@
 #ifndef __NETWORK_H
 #define __NETWORK_H
 
+#include <string>
+
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -55,6 +57,7 @@ enum networking_status {
 
 struct networking_t {
     URL_t *url;
+    std::string mime;
     networking_status status;
     int buffering;	// boolean
     unsigned int prebuffer_size;

@@ -64,6 +64,7 @@ namespace mpxp {
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
 	    virtual float	stream_pts() const;
+	    virtual std::string mime_type() const;
 	private:
 	    MPXP_Rc		new_stream(const char * filename);
 	    void		stream_ignore_timers(int ignore);
@@ -238,6 +239,7 @@ off_t	DvdNav_Stream_Interface::start_pos() const { return cpos; }
 off_t	DvdNav_Stream_Interface::size() const { return -1; }
 off_t	DvdNav_Stream_Interface::sector_size() const { return tevent?DVD_BLOCK_SIZE*10:DVD_BLOCK_SIZE; }
 float	DvdNav_Stream_Interface::stream_pts() const { return _stream_pts; }
+std::string DvdNav_Stream_Interface::mime_type() const { return "application/octet-stream"; }
 
 void DvdNav_Stream_Interface::stream_read(dvdnav_event_t*de) {
     int event = DVDNAV_NOP;

@@ -307,7 +307,6 @@ const struct s_stream_txt_ids
     { INFOT_SOURCE_MEDIA,SCTRL_TXT_GET_STREAM_SOURCE_MEDIA },
     { INFOT_RATING, 	SCTRL_TXT_GET_STREAM_RATING },
     { INFOT_COMMENTS, 	SCTRL_TXT_GET_STREAM_COMMENT },
-    { INFOT_MIME, 	SCTRL_TXT_GET_STREAM_MIME }
 };
 
 static const demuxer_driver_t* demux_find_driver(const char *name) {
@@ -315,6 +314,58 @@ static const demuxer_driver_t* demux_find_driver(const char *name) {
     for(;ddrivers[i]!=&demux_null;i++)
 	if(strcmp(name,ddrivers[i]->short_name)==0) return ddrivers[i];
     return NULL;
+}
+
+static const struct mime_type_table_t {
+	const char *mime_type;
+	const demuxer_driver_t* driver;
+} mime_type_table[] = {
+	// MP3 streaming, some MP3 streaming server answer with audio/mpeg
+	{ "audio/mpeg", &demux_mp3 },
+	// MPEG streaming
+	{ "video/mpeg", &demux_mpgps },
+	{ "video/x-mpeg", &demux_mpgps },
+	{ "video/x-mpeg2", &demux_mpgps },
+	// AVI ??? => video/x-msvideo
+	{ "video/x-msvideo", &demux_avi },
+	// MOV => video/quicktime
+	{ "video/quicktime", &demux_mov },
+	// ASF
+	{ "audio/x-ms-wax", &demux_asf },
+	{ "audio/x-ms-wma", &demux_asf },
+	{ "video/x-ms-asf", &demux_asf },
+	{ "video/x-ms-afs", &demux_asf },
+	{ "video/x-ms-wvx", &demux_asf },
+	{ "video/x-ms-wmv", &demux_asf },
+	{ "video/x-ms-wma", &demux_asf },
+	{ "application/x-mms-framed", &demux_asf },
+	{ "application/vnd.ms.wms-hdr.asfv1", &demux_asf },
+#if 0
+	// Playlists
+	{ "video/x-ms-wmx", Demuxer::Type_PLAYLIST },
+	{ "video/x-ms-wvx", Demuxer::Type_PLAYLIST },
+	{ "audio/x-scpls", Demuxer::Type_PLAYLIST },
+	{ "audio/x-mpegurl", Demuxer::Type_PLAYLIST },
+	{ "audio/x-pls", Demuxer::Type_PLAYLIST },
+#endif
+	// Real Media
+	{ "audio/x-pn-realaudio", &demux_realaud },
+	// OGG Streaming
+	{ "application/ogg", &demux_ogg },
+	{ "application/x-ogg", &demux_ogg },
+	// NullSoft Streaming Video
+	{ "video/nsv", &demux_nsv},
+	{ "misc/ultravox", &demux_nsv},
+	{ NULL, &demux_null }
+};
+
+static const demuxer_driver_t* demuxer_driver_by_name(const std::string& name)
+{
+    unsigned i=0;
+    while(mime_type_table[i].driver!=&demux_null) {
+	if(name==mime_type_table[i].mime_type) return mime_type_table[i].driver;
+    }
+    return &demux_null;
 }
 
 MPXP_Rc Demuxer::open()
@@ -355,6 +406,9 @@ again:
 	MSG_V("False\n");
     }
     if(!dpriv.driver) {
+	dpriv.driver=demuxer_driver_by_name(stream->mime_type());
+	if(dpriv.driver!=&demux_null) goto force_driver;
+	dpriv.driver=NULL;
 err_exit:
 	MSG_ERR(MSGTR_FormatNotRecognized);
 	return MPXP_False;

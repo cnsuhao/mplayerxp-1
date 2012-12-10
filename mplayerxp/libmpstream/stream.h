@@ -4,6 +4,7 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 
+#include <string>
 #include <inttypes.h>
 #include <sys/types.h>
 #include <string.h>
@@ -74,6 +75,7 @@ namespace mpxp {
 	    virtual off_t	end_pos() const;	/**< real end of stream (media may be not fully filled) */
 	    virtual unsigned	sector_size() const; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
 	    virtual float	stream_pts() const;	/**< PTS correction for idiotics DVD's discontinuities */
+	    virtual std::string mime_type() const;
 
 	    virtual int		read_char();
 	    virtual unsigned	read_word();
@@ -120,6 +122,7 @@ namespace mpxp {
 	    virtual off_t	start_pos() const;	/**< real start of stream (without internet's headers) */
 	    virtual off_t	end_pos() const;	/**< real end of stream (media may be not fully filled) */
 	    virtual unsigned	sector_size() const; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
+	    virtual std::string	mime_type() const; /**< alignment of read operations (1 for file, VCD_SECTOR_SIZE for VCDs) */
 	private:
 	    off_t		_pos;
 	    unsigned		_len;
@@ -165,7 +168,6 @@ namespace mpxp {
 	SCTRL_TXT_GET_STREAM_SOURCE_MEDIA,/**< Returns mediatype of stream. Accepts char *name as pointer on 256 bytes array  */
 	SCTRL_TXT_GET_STREAM_RATING,	/**< Returns rating of stream. Accepts char *name as pointer on 256 bytes array  */
 	SCTRL_TXT_GET_STREAM_COMMENT,	/**< Returns comments for stream. Accepts char *name as pointer on 256 bytes array  */
-	SCTRL_TXT_GET_STREAM_MIME,	/**< Returns mimetype of stream. Accepts char *name as pointer on 256 bytes array  */
 /* These controls extracts videospecific info from stream */
 	SCTRL_VID_GET_PALETTE=1000,	/**< Returns palette array. Accepts unsigned** as pointer to palette array */
 	SCTRL_VID_GET_WIDTH,		/**< Returns width of raw video in pixels. Accepts unsigned* as pointer to storage area */

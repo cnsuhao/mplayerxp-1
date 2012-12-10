@@ -170,7 +170,7 @@ static int read_id3v22_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 	    case mmioFOURCC(0,'T','Y','E'): if(len>1) demuxer->info().add(INFOT_DATE,data+1); break;
 	    case mmioFOURCC(0,'T','E','N'): if(len>1) demuxer->info().add(INFOT_ENCODER,data+1); break;
 	    case mmioFOURCC(0,'T','M','T'): if(len>1) demuxer->info().add(INFOT_SOURCE_MEDIA,data+1); break;
-	    case mmioFOURCC(0,'T','F','T'): if(len>1) demuxer->info().add(INFOT_MIME,data+1); break;
+//	    case mmioFOURCC(0,'T','F','T'): if(len>1) demuxer->info().add(INFOT_MIME,data+1); break;
 	    case mmioFOURCC(0,'P','O','P'): if(len>1) demuxer->info().add(INFOT_RATING,data+1); break;
 	    case mmioFOURCC(0,'W','X','X'): if(len>1) demuxer->info().add(INFOT_WWW,data+1); break;
 	    case 0: goto end;
@@ -243,7 +243,7 @@ static int read_id3v23_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 	    case mmioFOURCC('T','E','N','C'): if(len>1) demuxer->info().add(INFOT_ENCODER,data+1); break;
 	    case mmioFOURCC('T','C','O','P'): if(len>1) demuxer->info().add(INFOT_COPYRIGHT,data+1); break;
 	    case mmioFOURCC('T','M','E','D'): if(len>1) demuxer->info().add(INFOT_SOURCE_MEDIA,data+1); break;
-	    case mmioFOURCC('T','F','L','T'): if(len>1) demuxer->info().add(INFOT_MIME,data+1); break;
+//	    case mmioFOURCC('T','F','L','T'): if(len>1) demuxer->info().add(INFOT_MIME,data+1); break;
 	    case mmioFOURCC('P','O','P','M'): if(len>1) demuxer->info().add(INFOT_RATING,data+1); break;
 	    case mmioFOURCC('W','X','X','X'): if(len>1) demuxer->info().add(INFOT_WWW,data+1); break;
 	    case 0: goto end;
@@ -320,7 +320,7 @@ static int read_id3v24_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 	    case mmioFOURCC('T','E','N','C'): if(len>1) demuxer->info().add(INFOT_ENCODER,data+1); break;
 	    case mmioFOURCC('T','C','O','P'): if(len>1) demuxer->info().add(INFOT_COPYRIGHT,data+1); break;
 	    case mmioFOURCC('T','M','E','D'): if(len>1) demuxer->info().add(INFOT_SOURCE_MEDIA,data+1); break;
-	    case mmioFOURCC('T','F','L','T'): if(len>1) demuxer->info().add(INFOT_MIME,data+1); break;
+//	    case mmioFOURCC('T','F','L','T'): if(len>1) demuxer->info().add(INFOT_MIME,data+1); break;
 	    case mmioFOURCC('P','O','P','M'): if(len>1) demuxer->info().add(INFOT_RATING,data+1); break;
 	    case mmioFOURCC('W','X','X','X'): if(len>1) demuxer->info().add(INFOT_WWW,data+1); break;
 	    case 0: goto end;
@@ -511,7 +511,7 @@ static Opaque* mp3_open(Demuxer* demuxer) {
     sh_audio->i_bps=mp3_brate;
     sh_audio->rate=mp3_samplerate;
     sh_audio->nch=mp3_channels;
-    demuxer->movi_start-=4;
+    demuxer->movi_start-=HDR_SIZE;
     if(!read_mp3v1_tags(demuxer,hdr,pos)) return 0; /* id3v1 may coexist with id3v2 */
     break;
   case RAW_MP3:
@@ -519,7 +519,7 @@ static Opaque* mp3_open(Demuxer* demuxer) {
     sh_audio->i_bps=mp3_brate;
     sh_audio->rate=mp3_samplerate;
     sh_audio->nch=mp3_channels;
-    demuxer->movi_start-=4;
+    demuxer->movi_start-=HDR_SIZE;
     if(!read_mp3v1_tags(demuxer,hdr,pos)) return 0; /* id3v1 may coexist with id3v2 */
     break;
   }

@@ -35,6 +35,7 @@ namespace mpxp {
 	    virtual Stream::type_e type() const;
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
+	    virtual std::string mime_type() const;
 	private:
 	    URL_t*		url;
 	    off_t		spos;
@@ -75,6 +76,7 @@ MPXP_Rc Network_Stream_Interface::open(const char *filename,unsigned flags)
 Stream::type_e Network_Stream_Interface::type() const { return Stream::Type_Stream; }
 off_t	Network_Stream_Interface::size() const { return 0; }
 off_t	Network_Stream_Interface::sector_size() const { return 1; }
+std::string Network_Stream_Interface::mime_type() const { return networking->mime; }
 
 int Network_Stream_Interface::read(stream_packet_t*sp)
 {

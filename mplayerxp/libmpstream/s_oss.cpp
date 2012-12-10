@@ -42,6 +42,7 @@ namespace mpxp {
 	    virtual Stream::type_e type() const;
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
+	    virtual std::string mime_type() const;
 	private:
 	    int		fd;
 	    unsigned	nchannels; /* 1,2,6 */
@@ -140,6 +141,7 @@ MPXP_Rc Oss_Stream_Interface::open(const char *filename,unsigned flags)
 Stream::type_e Oss_Stream_Interface::type() const { return Stream::Type_Stream|Stream::Type_RawAudio; }
 off_t	Oss_Stream_Interface::size() const { return -1; }
 off_t	Oss_Stream_Interface::sector_size() const { return _sector_size; }
+std::string Oss_Stream_Interface::mime_type() const { return "audio/PCMA"; }
 
 #ifndef TEMP_FAILURE_RETRY
 #define TEMP_FAILURE_RETRY(x) (x)

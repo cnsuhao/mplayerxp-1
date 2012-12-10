@@ -65,6 +65,7 @@ namespace mpxp {
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
 	    virtual float	stream_pts() const;
+	    virtual std::string mime_type() const;
 	private:
 	    int			chapter_from_cell(int title,int cell);
 	    int			number_of_subs() const;
@@ -715,6 +716,7 @@ off_t	DvdRead_Stream_Interface::start_pos() const { return (off_t)cur_pack*2048;
 off_t	DvdRead_Stream_Interface::size() const { return _end_pos; }
 off_t	DvdRead_Stream_Interface::sector_size() const { return 2048; }
 float	DvdRead_Stream_Interface::stream_pts() const { return _stream_pts; }
+std::string DvdRead_Stream_Interface::mime_type() const { return "application/octet-stream"; }
 
 int DvdRead_Stream_Interface::read(stream_packet_t *sp)
 {

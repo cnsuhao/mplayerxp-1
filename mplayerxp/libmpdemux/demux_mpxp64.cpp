@@ -399,7 +399,7 @@ static void mpxpav64_read_fcnt(Demuxer* demuxer,unsigned fsize)
 	    case mmioFOURCC('M','A','I','L'): infot=INFOT_MAIL; break;
 	    case mmioFOURCC('R','A','T','E'): infot=INFOT_RATING; break;
 	    case mmioFOURCC('C','M','T','S'): infot=INFOT_COMMENTS; break;
-	    case mmioFOURCC('M','I','M','E'): infot=INFOT_MIME; break;
+//	    case mmioFOURCC('M','I','M','E'): infot=INFOT_MIME; break;
 	    default: MSG_V("Unhandled contents descriptor %c%c%c%c %u bytes found\n",
 			    ((char *)&fourcc)[0],((char *)&fourcc)[1],
 			    ((char *)&fourcc)[2],((char *)&fourcc)[3],

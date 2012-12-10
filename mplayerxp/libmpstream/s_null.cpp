@@ -22,6 +22,7 @@ namespace mpxp {
 	    virtual Stream::type_e type() const;
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
+	    virtual std::string mime_type() const;
     };
 
 Null_Stream_Interface::Null_Stream_Interface(libinput_t*libinput):Stream_Interface(libinput) {}
@@ -45,6 +46,7 @@ MPXP_Rc Null_Stream_Interface::ctrl(unsigned cmd,any_t*args) {
 Stream::type_e Null_Stream_Interface::type() const { return Stream::Type_Stream; }
 off_t	Null_Stream_Interface::size() const { return 0; }
 off_t	Null_Stream_Interface::sector_size() const { return 0; }
+std::string Null_Stream_Interface::mime_type() const { return "application/octet-stream"; }
 
 static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Null_Stream_Interface(libinput); }
 

@@ -33,6 +33,7 @@ namespace mpxp {
 	    virtual off_t	start_pos() const;
 	    virtual off_t	size() const;
 	    virtual off_t	sector_size() const;
+	    virtual std::string mime_type() const;
 	protected:
 	    cdda_priv*		priv;
 	private:
@@ -63,6 +64,7 @@ Stream::type_e Cdda_Stream_Interface::type() const { return Stream::Type_RawAudi
 off_t	Cdda_Stream_Interface::start_pos() const { return cdda_start(priv); }
 off_t	Cdda_Stream_Interface::size() const { return cdda_size(priv); }
 off_t	Cdda_Stream_Interface::sector_size() const { return CD_FRAMESIZE_RAW; }
+std::string Cdda_Stream_Interface::mime_type() const { return "audio/PCMA"; }
 
 int Cdda_Stream_Interface::read(stream_packet_t*sp)
 {

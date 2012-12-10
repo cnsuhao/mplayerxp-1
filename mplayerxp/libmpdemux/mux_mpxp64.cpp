@@ -240,8 +240,8 @@ static void mpxpav64_put_fcnt(muxer_t *muxer,Demuxer*dinfo)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"RATE",sname);
     if((sname=dinfo->info().get(INFOT_COMMENTS))!=NULL)
 	if(sname[0]) mpxpav64_put_frcc_unicode(f,"CMTS",sname);
-    if((sname=dinfo->info().get(INFOT_MIME))!=NULL)
-	if(sname[0]) mpxpav64_put_frcc_unicode(f,"MIME",sname);
+//    if((sname=dinfo->info().get(INFOT_MIME))!=NULL)
+//	if(sname[0]) mpxpav64_put_frcc_unicode(f,"MIME",sname);
 #endif
     mpxpav64_close_header32(f,fpos);
 }

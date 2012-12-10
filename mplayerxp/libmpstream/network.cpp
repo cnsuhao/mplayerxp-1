@@ -105,6 +105,7 @@ networking_t* new_networking() {
 	MSG_FATAL(MSGTR_OutOfMemory);
 	return NULL;
     }
+    networking->mime="application/octet-stream";
     return networking;
 }
 
@@ -430,6 +431,8 @@ static MPXP_Rc autodetectProtocol(networking_t *networking, Tcp& tcp) {
 			    MSG_INFO("Public : %s\n", atoi(field_data)?"yes":"no"); field_data = NULL;
 			if( (field_data = http_get_field(http_hdr, "icy-br")) != NULL )
 			    MSG_INFO("Bitrate: %skbit/s\n", field_data); field_data = NULL;
+			if ( (field_data = http_get_field(http_hdr, "content-type")) != NULL )
+			    networking->mime = field_data;
 			return MPXP_Ok;
 		    }
 		    case 400: // Server Full

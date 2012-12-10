@@ -23,8 +23,7 @@ namespace mpxp {
 	INFOT_MAIL		=13,
 	INFOT_RATING		=14,
 	INFOT_COMMENTS		=15,
-	INFOT_MIME		=16,
-	INFOT_MAX		=16
+	INFOT_MAX		=15
     };
 
     struct Demuxer_Info : public Opaque {

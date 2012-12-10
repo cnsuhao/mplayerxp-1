@@ -3,6 +3,7 @@
 #include "mp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
+#include <string>
 
 namespace mpxp {
     struct libinput_t;
@@ -60,6 +61,7 @@ namespace mpxp {
 		/** Return size of sector of stream */
 	    virtual off_t		sector_size() const = 0;
 	    virtual float		stream_pts() const { return 0; }
+	    virtual std::string		mime_type() const = 0;
     };
 
     /** Stream-driver interface */

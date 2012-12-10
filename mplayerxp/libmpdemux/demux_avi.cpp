@@ -23,7 +23,6 @@ using namespace mpxp;
 #include "aviprint.h"
 #include "demux_msg.h"
 
-typedef int (*alt_demuxer_t)(Demuxer *demux,Demuxer_Stream *__ds);
 struct avi_priv_t : public Opaque {
     public:
 	avi_priv_t() {}
@@ -54,7 +53,6 @@ struct avi_priv_t : public Opaque {
 	unsigned int suidx_size;
 	int nini;
 	int is_odml;
-	alt_demuxer_t alt_demuxer;
 };
 
 avi_priv_t::~avi_priv_t() {
@@ -908,7 +906,6 @@ static int avi_read_nini(Demuxer *demux,Demuxer_Stream* ds);
 
 static int avi_demux(Demuxer *demux,Demuxer_Stream *__ds){
     avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
-    if(priv->alt_demuxer) return priv->alt_demuxer(demux,__ds);
     unsigned int id=0;
     unsigned int len;
     int ret=0;
@@ -986,12 +983,10 @@ do{
 	MSG_WARN("\nBadly interleaved .AVI detected - switching to -ni mode...\n");
 	if(priv->idx_size>0){
 	    // has index
-	    priv->alt_demuxer = avi_read_ni;
 	    priv->nini=1;
 	    --priv->idx_pos; // hack
 	} else {
 	    // no index
-	    priv->alt_demuxer = avi_read_nini;
 	    priv->nini=1;
 	    priv->idx_pos=demux->filepos; // hack
 	}
@@ -1001,130 +996,6 @@ do{
     }
   ret=demux_avi_read_packet(demux,ds,id,len,priv->idx_pos-1,flags);
 } while(ret!=1);
-  return 1;
-}
-
-
-// return value:
-//     0 = EOF or no stream found
-//     1 = successfully read a packet
-static int avi_read_ni(Demuxer *demux,Demuxer_Stream* ds){
-avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
-unsigned int id=0;
-unsigned int len;
-int ret=0;
-
-do{
-  dp_flags_e flags=DP_KEYFRAME;
-  AVIINDEXENTRY *idx=NULL;
-  int idx_pos=0;
-  demux->filepos=demux->stream->tell();
-
-  if(ds==demux->video) idx_pos=priv->idx_pos_v++; else
-  if(ds==demux->audio) idx_pos=priv->idx_pos_a++; else
-		       idx_pos=priv->idx_pos++;
-
-  if(priv->idx_size>0 && idx_pos<priv->idx_size){
-    off_t pos;
-    idx=&((AVIINDEXENTRY *)priv->idx)[idx_pos];
-//    idx=&priv->idx[idx_pos];
-
-    if(idx->dwFlags&AVIIF_LIST){
-      // LIST
-      continue;
-    }
-    if(ds && demux_avi_select_stream(demux,idx->ckid)!=ds){
-      MSG_DBG3("Skip chunk %.4s (0x%X)  \n",(char *)&idx->ckid,(unsigned int)idx->ckid);
-      continue; // skip this chunk
-    }
-
-    pos = priv->idx_offset+(unsigned long)idx->dwChunkOffset;
-    if((pos<demux->movi_start || pos>=demux->movi_end) && (demux->movi_end>demux->movi_start)){
-      MSG_V("ChunkOffset out of range!  current=0x%X  idx=0x%X  \n",demux->filepos,pos);
-      continue;
-    }
-#if 0
-    if(pos!=demux->filepos){
-      MSG_V("Warning! pos=0x%X  idx.pos=0x%X  diff=%d   \n",demux->filepos,pos,pos-demux->filepos);
-    }
-#endif
-    demux->stream->seek(pos);
-
-    id=demux->stream->read_dword_le();
-
-    if(demux->stream->eof()) return 0;
-
-    if(id!=idx->ckid){
-      MSG_V("ChunkID mismatch! raw=%.4s idx=%.4s  \n",(char *)&id,(char *)&idx->ckid);
-      if(valid_fourcc(idx->ckid))
-	  id=idx->ckid;	// use index if valid
-      else
-	  if(!valid_fourcc(id)) continue; // drop chunk if both id and idx bad
-    }
-    len=demux->stream->read_dword_le();
-    if((len!=idx->dwChunkLength)&&((len+1)!=idx->dwChunkLength)){
-      MSG_V("ChunkSize mismatch! raw=%d idx=%ld  \n",len,idx->dwChunkLength);
-      if(len>0x200000 && idx->dwChunkLength>0x200000) continue; // both values bad :(
-      len=choose_chunk_len(idx->dwChunkLength,len);
-    }
-    if(!(idx->dwFlags&AVIIF_KEYFRAME)) flags=DP_NONKEYFRAME;
-  } else return 0;
-  ret=demux_avi_read_packet(demux,demux_avi_select_stream(demux,id),id,len,idx_pos,flags);
-} while(ret!=1);
-  return 1;
-}
-
-
-// return value:
-//     0 = EOF or no stream found
-//     1 = successfully read a packet
-static int avi_read_nini(Demuxer *demux,Demuxer_Stream* ds){
-avi_priv_t *priv=static_cast<avi_priv_t*>(demux->priv);
-unsigned int id=0;
-unsigned int len;
-int ret=0;
-off_t *fpos=NULL;
-
-  if(ds==demux->video) fpos=&priv->idx_pos_v; else
-  if(ds==demux->audio) fpos=&priv->idx_pos_a; else
-  return 0;
-
-  demux->stream->seek(fpos[0]);
-
-do{
-
-  demux->filepos=demux->stream->tell();
-  if(demux->filepos>=demux->movi_end && (demux->movi_end>demux->movi_start)){
-	  ds->eof=1;
-	  return 0;
-  }
-  if(demux->stream->eof()) return 0;
-
-  id=demux->stream->read_dword_le();
-  len=demux->stream->read_dword_le();
-
-  if(id==mmioFOURCC('L','I','S','T')){
-      id=demux->stream->read_dword_le();      // list type
-      continue;
-  }
-
-  if(id==mmioFOURCC('R','I','F','F')){
-      MSG_V("additional RIFF header...\n");
-      id=demux->stream->read_dword_le();      // "AVIX"
-      continue;
-  }
-
-  if(ds==demux_avi_select_stream(demux,id)){
-    // read it!
-    ret=demux_avi_read_packet(demux,ds,id,len,priv->idx_pos-1,DP_NONKEYFRAME);
-  } else {
-    // skip it!
-    int skip=(len+1)&(~1); // total bytes in this chunk
-    demux->stream->skip(skip);
-  }
-
-} while(ret!=1);
-  fpos[0]=demux->stream->tell();
   return 1;
 }
 
