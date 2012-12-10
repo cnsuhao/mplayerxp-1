@@ -38,13 +38,15 @@ int mlock(const any_t*addr,size_t len) { return ENOSYS; }
 int munlock(const any_t*addr,size_t len) { return ENOSYS; }
 #endif
 
-Vidix_System::Vidix_System(const char *drvname)
-	    :vidix(new(zeromem) Vidix(drvname?drvname[0]==':'?&drvname[1]:drvname[0]?drvname:NULL:NULL,
+Vidix_System::Vidix_System(const std::string& drvname)
+	    :vidix(new(zeromem) Vidix(!drvname.empty()?
+					drvname[0]==':'?
+					    drvname.substr(1):drvname:"",
 			TYPE_OUTPUT,
 			mp_conf.verbose))
 {
     int err;
-    MSG_DBG2("vidix_preinit(%s) was called\n",drvname);
+    MSG_DBG2("vidix_preinit(%s) was called\n",drvname.c_str());
     if(vidix->version() != VIDIX_VERSION) {
 	MSG_FATAL("You have wrong version of VIDIX library\n");
 	exit_player("Vidix");

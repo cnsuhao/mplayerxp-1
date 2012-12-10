@@ -26,7 +26,7 @@ using namespace mpxp;
 
 struct Vidix_System : public video_private {
     public:
-	Vidix_System(const char *drvname);
+	Vidix_System(const std::string& drvname);
 	virtual ~Vidix_System();
 
 	MPXP_Rc		configure(unsigned src_width,unsigned src_height,
