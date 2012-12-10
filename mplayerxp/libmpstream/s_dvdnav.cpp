@@ -53,7 +53,7 @@ namespace mpxp {
 	    DvdNav_Stream_Interface(libinput_t* libinput);
 	    virtual ~DvdNav_Stream_Interface();
 
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -66,7 +66,7 @@ namespace mpxp {
 	    virtual float	stream_pts() const;
 	    virtual std::string mime_type() const;
 	private:
-	    MPXP_Rc		new_stream(const char * filename);
+	    MPXP_Rc		new_stream(const std::string& filename);
 	    void		stream_ignore_timers(int ignore);
 	    void		stream_sleep(int seconds);
 	    int			stream_sleeping();
@@ -77,7 +77,7 @@ namespace mpxp {
 	    void		cmd_handler(unsigned cmd);
 
 	    dvdnav_t*		dvdnav;              /* handle to libdvdnav stuff */
-	    const char*		filename;            /* path */
+	    std::string		filename;            /* path */
 	    int			ignore_timers;       /* should timers be skipped? */
 	    int			sleeping;            /* are we sleeping? */
 	    unsigned int	sleep_until;         /* timer */
@@ -106,14 +106,13 @@ void DvdNav_Stream_Interface::stream_ignore_timers(int ignore) {
     ignore_timers=ignore;
 }
 
-MPXP_Rc DvdNav_Stream_Interface::new_stream(const char* _filename) {
-    const char * title_str;
+MPXP_Rc DvdNav_Stream_Interface::new_stream(const std::string& _filename) {
+    const char* title_str;
 
-    if (!_filename) return MPXP_False;
-    filename=mp_strdup(_filename);
+    if (_filename.empty()) return MPXP_False;
+    filename=_filename;
 
-    if(dvdnav_open(&dvdnav,filename)!=DVDNAV_STATUS_OK) {
-	delete filename;
+    if(dvdnav_open(&dvdnav,filename.c_str())!=DVDNAV_STATUS_OK) {
 	return MPXP_False;
     }
 
@@ -180,7 +179,7 @@ unsigned* DvdNav_Stream_Interface::stream_get_palette() const {
     return 0;
 }
 
-MPXP_Rc DvdNav_Stream_Interface::open(const char *_filename,unsigned flags)
+MPXP_Rc DvdNav_Stream_Interface::open(const std::string& _filename,unsigned flags)
 {
     const char *param;
     char *dvd_device;

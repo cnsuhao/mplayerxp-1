@@ -82,6 +82,11 @@ const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,ch
     return line;
 }
 
+const char *mrl_parse_line(const std::string& line,char **user,char **pass,char **ms,char **port)
+{
+    return mrl_parse_line(line.c_str(),user,pass,ms,port);
+}
+
 static void mrl_store_args(const char *arg,char *value, const mrl_config_t * args)
 {
 #ifdef TEST_MRL
@@ -179,6 +184,10 @@ const char * mrl_parse_params(const char *param, const mrl_config_t * args)
     if(arg) delete arg;
     if(value) delete value;
     return param;
+}
+const char * mrl_parse_params(const std::string& param, const mrl_config_t * args)
+{
+    return mrl_parse_params(param.c_str(),args);
 }
 } // namespace mpxp
 

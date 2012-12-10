@@ -48,10 +48,10 @@ MPXP_Rc Demuxer_Info::add(unsigned opt, const char *param)
     return MPXP_Ok;
 }
 
-int Demuxer_Info::print(const char *filename) const
+int Demuxer_Info::print(const std::string& filename) const
 {
     unsigned i;
-    MSG_HINT(" CLIP INFO (%s):\n",filename);
+    MSG_HINT(" CLIP INFO (%s):\n",filename.c_str());
     for(i=0;i<INFOT_MAX;i++)
 	if(id[i])
 	    MSG_HINT("   %s: %s\n",info_names[i],id[i]);

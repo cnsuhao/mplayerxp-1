@@ -13,6 +13,7 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 
+#include <string>
 #include <inttypes.h>
 #include <stdarg.h>
 
@@ -50,7 +51,7 @@ namespace mpxp {
 
     /** Text description of VO-driver */
     class VO_Interface;
-    typedef VO_Interface* (*query_interface_t)(const char* args);
+    typedef VO_Interface* (*query_interface_t)(const std::string& args);
     struct vo_info_t {
 	const char* name;	/**< driver name ("Matrox Millennium G200/G400") */
 	const char* short_name; /**< short name (for config strings) ("mga") */
@@ -166,12 +167,14 @@ namespace mpxp {
 	    void	FLIP_UNSET()	{ flags&=~VOFLAG_FLIPPING; }
 	    void	FLIP_REVERT()	{ flags^=VOFLAG_FLIPPING; }
 
-	    virtual MPXP_Rc	init(const char *driver_name) const;
+	    virtual MPXP_Rc	init(const std::string& driver_name) const;
 	    virtual void	print_help() const;
 	    virtual const vo_info_t* get_info() const;
-	    virtual MPXP_Rc	configure(vf_stream_t* parent,uint32_t width, uint32_t height, uint32_t d_width,
-				  uint32_t d_height, vo_flags_e fullscreen,const char *title,
-				  uint32_t format);
+	    virtual MPXP_Rc	configure(vf_stream_t* parent,uint32_t width,
+				    uint32_t height, uint32_t d_width,
+				    uint32_t d_height, vo_flags_e fullscreen,
+				    const std::string& title,
+				    uint32_t format);
 	    virtual uint32_t	query_format(uint32_t* fourcc,unsigned src_w,unsigned src_h) const;
 
 	    virtual MPXP_Rc	reset() const;

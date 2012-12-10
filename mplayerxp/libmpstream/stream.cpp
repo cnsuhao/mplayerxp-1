@@ -120,7 +120,7 @@ void		Stream::type(Stream::type_e t) { _type=t; }
 int		Stream::eof() const { return _eof; }
 void		Stream::eof(int e) { if(!e) reset(); _eof = e; }
 
-MPXP_Rc		Stream::open(libinput_t*libinput,const char* filename,int* ff)
+MPXP_Rc		Stream::open(libinput_t*libinput,const std::string& filename,int* ff)
 {
     unsigned i,done;
     unsigned mrl_len;
@@ -128,7 +128,7 @@ MPXP_Rc		Stream::open(libinput_t*libinput,const char* filename,int* ff)
     done=0;
     for(i=0;sdrivers[i]!=&null_stream;i++) {
 	mrl_len=strlen(sdrivers[i]->mrl);
-	if(strncmp(filename,sdrivers[i]->mrl,mrl_len)==0||sdrivers[i]->mrl[0]=='*') {
+	if(filename.substr(0,mrl_len)==sdrivers[i]->mrl||sdrivers[i]->mrl[0]=='*') {
 	    MSG_V("Opening %s ... ",sdrivers[i]->mrl);
 	    Stream_Interface* drv = sdrivers[i]->query_interface(libinput);
 	    if(sdrivers[i]->mrl[0]=='*') mrl_len=0;

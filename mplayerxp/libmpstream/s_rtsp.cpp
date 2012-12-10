@@ -32,7 +32,7 @@ namespace mpxp {
 	    Rtsp_Stream_Interface(libinput_t* libinput);
 	    virtual ~Rtsp_Stream_Interface();
 
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -139,13 +139,13 @@ MPXP_Rc Rtsp_Stream_Interface::start()
 }
 
 extern int index_mode;
-MPXP_Rc Rtsp_Stream_Interface::open(const char *filename,unsigned flags)
+MPXP_Rc Rtsp_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
     URL_t *url;
     UNUSED(flags);
-    if(strncmp(filename,"rtsp://",7)!=0) return MPXP_False;
+    if(filename.substr(0,7)!="rtsp://") return MPXP_False;
 
-    MSG_V("STREAM_RTSP, URL: %s\n", filename);
+    MSG_V("STREAM_RTSP, URL: %s\n", filename.c_str());
     networking = new_networking();
     if (!networking) return MPXP_False;
 

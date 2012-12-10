@@ -3,6 +3,7 @@
 #define __MPXP_MRL_H 1
 
 #include "mp_config.h"
+#include <string>
 namespace mpxp {
 /** Parses line which contains MRL and splits it on components.
   * @param line		source line to be parsed
@@ -23,6 +24,7 @@ namespace mpxp {
   * @see		mrl_parse_params
 **/
     extern const char *mrl_parse_line(const char *line,char **user,char **pass,char **ms,char **port);
+    extern const char *mrl_parse_line(const std::string& line,char **user,char **pass,char **ms,char **port);
 
     enum {
 	MRL_TYPE_PRINT	=0, /**< NoType! Just printout value of argument */
@@ -52,5 +54,6 @@ namespace mpxp {
   * @see		mrl_parse_line
 **/
     extern const char *	mrl_parse_params(const char *param,const mrl_config_t * args);
+    extern const char *	mrl_parse_params(const std::string& param,const mrl_config_t * args);
 } // namespace mpxp
 #endif

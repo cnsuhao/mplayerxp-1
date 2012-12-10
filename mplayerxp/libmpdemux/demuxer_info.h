@@ -4,6 +4,7 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include "xmpcore/xmp_enums.h"
+#include <string>
 
 namespace mpxp {
     enum {
@@ -33,7 +34,7 @@ namespace mpxp {
 
 	    MPXP_Rc	add(unsigned opt, const char *param);
 	    const char*	get(unsigned opt) const;
-	    int		print(const char *filename) const;
+	    int		print(const std::string& filename) const;
 
 	private:
 	    char *id[INFOT_MAX];

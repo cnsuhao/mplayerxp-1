@@ -109,7 +109,7 @@ typedef struct {
 
 class FBDev_VO_Interface : public VO_Interface {
     public:
-	FBDev_VO_Interface(const char* args);
+	FBDev_VO_Interface(const std::string& args);
 	virtual ~FBDev_VO_Interface();
 
 	virtual MPXP_Rc	configure(uint32_t width,
@@ -117,7 +117,7 @@ class FBDev_VO_Interface : public VO_Interface {
 				uint32_t d_width,
 				uint32_t d_height,
 				unsigned flags,
-				const char *title,
+				const std::string& title,
 				uint32_t format);
 	virtual MPXP_Rc	select_frame(unsigned idx);
 	virtual MPXP_Rc	flush_page(unsigned idx);
@@ -130,8 +130,8 @@ class FBDev_VO_Interface : public VO_Interface {
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
 	MPXP_Rc		fb_preinit();
-	const char*	parse_sub_device(const char *sd);
-	int		parse_fbmode_cfg(const char *cfgfile);
+	std::string	parse_sub_device(const std::string& sd);
+	int		parse_fbmode_cfg(const std::string& cfgfile);
 	int		get_token(int num);
 	void		vt_set_textarea(int u, int l);
 	void		lots_of_printf() const;
@@ -189,11 +189,11 @@ class FBDev_VO_Interface : public VO_Interface {
 	MPXP_Rc		fb_works;
 };
 
-const char* FBDev_VO_Interface::parse_sub_device(const char *sd)
+std::string FBDev_VO_Interface::parse_sub_device(const std::string& sd)
 {
     const char *param;
 #ifdef CONFIG_VIDIX
-    if(memcmp(sd,"vidix",5) == 0) return &sd[5]; /* vidix_name will be valid within init() */
+    if(sd.substr(0,5)=="vidix") return &sd[5]; /* vidix_name will be valid within init() */
     else
 #endif
     {
@@ -292,16 +292,16 @@ FBDev_VO_Interface::~FBDev_VO_Interface()
 #endif
 }
 
-FBDev_VO_Interface::FBDev_VO_Interface(const char *arg)
+FBDev_VO_Interface::FBDev_VO_Interface(const std::string& arg)
 		    :VO_Interface(arg),
 		    aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect))
 {
-    const char *vidix_name=NULL;
-    if(arg) vidix_name=parse_sub_device(arg);
+    std::string vidix_name;
+    if(!arg.empty()) vidix_name=parse_sub_device(arg);
 #ifdef CONFIG_VIDIX
-    if(vidix_name) {
+    if(!vidix_name.empty()) {
 	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
-	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name);
+	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name.c_str());
 	    exit_player("Vidix error");
 	}
     }
@@ -361,7 +361,7 @@ out_eol:
 static fb_mode_t *fb_modes = NULL;
 static int nr_modes = 0;
 
-int FBDev_VO_Interface::parse_fbmode_cfg(const char *cfgfile)
+int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
 {
 #define CHECK_IN_MODE_DEF\
 	do {\
@@ -376,14 +376,14 @@ int FBDev_VO_Interface::parse_fbmode_cfg(const char *cfgfile)
     int in_mode_def = 0;
     int tmp, i;
 
-    MSG_DBG2("Reading %s: ", cfgfile);
+    MSG_DBG2("Reading %s: ", cfgfile.c_str());
 
-    if ((fp = fopen(cfgfile, "r")) == NULL) {
-	MSG_ERR("can't open '%s': %s\n", cfgfile, strerror(errno));
+    if ((fp = fopen(cfgfile.c_str(), "r")) == NULL) {
+	MSG_ERR("can't open '%s': %s\n", cfgfile.c_str(), strerror(errno));
 	return -1;
     }
 
-    if ((line = (char *) mp_malloc(MAX_LINE_LEN + 1)) == NULL) {
+    if ((line = new char[MAX_LINE_LEN + 1]) == NULL) {
 	MSG_ERR("can't get memory for 'line': %s\n", strerror(errno));
 	return -2;
     }
@@ -894,7 +894,7 @@ void FBDev_VO_Interface::vt_set_textarea(int u, int l)
 }
 
 MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_width,
-		uint32_t d_height, unsigned _flags, const char *title,
+		uint32_t d_height, unsigned _flags, const std::string& title,
 		uint32_t format)
 {
     struct fb_cmap *cmap;
@@ -1206,7 +1206,7 @@ MPXP_Rc FBDev_VO_Interface::ctrl(uint32_t request, any_t*data) {
     return MPXP_NA;
 }
 
-static VO_Interface* query_interface(const char* args) { return new(zeromem) FBDev_VO_Interface(args); }
+static VO_Interface* query_interface(const std::string& args) { return new(zeromem) FBDev_VO_Interface(args); }
 extern const vo_info_t fbdev_vo_info = {
     "Framebuffer Device"
 #ifdef CONFIG_VIDIX

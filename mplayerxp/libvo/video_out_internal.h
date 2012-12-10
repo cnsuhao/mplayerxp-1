@@ -23,11 +23,12 @@
 #ifndef __VIDEO_OUT_INTERNAL_H
 #define __VIDEO_OUT_INTERNAL_H 1
 #include "dri_vo.h"
+#include <string>
 
 namespace mpxp {
 class VO_Interface : public Opaque {
     public:
-	VO_Interface(const char *args) { UNUSED(args); };
+	VO_Interface(const std::string& args) { UNUSED(args); };
 	virtual ~VO_Interface() {};
 
 	virtual MPXP_Rc configure(uint32_t width,
@@ -35,7 +36,7 @@ class VO_Interface : public Opaque {
 				uint32_t d_width,
 				uint32_t d_height,
 				unsigned flags,
-				const char *title,
+				const std::string& title,
 				uint32_t format) = 0;
 	virtual MPXP_Rc	select_frame(unsigned idx) = 0;
 	virtual MPXP_Rc	flush_page(unsigned idx) { UNUSED(idx); return MPXP_NA; }

@@ -42,7 +42,7 @@ using namespace mpxp;
 namespace mpxp {
 class Xv_VO_Interface : public VO_Interface {
     public:
-	Xv_VO_Interface(const char* args);
+	Xv_VO_Interface(const std::string& args);
 	virtual ~Xv_VO_Interface();
 
 	virtual MPXP_Rc	configure(uint32_t width,
@@ -50,7 +50,7 @@ class Xv_VO_Interface : public VO_Interface {
 				uint32_t d_width,
 				uint32_t d_height,
 				unsigned flags,
-				const char *title,
+				const std::string& title,
 				uint32_t format);
 	virtual MPXP_Rc	select_frame(unsigned idx);
 	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
@@ -83,14 +83,14 @@ class Xv_VO_Interface : public VO_Interface {
 int XShmGetEventBase(Display*);
 // FIXME: dynamically allocate this stuff
 
-Xv_VO_Interface::Xv_VO_Interface(const char *arg)
+Xv_VO_Interface::Xv_VO_Interface(const std::string& arg)
 		:VO_Interface(arg),
 		aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
 		xv(new(zeromem) Xv_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
 {
     num_buffers=1;
-    if(arg) {
-	MSG_ERR("vo_xv: Unknown subdevice: %s\n",arg);
+    if(!arg.empty()) {
+	MSG_ERR("vo_xv: Unknown subdevice: %s\n",arg.c_str());
 	exit_player("Xv error");
     }
 }
@@ -143,7 +143,7 @@ void Xv_VO_Interface::set_gamma_correction( ) const
  * connect to server, create and map window,
  * allocate colors and (shared) memory
  */
-MPXP_Rc Xv_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height,unsigned _flags,const char *title, uint32_t _format)
+MPXP_Rc Xv_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height,unsigned _flags,const std::string& title, uint32_t _format)
 {
     XVisualInfo vinfo;
     XSizeHints hint;
@@ -324,7 +324,7 @@ MPXP_Rc Xv_VO_Interface::ctrl(uint32_t request, any_t*data)
   return MPXP_NA;
 }
 
-static VO_Interface* query_interface(const char* args) { return new(zeromem) Xv_VO_Interface(args); }
+static VO_Interface* query_interface(const std::string& args) { return new(zeromem) Xv_VO_Interface(args); }
 extern const vo_info_t xv_vo_info =
 {
 	"X11/Xv",

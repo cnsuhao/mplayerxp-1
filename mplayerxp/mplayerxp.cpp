@@ -906,7 +906,7 @@ char* MPXPSystem::init_output_subsystems() {
     unsigned i;
     // check video_out driver name:
     MP_UNIT("vo_init");
-    vo_inited = (mpxp_context().video().output->init(mp_conf.video_driver)!=NULL)?1:0;
+    vo_inited = (mpxp_context().video().output->init(mp_conf.video_driver?mp_conf.video_driver:"")!=NULL)?1:0;
 
     if(!vo_inited){
 	MSG_FATAL(MSGTR_InvalidVOdriver,mp_conf.video_driver?mp_conf.video_driver:"?");

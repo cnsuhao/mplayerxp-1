@@ -58,7 +58,7 @@ namespace mpxp {
 
 	    static void		print_drivers();
 
-	    virtual MPXP_Rc	open(libinput_t*libinput,const char* filename,int* file_format);
+	    virtual MPXP_Rc	open(libinput_t*libinput,const std::string& filename,int* file_format);
 	    virtual int		read(any_t* mem,int total);
 	    virtual off_t	seek(off_t off);
 	    virtual int		skip(off_t len);

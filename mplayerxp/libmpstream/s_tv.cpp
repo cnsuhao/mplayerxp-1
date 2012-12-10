@@ -584,7 +584,7 @@ int __FASTCALL__ tv_step_chanlist(tvi_handle_t *tvh)
 	    Tv_Stream_Interface(libinput_t* libinput);
 	    virtual ~Tv_Stream_Interface();
 
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -602,7 +602,7 @@ int __FASTCALL__ tv_step_chanlist(tvi_handle_t *tvh)
 Tv_Stream_Interface::Tv_Stream_Interface(libinput_t*libinput):Stream_Interface(libinput) {}
 Tv_Stream_Interface::~Tv_Stream_Interface() { delete priv; }
 
-MPXP_Rc Tv_Stream_Interface::open(const char *filename,unsigned flags)
+MPXP_Rc Tv_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
     UNUSED(flags);
     mrl_parse_params(filename,tvopts_conf);

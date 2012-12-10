@@ -45,21 +45,20 @@ URL_t *url_redirect(URL_t **url, const char *redir) {
   return res;
 }
 
-URL_t*
-url_new(const char* url) {
+URL_t* url_new(const std::string& url) {
 	int pos1, pos2,v6addr = 0;
 	URL_t* Curl = NULL;
 	char *escfilename=NULL;
 	char *ptr1=NULL, *ptr2=NULL, *ptr3=NULL, *ptr4=NULL;
 	int jumpSize = 3;
 
-	if( url==NULL ) return NULL;
+	if( url.empty()) return NULL;
 
-	if (strlen(url) > (std::numeric_limits<size_t>::max() / 3 - 1)) {
+	if (url.length() > (std::numeric_limits<size_t>::max() / 3 - 1)) {
 		MSG_FATAL("MemAllocFailed\n");
 		goto err_out;
 	}
-	escfilename=new char [strlen(url)*3+1];
+	escfilename=new char [url.length()*3+1];
 	if (!escfilename ) {
 		MSG_FATAL("MemAllocFailed\n");
 		goto err_out;
@@ -241,10 +240,10 @@ url_free(URL_t* url) {
 /* Replace escape sequences in an URL (or a part of an URL) */
 /* works like strcpy(), but without return argument */
 void
-url2string(char *outbuf, const char *inbuf)
+url2string(char *outbuf, const std::string& inbuf)
 {
 	unsigned char c,c1,c2;
-	int i,len=strlen(inbuf);
+	int i,len=inbuf.length();
 	for (i=0;i<len;i++){
 		c = inbuf[i];
 		if (c == '%' && i<len-2) { //must have 2 more chars
@@ -311,8 +310,8 @@ url_escape_string_part(char *outbuf, const char *inbuf) {
 /* Replace specific characters in the URL string by an escape sequence */
 /* works like strcpy(), but without return argument */
 void
-string2url(char *outbuf, const char *_inbuf) {
-    char* inbuf=mp_strdup(_inbuf);
+string2url(char *outbuf, const std::string& _inbuf) {
+    char* inbuf=mp_strdup(_inbuf.c_str());
     int i = 0,j,len = strlen(inbuf);
     char* tmp,*in;
     char *unesc = NULL;

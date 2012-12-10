@@ -170,22 +170,23 @@ const vo_info_t* Video_Output::get_info() const
     return priv.video_out;
 }
 
-MPXP_Rc Video_Output::init(const char *driver_name) const
+MPXP_Rc Video_Output::init(const std::string& driver_name) const
 {
-    char* drv_name = NULL;
-    char * subdev = NULL;
-    if(driver_name) {
-	drv_name=mp_strdup(driver_name);
-	subdev = strchr(drv_name,':');
-	if(subdev) { *subdev='\0'; subdev++; }
+    size_t offset;
+    std::string drv_name;
+    std::string subdev;
+    if(!driver_name.empty()) {
+	drv_name=driver_name;
+	offset=drv_name.find(':');
+	if(offset!=std::string::npos) subdev = drv_name.substr(offset+1);
     }
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
     unsigned i;
-    if(!drv_name) priv.video_out=vo_infos[0];
+    if(drv_name.empty()) priv.video_out=vo_infos[0];
     else
     for (i=0; vo_infos[i] != &null_vo_info; i++){
 	const vo_info_t *info = vo_infos[i];
-	if(strcmp(info->short_name,drv_name) == 0){
+	if(info->short_name==drv_name){
 	    priv.video_out = vo_infos[i];
 	    break;
 	}
@@ -194,7 +195,6 @@ MPXP_Rc Video_Output::init(const char *driver_name) const
     if(priv.video_out) {
 	priv.vo_iface=priv.video_out->query_interface(subdev);
     }
-    if(drv_name) delete drv_name;
     return priv.vo_iface?MPXP_Ok:MPXP_False;
 }
 
@@ -312,7 +312,7 @@ void Video_Output::dri_reconfig(int is_resize ) const
 }
 
 MPXP_Rc Video_Output::configure(vf_stream_t* s,uint32_t width, uint32_t height, uint32_t d_width,
-		   uint32_t d_height, vo_flags_e _fullscreen, const char *title,
+		   uint32_t d_height, vo_flags_e _fullscreen, const std::string& title,
 		   uint32_t format)
 {
     vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
@@ -338,7 +338,7 @@ MPXP_Rc Video_Output::configure(vf_stream_t* s,uint32_t width, uint32_t height, 
     priv.dri.d_width = d_w;
     priv.dri.d_height = d_h;
     MSG_V("priv.video_out->config(%u,%u,%u,%u,0x%x,'%s',%s)\n"
-	,w,h,d_w,d_h,_fullscreen,title,vo_format_name(dest_fourcc));
+	,w,h,d_w,d_h,_fullscreen,title.c_str(),vo_format_name(dest_fourcc));
     retval = priv.vo_iface->configure(w,h,d_w,d_h,_fullscreen,title,dest_fourcc);
     priv.srcFourcc=format;
     if(retval == MPXP_Ok) {

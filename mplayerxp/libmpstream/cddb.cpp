@@ -582,7 +582,7 @@ CD_Info::~CD_Info() {
     }
 }
 
-cd_track_t* CD_Info::add_track(const char *track_name,
+cd_track_t* CD_Info::add_track(const std::string& track_name,
 				unsigned int track_nb,
 				unsigned int _min,
 				unsigned int _sec,
@@ -591,7 +591,7 @@ cd_track_t* CD_Info::add_track(const char *track_name,
 				unsigned long frame_length) {
     cd_track_t *cd_track;
 
-    if( track_name==NULL ) return NULL;
+    if( track_name.empty()) return NULL;
 
     cd_track = new(zeromem) cd_track_t;
     if( cd_track==NULL ) {
@@ -697,13 +697,13 @@ static char* __FASTCALL__ xmcd_parse_ttitle(CD_Info& cd_info,char *line) {
     return ptr;
 }
 
-MPXP_Rc CD_Info::parse_xmcd(const char *_xmcd_file) {
+MPXP_Rc CD_Info::parse_xmcd(const std::string& _xmcd_file) {
     int length, pos = 0;
     char *ptr;
     char *ptr2;
     unsigned int audiolen;
-    if( _xmcd_file==NULL ) return MPXP_False;
-    char* xmcd_file = mp_strdup(_xmcd_file);
+    if( _xmcd_file.empty() ) return MPXP_False;
+    char* xmcd_file = mp_strdup(_xmcd_file.c_str());
 
     length = strlen(xmcd_file);
     ptr = xmcd_file;
@@ -736,7 +736,7 @@ MPXP_Rc CD_Info::parse_xmcd(const char *_xmcd_file) {
     return MPXP_Ok;
 }
 
-MPXP_Rc CDD_Interface::open_cddb(libinput_t *libinput,const char *dev, const char *track) {
+MPXP_Rc CDD_Interface::open_cddb(libinput_t *libinput,const std::string& dev, const std::string& track) {
     char *xmcd_file = NULL;
     MPXP_Rc ret;
 

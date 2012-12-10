@@ -54,7 +54,7 @@ using namespace mpxp;
 namespace mpxp {
 class X11_VO_Interface : public VO_Interface {
     public:
-	X11_VO_Interface(const char* args);
+	X11_VO_Interface(const std::string& args);
 	virtual ~X11_VO_Interface();
 
 	virtual MPXP_Rc	configure(uint32_t width,
@@ -62,7 +62,7 @@ class X11_VO_Interface : public VO_Interface {
 				uint32_t d_width,
 				uint32_t d_height,
 				unsigned flags,
-				const char *title,
+				const std::string& title,
 				uint32_t format);
 	virtual MPXP_Rc	select_frame(unsigned idx);
 	virtual MPXP_Rc	flush_page(unsigned idx);
@@ -75,7 +75,7 @@ class X11_VO_Interface : public VO_Interface {
 	virtual uint32_t check_events(const vo_resize_t*);
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
-	const char*	parse_sub_device(const char *sd);
+	std::string	parse_sub_device(const std::string& sd);
 	void		resize(int x,int y) const;
 	void		display_image(XImage * myximage) const;
 	void		lock_surfaces();
@@ -118,32 +118,32 @@ void X11_VO_Interface::unlock_surfaces() {
 #include <X11/extensions/XShm.h>
 #endif
 
-const char* X11_VO_Interface::parse_sub_device(const char *sd)
+std::string X11_VO_Interface::parse_sub_device(const std::string& sd)
 {
 #ifdef CONFIG_VIDIX
-    if(memcmp(sd,"vidix",5) == 0) return &sd[5]; /* vidix_name will be valid within init() */
+    if(sd.substr(0,5)=="vidix") return &sd[5]; /* vidix_name will be valid within init() */
 #endif
-    MSG_ERR("vo_x11: Unknown subdevice: '%s'\n", sd);
-    return NULL;
+    MSG_ERR("vo_x11: Unknown subdevice: '%s'\n", sd.c_str());
+    return "";
 }
 
-X11_VO_Interface::X11_VO_Interface(const char *arg)
+X11_VO_Interface::X11_VO_Interface(const std::string& arg)
 		:VO_Interface(arg),
 		aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
 		x11(new(zeromem) X11_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
 {
-    const char* vidix_name=NULL;
+    std::string vidix_name;
     num_buffers=1;
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     pthread_mutex_init(&surfaces_mutex,&attr);
 
-    if(arg) vidix_name = parse_sub_device(arg);
+    if(!arg.empty()) vidix_name = parse_sub_device(arg);
 #ifdef CONFIG_VIDIX
-    if(vidix_name) {
-MSG_INFO("args=%s vidix-name=%s\n",arg,vidix_name);
+    if(!vidix_name.empty()) {
+MSG_INFO("args=%s vidix-name=%s\n",arg.c_str(),vidix_name.c_str());
 	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
-	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name);
+	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name.c_str());
 	    exit_player("Vidix error");
 	}
     }
@@ -214,7 +214,7 @@ uint32_t X11_VO_Interface::check_events(const vo_resize_t*vrest)
    return ret;
 }
 
-MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_width,uint32_t d_height,unsigned _flags,const char *title,uint32_t format)
+MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_width,uint32_t d_height,unsigned _flags,const std::string& title,uint32_t format)
 {
     XSizeHints hint;
     unsigned i;
@@ -425,7 +425,7 @@ MPXP_Rc X11_VO_Interface::ctrl(uint32_t request, any_t*data) {
     return MPXP_NA;
 }
 
-static VO_Interface* query_interface(const char* args) { return new(zeromem) X11_VO_Interface(args); }
+static VO_Interface* query_interface(const std::string& args) { return new(zeromem) X11_VO_Interface(args); }
 extern const vo_info_t x11_vo_info =
 {
 	"X11 ( XImage/Shm )"

@@ -42,11 +42,11 @@ namespace mpxp {
 	    CD_Info();
 	    virtual ~CD_Info();
 
-	    virtual cd_track_t*	add_track(const char *track_name, unsigned int track_nb, unsigned int min, unsigned int sec, unsigned int msec, unsigned long frame_begin, unsigned long frame_length);
+	    virtual cd_track_t*	add_track(const std::string& track_name, unsigned int track_nb, unsigned int min, unsigned int sec, unsigned int msec, unsigned long frame_begin, unsigned long frame_length);
 	    virtual cd_track_t*	get_track(unsigned int track_nb) const;
 
 	    virtual void	print() const;
-	    virtual MPXP_Rc	parse_xmcd(const char *_xmcd_file);
+	    virtual MPXP_Rc	parse_xmcd(const std::string& _xmcd_file);
 
 	    std::string artist;
 	    std::string album;
@@ -73,8 +73,8 @@ namespace mpxp {
 	    CDD_Interface();
 	    virtual ~CDD_Interface();
 
-	    virtual MPXP_Rc	open_cdda(const char* dev,const char* track);
-	    virtual MPXP_Rc	open_cddb(libinput_t*,const char* dev,const char* track);
+	    virtual MPXP_Rc	open_cdda(const std::string& dev,const std::string& track);
+	    virtual MPXP_Rc	open_cddb(libinput_t*,const std::string& dev,const std::string& track);
 
 	    virtual int		read(char *buf,track_t* trackidx);
 	    virtual void	seek(off_t pos,track_t *trackidx);

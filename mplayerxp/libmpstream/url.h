@@ -6,7 +6,7 @@
 
 #ifndef __URL_H
 #define __URL_H
-
+#include <string>
 //#define __URL_DEBUG
 
 namespace mpxp {
@@ -20,12 +20,12 @@ namespace mpxp {
 	char *password;
     } URL_t;
 
-    URL_t* url_new(const char* url);
+    URL_t* url_new(const std::string& url);
     void   url_free(URL_t* url);
 
     URL_t *url_redirect(URL_t **url, const char *redir);
-    void url2string(char *outbuf, const char *inbuf);
-    void string2url(char *outbuf, const char *inbuf);
+    void url2string(char *outbuf, const std::string& inbuf);
+    void string2url(char *outbuf, const std::string& inbuf);
 
 #ifdef __URL_DEBUG
     void url_debug(URL_t* url);

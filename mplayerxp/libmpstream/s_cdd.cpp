@@ -23,7 +23,7 @@ namespace mpxp {
 	    Cdda_Stream_Interface(libinput_t* libinput);
 	    virtual ~Cdda_Stream_Interface();
 
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -46,13 +46,13 @@ Cdda_Stream_Interface::Cdda_Stream_Interface(libinput_t* libinput)
 			track_idx(255) {}
 Cdda_Stream_Interface::~Cdda_Stream_Interface() { delete priv; }
 
-MPXP_Rc Cdda_Stream_Interface::open(const char *filename,unsigned flags)
+MPXP_Rc Cdda_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
     MPXP_Rc rc;
     const char *param;
     char *device;
     UNUSED(flags);
-    if(strcmp(filename,"help") == 0) {
+    if(filename=="help") {
 	MSG_HINT("Usage: cdda://<@device><#trackno>\n");
 	return MPXP_False;
     }
@@ -133,7 +133,7 @@ extern const stream_interface_info_t cdda_stream =
 	    Cddb_Stream_Interface(libinput_t* libinput);
 	    virtual ~Cddb_Stream_Interface();
 
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	private:
 	    libinput_t*		libinput;
     };
@@ -142,14 +142,14 @@ Cddb_Stream_Interface::Cddb_Stream_Interface(libinput_t*_libinput)
 			libinput(_libinput) {}
 Cddb_Stream_Interface::~Cddb_Stream_Interface() {}
 
-MPXP_Rc Cddb_Stream_Interface::open(const char *filename,unsigned flags)
+MPXP_Rc Cddb_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
 #ifdef HAVE_STREAMING
     const char *param;
     char *device;
     MPXP_Rc retval;
     UNUSED(flags);
-    if(strcmp(filename,"help") == 0) {
+    if(filename=="help") {
 	MSG_HINT("Usage: cddb://<@device><#trackno>\n");
 	return MPXP_False;
     }

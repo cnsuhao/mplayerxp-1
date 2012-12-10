@@ -37,12 +37,12 @@ void cdda_register_options(m_config_t* cfg) {
   m_config_register_options(cfg,cdda_conf);
 }
 
-static unsigned cdda_parse_tracks(unsigned char *arr,unsigned nelem,const char *arg)
+static unsigned cdda_parse_tracks(unsigned char *arr,unsigned nelem,const std::string& arg)
 {
     const char *st,*end;
     unsigned rval=0;
-    unsigned slen=strlen(arg);
-    st=arg;
+    unsigned slen=arg.length();
+    st=arg.c_str();
     memset(arr,0,sizeof(unsigned char)*nelem);
     do {
 	size_t datalen,value,evalue,i;
@@ -70,22 +70,22 @@ static unsigned cdda_parse_tracks(unsigned char *arr,unsigned nelem,const char *
 	    rval=value;
 	}
 	st=end+1;
-	if(st>arg+slen) break;
+	if(st>arg.c_str()+slen) break;
     }while(end);
     return rval;
 }
 
-MPXP_Rc CDD_Interface::open_cdda(const char* dev,const char* arg) {
+MPXP_Rc CDD_Interface::open_cdda(const std::string& dev,const std::string& arg) {
     unsigned cd_tracks;
     unsigned int audiolen=0;
     unsigned i;
     unsigned char arr[256];
     int st_inited;
 
-    cd = cdio_cddap_identify(dev,mp_conf.verbose?1:0,NULL);
+    cd = cdio_cddap_identify(dev.c_str(),mp_conf.verbose?1:0,NULL);
 
     if(!cd) {
-	MSG_ERR("Can't open cdda device: %s\n",dev);
+	MSG_ERR("Can't open cdda device: %s\n",dev.c_str());
 	return MPXP_False;
     }
 

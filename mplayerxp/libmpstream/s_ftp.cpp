@@ -30,7 +30,7 @@ namespace mpxp {
 	    Ftp_Stream_Interface(libinput_t* libinput);
 	    virtual ~Ftp_Stream_Interface();
 
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -45,7 +45,7 @@ namespace mpxp {
 	    int			readresp(char* rsp);
 	    int			OpenPort();
 	    int			OpenData(size_t newpos);
-	    int			SendCmd(const char *cmd,char* rsp);
+	    int			SendCmd(const std::string& cmd,char* rsp);
 
 	    const char*	user;
 	    const char*	pass;
@@ -173,9 +173,10 @@ int Ftp_Stream_Interface::readresp(char* rsp)
     return r;
 }
 
-int Ftp_Stream_Interface::SendCmd(const char *cmd,char* rsp)
+int Ftp_Stream_Interface::SendCmd(const std::string& _cmd,char* rsp)
 {
-    int l = strlen(cmd);
+    const char* cmd=_cmd.c_str();
+    int l = _cmd.length();
     int hascrlf = cmd[l - 2] == '\r' && cmd[l - 1] == '\n';
 
     if(hascrlf && l == 2) MSG_V("\n");
@@ -314,18 +315,15 @@ void Ftp_Stream_Interface::close() {
     if(tcp.established()) tcp.close();
 }
 
-MPXP_Rc Ftp_Stream_Interface::open(const char *_filename,unsigned flags)
+MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
 {
     int resp;
     char str[256],rsp_txt[256];
-    char *uname;
+    std::string uname;
 
     UNUSED(flags);
-    if(!(uname=new char [strlen(_filename)+7])) return MPXP_False;
-    strcpy(uname,"ftp://");
-    strcat(uname,_filename);
+    uname=std::string("ftp://")+_filename;
     if(!(url=url_new(uname))) goto bad_url;
-    delete uname;
 //  url = check4proxies (rurl);
     if(!(url->hostname && url->file)) {
 	bad_url:

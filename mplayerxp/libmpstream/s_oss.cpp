@@ -33,7 +33,7 @@ namespace mpxp {
 	    Oss_Stream_Interface(libinput_t* libinput);
 	    virtual ~Oss_Stream_Interface();
 
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -56,14 +56,14 @@ Oss_Stream_Interface::Oss_Stream_Interface(libinput_t* libinput)
 		    :Stream_Interface(libinput) {}
 Oss_Stream_Interface::~Oss_Stream_Interface() {}
 
-MPXP_Rc Oss_Stream_Interface::open(const char *filename,unsigned flags)
+MPXP_Rc Oss_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
     char *args;
     char *oss_device,*comma;
     unsigned tmp,param;
     int err;
     UNUSED(flags);
-    if(strcmp(filename,"help") == 0) {
+    if(filename=="help") {
 	MSG_HINT("Usage: oss://<@device>#<channels>,<samplerate>,<sampleformat>\n");
 	return MPXP_False;
     }

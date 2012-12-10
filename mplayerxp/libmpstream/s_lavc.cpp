@@ -16,7 +16,7 @@ namespace mpxp {
 	    Lavs_Stream_Interface(libinput_t* libinput);
 	    virtual ~Lavs_Stream_Interface();
 
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -67,15 +67,15 @@ MPXP_Rc Lavs_Stream_Interface::ctrl(unsigned cmd, any_t*arg)
 
 void Lavs_Stream_Interface::close() {}
 
-MPXP_Rc Lavs_Stream_Interface::open(const char *filename,unsigned flags)
+MPXP_Rc Lavs_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
     int64_t _size;
 
     UNUSED(flags);
     av_register_all();
-    MSG_V("[lavc] Opening %s\n", filename);
+    MSG_V("[lavc] Opening %s\n", filename.c_str());
 
-    if (ffurl_open(&ctx, filename, 0, &int_cb, NULL) < 0) return MPXP_False;
+    if (ffurl_open(&ctx, filename.c_str(), 0, &int_cb, NULL) < 0) return MPXP_False;
     spos = 0;
     _size = ffurl_size(ctx);
     if (_size >= 0) end_pos = _size;

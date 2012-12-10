@@ -31,7 +31,7 @@ namespace mpxp {
 	    Udp_Stream_Interface(libinput_t* libinput);
 	    virtual ~Udp_Stream_Interface();
 
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -92,11 +92,11 @@ MPXP_Rc Udp_Stream_Interface::start ()
     return MPXP_Ok;
 }
 
-MPXP_Rc Udp_Stream_Interface::open(const char *filename,unsigned flags)
+MPXP_Rc Udp_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
     URL_t *url;
     UNUSED(flags);
-    MSG_V("STREAM_UDP, URL: %s\n", filename);
+    MSG_V("STREAM_UDP, URL: %s\n", filename.c_str());
     networking = new_networking();
     if (!networking) return MPXP_False;
 

@@ -13,7 +13,7 @@ namespace mpxp {
 	    Null_Stream_Interface(libinput_t* libinput);
 	    virtual ~Null_Stream_Interface();
 
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -28,7 +28,7 @@ namespace mpxp {
 Null_Stream_Interface::Null_Stream_Interface(libinput_t*libinput):Stream_Interface(libinput) {}
 Null_Stream_Interface::~Null_Stream_Interface() {}
 
-MPXP_Rc Null_Stream_Interface::open(const char *filename,unsigned flags) {
+MPXP_Rc Null_Stream_Interface::open(const std::string& filename,unsigned flags) {
     UNUSED(filename);
     UNUSED(flags);
     return MPXP_False;

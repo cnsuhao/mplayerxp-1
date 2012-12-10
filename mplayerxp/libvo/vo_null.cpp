@@ -41,7 +41,7 @@ using namespace mpxp;
 namespace mpxp {
 class Null_VO_Interface : public VO_Interface {
     public:
-	Null_VO_Interface(const char* args);
+	Null_VO_Interface(const std::string& args);
 	virtual ~Null_VO_Interface();
 
 	virtual MPXP_Rc	configure(uint32_t width,
@@ -49,7 +49,7 @@ class Null_VO_Interface : public VO_Interface {
 				uint32_t d_width,
 				uint32_t d_height,
 				unsigned flags,
-				const char *title,
+				const std::string& title,
 				uint32_t format);
 	virtual MPXP_Rc	select_frame(unsigned idx);
 	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
@@ -74,7 +74,7 @@ MPXP_Rc Null_VO_Interface::select_frame(unsigned idx)
     return MPXP_Ok;
 }
 
-MPXP_Rc Null_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height,unsigned flags,const char *title, uint32_t format)
+MPXP_Rc Null_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height,unsigned flags,const std::string& title, uint32_t format)
 {
     unsigned awidth;
     size_t i;
@@ -139,10 +139,10 @@ Null_VO_Interface::~Null_VO_Interface()
     }
 }
 
-Null_VO_Interface::Null_VO_Interface(const char *arg)
+Null_VO_Interface::Null_VO_Interface(const std::string& arg)
 		:VO_Interface(arg)
 {
-    if(arg) MSG_ERR("vo_null: Unknown subdevice: %s\n",arg);
+    if(!arg.empty()) MSG_ERR("vo_null: Unknown subdevice: %s\n",arg.c_str());
 }
 
 void Null_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const
@@ -224,10 +224,12 @@ uint32_t Null_VO_Interface::check_events(const vo_resize_t* vr) {
 }
 
 MPXP_Rc Null_VO_Interface::ctrl(uint32_t request, any_t*data) {
+    UNUSED(request);
+    UNUSED(data);
     return MPXP_NA;
 }
 
-static VO_Interface* query_interface(const char* args) { return new(zeromem) Null_VO_Interface(args); }
+static VO_Interface* query_interface(const std::string& args) { return new(zeromem) Null_VO_Interface(args); }
 extern const vo_info_t null_vo_info = {
     "Null video output",
     "null",

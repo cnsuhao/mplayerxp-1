@@ -34,7 +34,7 @@ namespace mpxp {
 	    VcdNav_Stream_Interface(libinput_t* libinput);
 	    virtual ~VcdNav_Stream_Interface();
 
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -73,10 +73,10 @@ VcdNav_Stream_Interface::~VcdNav_Stream_Interface() {
     if(segment) delete segment;
 }
 
-static void __FASTCALL__ _cdio_detect_media(const char *device)
+static void __FASTCALL__ _cdio_detect_media(const std::string& device)
 {
   CdIo_t *img;
-  img=cdio_open(device,DRIVER_UNKNOWN);
+  img=cdio_open(device.c_str(),DRIVER_UNKNOWN);
   if(img)
   {
     discmode_t mode=cdio_get_discmode(img);
@@ -84,7 +84,7 @@ static void __FASTCALL__ _cdio_detect_media(const char *device)
   }
 }
 
-MPXP_Rc VcdNav_Stream_Interface::open(const char *filename,unsigned flags)
+MPXP_Rc VcdNav_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
     const char *param;
     char *device,*dev;
@@ -92,7 +92,7 @@ MPXP_Rc VcdNav_Stream_Interface::open(const char *filename,unsigned flags)
     int vcd_track=-1;
     vcdinfo_open_return_t open_rc;
     UNUSED(flags);
-    if(strcmp(filename,"help") == 0) {
+    if(filename=="help") {
 	MSG_HINT("Usage: vcdnav://<@device><#trackno>\n");
 	return MPXP_False;
     }

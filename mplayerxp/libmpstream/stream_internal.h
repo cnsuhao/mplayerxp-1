@@ -19,7 +19,7 @@ namespace mpxp {
 		  * @param filename	points MRL of stream (vcdnav://, file://, http://, ...)
 		  * @param flags	currently unused and filled as 0
 		**/
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags) = 0;
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags) = 0;
 
 		/** Reads next packet from stream
 		  * @param _this	points structure which identifies stream

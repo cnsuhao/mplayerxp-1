@@ -26,7 +26,7 @@ namespace mpxp {
 	    Network_Stream_Interface(libinput_t* libinput);
 	    virtual ~Network_Stream_Interface();
 
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -53,14 +53,14 @@ Network_Stream_Interface::~Network_Stream_Interface() {
     }
 }
 
-MPXP_Rc Network_Stream_Interface::open(const char *filename,unsigned flags)
+MPXP_Rc Network_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
     UNUSED(flags);
     url = url_new(filename);
     if(url) {
 	networking=new_networking();
 	if(networking_start(tcp,networking,url)!=MPXP_Ok){
-	    MSG_ERR(MSGTR_UnableOpenURL, filename);
+	    MSG_ERR(MSGTR_UnableOpenURL, filename.c_str());
 	    url_free(url);
 	    url=NULL;
 	    free_networking(networking);

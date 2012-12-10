@@ -167,7 +167,7 @@ typedef enum {
 
 class SDL_VO_Interface : public VO_Interface {
     public:
-	SDL_VO_Interface(const char* args);
+	SDL_VO_Interface(const std::string& args);
 	virtual ~SDL_VO_Interface();
 
 	virtual MPXP_Rc	configure(uint32_t width,
@@ -175,7 +175,7 @@ class SDL_VO_Interface : public VO_Interface {
 				uint32_t d_width,
 				uint32_t d_height,
 				unsigned flags,
-				const char *title,
+				const std::string& title,
 				uint32_t format);
 	virtual MPXP_Rc	select_frame(unsigned idx);
 	virtual MPXP_Rc	flush_page(unsigned idx);
@@ -197,7 +197,7 @@ class SDL_VO_Interface : public VO_Interface {
 	void		erase_rectangle(unsigned idx,int x, int y, int w, int h);
 	void		lock_surfaces();
 	void		unlock_surfaces();
-	const char*	parse_sub_device(const char *sd) const;
+	std::string	parse_sub_device(const std::string& sd) const;
 
 
 	std::string	sdl_subdevice;
@@ -243,12 +243,12 @@ void SDL_VO_Interface::unlock_surfaces() {
 }
 
 /** Private SDL Data structure **/
-const char* SDL_VO_Interface::parse_sub_device(const char *sd) const
+std::string SDL_VO_Interface::parse_sub_device(const std::string& sd) const
 {
 #ifdef CONFIG_VIDIX
-    if(memcmp(sd,"vidix",5) == 0) return &sd[5]; /* vidix_name will be valid within init() */
+    if(sd.substr(0,5)=="vidix") return &sd[5]; /* vidix_name will be valid within init() */
 #endif
-    return NULL;
+    return "";
 }
 
 SDL_VO_Interface::~SDL_VO_Interface()
@@ -263,22 +263,22 @@ SDL_VO_Interface::~SDL_VO_Interface()
 #endif
 }
 
-SDL_VO_Interface::SDL_VO_Interface(const char *arg)
+SDL_VO_Interface::SDL_VO_Interface(const std::string& arg)
 		:VO_Interface(arg),
 		aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect))
 #ifdef HAVE_X11
 		,x11(new(zeromem) X11_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
 #endif
 {
-    const char* vidix_name=NULL;
+    std::string vidix_name;
     num_buffs = 1;
     surface = NULL;
-    if(arg) sdl_subdevice=arg;
-    if(arg) vidix_name = parse_sub_device(arg);
+    if(!arg.empty()) sdl_subdevice=arg;
+    if(!arg.empty()) vidix_name = parse_sub_device(arg);
 #ifdef CONFIG_VIDIX
-    if(vidix_name) {
+    if(!vidix_name.empty()) {
 	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
-	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name);
+	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name.c_str());
 	    exit_player("Vidix error");
 	}
     }
@@ -543,7 +543,7 @@ MPXP_Rc SDL_VO_Interface::set_fullmode (int _mode) {
  *   returns : non-zero on success, zero on error.
  **/
 
-MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t d_width, uint32_t d_height,unsigned _flags, const char *title, uint32_t _format)
+MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t d_width, uint32_t d_height,unsigned _flags, const std::string& title, uint32_t _format)
 //static int sdl_setup (int width, int height)
 {
     MPXP_Rc retval;
@@ -601,7 +601,7 @@ MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t 
     format = _format;
 
     /* Set output window title */
-    SDL_WM_SetCaption (".: MPlayerXP : F = Fullscreen/Windowed : C = Cycle Fullscreen Resolutions :.", title);
+    SDL_WM_SetCaption (".: MPlayerXP : F = Fullscreen/Windowed : C = Cycle Fullscreen Resolutions :.", title.c_str());
 
     if(mode == GL) {
 	switch(_format){
@@ -1247,7 +1247,7 @@ MPXP_Rc SDL_VO_Interface::ctrl(uint32_t request, any_t*data)
     return MPXP_NA;
 }
 
-static VO_Interface* query_interface(const char* args) { return new(zeromem) SDL_VO_Interface(args); }
+static VO_Interface* query_interface(const std::string& args) { return new(zeromem) SDL_VO_Interface(args); }
 extern const vo_info_t sdl_vo_info = {
     "SDL YUV/RGB/BGR renderer (SDL v1.1.7+ !)"
 #ifdef CONFIG_VIDIX

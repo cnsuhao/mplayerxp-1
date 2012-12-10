@@ -54,7 +54,7 @@ namespace mpxp {
 	    DvdRead_Stream_Interface(libinput_t* libinput);
 	    virtual ~DvdRead_Stream_Interface();
 
-	    virtual MPXP_Rc	open(const char *filename,unsigned flags);
+	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	    virtual int		read(stream_packet_t * sp);
 	    virtual off_t	seek(off_t off);
 	    virtual off_t	tell() const;
@@ -69,8 +69,8 @@ namespace mpxp {
 	private:
 	    int			chapter_from_cell(int title,int cell);
 	    int			number_of_subs() const;
-	    int			aid_from_lang(const char* lang) const;
-	    int			sid_from_lang(const char* lang) const;
+	    int			aid_from_lang(const std::string& lang) const;
+	    int			sid_from_lang(const std::string& lang) const;
 	    int			lang_from_sid(int id) const;
 	    int			next_title(int dvd_title);
 	    int			next_cell();
@@ -153,9 +153,10 @@ int DvdRead_Stream_Interface::chapter_from_cell(int _title,int cell)
 
 int DvdRead_Stream_Interface::number_of_subs() const { return nr_of_subtitles; }
 
-int DvdRead_Stream_Interface::aid_from_lang(const char* lang) const {
+int DvdRead_Stream_Interface::aid_from_lang(const std::string& _lang) const {
     int code;
     unsigned i;
+    const char* lang=_lang.c_str();
     while(lang && strlen(lang)>=2){
 	code=lang[1]|(lang[0]<<8);
 	for(i=0;i<unsigned(nr_of_channels);i++){
@@ -171,9 +172,10 @@ int DvdRead_Stream_Interface::aid_from_lang(const char* lang) const {
     return -1;
 }
 
-int DvdRead_Stream_Interface::sid_from_lang(const char* lang) const {
+int DvdRead_Stream_Interface::sid_from_lang(const std::string& _lang) const {
     int code;
     unsigned i;
+    const char* lang=_lang.c_str();
     while(lang && strlen(lang)>=2){
 	code=lang[1]|(lang[0]<<8);
 	for(i=0;i<unsigned(nr_of_subtitles);i++){
@@ -589,7 +591,7 @@ void DvdRead_Stream_Interface::close() {
     dvd_angle=1;
 }
 
-MPXP_Rc DvdRead_Stream_Interface::open(const char *filename,unsigned flags)
+MPXP_Rc DvdRead_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
     UNUSED(flags);
     int dvd_title;
@@ -598,7 +600,7 @@ MPXP_Rc DvdRead_Stream_Interface::open(const char *filename,unsigned flags)
     char param[256];
 
     last_title=-1;
-    if(strcmp(filename,"help") == 0 || strlen(filename)==10) {
+    if(filename=="help" || filename.length()==10) {
 	MSG_HINT("Usage: dvdread://<@device>#<titleno>-<lasttitle>,<chapter>-<lastchapter>,<angle>\n");
 	return MPXP_False;
     }

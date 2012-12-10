@@ -196,7 +196,7 @@ XVisualInfo* X11_System::get_visual() const
     return ::XGetVisualInfo(mDisplay, VisualIDMask, &vi_template, &dummy);
 }
 
-void X11_System::create_window(const XSizeHints& hint,XVisualInfo* vi,unsigned flags,unsigned dpth,const char*title)
+void X11_System::create_window(const XSizeHints& hint,XVisualInfo* vi,unsigned flags,unsigned dpth,const std::string& title)
 {
     Colormap theCmap;
     XSetWindowAttributes xswa;
@@ -226,7 +226,7 @@ void X11_System::create_window(const XSizeHints& hint,XVisualInfo* vi,unsigned f
 				CopyFromParent,vi->visual,xswamask,&xswa );
     ::XMapWindow( mDisplay,window );
     XSizeHints hn = hint;
-    ::XSetStandardProperties( mDisplay,window,title,title,None,NULL,0,&hn );
+    ::XSetStandardProperties( mDisplay,window,title.c_str(),title.c_str(),None,NULL,0,&hn );
 #ifdef HAVE_XINERAMA
     xinerama_move(&hn);
 #endif
@@ -1199,7 +1199,7 @@ void GLX_System::swap_buffers() const
     ::glXSwapBuffers(get_display(), window);
 }
 
-void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,unsigned flags,unsigned dpth,const char*title)
+void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,unsigned flags,unsigned dpth,const std::string& title)
 {
     Colormap theCmap;
     XSetWindowAttributes xswa;
@@ -1240,7 +1240,7 @@ void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,unsigned f
 				hint.width,hint.height,
 				0,dpth,InputOutput,vi->visual,xswamask,&xswa );
     XSizeHints hn = hint;
-    ::XSetStandardProperties( get_display(),window,title,title,None,NULL,0,&hn );
+    ::XSetStandardProperties( get_display(),window,title.c_str(),title.c_str(),None,NULL,0,&hn );
 
     ::glXMakeCurrent(get_display(), window, ctx);
 

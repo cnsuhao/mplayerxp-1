@@ -38,7 +38,7 @@ namespace mpxp {
 	    unsigned		screen_height() const;
 	    void		match_visual(XVisualInfo*) const;
 	    virtual XVisualInfo* get_visual() const;
-	    virtual void	create_window(const XSizeHints& hint,XVisualInfo* visual,unsigned flags,unsigned depth,const char*title);
+	    virtual void	create_window(const XSizeHints& hint,XVisualInfo* visual,unsigned flags,unsigned depth,const std::string& title);
 	    void		get_win_coord(vo_rect_t&) const;
 	    void		select_input(long mask) const;
 	    unsigned		depth() const { return _depth; }
@@ -153,7 +153,7 @@ namespace mpxp {
 	    GLX_System(const char* DisplayName,int ximerama_screen);
 	    virtual ~GLX_System();
 
-	    virtual void	create_window(const XSizeHints& hint,XVisualInfo* visual,unsigned flags,unsigned depth,const char*title);
+	    virtual void	create_window(const XSizeHints& hint,XVisualInfo* visual,unsigned flags,unsigned depth,const std::string& title);
 
 	    void		swap_buffers() const;
 	    virtual XVisualInfo* get_visual() const { return vis; }

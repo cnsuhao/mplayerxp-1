@@ -60,7 +60,7 @@ struct win_frame
 
 class VESA_VO_Interface : public VO_Interface {
     public:
-	VESA_VO_Interface(const char* args);
+	VESA_VO_Interface(const std::string& args);
 	virtual ~VESA_VO_Interface();
 
 	virtual MPXP_Rc	configure(uint32_t width,
@@ -68,7 +68,7 @@ class VESA_VO_Interface : public VO_Interface {
 				uint32_t d_width,
 				uint32_t d_height,
 				unsigned flags,
-				const char *title,
+				const std::string& title,
 				uint32_t format);
 	virtual MPXP_Rc	select_frame(unsigned idx);
 	virtual MPXP_Rc	flush_page(unsigned idx);
@@ -80,7 +80,7 @@ class VESA_VO_Interface : public VO_Interface {
 	virtual uint32_t check_events(const vo_resize_t*);
 	virtual MPXP_Rc	ctrl(uint32_t request, any_t*data);
     private:
-	const char*	parse_sub_device(const char *sd);
+	std::string	parse_sub_device(const std::string& sd);
 	int		has_dga() const { return win.idx == -1; }
 	int		valid_win_frame(unsigned long offset) const { return offset >= win.low && offset < win.high; }
 	any_t*		video_ptr(unsigned long offset) const { return win.ptr + offset - win.low; }
@@ -159,21 +159,21 @@ VESA_VO_Interface::~VESA_VO_Interface()
 #endif
 }
 
-VESA_VO_Interface::VESA_VO_Interface(const char *arg)
+VESA_VO_Interface::VESA_VO_Interface(const std::string& arg)
 		:VO_Interface(arg),
 		aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect))
 {
-    const char* vidix_name=NULL;
+    std::string vidix_name;
     MPXP_Rc pre_init_err = MPXP_Ok;
     subdev_flags = 0xFFFFFFFEUL;
     cpy_blk_fnc=NULL;
-    MSG_DBG2("vo_vesa: preinit(%s) was called\n",arg);
-    MSG_DBG3("vo_vesa: subdevice %s is being initialized\n",arg);
-    if(arg) vidix_name = parse_sub_device(arg);
+    MSG_DBG2("vo_vesa: preinit(%s) was called\n",arg.c_str());
+    MSG_DBG3("vo_vesa: subdevice %s is being initialized\n",arg.c_str());
+    if(!arg.empty()) vidix_name = parse_sub_device(arg);
 #ifdef CONFIG_VIDIX
-    if(vidix_name) {
+    if(!vidix_name.empty()) {
 	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
-	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name);
+	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name.c_str());
 	    exit_player("Vidix error");
 	}
     }
@@ -309,18 +309,18 @@ MPXP_Rc VESA_VO_Interface::select_frame(unsigned idx)
 
 #define SUBDEV_NODGA     0x00000001UL
 #define SUBDEV_FORCEDGA  0x00000002UL
-const char* VESA_VO_Interface::parse_sub_device(const char *sd)
+std::string VESA_VO_Interface::parse_sub_device(const std::string& sd)
 {
     subdev_flags = 0;
-    if(strcmp(sd,"nodga") == 0) { subdev_flags |= SUBDEV_NODGA; subdev_flags &= ~(SUBDEV_FORCEDGA); }
+    if(sd=="nodga") { subdev_flags |= SUBDEV_NODGA; subdev_flags &= ~(SUBDEV_FORCEDGA); }
     else
-    if(strcmp(sd,"dga") == 0)   { subdev_flags &= ~(SUBDEV_NODGA); subdev_flags |= SUBDEV_FORCEDGA; }
+    if(sd=="dga")   { subdev_flags &= ~(SUBDEV_NODGA); subdev_flags |= SUBDEV_FORCEDGA; }
 #ifdef CONFIG_VIDIX
     else
-    if(memcmp(sd,"vidix",5) == 0) return &sd[5]; /* priv.vidix_name will be valid within init() */
+    if(sd.substr(0,5)=="vidix") return &sd[5]; /* priv.vidix_name will be valid within init() */
 #endif
-    else { MSG_ERR("vo_vesa: Unknown subdevice: '%s'\n", sd); subdev_flags = 0xFFFFFFFFUL; }
-    return NULL;
+    else { MSG_ERR("vo_vesa: Unknown subdevice: '%s'\n", sd.c_str()); subdev_flags = 0xFFFFFFFFUL; }
+    return "";
 }
 
 static int __FASTCALL__ check_depth(unsigned bpp)
@@ -427,7 +427,7 @@ unsigned VESA_VO_Interface::fillMultiBuffer(unsigned long vsize, unsigned nbuffs
  * bit 2 (0x04) enables software scaling (-zoom)
  * bit 3 (0x08) enables flipping (-flip) (NK: and for what?)
  */
-MPXP_Rc VESA_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height,unsigned flags, const char *title, uint32_t format)
+MPXP_Rc VESA_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height,unsigned flags, const std::string& title, uint32_t format)
 {
     struct VbeInfoBlock vib;
     struct VesaModeInfoBlock vmib;
@@ -594,8 +594,8 @@ MPXP_Rc VESA_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d
 	if(use_scaler || fs_mode) {
 	    /* software scale */
 	    if(use_scaler > 1) {
-		aspect.save(width,height,d_width,d_height,vmode_info.XResolution,vmode_info.YResolution);
-		aspect.calc(dstW,dstH,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
+		aspect->save(width,height,d_width,d_height,vmode_info.XResolution,vmode_info.YResolution);
+		aspect->calc(dstW,dstH,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
 	    } else if(fs_mode) {
 		dstW = vmode_info.XResolution;
 		dstH = vmode_info.YResolution;
@@ -715,9 +715,9 @@ MPXP_Rc VESA_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d
 	int x;
 	if(mp_conf.verbose>1) paintBkGnd();
 	else clear_screen();
-	x = (vmode_info.XResolution/vmode_info.XCharSize)/2-strlen(title)/2;
+	x = (vmode_info.XResolution/vmode_info.XCharSize)/2-title.length()/2;
 	if(x < 0) x = 0;
-	vbeWriteString(x,0,7,title);
+	vbeWriteString(x,0,7,title.c_str());
     }
     return MPXP_Ok;
 }
@@ -803,7 +803,7 @@ MPXP_Rc VESA_VO_Interface::ctrl(uint32_t request, any_t*data)
     return MPXP_NA;
 }
 
-static VO_Interface* query_interface(const char* args) { return new(zeromem) VESA_VO_Interface(args); }
+static VO_Interface* query_interface(const std::string& args) { return new(zeromem) VESA_VO_Interface(args); }
 extern const vo_info_t vesa_vo_info =
 {
 	"VESA VBE 2.0 video output"

@@ -55,7 +55,7 @@ using namespace mpxp;
 namespace mpxp {
 class OpenGL_VO_Interface : public VO_Interface {
     public:
-	OpenGL_VO_Interface(const char* args);
+	OpenGL_VO_Interface(const std::string& args);
 	virtual ~OpenGL_VO_Interface();
 
 	virtual MPXP_Rc	configure(uint32_t width,
@@ -63,7 +63,7 @@ class OpenGL_VO_Interface : public VO_Interface {
 				uint32_t d_width,
 				uint32_t d_height,
 				unsigned flags,
-				const char *title,
+				const std::string& title,
 				uint32_t format);
 	virtual MPXP_Rc	select_frame(unsigned idx);
 	virtual void	get_surface_caps(dri_surface_cap_t *caps) const;
@@ -94,7 +94,7 @@ class OpenGL_VO_Interface : public VO_Interface {
 	LocalPtr<GLX_System>	glx;
 };
 
-OpenGL_VO_Interface::OpenGL_VO_Interface(const char *arg)
+OpenGL_VO_Interface::OpenGL_VO_Interface(const std::string& arg)
 			    :VO_Interface(arg),
 			    aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
 			    glx(new(zeromem) GLX_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
@@ -158,7 +158,7 @@ void OpenGL_VO_Interface::resize(int x,int y) const {
 /* connect to server, create and map window,
  * allocate colors and (shared) memory
  */
-MPXP_Rc OpenGL_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height,unsigned _flags, const char *title, uint32_t format)
+MPXP_Rc OpenGL_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_width, uint32_t d_height,unsigned _flags, const std::string& title, uint32_t format)
 {
     int is_bgr;
     XSizeHints hint;
@@ -289,10 +289,12 @@ MPXP_Rc OpenGL_VO_Interface::toggle_fullscreen() {
 }
 
 MPXP_Rc OpenGL_VO_Interface::ctrl(uint32_t request, any_t*data) {
+    UNUSED(request);
+    UNUSED(data);
     return MPXP_NA;
 }
 
-static VO_Interface* query_interface(const char* args) { return new(zeromem) OpenGL_VO_Interface(args); }
+static VO_Interface* query_interface(const std::string& args) { return new(zeromem) OpenGL_VO_Interface(args); }
 extern const vo_info_t opengl_vo_info =
 {
   "X11 (OpenGL)",
