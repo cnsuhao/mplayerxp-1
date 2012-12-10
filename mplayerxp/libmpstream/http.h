@@ -4,51 +4,59 @@
  * (C) 2001, MPlayer team.
  */
 
-#ifndef __HTTP_H
-#define __HTTP_H
+#ifndef __HTTP_H_INCLUDED
+#define __HTTP_H_INCLUDED 1
 
 #include "mp_config.h"
 
-typedef struct HTTP_field_type {
+namespace mpxp {
+    struct HTTP_field_t {
 	char *field_name;
-	struct HTTP_field_type *next;
-} HTTP_field_t;
+	HTTP_field_t *next;
+    };
 
-typedef struct {
-	char *protocol;
-	char *method;
-	char *uri;
-	unsigned int status_code;
-	char *reason_phrase;
-	unsigned int http_minor_version;
-	// Field variables
-	HTTP_field_t *first_field;
-	HTTP_field_t *last_field;
-	unsigned int field_nb;
-	char *field_search;
-	HTTP_field_t *field_search_pos;
-	// Body variables
-	unsigned char *body;
-	size_t body_size;
-	char *buffer;
-	size_t buffer_size;
-	unsigned int is_parsed;
-} HTTP_header_t;
+    class HTTP_Header : public Opaque {
+	public:
+	    HTTP_Header();
+	    virtual ~HTTP_Header();
 
-HTTP_header_t*	http_new_header();
-void		http_free( HTTP_header_t *http_hdr );
-int		http_response_append( HTTP_header_t *http_hdr, char *data, int length );
-int		http_response_parse( HTTP_header_t *http_hdr );
-int		http_is_header_entire( HTTP_header_t *http_hdr );
-char* 		http_build_request( HTTP_header_t *http_hdr );
-char* 		http_get_field( HTTP_header_t *http_hdr, const char *field_name );
-char*		http_get_next_field( HTTP_header_t *http_hdr );
-void		http_set_field( HTTP_header_t *http_hdr, const char *field_name );
-void		http_set_method( HTTP_header_t *http_hdr, const char *method );
-void		http_set_uri( HTTP_header_t *http_hdr, const char *uri );
-int		http_add_basic_authentication( HTTP_header_t *http_hdr, const char *username, const char *password );
+	    virtual int		response_append(const char *data, int length );
+	    virtual int		response_parse();
+	    virtual int		is_header_entire() const;
+	    virtual char*	build_request();
+	    virtual char*	get_field(const char *field_name );
+	    virtual char*	get_next_field();
+	    virtual void	set_field(const char *field_name );
+	    virtual void	set_method(const char *method );
+	    virtual void	set_uri(const char *uri );
+	    virtual int		add_basic_authentication(const char *username, const char *password );
 
-void		http_debug_hdr( HTTP_header_t *http_hdr );
+	    virtual void	debug_hdr();
+	    virtual void	cookies_set(const char *hostname, const char *url);
 
-int 		base64_encode(const any_t*enc, int encLen, char *out, int outMax);
+	    char*		buffer;
+	    size_t		buffer_size;
+	    unsigned int	status_code;
+	    unsigned char*	body;
+	    size_t		body_size;
+	    const char*		get_reason_phrase() const { return reason_phrase; }
+	    const char*		get_protocol() const { return protocol; }
+	private:
+	    char*		protocol;
+	    char*		method;
+	    char*		uri;
+	    char*		reason_phrase;
+	    unsigned int	http_minor_version;
+	    // Field variables
+	    HTTP_field_t*	first_field;
+	    HTTP_field_t*	last_field;
+	    unsigned int	field_nb;
+	    char*		field_search;
+	    HTTP_field_t*	field_search_pos;
+	    // Body variables
+	    unsigned int	is_parsed;
+    };
+
+    extern int		base64_encode(const any_t*enc, int encLen, char *out, int outMax);
+} // namespace mpxp
 #endif // __HTTP_H

@@ -3,9 +3,11 @@
  * by Bertrand BAUDET <bertrand_baudet@yahoo.com>
  * (C) 2001, MPlayer team.
  */
-
 #ifndef __NETWORK_H
 #define __NETWORK_H
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 
 #include <string>
 
@@ -81,9 +83,9 @@ int nop_networking_read(Tcp& fd, char *buffer, int size, networking_t *stream_ct
 int nop_networking_seek(Tcp& fd, off_t pos, networking_t *stream_ctrl );
 
 MPXP_Rc http_send_request(Tcp& tcp,URL_t *url, off_t pos);
-HTTP_header_t *http_read_response(Tcp& fd);
+HTTP_Header* http_read_response(Tcp& fd);
 
-int http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry);
+int http_authenticate(HTTP_Header& http_hdr, URL_t *url, int *auth_retry);
 
 /*
  * Joey Parrish <joey@yunamusic.com>:

@@ -172,48 +172,46 @@ check4proxies( URL_t *url ) {
 }
 
 MPXP_Rc http_send_request(Tcp& tcp, URL_t *url, off_t pos ) {
-	HTTP_header_t *http_hdr;
+	HTTP_Header* http_hdr = new(zeromem) HTTP_Header;
 	URL_t *server_url;
 	char str[256];
 	int ret;
 	int proxy = 0;		// Boolean
 
-	http_hdr = http_new_header();
-
 	if( !strcasecmp(url->protocol, "http_proxy") ) {
 		proxy = 1;
 		server_url = url_new( (url->file)+1 );
-		http_set_uri( http_hdr, server_url->url );
+		http_hdr->set_uri(server_url->url );
 	} else {
 		server_url = url;
-		http_set_uri( http_hdr, server_url->file );
+		http_hdr->set_uri( server_url->file );
 	}
 	if (server_url->port && server_url->port != 80)
 	    snprintf(str, 256, "Host: %s:%d", server_url->hostname, server_url->port );
 	else
 	    snprintf(str, 256, "Host: %s", server_url->hostname );
-	http_set_field( http_hdr, str);
+	http_hdr->set_field(str);
 	if (net_conf.useragent)
 	{
 	    snprintf(str, 256, "User-Agent: %s", net_conf.useragent);
-	    http_set_field(http_hdr, str);
+	    http_hdr->set_field(str);
 	}
 	else
-	    http_set_field( http_hdr, "User-Agent: MPlayerXP/"VERSION);
+	    http_hdr->set_field("User-Agent: MPlayerXP/"VERSION);
 
-	http_set_field(http_hdr, "Icy-MetaData: 1");
+	http_hdr->set_field("Icy-MetaData: 1");
 
 	if(pos>0) {
 	// Extend http_send_request with possibility to do partial content retrieval
 	    snprintf(str, 256, "Range: bytes=%d-", (int)pos);
-	    http_set_field(http_hdr, str);
+	    http_hdr->set_field(str);
 	}
 
-	if (net_conf.cookies_enabled) cookies_set( http_hdr, server_url->hostname, server_url->url );
+	if (net_conf.cookies_enabled) http_hdr->cookies_set( server_url->hostname, server_url->url );
 
-	http_set_field( http_hdr, "Connection: closed");
-	http_add_basic_authentication( http_hdr, url->username, url->password );
-	if( http_build_request( http_hdr )==NULL ) {
+	http_hdr->set_field( "Connection: closed");
+	http_hdr->add_basic_authentication( url->username, url->password );
+	if( http_hdr->build_request( )==NULL ) {
 		goto err_out;
 	}
 
@@ -237,46 +235,43 @@ MPXP_Rc http_send_request(Tcp& tcp, URL_t *url, off_t pos ) {
 		goto err_out;
 	}
 
-	http_free( http_hdr );
+	delete http_hdr;
 
 	return MPXP_Ok;
 err_out:
-	http_free(http_hdr);
+	delete http_hdr;
 	if (proxy && server_url)
 		url_free(server_url);
 	return MPXP_False;
 }
 
-HTTP_header_t* http_read_response( Tcp& tcp ) {
-	HTTP_header_t *http_hdr;
+HTTP_Header* http_read_response( Tcp& tcp ) {
+	HTTP_Header* http_hdr = new(zeromem) HTTP_Header;
 	char response[BUFFER_SIZE];
 	int i;
 
-	http_hdr = http_new_header();
-	if( http_hdr==NULL ) {
-		return NULL;
-	}
+	if( http_hdr==NULL ) return NULL;
 
 	do {
 		i = tcp.read((uint8_t*)response, BUFFER_SIZE);
 		if( i<0 ) {
 			MSG_ERR("Read failed\n");
-			http_free( http_hdr );
+			delete http_hdr;
 			return NULL;
 		}
 		if( i==0 ) {
 			MSG_ERR("http_read_response read 0 -ie- EOF\n");
-			http_free( http_hdr );
+			delete http_hdr;
 			return NULL;
 		}
-		http_response_append( http_hdr, response, i );
-	} while( !http_is_header_entire( http_hdr ) );
-	http_response_parse( http_hdr );
+		http_hdr->response_append(response, i );
+	} while( !http_hdr->is_header_entire() );
+	http_hdr->response_parse();
 	return http_hdr;
 }
 
 int
-http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry) {
+http_authenticate(HTTP_Header& http_hdr, URL_t *url, int *auth_retry) {
 	char *aut;
 
 	if( *auth_retry==1 ) {
@@ -294,7 +289,7 @@ http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry) {
 		}
 	}
 
-	aut = http_get_field(http_hdr, "WWW-Authenticate");
+	aut = http_hdr.get_field("WWW-Authenticate");
 	if( aut!=NULL ) {
 		char *aut_space;
 		aut_space = strstr(aut, "realm=");
@@ -327,7 +322,7 @@ http_authenticate(HTTP_header_t *http_hdr, URL_t *url, int *auth_retry) {
 }
 
 off_t http_seek(Tcp& tcp, networking_t *networking, off_t pos ) {
-    HTTP_header_t *http_hdr = NULL;
+    HTTP_Header* http_hdr = NULL;
 
     tcp.close();
     if(http_send_request(tcp,networking->url, pos)==MPXP_Ok) return 0;
@@ -339,22 +334,22 @@ off_t http_seek(Tcp& tcp, networking_t *networking, off_t pos ) {
     switch( http_hdr->status_code ) {
 	case 200:
 	case 206: // OK
-	    MSG_V("Content-Type: [%s]\n", http_get_field(http_hdr, "Content-Type") );
-	    MSG_V("Content-Length: [%s]\n", http_get_field(http_hdr, "Content-Length") );
+	    MSG_V("Content-Type: [%s]\n", http_hdr->get_field("Content-Type") );
+	    MSG_V("Content-Length: [%s]\n", http_hdr->get_field("Content-Length") );
 	    if( http_hdr->body_size>0 ) {
 		if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
-		    http_free( http_hdr );
+		    delete http_hdr;
 		    return 0;
 		}
 	    }
 	    break;
 	default:
-	    MSG_ERR("Server return %d: %s\n", http_hdr->status_code, http_hdr->reason_phrase );
+	    MSG_ERR("Server return %d: %s\n", http_hdr->status_code, http_hdr->get_reason_phrase());
 	    tcp.close();
     }
 
     if( http_hdr ) {
-	http_free( http_hdr );
+	delete http_hdr;
 	networking->data = NULL;
     }
 
@@ -364,7 +359,7 @@ off_t http_seek(Tcp& tcp, networking_t *networking, off_t pos ) {
 // By using the protocol, the extension of the file or the content-type
 // we might be able to guess the networking type.
 static MPXP_Rc autodetectProtocol(networking_t *networking, Tcp& tcp) {
-    HTTP_header_t *http_hdr=NULL;
+    HTTP_Header *http_hdr=NULL;
     unsigned int i;
     int redirect;
     int auth_retry=0;
@@ -404,34 +399,34 @@ static MPXP_Rc autodetectProtocol(networking_t *networking, Tcp& tcp) {
 
 	    http_hdr = http_read_response(tcp);
 	    if( http_hdr==NULL ) goto err_out;
-	    if( mp_conf.verbose ) http_debug_hdr( http_hdr );
+	    if( mp_conf.verbose ) http_hdr->debug_hdr();
 	    networking->data = (any_t*)http_hdr;
 
 	    // Check if we can make partial content requests and thus seek in http-streams
-	    if( http_hdr!=NULL && http_hdr->status_code==200 ) {
+	    if( http_hdr->status_code==200 ) {
 		    char *accept_ranges;
-		    if( (accept_ranges = http_get_field(http_hdr,"Accept-Ranges")) != NULL )
+		    if( (accept_ranges = http_hdr->get_field("Accept-Ranges")) != NULL )
 			seekable = strncmp(accept_ranges,"bytes",5)==0?MPXP_Ok:MPXP_False;
 	    }
 	    // Check if the response is an ICY status_code reason_phrase
-	    if( !strcasecmp(http_hdr->protocol, "ICY") ) {
+	    if( !strcasecmp(http_hdr->get_protocol(), "ICY") ) {
 		switch( http_hdr->status_code ) {
 		    case 200: { // OK
 			char *field_data = NULL;
 			// note: I skip icy-notice1 and 2, as they contain html <BR>
 			// and are IMHO useless info ::atmos
-			if( (field_data = http_get_field(http_hdr, "icy-name")) != NULL )
+			if( (field_data = http_hdr->get_field("icy-name")) != NULL )
 			    MSG_INFO("Name   : %s\n", field_data); field_data = NULL;
-			if( (field_data = http_get_field(http_hdr, "icy-genre")) != NULL )
+			if( (field_data = http_hdr->get_field("icy-genre")) != NULL )
 			    MSG_INFO("Genre  : %s\n", field_data); field_data = NULL;
-			if( (field_data = http_get_field(http_hdr, "icy-url")) != NULL )
+			if( (field_data = http_hdr->get_field("icy-url")) != NULL )
 			    MSG_INFO("Website: %s\n", field_data); field_data = NULL;
 			// XXX: does this really mean public server? ::atmos
-			if( (field_data = http_get_field(http_hdr, "icy-pub")) != NULL )
+			if( (field_data = http_hdr->get_field("icy-pub")) != NULL )
 			    MSG_INFO("Public : %s\n", atoi(field_data)?"yes":"no"); field_data = NULL;
-			if( (field_data = http_get_field(http_hdr, "icy-br")) != NULL )
+			if( (field_data = http_hdr->get_field("icy-br")) != NULL )
 			    MSG_INFO("Bitrate: %skbit/s\n", field_data); field_data = NULL;
-			if ( (field_data = http_get_field(http_hdr, "content-type")) != NULL )
+			if ( (field_data = http_hdr->get_field("content-type")) != NULL )
 			    networking->mime = field_data;
 			return MPXP_Ok;
 		    }
@@ -457,12 +452,12 @@ static MPXP_Rc autodetectProtocol(networking_t *networking, Tcp& tcp) {
 	    switch( http_hdr->status_code ) {
 		case 200: // OK
 		    // Look if we can use the Content-Type
-		    content_type = http_get_field( http_hdr, "Content-Type" );
+		    content_type = http_hdr->get_field("Content-Type" );
 		    if( content_type!=NULL ) {
 			const char *content_length = NULL;
 			MSG_V("Content-Type: [%s]\n", content_type );
-			if( (content_length = http_get_field(http_hdr, "Content-Length")) != NULL)
-			    MSG_V("Content-Length: [%s]\n", http_get_field(http_hdr, "Content-Length"));
+			if( (content_length = http_hdr->get_field("Content-Length")) != NULL)
+			    MSG_V("Content-Length: [%s]\n", http_hdr->get_field("Content-Length"));
 			// Check in the mime type table for a demuxer type
 			for( i=0 ; i<(sizeof(mime_type_table)/sizeof(mime_type_table[0])) ; i++ ) {
 			    if( !strcasecmp( content_type, mime_type_table[i].mime_type ) ) {
@@ -477,7 +472,7 @@ static MPXP_Rc autodetectProtocol(networking_t *networking, Tcp& tcp) {
 		    case 301: // Permanently
 		    case 302: // Temporarily
 			// TODO: RFC 2616, recommand to detect infinite redirection loops
-			next_url = http_get_field( http_hdr, "Location" );
+			next_url = http_hdr->get_field("Location" );
 			if( next_url!=NULL ) {
 			    networking->url = url = url_redirect( &url, next_url );
 			    if (!strcasecmp(url->protocol, "mms")) goto err_out;
@@ -489,11 +484,11 @@ static MPXP_Rc autodetectProtocol(networking_t *networking, Tcp& tcp) {
 			}
 			break;
 		    case 401: // Authentication required
-			if( http_authenticate(http_hdr, url, &auth_retry)<0 ) goto err_out;
+			if( http_authenticate(*http_hdr,url, &auth_retry)<0 ) goto err_out;
 			redirect = 1;
 			break;
 		    default:
-			MSG_ERR("Server returned %d: %s\n", http_hdr->status_code, http_hdr->reason_phrase );
+			MSG_ERR("Server returned %d: %s\n", http_hdr->status_code, http_hdr->get_reason_phrase());
 			goto err_out;
 	    }
 	} else {
@@ -502,8 +497,7 @@ static MPXP_Rc autodetectProtocol(networking_t *networking, Tcp& tcp) {
 	}
     } while( redirect );
 err_out:
-    http_free( http_hdr );
-    http_hdr = NULL;
+    delete http_hdr;
 
     return MPXP_False;
 }
@@ -562,7 +556,7 @@ nop_networking_seek(Tcp& tcp, off_t pos, networking_t *n ) {
 }
 
 MPXP_Rc nop_networking_start(Tcp& tcp,networking_t* networking ) {
-    HTTP_header_t *http_hdr = NULL;
+    HTTP_Header *http_hdr = NULL;
     char *next_url=NULL;
     URL_t *rd_url=NULL;
     MPXP_Rc ret;
@@ -575,11 +569,11 @@ MPXP_Rc nop_networking_start(Tcp& tcp,networking_t* networking ) {
 
 	switch( http_hdr->status_code ) {
 	    case 200: // OK
-		MSG_V("Content-Type: [%s]\n", http_get_field(http_hdr, "Content-Type") );
-		MSG_V("Content-Length: [%s]\n", http_get_field(http_hdr, "Content-Length") );
+		MSG_V("Content-Type: [%s]\n", http_hdr->get_field("Content-Type") );
+		MSG_V("Content-Length: [%s]\n", http_hdr->get_field("Content-Length") );
 		if( http_hdr->body_size>0 ) {
 		    if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
-			http_free( http_hdr );
+			delete http_hdr;
 			return MPXP_False;
 		    }
 		}
@@ -588,7 +582,7 @@ MPXP_Rc nop_networking_start(Tcp& tcp,networking_t* networking ) {
 	    case 301: // Permanently
 	    case 302: // Temporarily
 		ret=MPXP_False;
-		next_url = http_get_field( http_hdr, "Location" );
+		next_url = http_hdr->get_field("Location" );
 
 		if (next_url != NULL)
 		    rd_url=url_new(next_url);
@@ -608,16 +602,16 @@ MPXP_Rc nop_networking_start(Tcp& tcp,networking_t* networking ) {
 	    case 404: //Not found
 	    case 500: //Server Error
 	    default:
-		MSG_ERR("Server return %d: %s\n", http_hdr->status_code, http_hdr->reason_phrase );
+		MSG_ERR("Server return %d: %s\n", http_hdr->status_code, http_hdr->get_reason_phrase());
 		tcp.close();
 		return MPXP_False;
 		break;
 	}
     } else {
-	http_hdr = (HTTP_header_t*)networking->data;
+	http_hdr = (HTTP_Header*)networking->data;
 	if( http_hdr->body_size>0 ) {
 	    if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
-		http_free( http_hdr );
+		delete http_hdr;
 		networking->data = NULL;
 		return MPXP_False;
 	    }
@@ -625,7 +619,7 @@ MPXP_Rc nop_networking_start(Tcp& tcp,networking_t* networking ) {
     }
 
     if( http_hdr ) {
-	http_free( http_hdr );
+	delete http_hdr;
 	networking->data = NULL;
     }
 

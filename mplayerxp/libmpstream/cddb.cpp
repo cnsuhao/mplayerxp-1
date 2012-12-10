@@ -141,53 +141,51 @@ static unsigned long __FASTCALL__ cddb_discid(int tot_trks) {
 	return ((n % 0xff) << 24 | t << 8 | tot_trks);
 }
 
-static int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parser)(HTTP_header_t*,cddb_data_t*), cddb_data_t *cddb_data) {
-	char request[4096];
-	int ret = 0;
-	Tcp tcp(cddb_data->libinput,-1);
-	URL_t *url;
-	HTTP_header_t *http_hdr;
+static int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parser)(HTTP_Header&,cddb_data_t*), cddb_data_t *cddb_data) {
+    char request[4096];
+    int ret = 0;
+    Tcp tcp(cddb_data->libinput,-1);
+    URL_t *url;
 
-	if( reply_parser==NULL || command==NULL || cddb_data==NULL ) return -1;
+    if( reply_parser==NULL || command==NULL || cddb_data==NULL ) return -1;
 
-	sprintf( request, "http://%s/~cddb/cddb.cgi?cmd=%s%s&proto=%d", cddb_data->freedb_server, command, cddb_data->cddb_hello.c_str(), cddb_data->freedb_proto_level );
-	MSG_V("Request[%s]\n", request );
+    sprintf( request, "http://%s/~cddb/cddb.cgi?cmd=%s%s&proto=%d", cddb_data->freedb_server, command, cddb_data->cddb_hello.c_str(), cddb_data->freedb_proto_level );
+    MSG_V("Request[%s]\n", request );
 
-	url = url_new(request);
-	if( url==NULL ) {
-		MSG_ERR("Not a valid URL\n");
-		return -1;
-	}
+    url = url_new(request);
+    if( url==NULL ) {
+	MSG_ERR("Not a valid URL\n");
+	return -1;
+    }
 
-	if(http_send_request(tcp,url,0)!=MPXP_Ok) {
-		MSG_ERR("failed to send the http request\n");
-		return -1;
-	}
+    if(http_send_request(tcp,url,0)!=MPXP_Ok) {
+	MSG_ERR("failed to send the http request\n");
+	return -1;
+    }
 
-	http_hdr = http_read_response( tcp );
-	if( http_hdr==NULL ) {
-		MSG_ERR("Failed to read the http response\n");
-		return -1;
-	}
+    HTTP_Header* http_hdr = http_read_response( tcp );
+    if( http_hdr==NULL ) {
+	MSG_ERR("Failed to read the http response\n");
+	return -1;
+    }
 
-	http_debug_hdr(http_hdr);
-	MSG_V("body=[%s]\n", http_hdr->body );
+    http_hdr->debug_hdr();
 
-	switch(http_hdr->status_code) {
-		case 200:
-			ret = reply_parser(http_hdr, cddb_data);
-			break;
-		case 400:
-			MSG_V("Not Found\n");
-			break;
-		default:
-			MSG_V("Unknown Error code\n");
-	}
+    switch(http_hdr->status_code) {
+	case 200:
+	    ret = reply_parser(*http_hdr, cddb_data);
+	    break;
+	case 400:
+	    MSG_V("Not Found\n");
+	    break;
+	default:
+	    MSG_V("Unknown Error code\n");
+    }
 
-	http_free( http_hdr );
-	url_free( url );
+    delete http_hdr;
+    url_free( url );
 
-	return ret;
+    return ret;
 }
 
 static int __FASTCALL__ cddb_read_cache(cddb_data_t *cddb_data) {
@@ -265,60 +263,60 @@ static int __FASTCALL__ cddb_write_cache(cddb_data_t *cddb_data) {
 	return 0;
 }
 
-static int cddb_read_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
-	unsigned long disc_id;
-	char category[100];
-	char *ptr=NULL, *ptr2=NULL;
-	int ret, status;
+static int cddb_read_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
+    unsigned long disc_id;
+    char category[100];
+    char *ptr=NULL, *ptr2=NULL;
+    int ret, status;
 
-	if( http_hdr==NULL || cddb_data==NULL ) return -1;
+    if( cddb_data==NULL ) return -1;
 
-	ret = sscanf((char*)http_hdr->body, "%d ", &status);
-	if( ret!=1 ) {
+    ret = sscanf((char*)http_hdr.body, "%d ", &status);
+    if( ret!=1 ) {
+	MSG_ERR("Parse error\n");
+	return -1;
+    }
+
+    switch(status) {
+	case 210:
+	    ret = sscanf((char*)http_hdr.body, "%d %s %08lx", &status, category, &disc_id);
+	    if( ret!=3 ) {
 		MSG_ERR("Parse error\n");
 		return -1;
-	}
-
-	switch(status) {
-		case 210:
-			ret = sscanf((char*)http_hdr->body, "%d %s %08lx", &status, category, &disc_id);
-			if( ret!=3 ) {
-				MSG_ERR("Parse error\n");
-				return -1;
-			}
-			// Check if it's a xmcd database file
-			ptr = strstr((char*)http_hdr->body, "# xmcd");
-			if( ptr==NULL ) {
-				MSG_ERR("Invalid xmcd database file returned\n");
-				return -1;
-			}
-			// Ok found the beginning of the file
-			// look for the end
-			ptr2 = strstr(ptr, "\r\n.\r\n");
-			if( ptr2==NULL ) {
-				ptr2 = strstr(ptr, "\n.\n");
-				if( ptr2==NULL ) {
-					MSG_ERR("Unable to find '.'\n");
-					return -1;
-				}
-			}
-			// Ok found the end
-			// do a sanity check
-			if( http_hdr->body_size<(unsigned long)(ptr2-ptr) ) {
-				MSG_ERR("Unexpected fix me\n");
-				return -1;
-			}
-			cddb_data->xmcd_file = ptr;
-			cddb_data->xmcd_file_size = ptr2-ptr+2;
-			cddb_data->xmcd_file[cddb_data->xmcd_file_size] = '\0';
-			// Avoid the http_free function to mp_free the xmcd file...save a mempcy...
-			http_hdr->body = NULL;
-			http_hdr->body_size = 0;
-			return cddb_write_cache(cddb_data);
-		default:
-			MSG_ERR("Unhandled code\n");
-	}
-	return 0;
+	    }
+	    // Check if it's a xmcd database file
+	    ptr = strstr((char*)http_hdr.body, "# xmcd");
+	    if( ptr==NULL ) {
+		MSG_ERR("Invalid xmcd database file returned\n");
+		return -1;
+	    }
+	    // Ok found the beginning of the file
+	    // look for the end
+	    ptr2 = strstr(ptr, "\r\n.\r\n");
+	    if( ptr2==NULL ) {
+		ptr2 = strstr(ptr, "\n.\n");
+		if( ptr2==NULL ) {
+		    MSG_ERR("Unable to find '.'\n");
+		    return -1;
+		}
+	    }
+	    // Ok found the end
+	    // do a sanity check
+	    if( http_hdr.body_size<(unsigned long)(ptr2-ptr) ) {
+		MSG_ERR("Unexpected fix me\n");
+		return -1;
+	    }
+	    cddb_data->xmcd_file = ptr;
+	    cddb_data->xmcd_file_size = ptr2-ptr+2;
+	    cddb_data->xmcd_file[cddb_data->xmcd_file_size] = '\0';
+	    // Avoid the http_free function to mp_free the xmcd file...save a mempcy...
+	    http_hdr.body = NULL;
+	    http_hdr.body_size = 0;
+	    return cddb_write_cache(cddb_data);
+	default:
+	    MSG_ERR("Unhandled code\n");
+    }
+    return 0;
 }
 
 static int __FASTCALL__ cddb_request_titles(cddb_data_t *cddb_data) {
@@ -327,12 +325,12 @@ static int __FASTCALL__ cddb_request_titles(cddb_data_t *cddb_data) {
     return cddb_http_request(command, cddb_read_parse, cddb_data);
 }
 
-static int cddb_query_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
+static int cddb_query_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
     char album_title[100];
     char *ptr = NULL;
     int ret, status;
 
-    ret = sscanf((char*)http_hdr->body, "%d ", &status);
+    ret = sscanf((char*)http_hdr.body, "%d ", &status);
     if( ret!=1 ) {
 	MSG_ERR("Parse error\n");
 	return -1;
@@ -341,18 +339,18 @@ static int cddb_query_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
     switch(status) {
 	case 200:
 	    // Found exact match
-	    ret = sscanf((char*)http_hdr->body, "%d %s %08lx %s", &status, cddb_data->category.c_str(), &(cddb_data->disc_id), album_title);
+	    ret = sscanf((char*)http_hdr.body, "%d %s %08lx %s", &status, cddb_data->category.c_str(), &(cddb_data->disc_id), album_title);
 	    if( ret!=4 ) {
 		MSG_ERR("Parse error\n");
 		return -1;
 	    }
-	    ptr = strstr((char*)http_hdr->body, album_title);
+	    ptr = strstr((char*)http_hdr.body, album_title);
 	    if( ptr!=NULL ) {
 		char *ptr2;
 		int len;
 		ptr2 = strstr(ptr, "\n");
 		if( ptr2==NULL ) {
-		    len = (http_hdr->body_size)-(ptr-(char*)(http_hdr->body));
+		    len = (http_hdr.body_size)-(ptr-(char*)(http_hdr.body));
 		} else {
 		    len = ptr2-ptr+1;
 		}
@@ -367,7 +365,7 @@ static int cddb_query_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
 	    break;
 	case 210:
 	    // Found exact matches, list follows
-	    ptr = strstr((char*)http_hdr->body, "\n");
+	    ptr = strstr((char*)http_hdr.body, "\n");
 	    if( ptr==NULL ) {
 		MSG_ERR("Unable to find end of line\n");
 		return -1;
@@ -380,13 +378,13 @@ static int cddb_query_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
 		MSG_ERR("Parse error\n");
 		return -1;
 	    }
-	    ptr = strstr((char*)http_hdr->body, album_title);
+	    ptr = strstr((char*)http_hdr.body, album_title);
 	    if( ptr!=NULL ) {
 		char *ptr2;
 		int len;
 		ptr2 = strstr(ptr, "\n");
 		if( ptr2==NULL ) {
-		    len = (http_hdr->body_size)-(ptr-(char*)(http_hdr->body));
+		    len = (http_hdr.body_size)-(ptr-(char*)(http_hdr.body));
 		} else {
 		    len = ptr2-ptr+1;
 		}
@@ -412,12 +410,12 @@ blues c711930d Santana / Supernatural
     return -1;
 }
 
-static int cddb_proto_level_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
+static int cddb_proto_level_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
     int max;
     int ret, status;
     char *ptr;
 
-    ret = sscanf((char*)http_hdr->body, "%d ", &status);
+    ret = sscanf((char*)http_hdr.body, "%d ", &status);
     if( ret!=1 ) {
 	MSG_ERR("Parse error\n");
 	return -1;
@@ -425,7 +423,7 @@ static int cddb_proto_level_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_dat
 
     switch(status) {
 	case 210:
-	    ptr = strstr((char*)http_hdr->body, "max proto:");
+	    ptr = strstr((char*)http_hdr.body, "max proto:");
 	    if( ptr==NULL ) {
 		MSG_ERR("Parse error\n");
 		return -1;
@@ -447,10 +445,10 @@ static int __FASTCALL__ cddb_get_proto_level(cddb_data_t *cddb_data) {
     return cddb_http_request("stat", cddb_proto_level_parse, cddb_data);
 }
 
-static int cddb_freedb_sites_parse(HTTP_header_t *http_hdr, cddb_data_t *cddb_data) {
+static int cddb_freedb_sites_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
     int ret, status;
     UNUSED(cddb_data);
-    ret = sscanf((char*)http_hdr->body, "%d ", &status);
+    ret = sscanf((char*)http_hdr.body, "%d ", &status);
     if( ret!=1 ) {
 	MSG_ERR("Parse error\n");
 	return -1;

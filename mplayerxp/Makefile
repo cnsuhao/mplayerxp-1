@@ -103,7 +103,7 @@ distclean:
 	-rm -f mp_config.h mp_config.mak mp_conf_lavc.h version.h
 	-rm -f cpuinfo help_mp.h
 
-dep:
+dep: version.h
 	$(CXX) -MM $(CXXFLAGS) $(SRCS) 1>.depend
 	$(DO_MAKE)
 

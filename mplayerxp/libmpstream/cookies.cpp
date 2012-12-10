@@ -26,6 +26,7 @@ using namespace mpxp;
 
 #define MAX_COOKIES 20
 
+namespace mpxp {
 typedef struct cookie_list_type {
     char *name;
     char *value;
@@ -220,8 +221,7 @@ static struct cookie_list_type *load_cookies(void)
 }
 
 /* Take an HTTP_header_t, and insert the correct headers. The cookie files are read if necessary. */
-void
-cookies_set(HTTP_header_t * http_hdr, const char *domain, const char *url)
+void HTTP_Header::cookies_set(const char *domain, const char *url)
 {
     int found_cookies = 0;
     struct cookie_list_type *cookies[MAX_COOKIES];
@@ -281,7 +281,8 @@ cookies_set(HTTP_header_t * http_hdr, const char *domain, const char *url)
     }
 
     if (found_cookies)
-	http_set_field(http_hdr, buf);
+	set_field(buf);
     else
 	delete buf;
 }
+} // namespace mpxp

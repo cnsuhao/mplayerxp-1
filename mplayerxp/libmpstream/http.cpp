@@ -16,376 +16,323 @@ using namespace mpxp;
 #include "url.h"
 #include "stream_msg.h"
 
-HTTP_header_t *
-http_new_header() {
-	HTTP_header_t *http_hdr;
-
-	http_hdr = (HTTP_header_t*)mp_mallocz(sizeof(HTTP_header_t));
-	if( http_hdr==NULL ) return NULL;
-
-	return http_hdr;
+namespace mpxp {
+HTTP_Header::HTTP_Header() {}
+HTTP_Header::~HTTP_Header() {
+    HTTP_field_t *field, *field2free;
+    if( protocol!=NULL ) delete protocol ;
+    if( uri!=NULL ) delete uri ;
+    if( reason_phrase!=NULL ) delete reason_phrase ;
+    if( field_search!=NULL ) delete field_search ;
+    if( method!=NULL ) delete method ;
+    if( buffer!=NULL ) delete buffer ;
+    field = first_field;
+    while( field!=NULL ) {
+	field2free = field;
+	if (field->field_name) delete field->field_name;
+	field = field->next;
+	delete field2free;
+    }
 }
 
-void
-http_free( HTTP_header_t *http_hdr ) {
-	HTTP_field_t *field, *field2free;
-	if( http_hdr==NULL ) return;
-	if( http_hdr->protocol!=NULL ) delete http_hdr->protocol ;
-	if( http_hdr->uri!=NULL ) delete http_hdr->uri ;
-	if( http_hdr->reason_phrase!=NULL ) delete http_hdr->reason_phrase ;
-	if( http_hdr->field_search!=NULL ) delete http_hdr->field_search ;
-	if( http_hdr->method!=NULL ) delete http_hdr->method ;
-	if( http_hdr->buffer!=NULL ) delete http_hdr->buffer ;
-	field = http_hdr->first_field;
-	while( field!=NULL ) {
-		field2free = field;
-		if (field->field_name)
-		  delete field->field_name;
-		field = field->next;
-		delete field2free ;
-	}
-	delete http_hdr ;
-	http_hdr = NULL;
+int HTTP_Header::response_append(const char *response, int length ) {
+    if( response==NULL || length<0 ) return -1;
+
+    if( (unsigned)length > std::numeric_limits<size_t>::max() - buffer_size - 1) {
+	MSG_FATAL("Bad size in memory (re)allocation\n");
+	return -1;
+    }
+    buffer = (char*)mp_realloc( buffer, buffer_size+length+1 );
+    if(buffer ==NULL ) {
+	MSG_FATAL("Memory allocation failed\n");
+	return -1;
+    }
+    memcpy( buffer+buffer_size, response, length );
+    buffer_size += length;
+    buffer[buffer_size]=0; // close the string!
+    return buffer_size;
 }
 
-int
-http_response_append( HTTP_header_t *http_hdr, char *response, int length ) {
-	if( http_hdr==NULL || response==NULL || length<0 ) return -1;
+int HTTP_Header::is_header_entire() const {
+    if( buffer==NULL ) return 0; // empty
 
-	if( (unsigned)length > std::numeric_limits<size_t>::max() - http_hdr->buffer_size - 1) {
-		MSG_FATAL("Bad size in memory (re)allocation\n");
-		return -1;
-	}
-	http_hdr->buffer = (char*)mp_realloc( http_hdr->buffer, http_hdr->buffer_size+length+1 );
-	if(http_hdr->buffer ==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		return -1;
-	}
-	memcpy( http_hdr->buffer+http_hdr->buffer_size, response, length );
-	http_hdr->buffer_size += length;
-	http_hdr->buffer[http_hdr->buffer_size]=0; // close the string!
-	return http_hdr->buffer_size;
+    if( strstr(buffer, "\r\n\r\n")==NULL &&
+	strstr(buffer, "\n\n")==NULL ) return 0;
+    return 1;
 }
 
-int
-http_is_header_entire( HTTP_header_t *http_hdr ) {
-	if( http_hdr==NULL ) return -1;
-	if( http_hdr->buffer==NULL ) return 0; // empty
+int HTTP_Header::response_parse( ) {
+    char *hdr_ptr, *ptr;
+    char *field=NULL;
+    int pos_hdr_sep, hdr_sep_len;
+    size_t len;
+    if( is_parsed ) return 0;
 
-	if( strstr(http_hdr->buffer, "\r\n\r\n")==NULL &&
-	    strstr(http_hdr->buffer, "\n\n")==NULL ) return 0;
-	return 1;
-}
+    // Get the protocol
+    hdr_ptr = strstr( buffer, " " );
+    if( hdr_ptr==NULL ) {
+	MSG_FATAL("Malformed answer. No space separator found.\n");
+	return -1;
+    }
+    len = hdr_ptr-buffer;
+    protocol = new char [len+1];
+    if( protocol==NULL ) {
+	MSG_FATAL("Memory allocation failed\n");
+	return -1;
+    }
+    strncpy( protocol, buffer, len );
+    protocol[len]='\0';
+    if( !strncasecmp( protocol, "HTTP", 4) ) {
+	if( sscanf( protocol+5,"1.%d", &(http_minor_version) )!=1 ) {
+	    MSG_FATAL("Malformed answer. Unable to get HTTP minor version.\n");
+	    return -1;
+	}
+    }
 
-int
-http_response_parse( HTTP_header_t *http_hdr ) {
-	char *hdr_ptr, *ptr;
-	char *field=NULL;
-	int pos_hdr_sep, hdr_sep_len;
-	size_t len;
-	if( http_hdr==NULL ) return -1;
-	if( http_hdr->is_parsed ) return 0;
+    // Get the status code
+    if( sscanf( ++hdr_ptr, "%d", &status_code )!=1 ) {
+	MSG_FATAL("Malformed answer. Unable to get status code.\n");
+	return -1;
+    }
+    hdr_ptr += 4;
 
-	// Get the protocol
-	hdr_ptr = strstr( http_hdr->buffer, " " );
-	if( hdr_ptr==NULL ) {
-		MSG_FATAL("Malformed answer. No space separator found.\n");
-		return -1;
-	}
-	len = hdr_ptr-http_hdr->buffer;
-	http_hdr->protocol = (char*)mp_malloc(len+1);
-	if( http_hdr->protocol==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		return -1;
-	}
-	strncpy( http_hdr->protocol, http_hdr->buffer, len );
-	http_hdr->protocol[len]='\0';
-	if( !strncasecmp( http_hdr->protocol, "HTTP", 4) ) {
-		if( sscanf( http_hdr->protocol+5,"1.%d", &(http_hdr->http_minor_version) )!=1 ) {
-			MSG_FATAL("Malformed answer. Unable to get HTTP minor version.\n");
-			return -1;
-		}
-	}
+    // Get the reason phrase
+    ptr = strstr( hdr_ptr, "\n" );
+    if( hdr_ptr==NULL ) {
+	MSG_FATAL("Malformed answer. Unable to get the reason phrase.\n");
+	return -1;
+    }
+    len = ptr-hdr_ptr;
+    reason_phrase = new char[len+1];
+    if( reason_phrase==NULL ) {
+	MSG_FATAL("Memory allocation failed\n");
+	return -1;
+    }
+    strncpy( reason_phrase, hdr_ptr, len );
+    if( reason_phrase[len-1]=='\r' ) {
+	len--;
+    }
+    reason_phrase[len]='\0';
 
-	// Get the status code
-	if( sscanf( ++hdr_ptr, "%d", &(http_hdr->status_code) )!=1 ) {
-		MSG_FATAL("Malformed answer. Unable to get status code.\n");
-		return -1;
-	}
-	hdr_ptr += 4;
-
-	// Get the reason phrase
-	ptr = strstr( hdr_ptr, "\n" );
-	if( hdr_ptr==NULL ) {
-		MSG_FATAL("Malformed answer. Unable to get the reason phrase.\n");
-		return -1;
-	}
-	len = ptr-hdr_ptr;
-	http_hdr->reason_phrase = (char*)mp_malloc(len+1);
-	if( http_hdr->reason_phrase==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		return -1;
-	}
-	strncpy( http_hdr->reason_phrase, hdr_ptr, len );
-	if( http_hdr->reason_phrase[len-1]=='\r' ) {
-		len--;
-	}
-	http_hdr->reason_phrase[len]='\0';
-
-	// Set the position of the header separator: \r\n\r\n
-	hdr_sep_len = 4;
-	ptr = strstr( http_hdr->buffer, "\r\n\r\n" );
+    // Set the position of the header separator: \r\n\r\n
+    hdr_sep_len = 4;
+    ptr = strstr( buffer, "\r\n\r\n" );
+    if( ptr==NULL ) {
+	ptr = strstr( buffer, "\n\n" );
 	if( ptr==NULL ) {
-		ptr = strstr( http_hdr->buffer, "\n\n" );
-		if( ptr==NULL ) {
-			MSG_ERR("Header may be incomplete. No CRLF CRLF found.\n");
-			return -1;
-		}
-		hdr_sep_len = 2;
+	    MSG_ERR("Header may be incomplete. No CRLF CRLF found.\n");
+	    return -1;
 	}
-	pos_hdr_sep = ptr-http_hdr->buffer;
+	hdr_sep_len = 2;
+    }
+    pos_hdr_sep = ptr-buffer;
 
-	// Point to the first line after the method line.
-	hdr_ptr = strstr( http_hdr->buffer, "\n" )+1;
-	do {
-		ptr = hdr_ptr;
-		while( *ptr!='\r' && *ptr!='\n' ) ptr++;
-		len = ptr-hdr_ptr;
-		if( len==0 ) break;
-		field = (char*)mp_realloc(field, len+1);
-		if( field==NULL ) {
-			MSG_FATAL("Memory allocation failed\n");
-			return -1;
-		}
-		strncpy( field, hdr_ptr, len );
-		field[len]='\0';
-		http_set_field( http_hdr, field );
-		hdr_ptr = ptr+((*ptr=='\r')?2:1);
-	} while( hdr_ptr<(http_hdr->buffer+pos_hdr_sep) );
-
-	if( field!=NULL ) delete field ;
-
-	if( pos_hdr_sep+hdr_sep_len<http_hdr->buffer_size ) {
-		// Response has data!
-		http_hdr->body = (unsigned char*)http_hdr->buffer+pos_hdr_sep+hdr_sep_len;
-		http_hdr->body_size = http_hdr->buffer_size-(pos_hdr_sep+hdr_sep_len);
+    // Point to the first line after the method line.
+    hdr_ptr = strstr( buffer, "\n" )+1;
+    do {
+	ptr = hdr_ptr;
+	while( *ptr!='\r' && *ptr!='\n' ) ptr++;
+	len = ptr-hdr_ptr;
+	if( len==0 ) break;
+	field = (char*)mp_realloc(field, len+1);
+	if( field==NULL ) {
+	    MSG_FATAL("Memory allocation failed\n");
+	    return -1;
 	}
+	strncpy( field, hdr_ptr, len );
+	field[len]='\0';
+	set_field( field );
+	hdr_ptr = ptr+((*ptr=='\r')?2:1);
+    } while( hdr_ptr<(buffer+pos_hdr_sep) );
 
-	http_hdr->is_parsed = 1;
-	return 0;
+    if( field!=NULL ) delete field ;
+
+    if( pos_hdr_sep+hdr_sep_len<buffer_size ) {
+	// Response has data!
+	body = (unsigned char*)buffer+pos_hdr_sep+hdr_sep_len;
+	body_size = buffer_size-(pos_hdr_sep+hdr_sep_len);
+    }
+
+    is_parsed = 1;
+    return 0;
 }
 
-char *
-http_build_request( HTTP_header_t *http_hdr ) {
-	char *ptr, *uri=NULL;
-	int len;
-	HTTP_field_t *field;
-	if( http_hdr==NULL ) return NULL;
+char* HTTP_Header::build_request() {
+    char *ptr;
+    int len;
+    HTTP_field_t *field;
 
-	if( http_hdr->method==NULL ) http_set_method( http_hdr, "GET");
-	if( http_hdr->uri==NULL ) http_set_uri( http_hdr, "/");
-	else {
-		uri = (char*)mp_malloc(strlen(http_hdr->uri) + 1);
-		if( uri==NULL ) {
-			MSG_FATAL("Memory allocation failed\n");
-			return NULL;
-		}
-		strcpy(uri,http_hdr->uri);
-	}
+    if( method==NULL ) set_method( "GET");
+    if( uri==NULL ) set_uri( "/");
 
-	//**** Compute the request length
-	// Add the Method line
-	len = strlen(http_hdr->method)+strlen(uri)+12;
-	// Add the fields
-	field = http_hdr->first_field;
-	while( field!=NULL ) {
-		len += strlen(field->field_name)+2;
-		field = field->next;
-	}
-	// Add the CRLF
-	len += 2;
-	// Add the body
-	if( http_hdr->body!=NULL ) {
-		len += http_hdr->body_size;
-	}
-	// Free the buffer if it was previously used
-	if( http_hdr->buffer!=NULL ) {
-		delete http_hdr->buffer ;
-		http_hdr->buffer = NULL;
-	}
-	http_hdr->buffer = (char*)mp_malloc(len+1);
-	if( http_hdr->buffer==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		return NULL;
-	}
-	http_hdr->buffer_size = len;
-
-	//*** Building the request
-	ptr = http_hdr->buffer;
-	// Add the method line
-	ptr += sprintf( ptr, "%s %s HTTP/1.%d\r\n", http_hdr->method, uri, http_hdr->http_minor_version );
-	field = http_hdr->first_field;
-	// Add the field
-	while( field!=NULL ) {
-		ptr += sprintf( ptr, "%s\r\n", field->field_name );
-		field = field->next;
-	}
-	ptr += sprintf( ptr, "\r\n" );
-	// Add the body
-	if( http_hdr->body!=NULL ) {
-		memcpy( ptr, http_hdr->body, http_hdr->body_size );
-	}
-
-	if( uri ) delete uri ;
-	return http_hdr->buffer;
-}
-
-char *
-http_get_field( HTTP_header_t *http_hdr, const char *field_name ) {
-	if( http_hdr==NULL || field_name==NULL ) return NULL;
-	http_hdr->field_search_pos = http_hdr->first_field;
-	http_hdr->field_search = (char*)mp_realloc( http_hdr->field_search, strlen(field_name)+1 );
-	if( http_hdr->field_search==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		return NULL;
-	}
-	strcpy( http_hdr->field_search, field_name );
-	return http_get_next_field( http_hdr );
-}
-
-char *
-http_get_next_field( HTTP_header_t *http_hdr ) {
-	char *ptr;
-	HTTP_field_t *field;
-	if( http_hdr==NULL ) return NULL;
-
-	field = http_hdr->field_search_pos;
-	while( field!=NULL ) {
-		ptr = strstr( field->field_name, ":" );
-		if( ptr==NULL ) return NULL;
-		if( !strncasecmp( field->field_name, http_hdr->field_search, ptr-(field->field_name) ) ) {
-			ptr++;	// Skip the column
-			while( ptr[0]==' ' ) ptr++; // Skip the spaces if there is some
-			http_hdr->field_search_pos = field->next;
-			return ptr;	// return the value without the field name
-		}
-		field = field->next;
-	}
+    //**** Compute the request length
+    // Add the Method line
+    len = strlen(method)+strlen(uri)+12;
+    // Add the fields
+    field = first_field;
+    while( field!=NULL ) {
+	len += strlen(field->field_name)+2;
+	field = field->next;
+    }
+    // Add the CRLF
+    len += 2;
+    // Add the body
+    if( body!=NULL ) {
+	len += body_size;
+    }
+    // Free the buffer if it was previously used
+    if( buffer!=NULL ) {
+	delete buffer ;
+	buffer = NULL;
+    }
+    buffer = new char [len+1];
+    if( buffer==NULL ) {
+	MSG_FATAL("Memory allocation failed\n");
 	return NULL;
+    }
+    buffer_size = len;
+
+    //*** Building the request
+    ptr = buffer;
+    // Add the method line
+    ptr += sprintf( ptr, "%s %s HTTP/1.%d\r\n", method,uri, http_minor_version );
+    field = first_field;
+    // Add the field
+    while( field!=NULL ) {
+	ptr += sprintf( ptr, "%s\r\n", field->field_name );
+	field = field->next;
+    }
+    ptr += sprintf( ptr, "\r\n" );
+    // Add the body
+    if( body!=NULL ) {
+	memcpy( ptr, body, body_size );
+    }
+
+    return buffer;
 }
 
-void
-http_set_field( HTTP_header_t *http_hdr, const char *field_name ) {
-	HTTP_field_t *new_field;
-	if( http_hdr==NULL || field_name==NULL ) return;
-
-	new_field = (HTTP_field_t*)mp_malloc(sizeof(HTTP_field_t));
-	if( new_field==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		return;
-	}
-	new_field->next = NULL;
-	new_field->field_name = (char*)mp_malloc(strlen(field_name)+1);
-	if( new_field->field_name==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		delete new_field;
-		return;
-	}
-	strcpy( new_field->field_name, field_name );
-
-	if( http_hdr->last_field==NULL ) {
-		http_hdr->first_field = new_field;
-	} else {
-		http_hdr->last_field->next = new_field;
-	}
-	http_hdr->last_field = new_field;
-	http_hdr->field_nb++;
+char* HTTP_Header::get_field(const char *field_name ) {
+    if( field_name==NULL ) return NULL;
+    field_search_pos = first_field;
+    field_search = (char*)mp_realloc( field_search, strlen(field_name)+1 );
+    if( field_search==NULL ) {
+	MSG_FATAL("Memory allocation failed\n");
+	return NULL;
+    }
+    strcpy( field_search, field_name );
+    return get_next_field();
 }
 
-void
-http_set_method( HTTP_header_t *http_hdr, const char *method ) {
-	if( http_hdr==NULL || method==NULL ) return;
+char* HTTP_Header::get_next_field() {
+    char *ptr;
+    HTTP_field_t *field;
 
-	http_hdr->method = (char*)mp_malloc(strlen(method)+1);
-	if( http_hdr->method==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		return;
+    field = field_search_pos;
+    while( field!=NULL ) {
+	ptr = strstr( field->field_name, ":" );
+	if( ptr==NULL ) return NULL;
+	if( !strncasecmp( field->field_name, field_search, ptr-(field->field_name) ) ) {
+	    ptr++;	// Skip the column
+	    while( ptr[0]==' ' ) ptr++; // Skip the spaces if there is some
+	    field_search_pos = field->next;
+	    return ptr;	// return the value without the field name
 	}
-	strcpy( http_hdr->method, method );
+	field = field->next;
+    }
+    return NULL;
 }
 
-void
-http_set_uri( HTTP_header_t *http_hdr, const char *uri ) {
-	if( http_hdr==NULL || uri==NULL ) return;
+void HTTP_Header::set_field(const char *field_name ) {
+    HTTP_field_t *new_field;
+    if( field_name==NULL ) return;
 
-	http_hdr->uri = (char*)mp_malloc(strlen(uri)+1);
-	if( http_hdr->uri==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		return;
-	}
-	strcpy( http_hdr->uri, uri );
+    new_field = new(zeromem) HTTP_field_t;
+    if( new_field==NULL ) {
+	MSG_FATAL("Memory allocation failed\n");
+	return;
+    }
+    new_field->next = NULL;
+    new_field->field_name = new char [strlen(field_name)+1];
+    if( new_field->field_name==NULL ) {
+	MSG_FATAL("Memory allocation failed\n");
+	delete new_field;
+	return;
+    }
+    strcpy( new_field->field_name, field_name );
+
+    if( last_field==NULL ) {
+	first_field = new_field;
+    } else {
+	last_field->next = new_field;
+    }
+    last_field = new_field;
+    field_nb++;
 }
 
-int
-http_add_basic_authentication( HTTP_header_t *http_hdr, const char *username, const char *password ) {
-	char *auth=NULL, *usr_pass=NULL, *b64_usr_pass=NULL;
-	int encoded_len, pass_len=0, out_len;
-	int res = -1;
-	if( http_hdr==NULL || username==NULL ) return -1;
+void HTTP_Header::set_method( const char *_method ) {
+    if( _method==NULL ) return;
+    method=mp_strdup(_method);
+}
 
-	if( password!=NULL ) {
-		pass_len = strlen(password);
-	}
+void HTTP_Header::set_uri(const char *_uri ) {
+    if(_uri==NULL ) return;
+    uri=mp_strdup(_uri);
+}
 
-	usr_pass = (char*)mp_malloc(strlen(username)+pass_len+2);
-	if( usr_pass==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		goto out;
-	}
+int HTTP_Header::add_basic_authentication( const char *username, const char *password ) {
+    char *auth=NULL, *usr_pass=NULL, *b64_usr_pass=NULL;
+    int encoded_len, pass_len=0, out_len;
+    int res = -1;
+    if( username==NULL ) return -1;
 
-	sprintf( usr_pass, "%s:%s", username, (password==NULL)?"":password );
+    if( password!=NULL ) pass_len = strlen(password);
 
-	// Base 64 encode with at least 33% more data than the original size
-	encoded_len = strlen(usr_pass)*2;
-	b64_usr_pass = (char*)mp_malloc(encoded_len);
-	if( b64_usr_pass==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		goto out;
-	}
+    usr_pass = new char [strlen(username)+pass_len+2];
+    if( usr_pass==NULL ) {
+	MSG_FATAL("Memory allocation failed\n");
+	goto out;
+    }
 
-	out_len = base64_encode( usr_pass, strlen(usr_pass), b64_usr_pass, encoded_len);
-	if( out_len<0 ) {
-		MSG_FATAL("Base64 out overflow\n");
-		goto out;
-	}
+    sprintf( usr_pass, "%s:%s", username, (password==NULL)?"":password );
 
-	b64_usr_pass[out_len]='\0';
+    // Base 64 encode with at least 33% more data than the original size
+    encoded_len = strlen(usr_pass)*2;
+    b64_usr_pass = new char [encoded_len];
+    if( b64_usr_pass==NULL ) {
+	MSG_FATAL("Memory allocation failed\n");
+	goto out;
+    }
 
-	auth = (char*)mp_malloc(encoded_len+22);
-	if( auth==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		goto out;
-	}
+    out_len = base64_encode( usr_pass, strlen(usr_pass), b64_usr_pass, encoded_len);
+    if( out_len<0 ) {
+	MSG_FATAL("Base64 out overflow\n");
+	goto out;
+    }
 
-	sprintf( auth, "Authorization: Basic %s", b64_usr_pass);
-	http_set_field( http_hdr, auth );
-	res = 0;
+    b64_usr_pass[out_len]='\0';
 
+    auth = new char [encoded_len+22];
+    if( auth==NULL ) {
+	MSG_FATAL("Memory allocation failed\n");
+	goto out;
+    }
+
+    sprintf( auth, "Authorization: Basic %s", b64_usr_pass);
+    set_field( auth );
+    res = 0;
 out:
-	delete usr_pass ;
-	delete b64_usr_pass ;
-	delete auth ;
+    delete usr_pass ;
+    delete b64_usr_pass ;
+    delete auth ;
 
-	return res;
+    return res;
 }
 
-void
-http_debug_hdr( HTTP_header_t *http_hdr ) {
-	HTTP_field_t *field;
-	int i = 0;
-	if( http_hdr==NULL ) return;
+void HTTP_Header::debug_hdr( ) {
+    HTTP_field_t *field;
+    int i = 0;
 
-	MSG_V(	"--- HTTP DEBUG HEADER --- START ---\n"
+    MSG_V(	"--- HTTP DEBUG HEADER --- START ---\n"
 		"protocol:           [%s]\n"
 		"http minor version: [%d]\n"
 		"uri:                [%s]\n"
@@ -393,21 +340,21 @@ http_debug_hdr( HTTP_header_t *http_hdr ) {
 		"status code:        [%d]\n"
 		"reason phrase:      [%s]\n"
 		"body size:          [%d]\n"
-		, http_hdr->protocol
-		, http_hdr->http_minor_version
-		, http_hdr->uri
-		, http_hdr->method
-		, http_hdr->status_code
-		, http_hdr->reason_phrase
-		, http_hdr->body_size );
+		,protocol
+		,http_minor_version
+		,uri
+		,method
+		,status_code
+		,reason_phrase
+		,body_size );
 
-	MSG_V("Fields:\n");
-	field = http_hdr->first_field;
-	while( field!=NULL ) {
-		MSG_V(" %d - %s\n", i++, field->field_name );
-		field = field->next;
-	}
-	MSG_V("--- HTTP DEBUG HEADER --- END ---\n");
+    MSG_V("Fields:\n");
+    field = first_field;
+    while( field!=NULL ) {
+	MSG_V(" %d - %s\n", i++, field->field_name );
+	field = field->next;
+    }
+    MSG_V("--- HTTP DEBUG HEADER --- END ---\n");
 }
 
 int
@@ -463,5 +410,4 @@ base64_encode(const any_t*enc, int encLen, char *out, int outMax) {
 	// Output overflow
 	return -1;
 }
-
-
+}// namespace mpxp
