@@ -317,46 +317,48 @@ static const demuxer_driver_t* demux_find_driver(const char *name) {
 }
 
 static const struct mime_type_table_t {
-	const char *mime_type;
-	const demuxer_driver_t* driver;
+    const char *mime_type;
+    const demuxer_driver_t* driver;
 } mime_type_table[] = {
-	// MP3 streaming, some MP3 streaming server answer with audio/mpeg
-	{ "audio/mpeg", &demux_mp3 },
-	// MPEG streaming
-	{ "video/mpeg", &demux_mpgps },
-	{ "video/x-mpeg", &demux_mpgps },
-	{ "video/x-mpeg2", &demux_mpgps },
-	// AVI ??? => video/x-msvideo
-	{ "video/x-msvideo", &demux_avi },
-	// MOV => video/quicktime
-	{ "video/quicktime", &demux_mov },
-	// ASF
-	{ "audio/x-ms-wax", &demux_asf },
-	{ "audio/x-ms-wma", &demux_asf },
-	{ "video/x-ms-asf", &demux_asf },
-	{ "video/x-ms-afs", &demux_asf },
-	{ "video/x-ms-wvx", &demux_asf },
-	{ "video/x-ms-wmv", &demux_asf },
-	{ "video/x-ms-wma", &demux_asf },
-	{ "application/x-mms-framed", &demux_asf },
-	{ "application/vnd.ms.wms-hdr.asfv1", &demux_asf },
+    // Raw-Audio
+    { "audio/PCMA", &demux_rawaudio },
+    // MP3 streaming, some MP3 streaming server answer with audio/mpeg
+    { "audio/mpeg", &demux_mp3 },
+    // MPEG streaming
+    { "video/mpeg", &demux_mpgps },
+    { "video/x-mpeg", &demux_mpgps },
+    { "video/x-mpeg2", &demux_mpgps },
+    // AVI ??? => video/x-msvideo
+    { "video/x-msvideo", &demux_avi },
+    // MOV => video/quicktime
+    { "video/quicktime", &demux_mov },
+    // ASF
+    { "audio/x-ms-wax", &demux_asf },
+    { "audio/x-ms-wma", &demux_asf },
+    { "video/x-ms-asf", &demux_asf },
+    { "video/x-ms-afs", &demux_asf },
+    { "video/x-ms-wvx", &demux_asf },
+    { "video/x-ms-wmv", &demux_asf },
+    { "video/x-ms-wma", &demux_asf },
+    { "application/x-mms-framed", &demux_asf },
+    { "application/vnd.ms.wms-hdr.asfv1", &demux_asf },
 #if 0
-	// Playlists
-	{ "video/x-ms-wmx", Demuxer::Type_PLAYLIST },
-	{ "video/x-ms-wvx", Demuxer::Type_PLAYLIST },
-	{ "audio/x-scpls", Demuxer::Type_PLAYLIST },
-	{ "audio/x-mpegurl", Demuxer::Type_PLAYLIST },
-	{ "audio/x-pls", Demuxer::Type_PLAYLIST },
+    // Playlists
+    { "video/x-ms-wmx", Demuxer::Type_PLAYLIST },
+    { "video/x-ms-wvx", Demuxer::Type_PLAYLIST },
+    { "audio/x-scpls", Demuxer::Type_PLAYLIST },
+    { "audio/x-mpegurl", Demuxer::Type_PLAYLIST },
+    { "audio/x-pls", Demuxer::Type_PLAYLIST },
 #endif
-	// Real Media
-	{ "audio/x-pn-realaudio", &demux_realaud },
-	// OGG Streaming
-	{ "application/ogg", &demux_ogg },
-	{ "application/x-ogg", &demux_ogg },
-	// NullSoft Streaming Video
-	{ "video/nsv", &demux_nsv},
-	{ "misc/ultravox", &demux_nsv},
-	{ NULL, &demux_null }
+    // Real Media
+    { "audio/x-pn-realaudio", &demux_realaud },
+    // OGG Streaming
+    { "application/ogg", &demux_ogg },
+    { "application/x-ogg", &demux_ogg },
+    // NullSoft Streaming Video
+    { "video/nsv", &demux_nsv},
+    { "misc/ultravox", &demux_nsv},
+    { NULL, &demux_null }
 };
 
 static const demuxer_driver_t* demuxer_driver_by_name(const std::string& name)
