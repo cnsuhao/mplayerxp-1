@@ -8,7 +8,7 @@ CXXFLAGS  = $(OPTXXFLAGS) -I. -I../.. $(EXTRA_INC) -Wall
 
 .SUFFIXES: .cpp .o
 
-all: $(CXXOBJS)
+all: dep $(CXXOBJS)
 
 .cpp.o:
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
@@ -19,9 +19,9 @@ clean:
 distclean:
 	rm -f Makefile.bak *.o *.a *~ .depend
 
-dep:    depend
+dep:    .depend
 
-depend:
+.depend: $(CXXSRCS)
 	$(CXX) -MM $(CXXFLAGS) $(CXXSRCS) 1>.depend
 
 #

@@ -143,7 +143,7 @@ void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){
 }
 
 mp_image_t* new_mp_image(unsigned w,unsigned h,unsigned xp_idx){
-    mp_image_t* mpi=(mp_image_t*)mp_mallocz(sizeof(mp_image_t));
+    mp_image_t* mpi=new(zeromem) mp_image_t;
     if(!mpi) return NULL; // error!
     mpi->xp_idx = xp_idx;
     mpi->width=mpi->w=w;

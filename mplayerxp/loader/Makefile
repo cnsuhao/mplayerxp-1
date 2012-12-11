@@ -47,7 +47,7 @@ CFLAGS=-I. -I.. $(OPTFLAGS) -D_FILE_OFFSET_BITS=32 $(EXTRA_INC) $(WARN_FLAGS) -f
 
 .PHONY: $(SUBDIRS)
 
-all:	$(LIBNAME)
+all:	dep $(LIBNAME)
 
 $(SUBDIRS):
 	$(DO_ALL)
@@ -73,9 +73,9 @@ $(LIBNAME): $(SUBDIRS) $(OBJS) $(AOBJS)
 	$(wildcard dshow/*.o) \
 	$(wildcard dmo/*.o)
 
-dep:    depend
+dep:    .depend
 
-depend:
+.depend: $(SRCS) $(CXXSRCS)
 	$(DO_MAKE)
 	$(CC) -MM $(CFLAGS) $(SRCS) 1>.depend
 

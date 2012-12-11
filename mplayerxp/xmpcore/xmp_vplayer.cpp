@@ -273,10 +273,10 @@ MSG_INFO("mpxp_context().engine().xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_
 any_t* xmp_video_player( any_t* arg )
 {
     mpxp_thread_t* priv=reinterpret_cast<mpxp_thread_t*>(arg);
-    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(priv->dae->sh);
+    sh_video_t* sh_video=static_cast<sh_video_t*>(priv->dae->sh);
     Demuxer_Stream *d_video=sh_video->ds;
     Demuxer *demuxer=d_video->demuxer;
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
+    sh_audio_t* sh_audio=static_cast<sh_audio_t*>(demuxer->audio->sh);
 
     priv->state=Pth_Run;
     priv->dae->eof = 0;

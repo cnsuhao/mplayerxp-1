@@ -71,7 +71,7 @@ void xmp_uninit(void) {
 
 unsigned xmp_register_main(sig_handler_t sigfunc) {
     unsigned idx=0;
-    mpxp_context().engine().xp_core->mpxp_threads[idx]=(mpxp_thread_t*)mp_mallocz(sizeof(mpxp_thread_t));
+    mpxp_context().engine().xp_core->mpxp_threads[idx]=new(zeromem) mpxp_thread_t;
     mpxp_context().engine().xp_core->mpxp_threads[idx]->p_idx=idx;
     mpxp_context().engine().xp_core->mpxp_threads[idx]->pid=getpid();
     mpxp_context().engine().xp_core->main_pth_id=mpxp_context().engine().xp_core->mpxp_threads[idx]->pth_id=pthread_self();
@@ -110,10 +110,10 @@ void dae_reset(dec_ahead_engine_t* it) {
     it->num_decoded_frames=0;
 }
 
-void dae_init(dec_ahead_engine_t* it,unsigned nframes,any_t* sh)
+void dae_init(dec_ahead_engine_t* it,unsigned nframes,Opaque* sh)
 {
     it->nframes=nframes;
-    it->frame = (xmp_frame_t*)mp_malloc(sizeof(xmp_frame_t)*nframes);
+    it->frame = new(zeromem) xmp_frame_t[nframes];
     it->sh=sh;
     dae_reset(it);
 }
@@ -243,7 +243,7 @@ int xmp_init_engine(sh_video_t *shv, sh_audio_t *sha)
 {
     mpxp_context().engine().xp_core->flags=xmp_engine_compute_model(shv,sha);
     if(shv) {
-	mpxp_context().engine().xp_core->video=(dec_ahead_engine_t*)mp_mallocz(sizeof(dec_ahead_engine_t));
+	mpxp_context().engine().xp_core->video=new(zeromem) dec_ahead_engine_t;
 	dae_init(mpxp_context().engine().xp_core->video,mpxp_context().engine().xp_core->num_v_buffs,shv);
     }
     if(sha) {
@@ -262,7 +262,7 @@ int xmp_init_engine(sh_video_t *shv, sh_audio_t *sha)
 		min_reserv = (float)min_reserv * (float)o_bps / (float)sha->o_bps;
 	    init_audio_buffer(asize+min_reserv,min_reserv+MIN_BUFFER_RESERV,asize/(sha->audio_out_minsize<10000?sha->audio_out_minsize:4000)+100,sha);
 	}
-	mpxp_context().engine().xp_core->audio=(dec_ahead_engine_t*)mp_mallocz(sizeof(dec_ahead_engine_t));
+	mpxp_context().engine().xp_core->audio=new(zeromem) dec_ahead_engine_t;
 	dae_init(mpxp_context().engine().xp_core->audio,mpxp_context().engine().xp_core->num_a_buffs,sha);
     }
     return 0;
@@ -302,7 +302,7 @@ unsigned xmp_register_thread(dec_ahead_engine_t* dae,sig_handler_t sigfunc,mpxp_
     /* requires root privelegies */
     pthread_attr_setschedpolicy(&attr,SCHED_FIFO);
 #endif
-    mpxp_context().engine().xp_core->mpxp_threads[idx]=(mpxp_thread_t*)mp_mallocz(sizeof(mpxp_thread_t));
+    mpxp_context().engine().xp_core->mpxp_threads[idx]=new(zeromem) mpxp_thread_t;
 
     mpxp_context().engine().xp_core->mpxp_threads[idx]->p_idx=idx;
     mpxp_context().engine().xp_core->mpxp_threads[idx]->name=name;

@@ -12,7 +12,7 @@ CXXFLAGS  = $(MLIB_INC) $(OPTXXFLAGS) -W -Wall
 .cpp.o:
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
-all:	$(CXXOBJS)
+all:	dep $(CXXOBJS)
 
 clean:
 	rm -f *.o *.a *~
@@ -20,9 +20,9 @@ clean:
 distclean:
 	rm -f test *.o $(LIBNAME) *~ .depend
 
-dep:    depend
+dep:    .depend
 
-depend:
+.depend: $(CXXSRCS)
 	$(CXX) -MM $(CXXFLAGS) $(CXXSRCS) 1>.depend
 
 #

@@ -33,7 +33,7 @@ CXXFLAGS  = $(OPTXXFLAGS) -I. -I.. -Wall
 $(LIBNAME): $(CXXOBJS) $(OBJS)
 	$(AR) r $(LIBNAME) $(CXXOBJS) $(OBJS)
 
-all:    $(LIBNAME)
+all:   dep $(LIBNAME)
 
 clean:
 	rm -f *.o *.a *~
@@ -41,9 +41,9 @@ clean:
 distclean:
 	rm -f Makefile.bak *.o *.a *~ .depend
 
-dep:    depend
+dep:    .depend
 
-depend:
+.depend: $(SRCS) $(CXXSRCS)
 	$(CXX) -MM $(CXXFLAGS) $(CXXSRCS) $(SRCS) 1>.depend
 
 #

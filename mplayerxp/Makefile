@@ -56,7 +56,7 @@ CXXFLAGS = $(OPTXXFLAGS) $(EXTRA_INC)
 
 # .PHONY: all clean
 
-all:	$(TARGET_EXE) $(SUBDIRS)
+all:	dep $(TARGET_EXE) $(SUBDIRS)
 
 .cpp.o:
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
@@ -68,7 +68,7 @@ $(TARGET_EXE):	$(OBJS) $(MP_LIBS)
 	$(DO_MAKE_ALL)
 	$(CXX) -o $(TARGET_EXE) $(OBJS) $(LDFLAGS) $(LDXXFLAGS) $(LIBS)
 #-Xlinker --export-dynamic -Xlinker --gc-sections -Xlinker --sort-common
-$(SRCS): .depend
+$(SRCS):
 
 install: $(TARGET_EXE)
 ifeq ($(INSTALL),)
@@ -103,7 +103,9 @@ distclean:
 	-rm -f mp_config.h mp_config.mak mp_conf_lavc.h version.h
 	-rm -f cpuinfo help_mp.h
 
-.depend:
+dep: .depend
+
+.depend: $(SRCS)
 	$(CXX) -MM $(CXXFLAGS) $(SRCS) 1>.depend
 	$(DO_MAKE)
 

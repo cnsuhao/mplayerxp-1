@@ -69,7 +69,7 @@ CXXFLAGS  = $(OPTXXFLAGS) $(INCLUDE) -W -Wall
 
 .PHONY: $(SUBDIRS)
 
-all:	$(LIBNAME)
+all:	dep $(LIBNAME)
 
 $(SUBDIRS):
 	$(DO_ALL)
@@ -96,9 +96,9 @@ distclean:
 	$(DO_MAKE)
 	rm -f test Makefile.bak *.o *.a *~ .depend
 
-dep:    depend
+dep:    .depend
 
-depend:
+.depend: $(SRCS) $(CXXSRCS)
 	$(DO_MAKE)
 	$(CXX) -MM $(CXXFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 

@@ -66,9 +66,9 @@ audio_buffer_t audio_buffer;
 int init_audio_buffer( int size, int min_reserv, int indices, sh_audio_t *sha )
 {
     MSG_V("Using audio buffer %i bytes (min reserve = %i, indices %i)\n",size,min_reserv, indices);
-    if( !(audio_buffer.buffer = (unsigned char*)mp_malloc(size)) )
+    if( !(audio_buffer.buffer = new unsigned char[size]) )
 	return ENOMEM;
-    if( !(audio_buffer.indices = (audio_buffer_index_t*)mp_malloc(indices*sizeof(audio_buffer_index_t))) ) {
+    if( !(audio_buffer.indices = new audio_buffer_index_t[indices])) {
 	delete audio_buffer.buffer;
 	audio_buffer.buffer=NULL;
 	return ENOMEM;
@@ -384,9 +384,9 @@ int get_free_audio_buffer(void)
 
 int xp_thread_decode_audio(Demuxer_Stream *d_audio)
 {
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(mpxp_context().engine().xp_core->audio->sh);
+    sh_audio_t* sh_audio=static_cast<sh_audio_t*>(mpxp_context().engine().xp_core->audio->sh);
     sh_video_t* sh_video=NULL;
-    if(mpxp_context().engine().xp_core->video) sh_video=reinterpret_cast<sh_video_t*>(mpxp_context().engine().xp_core->video->sh);
+    if(mpxp_context().engine().xp_core->video) sh_video=static_cast<sh_video_t*>(mpxp_context().engine().xp_core->video->sh);
     int free_buf, vbuf_size, pref_buf;
     unsigned len=0;
 
@@ -426,7 +426,7 @@ static volatile int dec_ahead_can_adseek=1;  /* It is safe to seek audio buffer 
 any_t* a_dec_ahead_routine( any_t* arg )
 {
     mpxp_thread_t* priv=reinterpret_cast<mpxp_thread_t*>(arg);
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->dae->sh);
+    sh_audio_t* sh_audio=static_cast<sh_audio_t*>(priv->dae->sh);
     Demuxer_Stream *d_audio=sh_audio->ds;
 
     int ret;

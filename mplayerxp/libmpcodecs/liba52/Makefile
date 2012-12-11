@@ -1,7 +1,7 @@
 include ../../mp_config.mak
 
 CXXSRCS = parse.cpp bitstream.cpp imdct.cpp downmix.cpp bit_allocate.cpp crc.cpp resample.cpp
-SRCS    = 
+SRCS    =
 OBJS	= $(SRCS:.c=.o)
 CXXOBJS	= $(CXXSRCS:.cpp=.o)
 
@@ -17,7 +17,7 @@ CXXFLAGS  = $(MLIB_INC) $(OPTXXFLAGS) -W -Wall
 .cpp.o:
 	$(CC) -c $(CXXFLAGS) -o $@ $<
 
-all:	$(OBJS) $(CXXOBJS)
+all:	dep $(OBJS) $(CXXOBJS)
 
 clean:
 	rm -f *.o *.a *~
@@ -25,9 +25,9 @@ clean:
 distclean:
 	rm -f test *.o $(LIBNAME) *~ .depend
 
-dep:    depend
+dep:    .depend
 
-depend:
+.depend: $(SRCS) $(CXXSRCS)
 	$(CC) -MM $(CFLAGS) $(SRCS) $(CXXSRCS) 1>.depend
 
 #

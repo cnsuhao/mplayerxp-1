@@ -134,10 +134,10 @@ while(sh_audio){
 any_t* audio_play_routine( any_t* arg )
 {
     mpxp_thread_t* priv=reinterpret_cast<mpxp_thread_t*>(arg);
-    sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(priv->dae->sh);
+    sh_audio_t* sh_audio=static_cast<sh_audio_t*>(priv->dae->sh);
     Demuxer_Stream *d_audio=sh_audio->ds;
     Demuxer *demuxer=d_audio->demuxer;
-    sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(demuxer->video->sh);
+    sh_video_t* sh_video=static_cast<sh_video_t*>(demuxer->video->sh);
 
     int eof = 0;
     struct timeval now;

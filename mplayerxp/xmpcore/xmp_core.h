@@ -10,6 +10,7 @@
 #include <inttypes.h>
 #include <pthread.h>
 
+#include "mp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 
@@ -38,7 +39,7 @@ namespace mpxp {
 	volatile unsigned	decoder_idx;	/* index of frame which is currently decoded */
 	unsigned		nframes;	/* number of frames in buffer */
 	xmp_frame_t*		frame;		/* frame related attributes */
-	any_t*			sh;		/* corresponded sh_audio_t or sh_video_t */
+	Opaque*			sh;		/* corresponded sh_audio_t or sh_video_t */
 	int			eof;		/* EOF for stream */
 	/* methods */
 	func_new_frame_priv_t	new_priv;
@@ -132,7 +133,7 @@ namespace mpxp {
     int		xmp_run_players( void );
     void	xmp_reset_sh_video(sh_video_t* shv);
 
-    void	dae_init(dec_ahead_engine_t* it,unsigned nframes,any_t* sh);
+    void	dae_init(dec_ahead_engine_t* it,unsigned nframes,Opaque* sh);
     void	dae_uninit(dec_ahead_engine_t* it);
     void	dae_reset(dec_ahead_engine_t* it); /* after mpxp_seek */
 
