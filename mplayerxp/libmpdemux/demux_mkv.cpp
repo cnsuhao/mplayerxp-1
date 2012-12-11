@@ -35,7 +35,7 @@ using namespace mpxp;
 #include "osdep/bswap.h"
 #include "libmpsub/vobsub.h"
 #include "libmpsub/subreader.h"
-#include "libvo/sub.h"
+#include "libvo2/sub.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "libmpcodecs/libnuppelvideo/minilzo.h"
 #include "libao2/afmt.h"

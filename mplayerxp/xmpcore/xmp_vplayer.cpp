@@ -9,7 +9,7 @@ using namespace mpxp;
 #include "sig_hand.h"
 
 #include "libao2/audio_out.h"
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 
 #include "libmpdemux/demuxer_r.h"
 #include "osdep/timer.h"

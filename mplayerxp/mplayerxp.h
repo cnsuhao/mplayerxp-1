@@ -11,7 +11,7 @@
 #include "libmpconf/cfgparser.h"
 #include "libmpsub/subreader.h"
 #include "libao2/audio_out.h"
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 
 struct audio_decoder_t;
 struct video_decoder_t;

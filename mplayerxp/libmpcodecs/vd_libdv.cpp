@@ -8,7 +8,7 @@ using namespace mpxp;
 #include <unistd.h>
 #include <math.h>
 
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 #include "osdep/bswap.h"
 
 #include <libdv/dv.h>

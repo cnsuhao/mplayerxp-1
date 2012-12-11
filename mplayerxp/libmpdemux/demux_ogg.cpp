@@ -25,7 +25,7 @@ using namespace mpxp;
 #include "aviprint.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "libmpcodecs/dec_audio.h"
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 #include "libao2/afmt.h"
 #include "demux_msg.h"
 
@@ -176,7 +176,7 @@ ogg_demuxer_t::~ogg_demuxer_t() {
 //                          - subtitles up in demuxer buffer...
 
 #include "libmpsub/subreader.h"
-#include "libvo/sub.h"
+#include "libvo2/sub.h"
 #define OGG_SUB_MAX_LINE 128
 
 static subtitle ogg_sub;

@@ -56,7 +56,7 @@ using namespace mpxp;
 #endif
 #endif
 
-#include "../libvo/img_format.h"
+#include "../libvo2/img_format.h"
 #include "tv.h"
 #include "stream_msg.h"
 

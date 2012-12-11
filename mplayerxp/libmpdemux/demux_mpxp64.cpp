@@ -24,7 +24,7 @@ using namespace mpxp;
 #include "osdep/bswap.h"
 #include "aviheader.h"
 #include "libmpcodecs/dec_audio.h"
-#include "libvo/sub.h"
+#include "libvo2/sub.h"
 #include "aviprint.h"
 #include "mpxpav64.h"
 #include "demux_msg.h"

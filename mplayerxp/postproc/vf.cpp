@@ -9,8 +9,8 @@ using namespace mpxp;
 #include "mplayerxp.h"
 #include "help_mp.h"
 
-#include "libvo/img_format.h"
-#include "libvo/video_out.h"
+#include "libvo2/img_format.h"
+#include "libvo2/video_out.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "vf_internal.h"
@@ -165,7 +165,7 @@ mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt
 	MSG_DBG2("passthru mode to %s\n",vf->next->info->name);
 	return vf_get_new_image(vf->next,outfmt,mp_imgtype,mp_imgflag,w,h,xp_idx);
     }
-    // Note: we should call libvo first to check if it supports direct rendering
+    // Note: we should call libvo2 first to check if it supports direct rendering
     // and if not, then fallback to software buffers:
     switch(mp_imgtype){
 	case MP_IMGTYPE_IP:
@@ -201,7 +201,7 @@ mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt
 	if(!mpi->bpp) mp_image_setfmt(mpi,outfmt);
 	MSG_DBG2("vf_get_new_image setfmt. flags=0x%X\n",mpi->flags);
 	if(!(mpi->flags&MP_IMGFLAG_ALLOCATED) && mpi->type>MP_IMGTYPE_EXPORT) {
-	    // check libvo first!
+	    // check libvo2 first!
 	    if(vf->get_image) vf->get_image(vf,mpi);
 	    MSG_DBG2("[vf->get_image] returns xp_idx=%u\n",mpi->xp_idx);
 

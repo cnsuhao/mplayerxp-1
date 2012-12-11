@@ -24,7 +24,7 @@ using namespace mpxp;
 
 #include "libmpconf/codec-cfg.h"
 
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 #include "postproc/vf.h"
 #include "vd.h"
 
@@ -107,7 +107,7 @@ void mpcv_uninit(video_decoder_t *opaque){
     delete opaque;
 }
 
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 #define MPDEC_THREAD_COND (VF_FLAGS_THREADS|VF_FLAGS_SLICES)
 static unsigned smp_num_cpus=1;
 static unsigned use_vf_threads=0;
@@ -448,7 +448,7 @@ static void update_subtitle(video_decoder_t *opaque,float v_pts,unsigned xp_idx)
   }
 }
 
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 
 MPXP_Rc mpcodecs_config_vf(video_decoder_t *opaque, int w, int h){
     decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
@@ -475,7 +475,7 @@ MPXP_Rc mpcodecs_config_vf(video_decoder_t *opaque, int w, int h){
     MSG_V("VDec: vo config request - %d x %d\n",w,h);
 
 csp_again:
-    // check if libvo and codec has common outfmt (no conversion):
+    // check if libvo2 and codec has common outfmt (no conversion):
     j=-1;
     for(i=0;i<CODECS_MAX_OUTFMT;i++){
 	int flags;

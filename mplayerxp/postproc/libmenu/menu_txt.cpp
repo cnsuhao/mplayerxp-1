@@ -8,8 +8,8 @@ using namespace mpxp;
 #include <stdio.h>
 #include <string.h>
 
-#include "libvo/img_format.h"
-#include "libvo/sub.h"
+#include "libvo2/img_format.h"
+#include "libvo2/sub.h"
 #include "xmpcore/mp_image.h"
 
 #include "libmpconf/cfgparser.h"
@@ -17,7 +17,7 @@ using namespace mpxp;
 #include "libmpconf/m_option.h"
 #include "menu.h"
 
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 #include "osdep/keycodes.h"
 #include "pp_msg.h"
 #include "mplayerxp.h" // mpxp_context().video().output

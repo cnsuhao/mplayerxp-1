@@ -10,14 +10,14 @@ using namespace mpxp;
 
 #include "mplayerxp.h"
 
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "vf_internal.h"
 
 #include "osdep/fastmemcpy.h"
-#include "libvo/video_out.h"
-#include "libvo/font_load.h"
+#include "libvo2/video_out.h"
+#include "libvo2/font_load.h"
 #include "input2/input.h"
 #include "libmpconf/m_struct.h"
 #include "libmenu/menu.h"

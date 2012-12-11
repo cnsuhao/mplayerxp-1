@@ -16,7 +16,7 @@ using namespace mpxp;
 #include <unistd.h>
 #include <errno.h>
 
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 #include "xmpcore/mp_image.h"
 
 #include "libmpconf/cfgparser.h"
@@ -24,7 +24,7 @@ using namespace mpxp;
 #include "libmpconf/m_option.h"
 #include "menu.h"
 
-#include "libvo/font_load.h"
+#include "libvo2/font_load.h"
 #include "osdep/keycodes.h"
 #include "input2/input.h"
 #include "osdep/timer.h"

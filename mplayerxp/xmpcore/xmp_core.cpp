@@ -20,7 +20,7 @@ using namespace mpxp;
 #include "xmp_core.h"
 
 #include "libao2/audio_out.h"
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 
 #include "libmpcodecs/dec_video.h"
 #include "libmpcodecs/dec_audio.h"

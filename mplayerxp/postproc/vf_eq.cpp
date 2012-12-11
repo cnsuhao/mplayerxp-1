@@ -20,8 +20,8 @@ using namespace mpxp;
 
 #include "osdep/cpudetect.h"
 
-#include "libvo/img_format.h"
-#include "libvo/video_out.h"
+#include "libvo2/img_format.h"
+#include "libvo2/video_out.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "vf_internal.h"

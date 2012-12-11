@@ -7,7 +7,7 @@ using namespace mpxp;
 #ifdef USE_TV
 
 #include <stdio.h>
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 #include "tv.h"
 #include "tvi_def.h"
 

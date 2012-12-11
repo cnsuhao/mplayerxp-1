@@ -25,8 +25,8 @@ using namespace mpxp;
 
 #include "libmpsub/subreader.h"
 
-#include "libvo/video_out.h"
-#include "libvo/sub.h"
+#include "libvo2/video_out.h"
+#include "libvo2/sub.h"
 
 #define CC_MAX_LINE_LENGTH 64
 

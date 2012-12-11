@@ -15,7 +15,7 @@ using namespace mpxp;
 #include <string.h>
 #include <ctype.h>
 #include "subreader.h"
-#include "libvo/sub.h"
+#include "libvo2/sub.h"
 
 #ifdef USE_ICONV
 #ifdef HAVE_GICONV

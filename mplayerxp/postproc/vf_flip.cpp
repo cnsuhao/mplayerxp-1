@@ -29,7 +29,7 @@ using namespace mpxp;
 #include "vf.h"
 #include "vf_internal.h"
 
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 
 //===========================================================================//
 

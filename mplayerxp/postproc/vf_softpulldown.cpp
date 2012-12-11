@@ -5,13 +5,13 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <string.h>
 
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "vf_internal.h"
 
 #include "osdep/fastmemcpy.h"
-#include "libvo/sub.h"
+#include "libvo2/sub.h"
 #include "pp_msg.h"
 
 struct vf_priv_t {

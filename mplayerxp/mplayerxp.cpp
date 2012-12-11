@@ -53,9 +53,9 @@ using namespace mpxp;
 #include "libmpsub/spudec.h"
 #include "libmpsub/vobsub.h"
 
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 
-#include "libvo/sub.h"
+#include "libvo2/sub.h"
 #include "libao2/audio_out.h"
 #include "libao2/afmt.h"
 

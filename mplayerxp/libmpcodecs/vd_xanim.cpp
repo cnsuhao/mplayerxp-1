@@ -21,7 +21,7 @@ using namespace mpxp;
 
 #include "libmpconf/codec-cfg.h"
 
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 #include "osdep/timer.h"
 #include "osdep/fastmemcpy.h"
 #include "vd_internal.h"

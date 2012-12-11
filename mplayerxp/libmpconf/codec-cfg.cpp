@@ -23,7 +23,7 @@ using namespace mpxp;
 
 // for mmioFOURCC:
 #include "loader/wine/avifmt.h"
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 #include "codec-cfg.h"
 #define MSGT_CLASS MSGT_CODECCFG
 #include "mp_msg.h"

@@ -20,7 +20,7 @@ using namespace mpxp;
 #include "help_mp.h"
 
 #include "sub_cc.h"
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 #include "demux_msg.h"
 
 extern int sub_justify;

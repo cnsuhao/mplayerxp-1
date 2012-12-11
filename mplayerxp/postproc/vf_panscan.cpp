@@ -9,7 +9,7 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <string.h>
 
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 #include "xmpcore/mp_image.h"
 #include "vf.h"
 #include "vf_internal.h"
@@ -17,7 +17,7 @@ using namespace mpxp;
 #include "osdep/fastmemcpy.h"
 
 #ifdef OSD_SUPPORT
-#include "libvo/sub.h"
+#include "libvo2/sub.h"
 #endif
 #include "pp_msg.h"
 

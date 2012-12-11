@@ -10,7 +10,7 @@ using namespace mpxp;
 #include "xmpcore/xmp_core.h"
 #include "libmpconf/codec-cfg.h"
 
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 
 #include "libmpstream2/stream.h"
 #include "libmpdemux/demuxer.h"

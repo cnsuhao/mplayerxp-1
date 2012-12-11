@@ -33,7 +33,7 @@ using namespace mpxp;
 #include "libmpdemux/stheader.h"
 
 #include "libao2/afmt.h"
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 #include "osdep/fastmemcpy.h"
 #include "libao2/audio_out.h"
 

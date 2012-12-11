@@ -13,7 +13,7 @@ using namespace mpxp;
 #include "stream_internal.h"
 #include "help_mp.h"
 #include "libmpsub/spudec.h"
-#include "libvo/sub.h"
+#include "libvo2/sub.h"
 #include "input2/input.h"
 #include "mplayerxp.h"
 #include <algorithm>

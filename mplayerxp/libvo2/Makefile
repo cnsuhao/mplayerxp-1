@@ -1,6 +1,6 @@
 include ../mp_config.mak
 
-LIBNAME = libvo.a
+LIBNAME = libvo2.a
 
 CXXSRCS=video_out.cpp font_load.cpp img_format.cpp screenshot.cpp sub.cpp
 CXXSRCS+=osd_render.cpp aspect.cpp vo_null.cpp

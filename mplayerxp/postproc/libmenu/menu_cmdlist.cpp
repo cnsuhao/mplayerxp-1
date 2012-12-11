@@ -9,7 +9,7 @@ using namespace mpxp;
 #include <ctype.h>
 #include <string.h>
 
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 #include "xmpcore/mp_image.h"
 
 #include "libmpconf/m_option.h"
@@ -18,7 +18,7 @@ using namespace mpxp;
 #include "menu.h"
 #include "menu_list.h"
 
-#include "libvo/font_load.h"
+#include "libvo2/font_load.h"
 
 #include "input2/input.h"
 #include "version.h"

@@ -23,7 +23,7 @@ using namespace mpxp;
 #include "codecs_ld.h"
 #include "postproc/postprocess.h"
 #include "postproc/vf.h"
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 #include "osdep/bswap.h"
 
 static const vd_info_t info = {
@@ -79,7 +79,7 @@ LIBVD_EXTERN(lavc)
 
 #include "libavcodec/avcodec.h"
 #include "libavformat/riff.h"
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 
 
 static int vcodec_inited=0;

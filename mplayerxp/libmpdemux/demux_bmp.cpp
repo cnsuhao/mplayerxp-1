@@ -18,7 +18,7 @@ using namespace mpxp;
 #include "demuxer_internal.h"
 #include "stheader.h"
 
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 #include "osdep/fastmemcpy.h"
 #include "demux_msg.h"
 

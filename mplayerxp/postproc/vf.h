@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "xmpcore/xmp_enums.h"
 #include "xmpcore/mp_image.h"
-#include "libvo/video_out.h" // for vo_flags_e
+#include "libvo2/video_out.h" // for vo_flags_e
 #include "vfcap.h"
 
 struct vf_instance_t;

@@ -11,15 +11,15 @@ using namespace mpxp;
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "libvo/osd_render.h"
-#include "libvo/font_load.h"
-#include "libvo/sub.h"
+#include "libvo2/osd_render.h"
+#include "libvo2/font_load.h"
+#include "libvo2/sub.h"
 #include "osdep/keycodes.h"
 #include "libplaytree/asxparser.h"
 #include "nls/nls.h"
 
-#include "libvo/img_format.h"
-#include "libvo/video_out.h"
+#include "libvo2/img_format.h"
+#include "libvo2/video_out.h"
 #include "xmpcore/mp_image.h"
 #include "libmpconf/m_option.h"
 #include "libmpconf/m_struct.h"

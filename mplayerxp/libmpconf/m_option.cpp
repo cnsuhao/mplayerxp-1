@@ -865,7 +865,7 @@ extern const m_option_type_t m_option_type_subconfig = {
   NULL
 };
 
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 
 /* FIXME: snyc with img_format.h */
 static struct {

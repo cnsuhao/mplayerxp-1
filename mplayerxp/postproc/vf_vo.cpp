@@ -9,8 +9,8 @@ using namespace mpxp;
 #include "vf.h"
 #include "vf_internal.h"
 #include "vfcap.h"
-#include "libvo/video_out.h"
-#include "libvo/dri_vo.h"
+#include "libvo2/video_out.h"
+#include "libvo2/dri_vo.h"
 #include "pp_msg.h"
 #include "mplayerxp.h" // mpxp_context().video().output
 
@@ -157,7 +157,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 }
 
 extern const vf_info_t vf_info_vo = {
-    "libvo wrapper",
+    "libvo2 wrapper",
     "vo",
     "A'rpi",
     "for internal use",

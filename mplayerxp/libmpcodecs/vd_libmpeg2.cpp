@@ -111,7 +111,7 @@ static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
 
 
 #include "libmpdemux/parse_es.h"
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 #ifdef ATTRIBUTE_ALIGNED_MAX
 #define ATTR_ALIGN(align) __attribute__ ((__aligned__ ((ATTRIBUTE_ALIGNED_MAX < align) ? ATTRIBUTE_ALIGNED_MAX : align)))
 #else

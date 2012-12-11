@@ -26,7 +26,7 @@
 #include "wine/winerror.h"
 #include "com.h"
 
-#include "../libvo/img_format.h"
+#include "../libvo2/img_format.h"
 #ifndef NOAVIFILE_HEADERS
 #include "audiodecoder.h"
 #include "except.h"

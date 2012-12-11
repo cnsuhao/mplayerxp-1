@@ -29,8 +29,7 @@ using namespace mpxp;
 
 #include "libao2/afmt.h"
 #include "libao2/audio_out.h"
-#include "libvo/img_format.h"
-#include "libvo/fastmemcpy.h"
+#include "libvo2/img_format.h"
 
 #include "tv.h"
 #include "stream_msg.h"

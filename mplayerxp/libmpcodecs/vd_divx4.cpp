@@ -22,7 +22,7 @@ using namespace mpxp;
 #include "vd_internal.h"
 #include "vd.h"
 #include "codecs_ld.h"
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 #include "osdep/bswap.h"
 
 static const vd_info_t info = {

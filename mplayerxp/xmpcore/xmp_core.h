@@ -14,7 +14,7 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 #include "libmpdemux/stheader.h"
 
 namespace mpxp {

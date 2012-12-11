@@ -8,8 +8,8 @@ using namespace mpxp;
 
 #include <stdio.h>
 #include <limits.h>
-#include "libvo/video_out.h"
-#include "libvo/sub.h"
+#include "libvo2/video_out.h"
+#include "libvo2/sub.h"
 #include "subreader.h"
 #define MSGT_CLASS MSGT_FINDSUB
 #include "mp_msg.h"

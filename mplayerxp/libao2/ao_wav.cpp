@@ -30,7 +30,7 @@ using namespace mpxp;
 #include "afmt.h"
 #include "audio_out.h"
 #include "audio_out_internal.h"
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 #include "help_mp.h"
 #include "ao_msg.h"
 

@@ -12,7 +12,7 @@ using namespace mpxp;
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 #include "demux_msg.h"
 
 struct rawvideo_conf_t {

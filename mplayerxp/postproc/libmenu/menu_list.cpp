@@ -6,14 +6,14 @@ using namespace mpxp;
 #include <ctype.h>
 #include <string.h>
 
-#include "libvo/img_format.h"
-#include "libvo/sub.h"
+#include "libvo2/img_format.h"
+#include "libvo2/sub.h"
 #include "xmpcore/mp_image.h"
 
 #include "libmpconf/m_struct.h"
 #include "menu.h"
 
-#include "libvo/video_out.h"
+#include "libvo2/video_out.h"
 #include "osdep/keycodes.h"
 
 #include "mplayerxp.h" // mpxp_context().video().output

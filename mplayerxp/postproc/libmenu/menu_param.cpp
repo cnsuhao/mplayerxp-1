@@ -19,7 +19,7 @@ using namespace mpxp;
 #include "libmpconf/m_property.h"
 #include "libplaytree/asxparser.h"
 
-#include "libvo/img_format.h"
+#include "libvo2/img_format.h"
 #include "xmpcore/mp_image.h"
 
 #include "menu.h"
