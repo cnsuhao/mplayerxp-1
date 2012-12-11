@@ -20,7 +20,6 @@ using namespace mpxp;
 #include "mplayerxp.h"
 #include "tcp.h"
 #include "url.h"
-#include "libmpdemux/asf.h"
 #include "stream.h"
 
 #include "network.h"

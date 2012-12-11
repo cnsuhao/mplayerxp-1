@@ -63,14 +63,11 @@ and high-freqs and try to restore FR as:
 #include <math.h>
 #include <limits.h>
 
+#include "libmpdemux/stheader.h"
 #include "mplayerxp.h"
 #include "af.h"
 #include "af_internal.h"
 #include "aflib.h"
-
-#include "libmpstream/stream.h"
-#include "libmpdemux/demuxer.h"
-#include "libmpdemux/stheader.h"
 
 #define SAMPLE_MAX 1.0f
 

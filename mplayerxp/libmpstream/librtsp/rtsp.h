@@ -31,7 +31,7 @@
 
 #ifndef HAVE_RTSP_H
 #define HAVE_RTSP_H
-
+#include "libmpstream/tcp.h"
 
 /* some codes returned by rtsp_request_* functions */
 enum {

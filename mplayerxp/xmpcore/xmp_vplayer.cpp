@@ -11,8 +11,8 @@ using namespace mpxp;
 #include "libao2/audio_out.h"
 #include "libvo/video_out.h"
 
+#include "libmpdemux/demuxer_r.h"
 #include "osdep/timer.h"
-#include "libmpdemux/demuxer.h"
 #include "mplayerxp.h"
 #include "xmp_core.h"
 #include "xmp_adecoder.h"

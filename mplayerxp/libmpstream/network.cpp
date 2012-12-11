@@ -28,9 +28,7 @@ using namespace mpxp;
 #endif
 
 #include "stream.h"
-#include "libmpdemux/demuxer.h"
 #include "libmpconf/cfgparser.h"
-#include "libmpdemux/mpdemux.h"
 #include "help_mp.h"
 
 #include "tcp.h"
@@ -39,7 +37,6 @@ using namespace mpxp;
 #include "cookies.h"
 #include "url.h"
 #include "udp.h"
-#include "libmpdemux/asf.h"
 #include "pnm.h"
 #ifndef STREAMING_LIVE_DOT_COM
 #include "rtp.h"
@@ -62,42 +59,6 @@ net_config_t::net_config_t()
 }
 net_config_t::~net_config_t() {}
 net_config_t net_conf;
-
-static const struct {
-    const char *mime_type;
-    int demuxer_type;
-} mime_type_table[] = {
-    // MP3 networking, some MP3 networking server answer with audio/mpeg
-    { "audio/mpeg", Demuxer::Type_AUDIO },
-    // MPEG networking
-    { "video/mpeg", Demuxer::Type_UNKNOWN },
-    { "video/x-mpeg", Demuxer::Type_UNKNOWN },
-    { "video/x-mpeg2", Demuxer::Type_UNKNOWN },
-    // AVI ??? => video/x-msvideo
-    { "video/x-msvideo", Demuxer::Type_AVI },
-    // MOV => video/quicktime
-    { "video/quicktime", Demuxer::Type_MOV },
-    // ASF
-    { "audio/x-ms-wax", Demuxer::Type_ASF },
-    { "audio/x-ms-wma", Demuxer::Type_ASF },
-    { "video/x-ms-asf", Demuxer::Type_ASF },
-    { "video/x-ms-afs", Demuxer::Type_ASF },
-    { "video/x-ms-wvx", Demuxer::Type_ASF },
-    { "video/x-ms-wmv", Demuxer::Type_ASF },
-    { "video/x-ms-wma", Demuxer::Type_ASF },
-    // Playlists
-    { "video/x-ms-wmx", Demuxer::Type_PLAYLIST },
-    { "audio/x-scpls", Demuxer::Type_PLAYLIST },
-    { "audio/x-mpegurl", Demuxer::Type_PLAYLIST },
-    { "audio/x-pls", Demuxer::Type_PLAYLIST },
-    // Real Media
-    { "audio/x-pn-realaudio", Demuxer::Type_REAL },
-    // OGG Streaming
-    { "application/x-ogg", Demuxer::Type_OGG },
-    // NullSoft Streaming Video
-    { "video/nsv", Demuxer::Type_NSV},
-    { "misc/ultravox", Demuxer::Type_NSV}
-};
 
 networking_t* new_networking() {
     networking_t *networking = new(zeromem) networking_t;
@@ -359,7 +320,6 @@ off_t http_seek(Tcp& tcp, networking_t *networking, off_t pos ) {
 // we might be able to guess the networking type.
 static MPXP_Rc autodetectProtocol(networking_t *networking, Tcp& tcp) {
     HTTP_Header *http_hdr=NULL;
-    unsigned int i;
     int redirect;
     int auth_retry=0;
     MPXP_Rc seekable=MPXP_False;
@@ -457,12 +417,6 @@ static MPXP_Rc autodetectProtocol(networking_t *networking, Tcp& tcp) {
 			MSG_V("Content-Type: [%s]\n", content_type );
 			if( (content_length = http_hdr->get_field("Content-Length")) != NULL)
 			    MSG_V("Content-Length: [%s]\n", http_hdr->get_field("Content-Length"));
-			// Check in the mime type table for a demuxer type
-			for( i=0 ; i<(sizeof(mime_type_table)/sizeof(mime_type_table[0])) ; i++ ) {
-			    if( !strcasecmp( content_type, mime_type_table[i].mime_type ) ) {
-				return seekable;
-			    }
-			}
 		    }
 		    // Not found in the mime type table, don't fail,
 		    // we should try raw HTTP

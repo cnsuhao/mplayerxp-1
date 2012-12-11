@@ -12,6 +12,7 @@ using namespace mpxp;
 #include "mp_msg.h"
 #include "sig_hand.h"
 
+#include "libmpdemux/demuxer.h"
 #include "libmpcodecs/dec_audio.h"
 #include "libao2/audio_out.h"
 

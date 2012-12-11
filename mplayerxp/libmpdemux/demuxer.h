@@ -4,7 +4,6 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 
-#include "libmpstream/stream.h"
 #include "xmpcore/xmp_enums.h"
 #include "libmpconf/cfgparser.h"
 #include "demuxer_packet.h"

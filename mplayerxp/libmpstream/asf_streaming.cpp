@@ -20,10 +20,10 @@ using namespace mpxp;
 #include "url.h"
 #include "tcp.h"
 #include "http.h"
-#include "libmpdemux/asf.h"
 
 #include "stream.h"
 #include "asf_streaming.h"
+#include "libmpdemux/asf.h"
 #include "network.h"
 #include "stream_msg.h"
 

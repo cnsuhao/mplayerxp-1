@@ -32,6 +32,7 @@ using namespace mpxp;
 #include "yuv4mpeg.h"
 #include "demux_msg.h"
 #include "yuv4mpeg_intern.h"
+#include "libmpstream/stream.h"
 
 /* quick test of two ratios for equality (i.e. identical components) */
 #define Y4M_RATIO_EQL(a,b) ( ((a).n == (b).n) && ((a).d == (b).d) )
@@ -49,8 +50,6 @@ int y4m_allow_unknown_tags(int yn) {
 	if (yn >= 0) _y4mparam_allow_unknown_tags = (yn) ? 1 : 0;
 	return old;
 }
-
-
 
 /*************************************************************************
  *

@@ -14,10 +14,8 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 
-#include "libmpdemux/demuxer_r.h"
-#include "libmpstream/stream.h"
-#include "libmpdemux/stheader.h"
 #include "libvo/video_out.h"
+#include "libmpdemux/stheader.h"
 
 namespace mpxp {
     enum xp_modes { XP_NA=0, XP_UniCore, XP_DualCore, XP_TripleCore, XP_MultiCore };

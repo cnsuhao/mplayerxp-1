@@ -12,7 +12,6 @@ using namespace mpxp;
 #include "stream.h"
 #include "stream_internal.h"
 #include "help_mp.h"
-#include "libmpdemux/demuxer.h"
 #include "libmpsub/spudec.h"
 #include "libvo/sub.h"
 #include "input2/input.h"

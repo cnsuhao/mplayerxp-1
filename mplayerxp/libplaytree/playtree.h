@@ -1,6 +1,9 @@
 #ifndef __PLAYTREE_H
 #define __PLAYTREE_H
-#include "libmpstream/stream.h"
+
+namespace mpxp {
+    struct Stream;
+}
 
 enum {
     PLAY_TREE_ITER_ERROR=0,

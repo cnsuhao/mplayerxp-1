@@ -2,10 +2,7 @@
 #include "loader/wine/msacm.h"
 #endif
 #include "libmpconf/codec-cfg.h"
-
-#include "libmpstream/stream.h"
 #include "libmpdemux/demuxer_r.h"
-#include "libmpdemux/stheader.h"
 
 #include "ad.h"
 

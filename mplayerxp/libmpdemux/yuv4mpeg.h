@@ -28,9 +28,10 @@
 #define __YUV4MPEG_H__
 
 #include <stdlib.h>
-#include "libmpstream/stream.h"
 
-
+namespace mpxp {
+    struct Stream;
+}
 /************************************************************************
  *  error codes returned by y4m_* functions
  ************************************************************************/
