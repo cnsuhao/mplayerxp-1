@@ -66,7 +66,7 @@ CXXSRCS+=vf_1bpp.cpp \
       vf_swapuv.cpp \
       vf_test.cpp \
       vf_unsharp.cpp \
-      vf_vo.cpp \
+      vf_vo2.cpp \
       vf_yuvcsp.cpp \
       vf_yuy2.cpp \
       vf_yvu9.cpp
