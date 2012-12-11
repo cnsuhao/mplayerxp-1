@@ -97,7 +97,7 @@ static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigne
     dri_surface_cap_t dcaps;
     int rflags;
     uint32_t flags=mpxp_context().video().output->query_format(&fmt,w,h);
-    MSG_DBG2("[vf_vo] %i=query_format(%s)\n",flags,vo_format_name(fmt));
+    MSG_DBG2("[vf_vo2] %i=query_format(%s)\n",flags,vo_format_name(fmt));
     rflags=0;
     UNUSED(vf);
     if(flags) {
@@ -156,7 +156,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     return MPXP_Ok;
 }
 
-extern const vf_info_t vf_info_vo = {
+extern const vf_info_t vf_info_vo2 = {
     "libvo2 wrapper",
     "vo",
     "A'rpi",

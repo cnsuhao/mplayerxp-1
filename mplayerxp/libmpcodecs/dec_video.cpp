@@ -527,7 +527,7 @@ csp_again:
 	    vf_prepend_filter(s,"palette",&conf);
 	    goto csp_again;
 	} else {
-	// sws failed, if the last filter (vf_vo) support MPEGPES try to append vf_lavc
+	// sws failed, if the last filter (vf_vo2) support MPEGPES try to append vf_lavc
 	    // Remove the scale filter if we added it ourself
 	    if(strcmp(vf_get_first_name(s),"fmtcvt")==0) vf_remove_first(s);
 	}

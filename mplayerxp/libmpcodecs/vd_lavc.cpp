@@ -674,7 +674,7 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
     else			priv->use_slices=0;
 /*
     if codec is capable DR1
-    if sh->vfilter==vf_vo (DR1 is meaningless into temp buffer)
+    if sh->vfilter==vf_vo2 (DR1 is meaningless into temp buffer)
     It always happens with (vidix+bus mastering), (if (src_w%16==0)) with xv
 */
     has_b_frames=priv->ctx->has_b_frames||

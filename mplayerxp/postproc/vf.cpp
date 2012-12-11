@@ -54,7 +54,7 @@ extern const vf_info_t vf_info_softpulldown;
 extern const vf_info_t vf_info_swapuv;
 extern const vf_info_t vf_info_test;
 extern const vf_info_t vf_info_unsharp;
-extern const vf_info_t vf_info_vo;
+extern const vf_info_t vf_info_vo2;
 extern const vf_info_t vf_info_yuvcsp;
 extern const vf_info_t vf_info_yuy2;
 extern const vf_info_t vf_info_yvu9;
@@ -96,7 +96,7 @@ static const vf_info_t* filter_list[]={
     &vf_info_swapuv,
     &vf_info_test,
     &vf_info_unsharp,
-    &vf_info_vo,
+    &vf_info_vo2,
     &vf_info_yuvcsp,
     &vf_info_yuy2,
     &vf_info_yvu9,
