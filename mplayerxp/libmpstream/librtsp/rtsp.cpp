@@ -68,7 +68,7 @@ using namespace mpxp;
 #define HEADER_SIZE 1024
 #define MAX_FIELDS 256
 
-struct rtsp_s {
+struct rtsp_t {
 
   Tcp*         tcp;
 

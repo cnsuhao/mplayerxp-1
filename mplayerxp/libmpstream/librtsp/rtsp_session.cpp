@@ -59,6 +59,7 @@ using namespace mpxp;
 #include "realrtsp/xbuffer.h"
 #include "stream_msg.h"
 
+namespace mpxp {
 /*
 #define LOG
 */
@@ -71,22 +72,16 @@ using namespace mpxp;
 #define RTSP_SERVER_TYPE_HELIX "Helix"
 #define RTSP_SERVER_TYPE_UNKNOWN "unknown"
 
-struct rtsp_session_s {
-  rtsp_t       *s;
-  struct real_rtsp_session_t* real_session;
-  struct rtp_rtsp_session_t* rtp_session;
-};
-
-//rtsp_session_t *rtsp_session_start(char *mrl) {
-rtsp_session_t *rtsp_session_start(Tcp& tcp, char **mrl, char *path, char *host,
+//Rtsp_Session *rtsp_session_start(char *mrl) {
+Rtsp_Session *rtsp_session_start(Tcp& tcp, char **mrl, char *path, char *host,
   int port, int *redir, uint32_t bandwidth, char *user, char *pass) {
 
-  rtsp_session_t *rtsp_session = NULL;
+  Rtsp_Session *rtsp_session = NULL;
   char *server;
   char *mrl_line = NULL;
   rmff_header_t *h;
 
-  rtsp_session = new rtsp_session_t;
+  rtsp_session = new Rtsp_Session;
   rtsp_session->s = NULL;
   rtsp_session->real_session = NULL;
   rtsp_session->rtp_session = NULL;
@@ -219,75 +214,63 @@ rtsp_session_t *rtsp_session_start(Tcp& tcp, char **mrl, char *path, char *host,
   return rtsp_session;
 }
 
-int rtsp_session_read (Tcp& tcp,rtsp_session_t *self, char *data, int len) {
+int Rtsp_Session::read(Tcp& tcp,char *data, int len) {
 
-  if (self->real_session) {
-  int to_copy=len;
-  char *dest=data;
-  char *source =
-    (char *) (self->real_session->recv + self->real_session->recv_read);
-  int fill = self->real_session->recv_size - self->real_session->recv_read;
+    if (real_session) {
+	int to_copy=len;
+	char *dest=data;
+	char *source =
+	    (char *) (real_session->recv + real_session->recv_read);
+	int fill = real_session->recv_size - real_session->recv_read;
 
-  if(self->real_session->rdteof)
-    return -1;
-  if (len < 0) return 0;
-  if (self->real_session->recv_size < 0) return -1;
-  while (to_copy > fill) {
-
-    memcpy(dest, source, fill);
-    to_copy -= fill;
-    dest += fill;
-    self->real_session->recv_read = 0;
-    self->real_session->recv_size =
-      real_get_rdt_chunk (self->s, (char **)&(self->real_session->recv), self->real_session->rdt_rawdata);
-    if (self->real_session->recv_size < 0) {
-      self->real_session->rdteof = 1;
-      self->real_session->recv_size = 0;
-    }
-    source = (char *) self->real_session->recv;
-    fill = self->real_session->recv_size;
-
-    if (self->real_session->recv_size == 0) {
+	if(real_session->rdteof) return -1;
+	if(len < 0) return 0;
+	if(real_session->recv_size < 0) return -1;
+	while (to_copy > fill) {
+	    memcpy(dest, source, fill);
+	    to_copy -= fill;
+	    dest += fill;
+	    real_session->recv_read = 0;
+	    real_session->recv_size =
+	    real_get_rdt_chunk (s, (char **)&(real_session->recv), real_session->rdt_rawdata);
+	    if (real_session->recv_size < 0) {
+		real_session->rdteof = 1;
+		real_session->recv_size = 0;
+	    }
+	    source = (char *) real_session->recv;
+	    fill = real_session->recv_size;
+	    if (real_session->recv_size == 0) {
 #ifdef LOG
-      MSG_INFO("librtsp: %d of %d bytes provided\n", len-to_copy, len);
+		MSG_INFO("librtsp: %d of %d bytes provided\n", len-to_copy, len);
 #endif
-      return len-to_copy;
-    }
-  }
-
-  memcpy(dest, source, to_copy);
-  self->real_session->recv_read += to_copy;
-
+		return len-to_copy;
+	    }
+	}
+	memcpy(dest, source, to_copy);
+	real_session->recv_read += to_copy;
 #ifdef LOG
-  MSG_INFO("librtsp: %d bytes provided\n", len);
+	MSG_INFO("librtsp: %d bytes provided\n", len);
 #endif
+	return len;
+    } else if (rtp_session) {
+	int l = 0;
+	Tcp _tcp(tcp.get_libinput(),rtp_session->rtp_socket);
 
-  return len;
-  }
-  else if (self->rtp_session)
-  {
-    int l = 0;
-    Tcp _tcp(tcp.get_libinput(),self->rtp_session->rtp_socket);
-
-    l = read_rtp_from_server (_tcp, data, len);
-    /* send RTSP and RTCP keepalive  */
-    rtcp_send_rr (self->s, self->rtp_session);
-
-    if (l == 0)
-      rtsp_session_end (self);
-
-    return l;
-  }
-
-  return 0;
+	l = read_rtp_from_server (_tcp, data, len);
+	/* send RTSP and RTCP keepalive  */
+	rtcp_send_rr (s, rtp_session);
+	if (l == 0)	end ();
+	return l;
+    }
+    return 0;
 }
 
-void rtsp_session_end(rtsp_session_t *session) {
-
-  rtsp_close(session->s);
-  if (session->real_session)
-    free_real_rtsp_session (session->real_session);
-  if (session->rtp_session)
-    rtp_session_free (session->rtp_session);
-  delete session;
+void Rtsp_Session::end() {
+    rtsp_close(s);
+    if (real_session) free_real_rtsp_session (real_session);
+    if (rtp_session)  rtp_session_free (rtp_session);
 }
+
+Rtsp_Session::Rtsp_Session() {}
+Rtsp_Session::~Rtsp_Session() {}
+} // namespace mpxp

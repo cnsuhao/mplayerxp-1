@@ -72,7 +72,6 @@ MPXP_Rc Udp_Stream_Interface::ctrl(unsigned cmd,any_t*args)
 
 void Udp_Stream_Interface::close()
 {
-    url_free(networking->url);
     free_networking(networking);
     networking=NULL;
 }
@@ -94,7 +93,7 @@ MPXP_Rc Udp_Stream_Interface::start ()
 
 MPXP_Rc Udp_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
-    URL_t *url;
+    URL *url;
     UNUSED(flags);
     MSG_V("STREAM_UDP, URL: %s\n", filename.c_str());
     networking = new_networking();

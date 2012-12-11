@@ -1,3 +1,6 @@
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
 /*
  * This file was ported to MPlayer from xine CVS rtsp_session.h,v 1.4 2003/01/31 14:06:18
  */
@@ -31,13 +34,24 @@
 #ifndef HAVE_RTSP_SESSION_H
 #define HAVE_RTSP_SESSION_H
 
-typedef struct rtsp_session_s rtsp_session_t;
+struct real_rtsp_session_t;
+struct rtp_rtsp_session_t;
+struct rtsp_t;
+namespace mpxp {
+    struct Rtsp_Session : public Opaque {
+	public:
+	    Rtsp_Session();
+	    virtual ~Rtsp_Session();
 
-rtsp_session_t *rtsp_session_start(Tcp& tcp, char **mrl, char *path, char *host,
-  int port, int *redir, uint32_t bandwidth, char *user, char *pass);
+	    virtual int	read(Tcp& tcp,char *data, int len);
+	    virtual void	end();
 
-int rtsp_session_read(Tcp& tcp,rtsp_session_t *session, char *data, int len);
+	    rtsp_t*			s;
+	    real_rtsp_session_t*	real_session;
+	    rtp_rtsp_session_t*	rtp_session;
+    };
 
-void rtsp_session_end(rtsp_session_t *session);
-
+    Rtsp_Session* rtsp_session_start(Tcp& tcp, char **mrl, char *path, char *host,
+				    int port, int *redir, uint32_t bandwidth, char *user, char *pass);
+} // namespace mpxp
 #endif

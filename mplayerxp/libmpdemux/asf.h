@@ -123,25 +123,6 @@ enum {
 };
 #endif
 
-// Definition of the differents type of ASF streaming
-typedef enum {
-	ASF_Unknown_e,
-	ASF_Live_e,
-	ASF_Prerecorded_e,
-	ASF_Redirector_e,
-	ASF_PlainText_e,
-	ASF_Authenticate_e
-} ASF_StreamType_e;
-
-typedef struct {
-	ASF_StreamType_e networking_type;
-	int request;
-	int packet_size;
-	int *audio_streams,n_audio,*video_streams,n_video;
-	int audio_id, video_id;
-} asf_http_networking_t;
-
-
 /*
  * Some macros to swap little endian structures read from an ASF file
  * into machine endian format

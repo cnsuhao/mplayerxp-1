@@ -45,7 +45,7 @@ using namespace mpxp;
 
 namespace mpxp {
 /* Start listening on a UDP port. If multicast, join the group. */
-void Udp::open(const URL_t *url,int reuse_socket)
+void Udp::open(const URL *url,int reuse_socket)
 {
     int socket_server_fd, rxsockbufsz;
     int err;
@@ -175,7 +175,7 @@ void Udp::open(const URL_t *url,int reuse_socket)
 	return;
     }
 }
-Udp::Udp(const URL_t *url,int reuse_socket)
+Udp::Udp(const URL *url,int reuse_socket)
     :_fd(-1)
     ,_error(0)
 {

@@ -45,7 +45,7 @@ enum {
 #define RTSP_METHOD_TEARDOWN "TEARDOWN"
 #define RTSP_METHOD_SET_PARAMETER "SET_PARAMETER"
 
-typedef struct rtsp_s rtsp_t;
+struct rtsp_t;
 
 rtsp_t*  rtsp_connect (Tcp& tcp, char *mrl, char *path, char *host, int port, char *user_agent);
 

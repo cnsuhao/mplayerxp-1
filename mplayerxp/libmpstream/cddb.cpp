@@ -145,7 +145,7 @@ static int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parse
     char request[4096];
     int ret = 0;
     Tcp tcp(cddb_data->libinput,-1);
-    URL_t *url;
+    URL *url;
 
     if( reply_parser==NULL || command==NULL || cddb_data==NULL ) return -1;
 
@@ -183,7 +183,7 @@ static int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parse
     }
 
     delete http_hdr;
-    url_free( url );
+    delete url;
 
     return ret;
 }

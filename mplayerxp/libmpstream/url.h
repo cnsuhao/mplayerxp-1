@@ -10,25 +10,28 @@
 //#define __URL_DEBUG
 
 namespace mpxp {
-    typedef struct {
-	char *url;
-	char *protocol;
-	char *hostname;
-	char *file;
-	unsigned int port;
-	char *username;
-	char *password;
-    } URL_t;
+    struct URL : public Opaque {
+	public:
+	    URL();
+	    virtual ~URL();
 
-    URL_t* url_new(const std::string& url);
-    void   url_free(URL_t* url);
+	    const char*	url;
+	    char*	protocol;
+	    char*	hostname;
+	    char*	file;
+	    unsigned int port;
+	    char*	username;
+	    char*	password;
+    };
 
-    URL_t *url_redirect(URL_t **url, const char *redir);
+    URL* url_new(const std::string& url);
+
+    URL *url_redirect(URL **url, const std::string& redir);
     void url2string(char *outbuf, const std::string& inbuf);
     void string2url(char *outbuf, const std::string& inbuf);
 
 #ifdef __URL_DEBUG
-    void url_debug(URL_t* url);
+    void url_debug(URL* url);
 #endif // __URL_DEBUG
 } // namespace
 #endif // __URL_H

@@ -58,7 +58,7 @@ enum networking_status {
 };
 
 struct networking_t {
-    URL_t *url;
+    URL *url;
     std::string mime;
     networking_status status;
     int buffering;	// boolean
@@ -69,23 +69,23 @@ struct networking_t {
     unsigned int bandwidth;	// The downstream available
     int (*networking_read)( Tcp& fd, char *buffer, int buffer_size, networking_t *stream_ctrl );
     int (*networking_seek)( Tcp& fd, off_t pos, networking_t *stream_ctrl );
-    any_t*data;
+    Opaque* data;
 };
 
 extern void fixup_network_stream_cache(networking_t *s);
-extern MPXP_Rc networking_start(Tcp& fd,networking_t *n, URL_t *url);
+extern MPXP_Rc networking_start(Tcp& fd,networking_t *n, URL *url);
 extern int networking_bufferize(networking_t *networking,unsigned char *buffer, int size);
 extern networking_t *new_networking();
 extern void free_networking( networking_t *networking );
-extern URL_t* check4proxies( URL_t *url );
+extern URL* check4proxies( URL* url );
 
 int nop_networking_read(Tcp& fd, char *buffer, int size, networking_t *stream_ctrl );
 int nop_networking_seek(Tcp& fd, off_t pos, networking_t *stream_ctrl );
 
-MPXP_Rc http_send_request(Tcp& tcp,URL_t *url, off_t pos);
+MPXP_Rc http_send_request(Tcp& tcp,URL* url, off_t pos);
 HTTP_Header* http_read_response(Tcp& fd);
 
-int http_authenticate(HTTP_Header& http_hdr, URL_t *url, int *auth_retry);
+int http_authenticate(HTTP_Header& http_hdr, URL* url, int *auth_retry);
 
 /*
  * Joey Parrish <joey@yunamusic.com>:

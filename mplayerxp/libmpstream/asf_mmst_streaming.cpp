@@ -498,7 +498,7 @@ MPXP_Rc asf_mmst_networking_start(Tcp& tcp, networking_t *networking)
     int		asf_header_len;
     int		len, i, packet_length;
     char*	path, *unescpath;
-    URL_t* url1 = networking->url;
+    URL* url1 = networking->url;
 
     tcp.close();
 

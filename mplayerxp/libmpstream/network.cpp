@@ -111,15 +111,15 @@ networking_t* new_networking() {
 
 void free_networking( networking_t *networking ) {
     if( networking==NULL ) return;
-    if( networking->url ) url_free( networking->url );
+    if( networking->url ) delete networking->url;
     if( networking->buffer ) delete networking->buffer ;
     if( networking->data ) delete networking->data ;
     delete networking;
 }
 
-URL_t*
-check4proxies( URL_t *url ) {
-	URL_t *url_out = NULL;
+URL*
+check4proxies( URL *url ) {
+	URL *url_out = NULL;
 	if( url==NULL ) return NULL;
 	url_out = url_new( url->url );
 	if( !strcasecmp(url->protocol, "http_proxy") ) {
@@ -134,8 +134,8 @@ check4proxies( URL_t *url ) {
 			// We got a proxy, build the URL to use it
 			int len;
 			char *new_url;
-			URL_t *tmp_url;
-			URL_t *proxy_url = url_new( proxy );
+			URL *tmp_url;
+			URL *proxy_url = url_new( proxy );
 
 			if( proxy_url==NULL ) {
 				MSG_WARN("Invalid proxy setting...Trying without proxy.\n");
@@ -162,18 +162,18 @@ check4proxies( URL_t *url ) {
 			if( tmp_url==NULL ) {
 				return url_out;
 			}
-			url_free( url_out );
+			delete url_out;
 			url_out = tmp_url;
 			delete new_url ;
-			url_free( proxy_url );
+			delete proxy_url;
 		}
 	}
 	return url_out;
 }
 
-MPXP_Rc http_send_request(Tcp& tcp, URL_t *url, off_t pos ) {
+MPXP_Rc http_send_request(Tcp& tcp, URL *url, off_t pos ) {
 	HTTP_Header& http_hdr = *new(zeromem) HTTP_Header;
-	URL_t *server_url;
+	URL *server_url;
 	char str[256];
 	int ret;
 	int proxy = 0;		// Boolean
@@ -219,7 +219,7 @@ MPXP_Rc http_send_request(Tcp& tcp, URL_t *url, off_t pos ) {
 		if( url->port==0 ) url->port = 8080;			// Default port for the proxy server
 		tcp.close();
 		tcp.open(url->hostname, url->port, Tcp::IP4);
-		url_free( server_url );
+		delete server_url;
 		server_url = NULL;
 	} else {
 		if( server_url->port==0 ) server_url->port = 80;	// Default port for the web server
@@ -240,8 +240,7 @@ MPXP_Rc http_send_request(Tcp& tcp, URL_t *url, off_t pos ) {
 	return MPXP_Ok;
 err_out:
 	delete &http_hdr;
-	if (proxy && server_url)
-		url_free(server_url);
+	if (proxy && server_url) delete server_url;
 	return MPXP_False;
 }
 
@@ -271,7 +270,7 @@ HTTP_Header* http_read_response( Tcp& tcp ) {
 }
 
 int
-http_authenticate(HTTP_Header& http_hdr, URL_t *url, int *auth_retry) {
+http_authenticate(HTTP_Header& http_hdr, URL *url, int *auth_retry) {
     const char *aut;
 
 	if( *auth_retry==1 ) {
@@ -368,7 +367,7 @@ static MPXP_Rc autodetectProtocol(networking_t *networking, Tcp& tcp) {
     const char *content_type;
     const char *next_url;
 
-    URL_t *url = networking->url;
+    URL *url = networking->url;
 
     do {
 	next_url = NULL;
@@ -400,7 +399,7 @@ static MPXP_Rc autodetectProtocol(networking_t *networking, Tcp& tcp) {
 	    http_hdr = http_read_response(tcp);
 	    if( http_hdr==NULL ) goto err_out;
 	    if( mp_conf.verbose ) http_hdr->debug_hdr();
-	    networking->data = (any_t*)http_hdr;
+	    networking->data = http_hdr;
 
 	    // Check if we can make partial content requests and thus seek in http-streams
 	    if( http_hdr->get_status()==200 ) {
@@ -558,7 +557,7 @@ nop_networking_seek(Tcp& tcp, off_t pos, networking_t *n ) {
 MPXP_Rc nop_networking_start(Tcp& tcp,networking_t* networking ) {
     HTTP_Header *http_hdr = NULL;
     const char *next_url=NULL;
-    URL_t *rd_url=NULL;
+    URL *rd_url=NULL;
     MPXP_Rc ret;
 
     if( !tcp.established() ) {
@@ -645,22 +644,23 @@ void fixup_network_stream_cache(networking_t *networking) {
 
 int
 pnm_networking_read(Tcp& tcp, char *buffer, int size, networking_t *stream_ctrl ) {
+    Pnm& pnm=*static_cast<Pnm*>(stream_ctrl->data);
     UNUSED(tcp);
-    return pnm_read(reinterpret_cast<pnm_t*>(stream_ctrl->data), buffer, size);
+    return pnm.read(buffer, size);
 }
 
 MPXP_Rc pnm_networking_start(Tcp& tcp,networking_t *networking ) {
-    pnm_t *pnm;
+    Pnm* pnm = new(zeromem) Pnm(tcp);
 
     tcp.open(networking->url->hostname,
 	    networking->url->port ? networking->url->port : 7070);
     if(!tcp.established()) return MPXP_False;
 
-    pnm = pnm_connect(tcp,networking->url->file);
-    if(!pnm) return MPXP_NA;
-
+    if(pnm->connect(networking->url->file)!=MPXP_Ok) {
+	delete pnm;
+	return MPXP_NA;
+    }
     networking->data=pnm;
-
     networking->networking_read = pnm_networking_read;
     networking->prebuffer_size = 8*1024;  // 8 KBytes
     networking->buffering = 1;
@@ -670,11 +670,12 @@ MPXP_Rc pnm_networking_start(Tcp& tcp,networking_t *networking ) {
 
 int
 realrtsp_networking_read( Tcp& tcp, char *buffer, int size, networking_t *networking ) {
-    return rtsp_session_read(tcp,reinterpret_cast<rtsp_session_t*>(networking->data), buffer, size);
+    Rtsp_Session& rtsp=*static_cast<Rtsp_Session*>(networking->data);
+    return rtsp.read(tcp, buffer, size);
 }
 
 MPXP_Rc realrtsp_networking_start( Tcp& tcp, networking_t *networking ) {
-    rtsp_session_t *rtsp;
+    Rtsp_Session* rtsp;
     char *mrl;
     char *file;
     int port;
@@ -701,7 +702,7 @@ MPXP_Rc realrtsp_networking_start( Tcp& tcp, networking_t *networking ) {
 			networking->url->password);
 
 	if ( redirected == 1 ) {
-	    url_free(networking->url);
+	    delete networking->url;
 	    networking->url = url_new(mrl);
 	    tcp.close();
 	}
@@ -751,7 +752,7 @@ static MPXP_Rc rtp_networking_start(Tcp& tcp,networking_t* networking, int raw_u
 }
 #endif
 
-MPXP_Rc networking_start(Tcp& tcp,networking_t* networking, URL_t *url) {
+MPXP_Rc networking_start(Tcp& tcp,networking_t* networking, URL *url) {
     MPXP_Rc rc;
 
     networking->url = check4proxies( url );

@@ -21,33 +21,33 @@ using namespace mpxp;
 #include "mplayerxp.h"
 
 namespace mpxp {
-URL_t *url_redirect(URL_t **url, const char *redir) {
-  URL_t *u = *url;
-  URL_t *res;
-  if (!strchr(redir, '/') || *redir == '/') {
+URL *url_redirect(URL **url, const std::string& _redir) {
+  std::string redir=_redir;
+  URL *u = *url;
+  URL *res;
+  if (redir.find('/')==std::string::npos || redir[0] == '/') {
     char *tmp;
-    char *newurl = new char [strlen(u->url) + strlen(redir) + 1];
-    strcpy(newurl, u->url);
-    if (*redir == '/') {
-      redir++;
-      tmp = strstr(newurl, "://");
+    std::string newurl;
+    newurl=u->url;
+    if (redir[0] == '/') {
+      redir=redir.substr(1);
+      tmp = strstr(const_cast<char*>(newurl.c_str()), "://");
       if (tmp) tmp = strchr(tmp + 3, '/');
     } else
-      tmp = strrchr(newurl, '/');
+      tmp = strrchr(const_cast<char*>(newurl.c_str()), '/');
     if (tmp) tmp[1] = 0;
-    strcat(newurl, redir);
+    newurl+=redir;
     res = url_new(newurl);
-    delete newurl;
   } else
     res = url_new(redir);
-  url_free(u);
+  delete u;
   *url = res;
   return res;
 }
 
-URL_t* url_new(const std::string& url) {
+URL* url_new(const std::string& url) {
 	int pos1, pos2,v6addr = 0;
-	URL_t* Curl = NULL;
+	URL* Curl = NULL;
 	char *escfilename=NULL;
 	char *ptr1=NULL, *ptr2=NULL, *ptr3=NULL, *ptr4=NULL;
 	int jumpSize = 3;
@@ -65,14 +65,11 @@ URL_t* url_new(const std::string& url) {
 	}
 
 	// Create the URL container
-	Curl = new(zeromem) URL_t;
+	Curl = new(zeromem) URL;
 	if( Curl==NULL ) {
 		MSG_FATAL("MemAllocFailed\n");
 		goto err_out;
 	}
-
-	// Initialisation of the URL container members
-	memset( Curl, 0, sizeof(URL_t) );
 
 	string2url(escfilename,url);
 
@@ -220,22 +217,19 @@ URL_t* url_new(const std::string& url) {
 	return Curl;
 err_out:
 	if (escfilename) delete escfilename;
-	if (Curl) url_free(Curl);
+	if (Curl) delete Curl;
 	return NULL;
 }
 
-void
-url_free(URL_t* url) {
-	if(!url) return;
-	if(url->url) delete url->url;
-	if(url->protocol) delete url->protocol;
-	if(url->hostname) delete url->hostname;
-	if(url->file) delete url->file;
-	if(url->username) delete url->username;
-	if(url->password) delete url->password;
-	delete url;
+URL::URL() {}
+URL::~URL() {
+    if(url) delete url;
+    if(protocol) delete protocol;
+    if(hostname) delete hostname;
+    if(file) delete file;
+    if(username) delete username;
+    if(password) delete password;
 }
-
 
 /* Replace escape sequences in an URL (or a part of an URL) */
 /* works like strcpy(), but without return argument */
@@ -373,7 +367,7 @@ string2url(char *outbuf, const std::string& _inbuf) {
 
 #ifdef __URL_DEBUG
 void
-url_debug(const URL_t *url) {
+url_debug(const URL *url) {
 	if( url==NULL ) {
 		printf("URL pointer NULL\n");
 		return;

@@ -52,7 +52,7 @@ namespace mpxp {
 	    const char*	host;
 	    int		port;
 	    const char*	filename;
-	    URL_t*	url;
+	    URL*	url;
 
 	    char*	cput,*cget;
 	    Tcp		tcp;
@@ -341,14 +341,14 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
     tcp.open(host,port);
 
     if(!tcp.established()) {
-	url_free(url);
+	delete url;
 	return MPXP_False;
     }
     // We got a connection, let's start serious things
     buf = new char [BUFSIZE];
     if (readresp(NULL) == 0) {
 	close();
-	url_free(url);
+	delete url;
 	return MPXP_False;
     }
     // Login
@@ -361,13 +361,13 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
 	if(resp != 2) {
 	    MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
 	    close();
-	    url_free(url);
+	    delete url;
 	    return MPXP_False;
 	}
     } else if(resp != 2) {
 	MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
 	close();
-	url_free(url);
+	delete url;
 	return MPXP_False;
     }
 
@@ -376,7 +376,7 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
     if(resp != 2) {
 	MSG_ERR("[ftp] command 'TYPE I' failed: %s\n",rsp_txt);
 	close();
-	url_free(url);
+	delete url;
 	return MPXP_False;
     }
 
@@ -385,7 +385,7 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
     if(resp != 2) {
 	MSG_ERR("[ftp] command 'SYST' failed: %s\n",rsp_txt);
 	close();
-	url_free(url);
+	delete url;
 	return MPXP_False;
     }
     MSG_INFO("[ftp] System: %s\n",rsp_txt);
@@ -393,7 +393,7 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
     if(resp != 2) {
 	MSG_ERR("[ftp] command 'STAT' failed: %s\n",rsp_txt);
 	close();
-	url_free(url);
+	delete url;
 	return MPXP_False;
     }
 
@@ -414,7 +414,7 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
     // because the connection would stay open in the main process,
     // preventing correct abort with many servers.
 
-    url_free(url);
+    delete url;
     return MPXP_Ok;
 }
 Stream::type_e Ftp_Stream_Interface::type() const { return file_len?Stream::Type_Seekable:Stream::Type_Stream; }

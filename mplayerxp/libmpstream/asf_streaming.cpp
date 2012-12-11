@@ -564,8 +564,8 @@ asf_http_networking_type(const char *content_type,const char *features, HTTP_Hea
 
 static HTTP_Header* asf_http_request(networking_t *networking) {
 	HTTP_Header* http_hdr = new(zeromem) HTTP_Header;
-	URL_t *url = NULL;
-	URL_t *server_url = NULL;
+	URL *url = NULL;
+	URL *server_url = NULL;
 	asf_http_networking_t *asf_http_ctrl;
 	char str[250];
 	char *ptr;
@@ -595,7 +595,7 @@ static HTTP_Header* asf_http_request(networking_t *networking) {
 		}
 		http_hdr->set_uri(server_url->url );
 		sprintf( str, "Host: %.220s:%d", server_url->hostname, server_url->port );
-		url_free( server_url );
+		delete server_url;
 	} else {
 		http_hdr->set_uri(url->file );
 		sprintf( str, "Host: %.220s:%d", url->hostname, url->port );
@@ -719,7 +719,7 @@ asf_http_parse_response(asf_http_networking_t *asf_http_ctrl, HTTP_Header& http_
 
 static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
     HTTP_Header *http_hdr=NULL;
-    URL_t *url = networking->url;
+    URL *url = networking->url;
     asf_http_networking_t *asf_http_ctrl;
     char buffer[BUFFER_SIZE];
     int i, ret;
@@ -735,7 +735,7 @@ static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
     asf_http_ctrl->request = 1;
     asf_http_ctrl->audio_streams = asf_http_ctrl->video_streams = NULL;
     asf_http_ctrl->n_audio = asf_http_ctrl->n_video = 0;
-    networking->data = (any_t*)asf_http_ctrl;
+    networking->data = asf_http_ctrl;
 
     do {
 	done = 1;
@@ -842,3 +842,5 @@ static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
     return MPXP_Ok;
 }
 
+asf_http_networking_t::asf_http_networking_t() {}
+asf_http_networking_t::~asf_http_networking_t() {}

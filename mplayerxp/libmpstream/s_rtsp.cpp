@@ -58,7 +58,8 @@ Rtsp_Stream_Interface::~Rtsp_Stream_Interface() {}
 
 int Rtsp_Stream_Interface::read(stream_packet_t*sp)
 {
-    return rtsp_session_read (tcp,reinterpret_cast<rtsp_session_t*>(networking->data), sp->buf, sp->len);
+    Rtsp_Session& rtsp = *static_cast<Rtsp_Session*>(networking->data);
+    return rtsp.read (tcp, sp->buf, sp->len);
 }
 
 off_t Rtsp_Stream_Interface::seek(off_t newpos) { return newpos; }
@@ -73,19 +74,16 @@ MPXP_Rc Rtsp_Stream_Interface::ctrl(unsigned cmd,any_t*args)
 
 void Rtsp_Stream_Interface::close()
 {
-    rtsp_session_t *rtsp = NULL;
-
-    rtsp = reinterpret_cast<rtsp_session_t*>(networking->data);
-    if (rtsp)
-	rtsp_session_end (rtsp);
-    url_free(networking->url);
+    Rtsp_Session* rtsp = static_cast<Rtsp_Session*>(networking->data);
+    if (rtsp) rtsp->end ();
+    delete networking->url;
     free_networking(networking);
     networking=NULL;
 }
 
 MPXP_Rc Rtsp_Stream_Interface::start()
 {
-    rtsp_session_t *rtsp;
+    Rtsp_Session *rtsp;
     char *mrl;
     char *file;
     int port;
@@ -119,7 +117,7 @@ MPXP_Rc Rtsp_Stream_Interface::start()
 			networking->url->username,
 			networking->url->password);
 	if (redirected == 1) {
-	    url_free (networking->url);
+	    delete networking->url;
 	    networking->url = url_new (mrl);
 	    tcp.close();
 	}
@@ -141,7 +139,7 @@ MPXP_Rc Rtsp_Stream_Interface::start()
 extern int index_mode;
 MPXP_Rc Rtsp_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
-    URL_t *url;
+    URL *url;
     UNUSED(flags);
     if(filename.substr(0,7)!="rtsp://") return MPXP_False;
 

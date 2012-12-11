@@ -91,7 +91,6 @@ DISABLED_LIST=(
     "random_name|generates pseudo random suffix of target",
     "sdl|build with SDL video and audio output|http://www.libsdl.org",
     "sdl_image|build with SDL_image for screenshots|http://www.libsdl.org/projects/SDL_image",
-    "im_sure_that_must_have_streaming| the key to unlock streaming"
     "libvorbis|build with libvorbis support|http://www.vorbis.com",
 )
 
@@ -407,7 +406,6 @@ print_config HAVE_ mp_config.h mp_config.mak nanosleep
 check_func2 execinfo.h backtrace
 print_config HAVE_ mp_config.h mp_config.mak backtrace
 
-disabled im_sure_that_must_have_streaming && disable streaming
 disable inet_pton
 if enabled streaming ; then
 disable socklib
