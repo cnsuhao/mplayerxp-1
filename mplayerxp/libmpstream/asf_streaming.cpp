@@ -502,15 +502,15 @@ asf_http_networking_seek( Tcp& tcp, off_t pos, networking_t *networking ) {
 static int
 asf_header_check( HTTP_Header& http_hdr ) {
     ASF_obj_header_t *objh;
-    if( http_hdr.body==NULL || http_hdr.body_size<sizeof(ASF_obj_header_t) ) return -1;
+    if( http_hdr.get_body()==NULL || http_hdr.get_body_size()<sizeof(ASF_obj_header_t) ) return -1;
 
-    objh = (ASF_obj_header_t*)http_hdr.body;
+    objh = (ASF_obj_header_t*)http_hdr.get_body();
     if( ASF_LOAD_GUID_PREFIX(objh->guid)==0x75B22630 ) return 0;
     return -1;
 }
 
 static ASF_StreamType_e
-asf_http_networking_type(char *content_type, char *features, HTTP_Header& http_hdr ) {
+asf_http_networking_type(const char *content_type,const char *features, HTTP_Header& http_hdr ) {
 	if( content_type==NULL ) return ASF_Unknown_e;
 	if( 	!strcasecmp(content_type, "application/octet-stream") ||
 		!strcasecmp(content_type, "application/vnd.ms.wms-hdr.asfv1") ||        // New in Corona, first request
@@ -529,7 +529,7 @@ asf_http_networking_type(char *content_type, char *features, HTTP_Header& http_h
 		// so we could used mime type to know the stream type,
 		// but guess what? All of them are not well configured.
 		// So we have to check for an asf header :(, but it works :p
-		if( http_hdr.body_size>sizeof(ASF_obj_header_t) ) {
+		if( http_hdr.get_body_size()>sizeof(ASF_obj_header_t) ) {
 			if( asf_header_check( http_hdr )==0 ) {
 				MSG_V("=====> ASF Plain text\n");
 				return ASF_PlainText_e;
@@ -661,20 +661,20 @@ static HTTP_Header* asf_http_request(networking_t *networking) {
 
 static int
 asf_http_parse_response(asf_http_networking_t *asf_http_ctrl, HTTP_Header& http_hdr ) {
-	char *content_type, *pragma;
+	const char *content_type, *pragma;
 	char features[64] = "\0";
 	size_t len;
 	if( http_hdr.response_parse()<0 ) {
 		MSG_ERR("Failed to parse HTTP response\n");
 		return -1;
 	}
-	switch( http_hdr.status_code ) {
+	switch( http_hdr.get_status()) {
 		case 200:
 			break;
 		case 401: // Authentication required
 			return ASF_Authenticate_e;
 		default:
-			MSG_ERR("Server return %d:%s\n", http_hdr.status_code, http_hdr.get_reason_phrase());
+			MSG_ERR("Server return %d:%s\n", http_hdr.get_status(), http_hdr.get_reason_phrase());
 			return -1;
 	}
 
@@ -682,8 +682,8 @@ asf_http_parse_response(asf_http_networking_t *asf_http_ctrl, HTTP_Header& http_
 
 	pragma = http_hdr.get_field("Pragma");
 	while( pragma!=NULL ) {
-		char *comma_ptr=NULL;
-		char *end;
+		const char *comma_ptr=NULL;
+		const char *end;
 		// The pragma line can get severals attributes
 		// separeted with a comma ','.
 		do {
@@ -750,9 +750,9 @@ static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
 	if( !tcp.established()) return MPXP_False;
 
 	http_hdr = asf_http_request( networking );
-	MSG_DBG2("Request [%s]\n", http_hdr->buffer );
-	for(i=0; i < (int)http_hdr->buffer_size ; ) {
-	    int r = tcp.write((uint8_t*)(http_hdr->buffer+i), http_hdr->buffer_size-i);
+	MSG_DBG2("Request [%s]\n", http_hdr->get_buffer() );
+	for(i=0; i < (int)http_hdr->get_buffer_size() ; ) {
+	    int r = tcp.write((uint8_t*)(http_hdr->get_buffer()+i), http_hdr->get_buffer_size()-i);
 	    if(r<0) {
 		MSG_ERR("Socket write error : %s\n",strerror(errno));
 		return MPXP_False;
@@ -771,8 +771,7 @@ static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
 	    http_hdr->response_append(buffer,i);
 	} while( !http_hdr->is_header_entire());
 	if( mp_conf.verbose>0 ) {
-	    http_hdr->buffer[http_hdr->buffer_size]='\0';
-	    MSG_DBG2("Response [%s]\n", http_hdr->buffer );
+	    MSG_DBG2("Response [%s]\n", http_hdr->get_buffer() );
 	}
 	ret = asf_http_parse_response(asf_http_ctrl, *http_hdr);
 	if( ret<0 ) {
@@ -784,8 +783,8 @@ static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
 	    case ASF_Live_e:
 	    case ASF_Prerecorded_e:
 	    case ASF_PlainText_e:
-		if( http_hdr->body_size>0 ) {
-		    if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
+		if( http_hdr->get_body_size()>0 ) {
+		    if( networking_bufferize( networking, (unsigned char *)(http_hdr->get_body()), http_hdr->get_body_size())<0 ) {
 			delete http_hdr;
 			return MPXP_False;
 		    }
@@ -805,8 +804,8 @@ static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
 		}
 		break;
 	    case ASF_Redirector_e:
-		if( http_hdr->body_size>0 ) {
-		    if( networking_bufferize( networking, http_hdr->body, http_hdr->body_size )<0 ) {
+		if( http_hdr->get_body_size()>0 ) {
+		    if( networking_bufferize( networking, (unsigned char*)http_hdr->get_body(), http_hdr->get_body_size())<0 ) {
 			delete http_hdr;
 			return MPXP_False;
 		    }

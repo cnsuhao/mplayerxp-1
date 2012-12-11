@@ -6,6 +6,8 @@ using namespace mpxp;
  * by Bertrand Baudet <bertrand_baudet@yahoo.com>
  * (C) 2001, MPlayer team.
  */
+#include <algorithm>
+#include <ctype.h>
 #include <limits>
 
 #include <stdio.h>
@@ -19,20 +21,8 @@ using namespace mpxp;
 namespace mpxp {
 HTTP_Header::HTTP_Header() {}
 HTTP_Header::~HTTP_Header() {
-    HTTP_field_t *field, *field2free;
-    if( protocol!=NULL ) delete protocol ;
-    if( uri!=NULL ) delete uri ;
     if( reason_phrase!=NULL ) delete reason_phrase ;
-    if( field_search!=NULL ) delete field_search ;
-    if( method!=NULL ) delete method ;
     if( buffer!=NULL ) delete buffer ;
-    field = first_field;
-    while( field!=NULL ) {
-	field2free = field;
-	if (field->field_name) delete field->field_name;
-	field = field->next;
-	delete field2free;
-    }
 }
 
 int HTTP_Header::response_append(const char *response, int length ) {
@@ -75,15 +65,11 @@ int HTTP_Header::response_parse( ) {
 	return -1;
     }
     len = hdr_ptr-buffer;
-    protocol = new char [len+1];
-    if( protocol==NULL ) {
-	MSG_FATAL("Memory allocation failed\n");
-	return -1;
-    }
-    strncpy( protocol, buffer, len );
-    protocol[len]='\0';
-    if( !strncasecmp( protocol, "HTTP", 4) ) {
-	if( sscanf( protocol+5,"1.%d", &(http_minor_version) )!=1 ) {
+    protocol.assign(buffer,len);
+    std::string sstr=protocol.substr(0,4);
+    std::transform(sstr.begin(), sstr.end(),sstr.begin(), ::toupper);
+    if(sstr=="HTTP") {
+	if( sscanf( &protocol.c_str()[5],"1.%d", &(http_minor_version) )!=1 ) {
 	    MSG_FATAL("Malformed answer. Unable to get HTTP minor version.\n");
 	    return -1;
 	}
@@ -149,7 +135,7 @@ int HTTP_Header::response_parse( ) {
 
     if( pos_hdr_sep+hdr_sep_len<buffer_size ) {
 	// Response has data!
-	body = (unsigned char*)buffer+pos_hdr_sep+hdr_sep_len;
+	body = buffer+pos_hdr_sep+hdr_sep_len;
 	body_size = buffer_size-(pos_hdr_sep+hdr_sep_len);
     }
 
@@ -157,23 +143,19 @@ int HTTP_Header::response_parse( ) {
     return 0;
 }
 
-char* HTTP_Header::build_request() {
+const char* HTTP_Header::build_request() {
     char *ptr;
     int len;
-    HTTP_field_t *field;
 
-    if( method==NULL ) set_method( "GET");
-    if( uri==NULL ) set_uri( "/");
+    if( method.empty() ) set_method( "GET");
+    if( uri.empty() ) set_uri( "/");
 
     //**** Compute the request length
     // Add the Method line
-    len = strlen(method)+strlen(uri)+12;
+    len = method.length()+uri.length()+12;
     // Add the fields
-    field = first_field;
-    while( field!=NULL ) {
-	len += strlen(field->field_name)+2;
-	field = field->next;
-    }
+    std::vector<std::string>::size_type sz = fields.size();
+    for(unsigned i=0;i<sz;i++) len+= fields[i].length()+2;
     // Add the CRLF
     len += 2;
     // Add the body
@@ -195,13 +177,9 @@ char* HTTP_Header::build_request() {
     //*** Building the request
     ptr = buffer;
     // Add the method line
-    ptr += sprintf( ptr, "%s %s HTTP/1.%d\r\n", method,uri, http_minor_version );
-    field = first_field;
+    ptr += sprintf( ptr, "%s %s HTTP/1.%d\r\n", method.c_str(),uri.c_str(), http_minor_version );
     // Add the field
-    while( field!=NULL ) {
-	ptr += sprintf( ptr, "%s\r\n", field->field_name );
-	field = field->next;
-    }
+    for(unsigned i=0;i<sz;i++) ptr += sprintf( ptr, "%s\r\n", fields[i].c_str());
     ptr += sprintf( ptr, "\r\n" );
     // Add the body
     if( body!=NULL ) {
@@ -211,72 +189,45 @@ char* HTTP_Header::build_request() {
     return buffer;
 }
 
-char* HTTP_Header::get_field(const char *field_name ) {
-    if( field_name==NULL ) return NULL;
-    field_search_pos = first_field;
-    field_search = (char*)mp_realloc( field_search, strlen(field_name)+1 );
-    if( field_search==NULL ) {
-	MSG_FATAL("Memory allocation failed\n");
-	return NULL;
-    }
-    strcpy( field_search, field_name );
+const char* HTTP_Header::get_field(const char *field_name ) {
+    search_pos=0;
+    field_search=field_name;
     return get_next_field();
 }
 
-char* HTTP_Header::get_next_field() {
-    char *ptr;
-    HTTP_field_t *field;
-
-    field = field_search_pos;
-    while( field!=NULL ) {
-	ptr = strstr( field->field_name, ":" );
-	if( ptr==NULL ) return NULL;
-	if( !strncasecmp( field->field_name, field_search, ptr-(field->field_name) ) ) {
-	    ptr++;	// Skip the column
-	    while( ptr[0]==' ' ) ptr++; // Skip the spaces if there is some
-	    field_search_pos = field->next;
-	    return ptr;	// return the value without the field name
+const char* HTTP_Header::get_next_field() {
+    std::vector<std::string>::size_type sz = fields.size();
+    for(unsigned i=search_pos;i<sz;i++) {
+	size_t pos,epos;
+	const std::string& str = fields[i];
+	pos=0;
+	epos=str.find(':',pos);
+	if(epos!=std::string::npos) {
+	    if(str.substr(pos,epos)==field_search) {
+		epos++; // skip the column
+		pos=epos;
+		while(::isspace(str[epos])) epos++;
+		search_pos=i+1;
+		return &str[epos];
+	    }
 	}
-	field = field->next;
     }
     return NULL;
 }
 
 void HTTP_Header::set_field(const char *field_name ) {
-    HTTP_field_t *new_field;
     if( field_name==NULL ) return;
-
-    new_field = new(zeromem) HTTP_field_t;
-    if( new_field==NULL ) {
-	MSG_FATAL("Memory allocation failed\n");
-	return;
-    }
-    new_field->next = NULL;
-    new_field->field_name = new char [strlen(field_name)+1];
-    if( new_field->field_name==NULL ) {
-	MSG_FATAL("Memory allocation failed\n");
-	delete new_field;
-	return;
-    }
-    strcpy( new_field->field_name, field_name );
-
-    if( last_field==NULL ) {
-	first_field = new_field;
-    } else {
-	last_field->next = new_field;
-    }
-    last_field = new_field;
-    field_nb++;
+    fields.push_back(field_name);
 }
 
 void HTTP_Header::set_method( const char *_method ) {
     if( _method==NULL ) return;
-    method=mp_strdup(_method);
+    method=_method;
 }
 
 void HTTP_Header::set_uri(const char *_uri ) {
     if(_uri==NULL ) return;
-    uri=mp_strdup(_uri);
+    uri=_uri;
 }
 
 int HTTP_Header::add_basic_authentication( const char *username, const char *password ) {
@@ -328,9 +279,13 @@ out:
     return res;
 }
 
+void HTTP_Header::erase_body() {
+    body=NULL;
+    body_size=0;
+}
+
 void HTTP_Header::debug_hdr( ) {
-    HTTP_field_t *field;
-    int i = 0;
+    unsigned i = 0;
 
     MSG_V(	"--- HTTP DEBUG HEADER --- START ---\n"
 		"protocol:           [%s]\n"
@@ -340,20 +295,17 @@ void HTTP_Header::debug_hdr( ) {
 		"status code:        [%d]\n"
 		"reason phrase:      [%s]\n"
 		"body size:          [%d]\n"
-		,protocol
+		,protocol.c_str()
 		,http_minor_version
-		,uri
-		,method
+		,uri.c_str()
+		,method.c_str()
 		,status_code
 		,reason_phrase
 		,body_size );
 
     MSG_V("Fields:\n");
-    field = first_field;
-    while( field!=NULL ) {
-	MSG_V(" %d - %s\n", i++, field->field_name );
-	field = field->next;
-    }
+    std::vector<std::string>::size_type sz = fields.size();
+    for(i=0;i<sz;i++) MSG_V(" %d - %s\n", i, fields[i].c_str());
     MSG_V("--- HTTP DEBUG HEADER --- END ---\n");
 }
 

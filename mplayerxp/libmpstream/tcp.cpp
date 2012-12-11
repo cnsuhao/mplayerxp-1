@@ -72,6 +72,7 @@ void Tcp::open(const std::string& host, int port, tcp_af_e af) {
     struct timeval to;
 #endif
 
+    buf[0]=0;
     MSG_V("[tcp%s] Trying to resolv host '%s'\n", af2String(af), host.c_str());
     _fd = ::socket(af==Tcp::IP4?AF_INET:AF_INET6, SOCK_STREAM, 0);
 
