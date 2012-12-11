@@ -11,7 +11,7 @@ using namespace mpxp;
 #include <assert.h>
 #endif
 
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "demuxer.h"
 #include "demuxer_internal.h"
 #include "stheader.h"

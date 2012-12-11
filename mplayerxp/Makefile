@@ -11,7 +11,7 @@ include mp_config.mak
 
 TARGET_EXE = $(PROGNAME)
 # these subdirectories required installation due binaries within them
-SUBDIRS = libmpdemux libmpstream libmpsub libplaytree libmpcodecs libmpconf libao2 osdep postproc input2 nls libvo xmpcore
+SUBDIRS = libmpdemux libmpstream2 libmpsub libplaytree libmpcodecs libmpconf libao2 osdep postproc input2 nls libvo xmpcore
 ifeq ($(ENABLE_WIN32LOADER),yes)
 SUBDIRS+=loader
 endif
@@ -32,7 +32,7 @@ LAVC_LIBS=../lavc/libavcodec/libavcodec$(LAVC_SUFFIX).a \
 	  ../lavc/libavformat/libavformat$(LAVC_SUFFIX).a \
 	  ../lavc/libavutil/libavutil$(LAVC_SUFFIX).a
 
-MP_LIBS = libmpstream/libmpstream.a \
+MP_LIBS = libmpstream2/libmpstream2.a \
 	  libmpdemux/libmpdemux.a \
 	  libmpcodecs/libmpcodecs.a \
 	  libmpsub/libmpsub.a \

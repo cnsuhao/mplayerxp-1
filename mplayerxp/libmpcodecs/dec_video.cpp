@@ -16,7 +16,7 @@ using namespace mpxp;
 #include "osdep/timer.h"
 #include "osdep/shmem.h"
 
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/parse_es.h"
 #include "libmpdemux/stheader.h"

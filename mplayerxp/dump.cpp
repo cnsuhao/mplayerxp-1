@@ -15,8 +15,8 @@ using namespace mpxp;
 #include "input2/input.h"
 #include "mplayerxp.h"
 #include "libmpdemux/muxer.h"
-#include "libmpstream/stream.h"
-#include "libmpstream/mrl.h"
+#include "libmpstream2/stream.h"
+#include "libmpstream2/mrl.h"
 #define MSGT_CLASS MSGT_GLOBAL
 #include "mp_msg.h"
 #include "dump.h"

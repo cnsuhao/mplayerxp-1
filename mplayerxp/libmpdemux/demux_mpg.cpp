@@ -17,7 +17,7 @@ using namespace mpxp;
 #include "help_mp.h"
 #include "osdep/bswap.h"
 
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "demuxer.h"
 #include "demuxer_internal.h"
 #include "parse_es.h"

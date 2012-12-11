@@ -6,7 +6,7 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "demuxer.h"
 #include "aviprint.h"
 #include "demux_msg.h"

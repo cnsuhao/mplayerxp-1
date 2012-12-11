@@ -17,7 +17,7 @@ using namespace mpxp;
 #include "yuv4mpeg.h"
 
 //#include "stream.h"
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "demuxer.h"
 #include "demuxer_internal.h"
 #include "stheader.h"

@@ -4,7 +4,7 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "demux_msg.h"

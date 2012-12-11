@@ -8,7 +8,7 @@ using namespace mpxp;
 #include <unistd.h>
 
 #include "help_mp.h"
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "demuxer.h"
 #include "parse_es.h"
 #include "demux_msg.h"

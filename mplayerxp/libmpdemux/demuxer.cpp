@@ -23,7 +23,7 @@ using namespace mpxp;
 #include "demux_msg.h"
 #include "demuxer.h"
 #include "demuxer_internal.h"
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "stheader.h"
 #include "mplayerxp.h"
 

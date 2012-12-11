@@ -24,7 +24,7 @@ using namespace mpxp;
 #include "loader/qtx/qtxsdk/components.h"
 #include "osdep/bswap.h"
 
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 

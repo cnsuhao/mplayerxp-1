@@ -10,7 +10,7 @@ using namespace mpxp;
 
 #include "osdep/bswap.h"
 
-#include "libmpstream/mrl.h"
+#include "libmpstream2/mrl.h"
 #include "afmt.h"
 #include "audio_out.h"
 #include "audio_out_internal.h"

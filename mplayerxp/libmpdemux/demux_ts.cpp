@@ -32,7 +32,7 @@ using namespace mpxp;
 
 #include "mplayerxp.h"
 #include "help_mp.h"
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "demuxer.h"
 #include "demuxer_internal.h"
 #include "parse_es.h"

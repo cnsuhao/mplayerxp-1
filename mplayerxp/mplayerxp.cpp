@@ -35,7 +35,7 @@ using namespace mpxp;
 #define HELP_MP_DEFINE_STATIC
 #include "help_mp.h"
 
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 #include "libmpdemux/parse_es.h"

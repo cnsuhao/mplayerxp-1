@@ -2,7 +2,7 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "demuxer_stream.h"
 #include "demuxer.h"
 #include "demuxer_internal.h"

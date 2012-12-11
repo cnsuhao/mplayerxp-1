@@ -8,7 +8,7 @@ using namespace mpxp;
 #include <string.h>
 #include <unistd.h>
 
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "playtreeparser.h"
 #include "asxparser.h"
 #include "libmpconf/cfgparser.h"

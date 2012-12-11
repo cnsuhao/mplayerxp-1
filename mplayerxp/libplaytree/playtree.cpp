@@ -11,7 +11,7 @@ using namespace mpxp;
 #ifdef MP_DEBUG
 #include <assert.h>
 #endif
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "playtree.h"
 #define MSGT_CLASS MSGT_PLAYTREE
 #include "mp_msg.h"

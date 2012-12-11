@@ -32,7 +32,7 @@ using namespace mpxp;
 #include "yuv4mpeg.h"
 #include "demux_msg.h"
 #include "yuv4mpeg_intern.h"
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 
 /* quick test of two ratios for equality (i.e. identical components) */
 #define Y4M_RATIO_EQL(a,b) ( ((a).n == (b).n) && ((a).d == (b).d) )

@@ -6,7 +6,7 @@ using namespace mpxp;
 #define __USE_ISOC99 1 /* for lrint */
 #include <math.h>
 
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "demuxer.h"
 #include "stheader.h"
 #include "demuxer_r.h"

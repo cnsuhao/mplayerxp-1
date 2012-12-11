@@ -13,7 +13,7 @@ using namespace mpxp;
 #include <stdlib.h>
 
 #include "parse_mp4.h"
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "demux_msg.h"
 
 int mp4_read_descr_len(Memory_Stream& s) {

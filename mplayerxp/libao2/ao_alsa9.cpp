@@ -29,7 +29,7 @@ using namespace mpxp;
 #include "audio_out_internal.h"
 #include "afmt.h"
 #include "ao_msg.h"
-#include "libmpstream/mrl.h"
+#include "libmpstream2/mrl.h"
 
 static ao_info_t info =
 {

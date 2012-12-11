@@ -7,7 +7,7 @@ using namespace mpxp;
 #include <string.h>
 
 #include "mplayerxp.h"
-#include "libmpstream/stream.h" // for nav_hl
+#include "libmpstream2/stream.h" // for nav_hl
 #include "xmpcore/xmp_core.h"
 #include "video_out.h"
 #include "font_load.h"

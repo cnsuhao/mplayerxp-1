@@ -12,7 +12,7 @@ using namespace mpxp;
 #include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
 
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 #include "libmpconf/codec-cfg.h"

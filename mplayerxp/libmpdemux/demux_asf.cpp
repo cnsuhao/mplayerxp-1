@@ -10,7 +10,7 @@ using namespace mpxp;
 #include "help_mp.h"
 #include "osdep/bswap.h"
 
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "asf.h"
 #include "demuxer.h"
 #include "demuxer_internal.h"

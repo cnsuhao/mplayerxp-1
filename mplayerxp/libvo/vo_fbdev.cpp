@@ -35,7 +35,7 @@ using namespace mpxp;
 #endif
 #include "aspect.h"
 #include "dri_vo.h"
-#include "libmpstream/mrl.h"
+#include "libmpstream2/mrl.h"
 #include "vo_msg.h"
 
 namespace mpxp {

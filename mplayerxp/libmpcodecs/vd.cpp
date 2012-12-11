@@ -12,7 +12,7 @@ using namespace mpxp;
 
 #include "libvo/img_format.h"
 
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 #include "vd.h"

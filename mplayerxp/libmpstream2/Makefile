@@ -1,5 +1,5 @@
 
-LIBNAME = libmpstream.a
+LIBNAME = libmpstream2.a
 
 include ../mp_config.mak
 

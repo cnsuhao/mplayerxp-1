@@ -13,7 +13,7 @@ using namespace mpxp;
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "asxparser.h"
 #include "playtree.h"
 #include "playtreeparser.h"

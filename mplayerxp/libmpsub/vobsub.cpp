@@ -18,7 +18,7 @@ using namespace mpxp;
 #include <sys/types.h>
 
 #include "mplayerxp.h"
-#include "libmpstream/stream.h"
+#include "libmpstream2/stream.h"
 #include "vobsub.h"
 #include "spudec.h"
 #define MSGT_CLASS MSGT_VOBSUB
