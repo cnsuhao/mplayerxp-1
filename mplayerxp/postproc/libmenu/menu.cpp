@@ -47,10 +47,10 @@ menu_info_t* menu_info_list[] = {
 };
 
 typedef struct menu_def_st {
-  char* name;
+  const char* name;
   menu_info_t* type;
   any_t* cfg;
-  char* args;
+  const char* args;
 } menu_def_t;
 
 static struct MPContext *menu_ctx = NULL;
@@ -59,13 +59,15 @@ static int menu_count = 0;
 
 
 static int menu_parse_config(const char* buffer) {
-  char *element,*body, **attribs, *name;
+  char *element,*body;
+  std::string name;
+  ASX_Attrib attribs;
   menu_info_t* minfo = NULL;
   int r,i;
   ASX_Parser& parser = *new(zeromem) ASX_Parser;
 
   while(1) {
-    r = parser.get_element(&buffer,&element,&body,&attribs);
+    r = parser.get_element(&buffer,&element,&body,attribs);
     if(r < 0) {
       MSG_WARN("[libmenu] Syntax error at line: %i\n",parser.get_line());
       delete &parser;
@@ -75,12 +77,11 @@ static int menu_parse_config(const char* buffer) {
       return 1;
     }
     // Has it a name ?
-    name = asx_get_attrib("name",attribs);
-    if(!name) {
+    name = attribs.get("name");
+    if(name.empty()) {
       MSG_WARN("[libmenu] Menu definitions need a name attrib: %i\n",parser.get_line());
       delete element;
       if(body) delete body;
-      asx_free_attribs(attribs);
       continue;
     }
 
@@ -93,28 +94,31 @@ static int menu_parse_config(const char* buffer) {
     }
     // Got it : add this to our list
     if(minfo) {
-      menu_list = (menu_def_t*)mp_realloc(menu_list,(menu_count+2)*sizeof(menu_def_t));
-      menu_list[menu_count].name = name;
-      menu_list[menu_count].type = minfo;
-      menu_list[menu_count].cfg = m_struct_alloc(&minfo->priv_st);
-      menu_list[menu_count].args = body;
-      // Setup the attribs
-      for(i = 0 ; attribs[2*i] ; i++) {
-	if(strcasecmp(attribs[2*i],"name") == 0) continue;
-	if(!m_struct_set(&minfo->priv_st,menu_list[menu_count].cfg,attribs[2*i], attribs[2*i+1]))
-	  MSG_WARN("[libmenu] Bad attrib: %s %s %s %i\n",attribs[2*i],attribs[2*i+1],
-		 name,parser.get_line());
-      }
-      menu_count++;
-      memset(&menu_list[menu_count],0,sizeof(menu_def_t));
+	menu_list = (menu_def_t*)mp_realloc(menu_list,(menu_count+2)*sizeof(menu_def_t));
+	menu_list[menu_count].name = mp_strdup(name.c_str());
+	menu_list[menu_count].type = minfo;
+	menu_list[menu_count].cfg = m_struct_alloc(&minfo->priv_st);
+	menu_list[menu_count].args = body;
+	std::map<std::string,std::string,ASX_Attrib::stricomp>::iterator it;
+	std::map<std::string,std::string,ASX_Attrib::stricomp>& _map = attribs.map();
+	for(it=_map.begin();it!=_map.end();it++) {
+	    std::string sfirst,ssecond;
+	    sfirst=(*it).first;
+	    ssecond=(*it).second;
+	    if(strcasecmp(sfirst.c_str(),"name") == 0) continue;
+	    // Setup the attribs
+	    if(!m_struct_set(&minfo->priv_st,menu_list[menu_count].cfg,mp_strdup(sfirst.c_str()),mp_strdup(ssecond.c_str())))
+		MSG_WARN("[libmenu] Bad attrib: %s %s %s %i\n"
+		    ,sfirst.c_str(),ssecond.c_str(),name.c_str(),parser.get_line());
+	}
+	menu_count++;
+	memset(&menu_list[menu_count],0,sizeof(menu_def_t));
     } else {
-      MSG_WARN("[libmenu] Unknown menu type: %s %i\n",element,parser.get_line());
-      delete name;
-      if(body) delete body;
+	MSG_WARN("[libmenu] Unknown menu type: %s %i\n",element,parser.get_line());
+	if(body) delete body;
     }
 
     delete element;
-    asx_free_attribs(attribs);
   }
   delete &parser;
   return 0;
@@ -169,7 +173,7 @@ int menu_init(struct MPContext *mpctx,const char* cfg_file) {
 }
 
 // Destroy all this stuff
-void menu_unint(void) {
+void menu_uninit(void) {
   int i;
   for(i = 0 ; menu_list && menu_list[i].name ; i++) {
     delete menu_list[i].name;
@@ -219,8 +223,7 @@ menu_t* menu_open(const char *name,libinput_t* libinput) {
     return NULL;
   }
   for(i = 0 ; menu_list[i].name != NULL ; i++) {
-    if(strcmp(name,menu_list[i].name) == 0)
-      break;
+    if(strcmp(name,menu_list[i].name) == 0) break;
   }
   if(menu_list[i].name == NULL) {
     MSG_WARN("[libmenu] Menu not found: %s\n",name);

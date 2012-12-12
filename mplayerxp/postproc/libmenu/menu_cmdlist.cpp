@@ -27,10 +27,10 @@ using namespace mpxp;
 struct list_entry_s {
   struct list_entry p;
 
-  char* ok;
-  char* cancel;
-  char* left;
-  char* right;
+  const char* ok;
+  const char* cancel;
+  const char* left;
+  const char* right;
 };
 
 struct menu_priv_s {
@@ -109,13 +109,15 @@ static void close_menu(menu_t* menu) {
 }
 
 static int parse_args(menu_t* menu,const char* args) {
-  char *element,*body, **attribs, *name;
+  char *element,*body;
+  ASX_Attrib attribs;
+  std::string name;
   list_entry_t* m = NULL;
   int r;
   ASX_Parser& parser = *new(zeromem) ASX_Parser;
 
   while(1) {
-    r = parser.get_element(&args,&element,&body,&attribs);
+    r = parser.get_element(&args,&element,&body,attribs);
     if(r < 0) {
       MSG_WARN("[libmenu] Syntax error at line: %i\n",parser.get_line());
       delete &parser;
@@ -127,25 +129,23 @@ static int parse_args(menu_t* menu,const char* args) {
       return m ? 1 : 0;
     }
     // Has it a name ?
-    name = asx_get_attrib("name",attribs);
-    if(!name) {
+    name = attribs.get("name");
+    if(name.empty()) {
       MSG_WARN("[libmenu] ListMenu entry definitions need a name: %i\n",parser.get_line());
       delete element;
       if(body) delete body;
-      asx_free_attribs(attribs);
       continue;
     }
     m = new(zeromem) struct list_entry_s;
-    m->p.txt = name;
-    m->ok = asx_get_attrib("ok",attribs);
-    m->cancel = asx_get_attrib("cancel",attribs);
-    m->left = asx_get_attrib("left",attribs);
-    m->right = asx_get_attrib("right",attribs);
+    m->p.txt = mp_strdup(name.c_str());
+    m->ok = mp_strdup(attribs.get("ok").c_str());
+    m->cancel = mp_strdup(attribs.get("cancel").c_str());
+    m->left = mp_strdup(attribs.get("left").c_str());
+    m->right = mp_strdup(attribs.get("right").c_str());
     menu_list_add_entry(menu,m);
 
     delete element;
     if(body) delete body;
-    asx_free_attribs(attribs);
   }
   delete &parser;
   return -1;

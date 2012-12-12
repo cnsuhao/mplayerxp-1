@@ -30,11 +30,11 @@ using namespace mpxp;
 
 struct list_entry_s {
   struct list_entry p;
-  char* name;
-  char* txt;
-  char* prop;
+  const char* name;
+  const char* txt;
+  const char* prop;
   m_option_t* opt;
-  char* menu;
+  const char* menu;
 };
 
 struct menu_priv_s {
@@ -65,7 +65,7 @@ static m_option_t cfg_fields[] = {
 #define mpriv (menu->priv)
 
 static void entry_set_text(menu_t* menu, list_entry_t* e) {
-  const char* val = e->txt ? m_properties_expand_string(reinterpret_cast<m_option_t*>(e->prop), e->txt, menu->ctx) :
+  const char* val = e->txt ? m_properties_expand_string(e->opt, e->txt, menu->ctx) :
     mp_property_print(e->prop, menu->ctx);
   int l,edit = (mpriv->edit && e == mpriv->p.current);
   if(!val || !val[0]) {
@@ -92,14 +92,16 @@ static void update_entries(menu_t* menu) {
 }
 
 static int parse_args(menu_t* menu,const char* args) {
-  char *element,*body, **attribs, *name, *txt;
+  char *element,*body;
+  ASX_Attrib attribs;
+  std::string name,txt;
   list_entry_t* m = NULL;
   int r;
   m_option_t* opt;
   ASX_Parser& parser = *new(zeromem) ASX_Parser;
 
   while(1) {
-    r = parser.get_element(&args,&element,&body,&attribs);
+    r = parser.get_element(&args,&element,&body,attribs);
     if(r < 0) {
       MSG_ERR("[libmenu] Syntax error at line: %s\n",parser.get_line());
       delete &parser;
@@ -114,38 +116,36 @@ static int parse_args(menu_t* menu,const char* args) {
       return 1;
     }
     if(!strcmp(element,"menu")) {
-      name = asx_get_attrib("menu",attribs);
-      if(!name) {
+      name = attribs.get("menu");
+      if(name.empty()) {
 	MSG_WARN("[libmenu] Submenu definition need a menu attribut\n");
 	goto next_element;
       }
       m = new(zeromem) struct list_entry_s;
-      m->menu = name;
-      name = NULL; // we want to keep it
-      m->p.txt = asx_get_attrib("name",attribs);
+      m->menu = mp_strdup(name.c_str());
+      m->p.txt = mp_strdup(attribs.get("name").c_str());
       if(!m->p.txt) m->p.txt = mp_strdup(m->menu);
       menu_list_add_entry(menu,m);
       goto next_element;
     }
 
-    name = asx_get_attrib("property",attribs);
+    name = attribs.get("property");
     opt = NULL;
-    if(name && mp_property_do(name,M_PROPERTY_GET_TYPE,&opt,menu->ctx) <= 0) {
+    if(!name.empty() && mp_property_do(name.c_str(),M_PROPERTY_GET_TYPE,&opt,menu->ctx) <= 0) {
       MSG_WARN("[libmenu] Invalid property: %s %i\n",
-	     name,parser.get_line());
+	     name.c_str(),parser.get_line());
       goto next_element;
     }
-    txt = asx_get_attrib("txt",attribs);
-    if(!(name || txt)) {
+    txt = attribs.get("txt");
+    if(name.empty() || txt.empty()) {
       MSG_WARN("[libmenu] PrefMenu entry definitions need: %i\n",parser.get_line());
-      if(txt) { delete txt; txt = NULL; }
       goto next_element;
     }
     m = new(zeromem) struct list_entry_s;
     m->opt = opt;
-    m->txt = txt; txt = NULL;
-    m->prop = name; name = NULL;
-    m->name = asx_get_attrib("name",attribs);
+    m->txt = mp_strdup(txt.c_str());
+    m->prop = mp_strdup(name.c_str());
+    m->name = mp_strdup(attribs.get("name").c_str());
     if(!m->name) m->name = mp_strdup(opt ? opt->name : "-");
     entry_set_text(menu,m);
     menu_list_add_entry(menu,m);
@@ -153,8 +153,6 @@ static int parse_args(menu_t* menu,const char* args) {
   next_element:
     delete element;
     if(body) delete body;
-    if(name) delete name;
-    asx_free_attribs(attribs);
   }
   delete &parser;
   return -1;

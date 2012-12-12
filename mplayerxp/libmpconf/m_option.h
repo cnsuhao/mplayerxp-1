@@ -161,7 +161,7 @@ struct m_option_type {
    *  \return On error a negative value is returned, on success the number of arguments
    *          consumed. For details see \ref OptionParserReturn.
    */
-    int (*parse)(const m_option_t* opt,const char *name, char *param, any_t* dst, int src);
+    int (*parse)(const m_option_t* opt,const char *name,const char *param, any_t* dst, int src);
 
   /// Print back a value in string form.
   /** \param opt The option to print.
@@ -169,7 +169,7 @@ struct m_option_type {
    *  \return An allocated string containing the text value or (any_t*)-1
    *          on error.
    */
-    char* (*print)(const m_option_t* opt,  any_t* val);
+    char* (*print)(const m_option_t* opt,const any_t* val);
 
   /** \name
    *  These functions are called to save/set/restore the status of the
@@ -184,21 +184,21 @@ struct m_option_type {
    *  \param dst Pointer to the destination memory.
    *  \param src Pointer to the source memory.
    */
-    void (*save)(const m_option_t* opt,any_t* dst, any_t* src);
+    void (*save)(const m_option_t* opt,any_t* dst,const any_t* src);
 
   /// Set the value in the program (dst) from a save slot.
   /** \param opt The option to copy.
    *  \param dst Pointer to the destination memory.
    *  \param src Pointer to the source memory.
    */
-    void (*set)(const m_option_t* opt,any_t* dst, any_t* src);
+    void (*set)(const m_option_t* opt,any_t* dst,const any_t* src);
 
   /// Copy the data between two save slots. If NULL and size is > 0 a memcpy will be used.
   /** \param opt The option to copy.
    *  \param dst Pointer to the destination memory.
    *  \param src Pointer to the source memory.
    */
-    void (*copy)(const m_option_t* opt,any_t* dst, any_t* src);
+    void (*copy)(const m_option_t* opt,any_t* dst,const any_t* src);
   //@}
 
   /// Free the data allocated for a save slot.
@@ -206,7 +206,7 @@ struct m_option_type {
    *  \param dst Pointer to the data, usually a pointer that should be freed and
    *             set to NULL.
    */
-    void (*mp_free)(any_t* dst);
+    void (*mp_free)(const any_t* dst);
 };
 
 ///@}
@@ -354,13 +354,13 @@ const m_option_t* m_option_list_find(const m_option_t* list,const char* name);
 
 /// Helper to parse options, see \ref m_option_type::parse.
 inline static int
-m_option_parse(const m_option_t* opt,const char *name, char *param, any_t* dst, int src) {
+m_option_parse(const m_option_t* opt,const char *name,const char *param, any_t* dst, int src) {
   return opt->type->parse(opt,name,param,dst,src);
 }
 
 /// Helper to print options, see \ref m_option_type::print.
 inline static  char*
-m_option_print(const m_option_t* opt,  any_t* val_ptr) {
+m_option_print(const m_option_t* opt,const any_t* val_ptr) {
   if(opt->type->print)
     return opt->type->print(opt,val_ptr);
   else
@@ -369,21 +369,21 @@ m_option_print(const m_option_t* opt,  any_t* val_ptr) {
 
 /// Helper around \ref m_option_type::save.
 inline static  void
-m_option_save(const m_option_t* opt,any_t* dst, any_t* src) {
+m_option_save(const m_option_t* opt,any_t* dst,const any_t* src) {
   if(opt->type->save)
     opt->type->save(opt,dst,src);
 }
 
 /// Helper around \ref m_option_type::set.
 inline static  void
-m_option_set(const m_option_t* opt,any_t* dst, any_t* src) {
+m_option_set(const m_option_t* opt,any_t* dst,const any_t* src) {
   if(opt->type->set)
     opt->type->set(opt,dst,src);
 }
 
 /// Helper around \ref m_option_type::copy.
 inline  static void
-m_option_copy(const m_option_t* opt,any_t* dst, any_t* src) {
+m_option_copy(const m_option_t* opt,any_t* dst,const any_t* src) {
   if(opt->type->copy)
     opt->type->copy(opt,dst,src);
   else if(opt->type->size > 0)
@@ -392,7 +392,7 @@ m_option_copy(const m_option_t* opt,any_t* dst, any_t* src) {
 
 /// Helper around \ref m_option_type::mp_free.
 inline static void
-m_option_free(const m_option_t* opt,any_t* dst) {
+m_option_free(const m_option_t* opt,const any_t* dst) {
   if(opt->type->mp_free)
     opt->type->mp_free(dst);
 }

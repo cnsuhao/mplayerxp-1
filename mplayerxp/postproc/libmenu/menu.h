@@ -45,7 +45,7 @@ enum {
 };
 /// Global init/uninit
 int menu_init(struct MPContext *mpctx,const char* cfg_file);
-void menu_unint(void);
+void menu_uninit(void);
 
 /// Open a menu defined in the config file
 menu_t* menu_open(const char *name,libinput_t*libinput);

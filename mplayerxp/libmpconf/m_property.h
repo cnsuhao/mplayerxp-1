@@ -103,7 +103,7 @@ void m_properties_print_help_list(m_option_t* list);
  *  \param str The string to expand.
  *  \return The newly allocated expanded string.
  */
-char* m_properties_expand_string(m_option_t* prop_list,char* str, any_t*ctx);
+char* m_properties_expand_string(m_option_t* prop_list,const char* str, any_t*ctx);
 
 // Helpers to use MPlayer's properties
 

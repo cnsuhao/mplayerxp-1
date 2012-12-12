@@ -218,6 +218,7 @@ static void __FASTCALL__ uninit(vf_instance_t *vf) {
        free_mp_image(pause_mpi);
        pause_mpi = NULL;
      }
+     menu_uninit();
 }
 
 static int __FASTCALL__ vf_config(vf_instance_t* vf, int width, int height, int d_width, int d_height,

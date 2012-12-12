@@ -16,128 +16,7 @@ using namespace mpxp;
 #define MSGT_CLASS MSGT_PLAYTREE
 #include "mp_msg.h"
 
-////// List utils
 namespace mpxp {
-static void __FASTCALL__ asx_list_add(any_t* list_ptr,any_t* entry){
-  any_t** list = *(any_t***)list_ptr;
-  int c = 0;
-
-  if(list != NULL)
-    for( ; list[c] != NULL; c++) ;
-
-  list = (any_t**)mp_realloc(list,sizeof(any_t*)*(c+2));
-
-  list[c] = entry;
-  list[c+1] = NULL;
-
-  *(any_t***)list_ptr = list;
-}
-
-
-static void __FASTCALL__ asx_list_remove(any_t* list_ptr,any_t* entry,ASX_FreeFunc free_func) {
-  any_t** list = *(any_t***)list_ptr;
-  int c,e = -1;
-
-  if(list == NULL) return;
-
-  for(c = 0 ; list[c] != NULL; c++){
-    if(list[c] == entry) e = c;
-  }
-
-  if(e == -1) return; // Not found
-
-  if(free_func != NULL) free_func(list[e]);
-
-  if(c == 1) { // Only one entry, we drop all
-    delete list;
-    *(any_t**)list_ptr = NULL;
-    return;
-  }
-
-  if(c > e) // If c==e the memmove is not needed
-    memmove(list+e,list+e+1,(c-e)*sizeof(any_t*));
-
-  list = (any_t**)mp_realloc(list,(c-1)*sizeof(any_t*));
-  list[c-1] = NULL;
-
-  *(any_t***)list_ptr = list;
-}
-
-void __FASTCALL__ asx_list_free(any_t* list_ptr,ASX_FreeFunc free_func) {
-  any_t** ptr = *(any_t***)list_ptr;
-  if(ptr == NULL) return;
-  if(free_func != NULL) {
-    for( ; *ptr != NULL ; ptr++)
-      free_func(*ptr);
-  }
-  delete *(any_t**)list_ptr;
-  *(any_t**)list_ptr = NULL;
-}
-
-/////// Attribs utils
-
-char* __FASTCALL__ asx_get_attrib(const char* attrib,char** attribs) {
-    char** ptr;
-
-    if(attrib == NULL || attribs == NULL) return NULL;
-    for(ptr = attribs; ptr[0] != NULL; ptr += 2){
-	if(strcasecmp(ptr[0],attrib) == 0) return mp_strdup(ptr[1]);
-    }
-    return NULL;
-}
-
-int __FASTCALL__ asx_attrib_to_enum(const char* val,const char** valid_vals) {
-    const char** ptr;
-    int r = 0;
-
-    if(valid_vals == NULL || val == NULL) return -2;
-    for(ptr = valid_vals ; ptr[0] != NULL ; ptr++) {
-	if(strcasecmp(val,ptr[0]) == 0) return r;
-	r++;
-    }
-    return -1;
-}
-
-void ASX_Parser::warning_attrib_invalid(char* elem, char* attrib,
-					const char** valid_vals,char* val) const
-{
-    char *str,*vals;
-    const char **ptr;
-    int len;
-
-    if(valid_vals == NULL || valid_vals[0] == NULL) return;
-
-    len = strlen(valid_vals[0]) + 1;
-    for(ptr = valid_vals+1 ; ptr[0] != NULL; ptr++) {
-	len += strlen(ptr[0]);
-	len += ((ptr[1] == NULL) ? 4 : 2);
-    }
-    str = vals = new char[len];
-    vals += sprintf(vals,"%s",valid_vals[0]);
-    for(ptr = valid_vals + 1 ; ptr[0] != NULL ; ptr++) {
-	if(ptr[1] == NULL)	vals += sprintf(vals," or %s",ptr[0]);
-	else			vals += sprintf(vals,", %s",ptr[0]);
-    }
-    MSG_ERR("at line %d : attribute %s of element %s is invalid (%s). Valid values are %s",
-	    line,attrib,elem,val,str);
-    delete str;
-}
-
-int ASX_Parser::get_yes_no_attrib(char* element, char* attrib,char** cattribs,int def) const {
-    char* val = asx_get_attrib(attrib,cattribs);
-    const char* valids[] = { "NO", "YES", NULL };
-    int r;
-
-    if(val == NULL) return def;
-    r = asx_attrib_to_enum(val,valids);
-
-    if(r < 0) {
-	warning_attrib_invalid(element,attrib,valids,val);
-	r = def;
-    }
-    delete val;
-    return r;
-}
 
 void ASX_Parser::warning_attrib_required(const char *e, const char *a) const { MSG_WARN("At line %d : element %s don't have the required attribute %s",line,e,a); }
 void ASX_Parser::warning_body_parse_error(const char *e) const { MSG_WARN("At line %d : error while parsing %s body",line,e); }
@@ -145,10 +24,9 @@ void ASX_Parser::warning_body_parse_error(const char *e) const { MSG_WARN("At li
 ASX_Parser::ASX_Parser() {}
 ASX_Parser::~ASX_Parser() { if(ret_stack) delete ret_stack; }
 
-int ASX_Parser::parse_attribs(char* buffer,char*** _attribs) const {
+int ASX_Parser::parse_attribs(char* buffer,ASX_Attrib& _attribs) const {
     char *ptr1, *ptr2, *ptr3;
     int n_attrib = 0;
-    char **cattribs = NULL;
     char *attrib, *val;
 
     ptr1 = buffer;
@@ -177,7 +55,7 @@ int ASX_Parser::parse_attribs(char* buffer,char*** _attribs) const {
 	ptr1++;
 	ptr2 = strchr(ptr1,'"');
 	if (ptr2 == NULL) {
-	    MSG_WARN("At line %d : value of attribute %s isn't finished",line,attrib);
+	    MSG_WARN("At line %d : value of attribute %s isn't finished\n",line,attrib);
 	    delete attrib;
 	    break;
 	}
@@ -186,16 +64,11 @@ int ASX_Parser::parse_attribs(char* buffer,char*** _attribs) const {
 	val[ptr2-ptr1] = '\0';
 	n_attrib++;
 
-	cattribs = (char**)mp_realloc(cattribs,(2*n_attrib+1)*sizeof(char*));
-	cattribs[n_attrib*2-2] = attrib;
-	cattribs[n_attrib*2-1] = val;
+	_attribs.set(attrib,val);
 
 	ptr1 = ptr2+1;
     }
 pa_end:
-    if(n_attrib > 0)
-	cattribs[n_attrib*2-0] = NULL;
-    *_attribs = cattribs;
     return n_attrib;
 }
 
@@ -203,7 +76,7 @@ pa_end:
  * Return -1 on error, 0 when nothing is found, 1 on sucess
  */
 int ASX_Parser::get_element(const char** _buffer, char** _element,
-			    char** _body,char*** _attribs) {
+			    char** _body,ASX_Attrib& _attribs) {
     const char *ptr1,*ptr2, *ptr3, *ptr4;
     char *cattribs = NULL;
     char *element = NULL, *body = NULL;
@@ -212,13 +85,13 @@ int ASX_Parser::get_element(const char** _buffer, char** _element,
     int n_attrib = 0;
     int body_line = 0,attrib_line,ret_line,in = 0;
 
-    if(_buffer == NULL || _element == NULL || _body == NULL || _attribs == NULL) {
+    if(_buffer == NULL || _element == NULL || _body == NULL) {
 	MSG_ERR("At line %d : asx_get_element called with invalid value",line);
 	return -1;
     }
 
+    _attribs.clear();
     *_body = *_element = NULL;
-    *_attribs =  NULL;
     buffer = *_buffer;
 
     if(buffer == NULL) return 0;
@@ -402,8 +275,7 @@ int ASX_Parser::get_element(const char** _buffer, char** _element,
 	    delete body;
 	    return -1;
 	}
-    } else
-    *_attribs = NULL;
+    } else _attribs.clear();
 
     *_element = element;
     *_body = body;
@@ -420,48 +292,43 @@ int ASX_Parser::get_element(const char** _buffer, char** _element,
     return 1;
 }
 
-void ASX_Parser::param(char** cattribs, play_tree_t* pt) const {
-    const char *name,*val;
+void ASX_Parser::param(ASX_Attrib& cattribs, play_tree_t* pt) const {
+    std::string name,val;
 
-    name = asx_get_attrib("NAME",cattribs);
-    if(!name) {
+    name = cattribs.get("NAME");
+    if(name.empty()) {
 	warning_attrib_required("PARAM" ,"NAME" );
 	return;
     }
-    val = asx_get_attrib("VALUE",cattribs);
-    if(m_config_get_option(mpxp_context().mconfig,name) == NULL) {
-	MSG_WARN("Found unknow param in asx: %s",name);
-	if(val)	MSG_WARN("=%s\n",val);
-	else	MSG_WARN("\n");
+    val = cattribs.get("VALUE");
+    if(m_config_get_option(mpxp_context().mconfig,name.c_str()) == NULL) {
+	MSG_WARN("Found unknow param in asx: %s",name.c_str());
+	if(!val.empty())MSG_WARN("=%s\n",val.c_str());
+	else		MSG_WARN("\n");
 	return;
     }
-    play_tree_set_param(pt,name,val);
+    play_tree_set_param(pt,mp_strdup(name.c_str()),mp_strdup(val.c_str()));
 }
 
-void ASX_Parser::ref(char** cattribs, play_tree_t* pt) const {
-    char *href;
+void ASX_Parser::ref(ASX_Attrib& cattribs, play_tree_t* pt) const {
+    std::string href;
 
-    href = asx_get_attrib("HREF",cattribs);
-    if(href == NULL) {
+    href = cattribs.get("HREF");
+    if(href.empty()) {
 	warning_attrib_required("REF" ,"HREF" );
 	return;
     }
     // replace http my mmshttp to avoid infinite loops
-    if (strncmp(href, "http://", 7) == 0) {
-	char *newref = new char [3 + strlen(href) + 1];
-	strcpy(newref, "mms");
-	strcpy(newref + 3, href);
-	delete href;
-	href = newref;
+    if (href.substr(0,7)=="http://") {
+	href = "mms"+href;
     }
-    play_tree_add_file(pt,href);
-    MSG_V("Adding file %s to element entry\n",href);
-    delete href;
+    play_tree_add_file(pt,mp_strdup(href.c_str()));
+    MSG_V("Adding file %s to element entry\n",href.c_str());
 }
 
-play_tree_t* ASX_Parser::entryref(libinput_t* libinput,char* buffer,char** _attribs) const {
+play_tree_t* ASX_Parser::entryref(libinput_t* libinput,char* buffer,ASX_Attrib& _attribs) const {
     play_tree_t* pt;
-    char *href;
+    std::string href;
     Stream* stream;
     play_tree_parser_t* ptp;
     int f;
@@ -469,23 +336,23 @@ play_tree_t* ASX_Parser::entryref(libinput_t* libinput,char* buffer,char** _attr
 
     if(deep > 0) return NULL;
 
-    href = asx_get_attrib("HREF",_attribs);
-    if(href == NULL) {
+    href = _attribs.get("HREF");
+    if(href.empty()) {
 	warning_attrib_required("ENTRYREF" ,"HREF" );
 	return NULL;
     }
     stream=new(zeromem) Stream;
     if(stream->open(libinput,href,&f)!=MPXP_Ok) {
-	MSG_WARN("Can't open playlist %s\n",href);
+	MSG_WARN("Can't open playlist %s\n",href.c_str());
 	delete stream;
 	return NULL;
     }
     if(!(stream->type() & Stream::Type_Text)) {
-	MSG_WARN("URL %s dont point to a playlist\n",href);
+	MSG_WARN("URL %s dont point to a playlist\n",href.c_str());
 	delete stream;
 	return NULL;
     }
-    MSG_V("Adding playlist %s to element entryref\n",href);
+    MSG_V("Adding playlist %s to element entryref\n",href.c_str());
     ptp = play_tree_parser_new(stream,deep+1);
     pt = play_tree_parser_get_play_tree(libinput,ptp);
     play_tree_parser_free(ptp);
@@ -494,8 +361,9 @@ play_tree_t* ASX_Parser::entryref(libinput_t* libinput,char* buffer,char** _attr
     return pt;
 }
 
-play_tree_t* ASX_Parser::entry(const char* buffer,char** _attribs) {
-    char *celement,*body,**cattribs;
+play_tree_t* ASX_Parser::entry(const char* buffer,ASX_Attrib& _attribs) {
+    char *celement,*body;
+    ASX_Attrib cattribs;
     int r,nref=0;
     play_tree_t *pt_ref;
     UNUSED(_attribs);
@@ -503,7 +371,7 @@ play_tree_t* ASX_Parser::entry(const char* buffer,char** _attribs) {
     pt_ref = play_tree_new();
 
     while(buffer && buffer[0] != '\0') {
-	r = get_element(&buffer,&celement,&body,&cattribs);
+	r = get_element(&buffer,&celement,&body,cattribs);
 	if(r < 0) {
 	    warning_body_parse_error("ENTRY");
 	    return NULL;
@@ -514,7 +382,6 @@ play_tree_t* ASX_Parser::entry(const char* buffer,char** _attribs) {
 	    nref++;
 	} else MSG_DBG2("Ignoring element %s\n",celement);
 	if(body) delete body;
-	asx_free_attribs(cattribs);
     }
     if(nref <= 0) {
 	play_tree_free(pt_ref,1);
@@ -523,27 +390,27 @@ play_tree_t* ASX_Parser::entry(const char* buffer,char** _attribs) {
     return pt_ref;
 }
 
-play_tree_t* ASX_Parser::repeat(libinput_t*libinput,const char* buffer,char** _attribs) {
-    char *element,*body,**cattribs;
+play_tree_t* ASX_Parser::repeat(libinput_t*libinput,const char* buffer,ASX_Attrib& _attribs) {
+    char *element,*body;
+    ASX_Attrib cattribs;
     play_tree_t *pt_repeat, *list=NULL, *pt_entry;
-    char* count;
+    std::string count;
     int r;
 
     pt_repeat = play_tree_new();
 
-    count = asx_get_attrib("COUNT",_attribs);
-    if(count == NULL) {
+    count = _attribs.get("COUNT");
+    if(count.empty()) {
 	MSG_DBG2("Setting element repeat loop to infinit\n");
 	pt_repeat->loop = -1; // Infinit
     } else {
-	pt_repeat->loop = atoi(count);
-	delete count;
+	pt_repeat->loop = ::atoi(count.c_str());
 	if(pt_repeat->loop == 0) pt_repeat->loop = 1;
 	MSG_DBG2("Setting element repeat loop to %d\n",pt_repeat->loop);
     }
 
     while(buffer && buffer[0] != '\0') {
-	r = get_element(&buffer,&element,&body,&cattribs);
+	r = get_element(&buffer,&element,&body,cattribs);
 	if(r < 0) {
 	    warning_body_parse_error("REPEAT");
 	    return NULL;
@@ -573,7 +440,6 @@ play_tree_t* ASX_Parser::repeat(libinput_t*libinput,const char* buffer,char** _a
 	    param(cattribs,pt_repeat);
 	} else MSG_DBG2("Ignoring element %s\n",element);
 	if(body) delete body;
-	asx_free_attribs(cattribs);
     }
 
     if(!list) {
@@ -585,7 +451,8 @@ play_tree_t* ASX_Parser::repeat(libinput_t*libinput,const char* buffer,char** _a
 }
 
 play_tree_t* ASX_Parser::build_tree(libinput_t*libinput,const char* buffer,int deep) {
-    char *element,*asx_body,**asx_attribs,*body, **attribs;
+    char *element,*asx_body,*body;
+    ASX_Attrib asx_attribs,attribs;
     int r;
     play_tree_t *asx,*pt_entry,*list = NULL;
     ASX_Parser& parser = *new(zeromem) ASX_Parser;
@@ -593,7 +460,7 @@ play_tree_t* ASX_Parser::build_tree(libinput_t*libinput,const char* buffer,int d
     parser.line = 1;
     parser.deep = deep;
 
-    r = parser.get_element(&buffer,&element,&asx_body,&asx_attribs);
+    r = parser.get_element(&buffer,&element,&asx_body,asx_attribs);
     if(r < 0) {
 	MSG_ERR("At line %d : Syntax error ???",parser.line);
 	delete &parser;
@@ -606,7 +473,6 @@ play_tree_t* ASX_Parser::build_tree(libinput_t*libinput,const char* buffer,int d
 
     if(strcasecmp(element,"ASX") != 0) {
 	MSG_ERR("first element isn't ASX, it's %s\n",element);
-	asx_free_attribs(asx_attribs);
 	if(body) delete body;
 	delete &parser;
 	return NULL;
@@ -614,7 +480,6 @@ play_tree_t* ASX_Parser::build_tree(libinput_t*libinput,const char* buffer,int d
 
     if(!asx_body) {
 	MSG_ERR("ASX element is empty");
-	asx_free_attribs(asx_attribs);
 	delete &parser;
 	return NULL;
     }
@@ -622,7 +487,7 @@ play_tree_t* ASX_Parser::build_tree(libinput_t*libinput,const char* buffer,int d
     asx = play_tree_new();
     buffer = asx_body;
     while(buffer && buffer[0] != '\0') {
-	r = parser.get_element(&buffer,&element,&body,&attribs);
+	r = parser.get_element(&buffer,&element,&body,attribs);
 	if(r < 0) {
 	    parser.warning_body_parse_error("ASX");
 	    delete &parser;
@@ -651,11 +516,9 @@ play_tree_t* ASX_Parser::build_tree(libinput_t*libinput,const char* buffer,int d
 	    }
 	} else MSG_DBG2("Ignoring element %s\n",element);
 	if(body) delete body;
-	asx_free_attribs(attribs);
     }
 
     delete asx_body;
-    asx_free_attribs(asx_attribs);
     delete &parser;
 
     if(!list) {

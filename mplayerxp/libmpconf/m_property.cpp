@@ -99,10 +99,10 @@ int m_property_do(m_option_t* prop_list, const char* name,
     return do_action(prop_list,name,action,arg,ctx);
 }
 
-char* m_properties_expand_string(m_option_t* prop_list,char* str, any_t*ctx) {
+char* m_properties_expand_string(m_option_t* prop_list,const char* str, any_t*ctx) {
     int l,fr=0,pos=0,size=strlen(str)+512;
-    char *e,*ret = new char [size], num_val;
-    const char* p=NULL;
+    char *ret = new char [size], num_val;
+    const char* e,*p=NULL;
     int skip = 0, lvl = 0, skip_lvl = 0;
 
     while(str[0]) {
