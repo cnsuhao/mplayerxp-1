@@ -27,7 +27,7 @@ using namespace mpxp;
 namespace mpxp {
     class Ftp_Stream_Interface : public Stream_Interface {
 	public:
-	    Ftp_Stream_Interface(libinput_t* libinput);
+	    Ftp_Stream_Interface(libinput_t& libinput);
 	    virtual ~Ftp_Stream_Interface();
 
 	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
@@ -62,7 +62,7 @@ namespace mpxp {
 	    off_t	file_len;
     };
 
-Ftp_Stream_Interface::Ftp_Stream_Interface(libinput_t* libinput)
+Ftp_Stream_Interface::Ftp_Stream_Interface(libinput_t& libinput)
 		    :Stream_Interface(libinput),
 		    tcp(libinput,-1) {}
 Ftp_Stream_Interface::~Ftp_Stream_Interface() {
@@ -428,7 +428,7 @@ MPXP_Rc Ftp_Stream_Interface::ctrl(unsigned cmd,any_t*args) {
     return MPXP_Unknown;
 }
 
-static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Ftp_Stream_Interface(libinput); }
+static Stream_Interface* query_interface(libinput_t& libinput) { return new(zeromem) Ftp_Stream_Interface(libinput); }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */
 extern const stream_interface_info_t ftp_stream =

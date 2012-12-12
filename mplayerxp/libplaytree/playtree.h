@@ -167,11 +167,11 @@ play_tree_iter_down_step(play_tree_iter_t* iter, int d,int with_nodes);
 
 char* play_tree_iter_get_file(play_tree_iter_t* iter, int d);
 
-play_tree_t* parse_playtree(libinput_t* libinput,Stream * stream);
+play_tree_t* parse_playtree(libinput_t& libinput,Stream * stream);
 
 play_tree_t* play_tree_cleanup(play_tree_t* pt);
 
-play_tree_t* parse_playlist_file(libinput_t*libinput,const char* file);
+play_tree_t* parse_playlist_file(libinput_t&libinput,const char* file);
 
 /// \defgroup PtAPI Playtree highlevel API
 /// \ingroup Playtree

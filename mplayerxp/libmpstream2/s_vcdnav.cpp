@@ -31,7 +31,7 @@ namespace mpxp {
 
     class VcdNav_Stream_Interface : public Stream_Interface {
 	public:
-	    VcdNav_Stream_Interface(libinput_t* libinput);
+	    VcdNav_Stream_Interface(libinput_t& libinput);
 	    virtual ~VcdNav_Stream_Interface();
 
 	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
@@ -64,7 +64,7 @@ namespace mpxp {
 	    lsn_t		vcd_sector_lsn;
     };
 
-VcdNav_Stream_Interface::VcdNav_Stream_Interface(libinput_t* libinput)
+VcdNav_Stream_Interface::VcdNav_Stream_Interface(libinput_t& libinput)
 			:Stream_Interface(libinput) {}
 VcdNav_Stream_Interface::~VcdNav_Stream_Interface() {
     vcdinfo_close(fd);
@@ -269,7 +269,7 @@ MPXP_Rc VcdNav_Stream_Interface::ctrl(unsigned cmd,any_t*args) {
     return MPXP_Unknown;
 }
 
-static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) VcdNav_Stream_Interface(libinput); }
+static Stream_Interface* query_interface(libinput_t& libinput) { return new(zeromem) VcdNav_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t vcdnav_stream =
 {

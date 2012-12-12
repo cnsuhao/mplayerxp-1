@@ -55,6 +55,9 @@ struct config {
 };
 
 struct m_config {
+    m_config(libinput_t& _libinput):libinput(_libinput) {}
+    ~m_config() {}
+
     const config_t** opt_list;
     config_save_t** config_stack;
     any_t**dynamics;
@@ -67,7 +70,7 @@ struct m_config {
     play_tree_t* last_entry; // last added entry
     play_tree_t* last_parent; // if last_entry is NULL we must create child of this
     int recursion_depth;
-    libinput_t*	libinput;
+    libinput_t&	libinput;
 };
 
 struct config_save {
@@ -93,7 +96,7 @@ MPXP_Rc m_config_parse_config_file(m_config_t *config,const char *conffile);
  */
 MPXP_Rc m_config_parse_command_line(m_config_t* config, int argc, char **argv, char **envp);
 
-m_config_t* m_config_new(play_tree_t* pt,libinput_t*libinput);
+m_config_t* m_config_new(play_tree_t* pt,libinput_t&libinput);
 
 void m_config_free(m_config_t* config);
 

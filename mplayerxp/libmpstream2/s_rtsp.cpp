@@ -29,7 +29,7 @@ using namespace mpxp;
 namespace mpxp {
     class Rtsp_Stream_Interface : public Stream_Interface {
 	public:
-	    Rtsp_Stream_Interface(libinput_t* libinput);
+	    Rtsp_Stream_Interface(libinput_t& libinput);
 	    virtual ~Rtsp_Stream_Interface();
 
 	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
@@ -49,7 +49,7 @@ namespace mpxp {
 	    Tcp			tcp;
     };
 
-Rtsp_Stream_Interface::Rtsp_Stream_Interface(libinput_t* _libinput)
+Rtsp_Stream_Interface::Rtsp_Stream_Interface(libinput_t& _libinput)
 			:Stream_Interface(_libinput),
 			tcp(_libinput,-1) {}
 Rtsp_Stream_Interface::~Rtsp_Stream_Interface() {}
@@ -167,7 +167,7 @@ off_t	Rtsp_Stream_Interface::size() const { return 0; }
 off_t	Rtsp_Stream_Interface::sector_size() const { return 1; }
 std::string Rtsp_Stream_Interface::mime_type() const { return "application/octet-stream"; }
 
-static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Rtsp_Stream_Interface(libinput); }
+static Stream_Interface* query_interface(libinput_t& libinput) { return new(zeromem) Rtsp_Stream_Interface(libinput); }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */
 extern const stream_interface_info_t rtsp_stream =

@@ -6,20 +6,22 @@ namespace mpxp {
 }
 
 struct menu_priv_s;
-typedef struct  menu_s menu_t;
 
-struct menu_s {
-  struct MPContext *ctx;
-  void (*draw)(menu_t* menu,mp_image_t* mpi);
-  void (*read_cmd)(menu_t* menu,int cmd);
-  void (*read_key)(menu_t* menu,int cmd);
-  void (*close)(menu_t* menu);
-  m_struct_t* priv_st;
-  struct menu_priv_s* priv;
-  int show; // Draw it ?
-  int cl; // Close request (user sent a close cmd or
-  menu_t* parent;
-  libinput_t*	libinput;
+struct menu_t {
+    menu_t(libinput_t& _libinput):libinput(_libinput) {}
+    ~menu_t() {}
+
+    struct MPContext *ctx;
+    void (*draw)(menu_t* menu,mp_image_t* mpi);
+    void (*read_cmd)(menu_t* menu,int cmd);
+    void (*read_key)(menu_t* menu,int cmd);
+    void (*close)(menu_t* menu);
+    m_struct_t* priv_st;
+    struct menu_priv_s* priv;
+    int show; // Draw it ?
+    int cl; // Close request (user sent a close cmd or
+    menu_t* parent;
+    libinput_t&	libinput;
 };
 
 typedef struct menu_info_s {
@@ -48,7 +50,7 @@ int menu_init(struct MPContext *mpctx,const char* cfg_file);
 void menu_uninit(void);
 
 /// Open a menu defined in the config file
-menu_t* menu_open(const char *name,libinput_t*libinput);
+menu_t* menu_open(const char *name,libinput_t&libinput);
 
 void menu_draw(menu_t* menu,mp_image_t* mpi);
 void menu_read_cmd(menu_t* menu,int cmd);

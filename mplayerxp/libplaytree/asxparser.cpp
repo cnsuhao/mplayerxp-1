@@ -324,7 +324,7 @@ void ASX_Parser::ref(ASX_Attrib& cattribs, play_tree_t* pt) const {
     MSG_V("Adding file %s to element entry\n",href.c_str());
 }
 
-play_tree_t* ASX_Parser::entryref(libinput_t* libinput,const char* buffer,ASX_Attrib& _attribs) const {
+play_tree_t* ASX_Parser::entryref(libinput_t& libinput,const char* buffer,ASX_Attrib& _attribs) const {
     play_tree_t* pt;
     std::string href;
     Stream* stream;
@@ -386,7 +386,7 @@ play_tree_t* ASX_Parser::entry(const char* buffer,ASX_Attrib& _attribs) {
     return pt_ref;
 }
 
-play_tree_t* ASX_Parser::repeat(libinput_t*libinput,const char* buffer,ASX_Attrib& _attribs) {
+play_tree_t* ASX_Parser::repeat(libinput_t&libinput,const char* buffer,ASX_Attrib& _attribs) {
     ASX_Element element;
     play_tree_t *pt_repeat, *list=NULL, *pt_entry;
     std::string count;
@@ -444,7 +444,7 @@ play_tree_t* ASX_Parser::repeat(libinput_t*libinput,const char* buffer,ASX_Attri
     return pt_repeat;
 }
 
-play_tree_t* ASX_Parser::build_tree(libinput_t*libinput,const char* buffer,int deep) {
+play_tree_t* ASX_Parser::build_tree(libinput_t&libinput,const char* buffer,int deep) {
     ASX_Element asx_element,element;
     int r;
     play_tree_t *asx,*pt_entry,*list = NULL;

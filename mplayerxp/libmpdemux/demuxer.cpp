@@ -434,14 +434,10 @@ force_driver:
     return MPXP_Ok;
 }
 
-Demuxer* Demuxer::open(Stream *vs,int audio_id,int video_id,int dvdsub_id){
+Demuxer* Demuxer::open(Stream *vs,libinput_t& libinput,int audio_id,int video_id,int dvdsub_id){
   Stream *as = NULL,*ss = NULL;
   Demuxer *vd,*ad = NULL,*sd = NULL;
   int afmt = 0,sfmt = 0;
-  libinput_t* libinput=NULL;
-#ifdef HAVE_STREAMIN
-    libinput=vs->streaming_strl->libinput;
-#endif
 
   if(demux_conf.audio_stream) {
     as = new(zeromem) Stream();

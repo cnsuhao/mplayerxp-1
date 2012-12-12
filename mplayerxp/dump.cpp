@@ -77,7 +77,7 @@ void dump_stream(Stream *stream)
 #define MUX_HAVE_SUBS  0x04
 struct dump_priv_t : public Opaque {
     public:
-	dump_priv_t() {}
+	dump_priv_t(libinput_t& l):libinput(l) {}
 	virtual ~dump_priv_t() {}
 
 	int		my_use_pts;
@@ -90,7 +90,7 @@ struct dump_priv_t : public Opaque {
 	uint64_t	vsize,asize,ssize;
 	float		timer_corr; /* use common time-base */
 	float		vtimer;
-	libinput_t*	libinput;
+	libinput_t&	libinput;
 };
 
 /*
@@ -116,16 +116,15 @@ static int check_cmd(dump_priv_t* priv)
   return retval;
 }
 
-void dump_mux_init(Demuxer *demuxer,libinput_t* libinput)
+void dump_mux_init(Demuxer *demuxer,libinput_t& libinput)
 {
     sh_audio_t* sha=reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
     sh_video_t* shv=reinterpret_cast<sh_video_t*>(demuxer->video->sh);
     char stream_dump_name[1024];
     /* TODO copy it from demuxer */
     if(demuxer->priv) return;
-    dump_priv_t*priv=new(zeromem) dump_priv_t;
+    dump_priv_t*priv=new(zeromem) dump_priv_t(libinput);
     demuxer->priv=priv;
-    priv->libinput=libinput;
     /* describe other useless dumps */
     priv->mux_type=MUX_HAVE_AUDIO|MUX_HAVE_VIDEO|MUX_HAVE_SUBS;
     if(port) {

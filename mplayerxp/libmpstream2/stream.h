@@ -58,7 +58,7 @@ namespace mpxp {
 
 	    static void		print_drivers();
 
-	    virtual MPXP_Rc	open(libinput_t*libinput,const std::string& filename,int* file_format);
+	    virtual MPXP_Rc	open(libinput_t&libinput,const std::string& filename,int* file_format);
 	    virtual int		read(any_t* mem,int total);
 	    virtual off_t	seek(off_t off);
 	    virtual int		skip(off_t len);
@@ -131,7 +131,7 @@ namespace mpxp {
 
     struct Cached_Stream : public Stream {
 	public:
-	    Cached_Stream(libinput_t* libinput,int size,int _min,int prefill,Stream::type_e type=Stream::Type_Unknown);
+	    Cached_Stream(libinput_t& libinput,int size,int _min,int prefill,Stream::type_e type=Stream::Type_Unknown);
 	    virtual ~Cached_Stream();
 
 	    virtual int		read(any_t* mem,int total);

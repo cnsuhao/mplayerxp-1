@@ -220,14 +220,14 @@ int m_config_pop(m_config_t* config) {
   return ret;
 }
 
-m_config_t* m_config_new(play_tree_t* pt,libinput_t*libinput) {
+m_config_t* m_config_new(play_tree_t* pt,libinput_t&libinput) {
   m_config_t* config;
 
 #ifdef MP_DEBUG
   assert(pt != NULL);
 #endif
 
-  config = (m_config_t*)mp_calloc(1,sizeof(m_config_t));
+  config = new(zeromem) m_config_t(libinput);
   if(config == NULL) {
     MSG_ERR( "Can't allocate %d bytes of memory : %s\n",sizeof(m_config_t),strerror(errno));
     return NULL;
@@ -240,7 +240,6 @@ m_config_t* m_config_new(play_tree_t* pt,libinput_t*libinput) {
   }
   SET_GLOBAL(config); // We always start with global options
   config->pt = pt;
-  config->libinput=libinput;
   return config;
 }
 

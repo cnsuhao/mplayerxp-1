@@ -28,7 +28,7 @@ using namespace mpxp;
 namespace mpxp {
     class Udp_Stream_Interface : public Stream_Interface {
 	public:
-	    Udp_Stream_Interface(libinput_t* libinput);
+	    Udp_Stream_Interface(libinput_t& libinput);
 	    virtual ~Udp_Stream_Interface();
 
 	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
@@ -49,7 +49,7 @@ namespace mpxp {
 	    Tcp			tcp;
     };
 
-Udp_Stream_Interface::Udp_Stream_Interface(libinput_t* libinput)
+Udp_Stream_Interface::Udp_Stream_Interface(libinput_t& libinput)
 			:Stream_Interface(libinput),
 			udp(-1),
 			tcp(libinput,-1) {}
@@ -122,7 +122,7 @@ off_t	Udp_Stream_Interface::size() const { return 0; }
 off_t	Udp_Stream_Interface::sector_size() const { return 1; }
 std::string Udp_Stream_Interface::mime_type() const { return "application/octet-stream"; }
 
-static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Udp_Stream_Interface(libinput); }
+static Stream_Interface* query_interface(libinput_t& libinput) { return new(zeromem) Udp_Stream_Interface(libinput); }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */
 extern const stream_interface_info_t rtsp_stream =

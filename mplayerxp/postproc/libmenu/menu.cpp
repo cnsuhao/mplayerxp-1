@@ -202,7 +202,7 @@ void menu_dflt_read_key(menu_t* menu,int cmd) {
   }
 }
 
-menu_t* menu_open(const char *name,libinput_t* libinput) {
+menu_t* menu_open(const char *name,libinput_t& libinput) {
   menu_t* m;
   int i;
 
@@ -227,8 +227,7 @@ menu_t* menu_open(const char *name,libinput_t* libinput) {
     MSG_WARN("[libmenu] Menu not found: %s\n",name);
     return NULL;
   }
-  m = new(zeromem) menu_t;
-  m->libinput = libinput;
+  m = new(zeromem) menu_t(libinput);
   m->priv_st = &(menu_list[i].type->priv_st);
   m->priv = (menu_priv_s*)m_struct_copy(m->priv_st,menu_list[i].cfg);
   m->ctx = menu_ctx;

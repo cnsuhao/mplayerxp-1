@@ -100,7 +100,7 @@ namespace mpxp {
 		Switch_Subs	=3
 	    };
 
-	    static Demuxer*		open(Stream* stream,int aid,int vid,int sid);
+	    static Demuxer*		open(Stream* stream,libinput_t& libinput,int aid,int vid,int sid);
 
 	    virtual MPXP_Rc		open();
 	    virtual int			demux(Demuxer_Stream* ds);

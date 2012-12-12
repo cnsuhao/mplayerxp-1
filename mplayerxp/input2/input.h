@@ -135,34 +135,34 @@ namespace mpxp {
     typedef int (*mp_input_cmd_filter)(mp_cmd_t* cmd, int paused, any_t* ctx); // Should return 1 if the command was processed
     extern void (*mp_input_key_cb)(int code); // Set this to grab all incoming key code
 
-    extern mp_cmd_t* mp_input_get_cmd_from_keys(libinput_t* handle,int n,int* keys);
+    extern mp_cmd_t* mp_input_get_cmd_from_keys(libinput_t& handle,int n,int* keys);
     // This function can be used to reput a command in the system. It's used by libmpdemux
     // when it perform a blocking operation to resend the command it received to the main
     // loop.
-    extern MPXP_Rc mp_input_queue_cmd(libinput_t* handle,mp_cmd_t* cmd);
+    extern MPXP_Rc mp_input_queue_cmd(libinput_t& handle,mp_cmd_t* cmd);
 
     // This function retrive the next avaible command waiting no more than time msec.
     // If pause is true, the next input will always return a pause command.
-    extern mp_cmd_t* mp_input_get_cmd(libinput_t*handle,int time, int paused, int peek_only);
+    extern mp_cmd_t* mp_input_get_cmd(libinput_t& handle,int time, int paused, int peek_only);
 
     extern mp_cmd_t* mp_input_parse_cmd(const char* str);
 
     /// These filter allow you to process the command before mplayer
     /// If a filter return a true value mp_input_get_cmd will return NULL
-    extern void mp_input_add_cmd_filter(libinput_t* handle,mp_input_cmd_filter, any_t* ctx);
+    extern void mp_input_add_cmd_filter(libinput_t& handle,mp_input_cmd_filter, any_t* ctx);
     // After getting a command from mp_input_get_cmd you need to mp_free it using this
     // function
     extern void mp_cmd_free(mp_cmd_t* cmd);
 
     // When you create a new driver you should add it in this 2 functions.
-    extern libinput_t* mp_input_open(void);
-    extern void   mp_input_close(libinput_t* handle);
+    extern libinput_t& mp_input_open();
+    extern void   mp_input_close(libinput_t& handle);
 
-    extern void mp_input_print_keys(libinput_t*handle);
-    extern void mp_input_print_cmds(libinput_t*handle);
+    extern void mp_input_print_keys(libinput_t& handle);
+    extern void mp_input_print_cmds(libinput_t& handle);
 
-    extern void mp_input_print_binds(libinput_t*handle);
+    extern void mp_input_print_binds(libinput_t& handle);
     // Interruptible usleep:  (used by libmpdemux)
-    extern MPXP_Rc mp_input_check_interrupt(libinput_t* handle,int time);
+    extern MPXP_Rc mp_input_check_interrupt(libinput_t& handle,int time);
 } // namespace mpxp
 #endif

@@ -7,7 +7,7 @@
 namespace mpxp {
     int  dump_parse(const char *param);
     void dump_stream(Stream *stream);
-    void dump_mux_init(Demuxer *demuxer,libinput_t*libinput);
+    void dump_mux_init(Demuxer *demuxer,libinput_t&libinput);
     void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play_n_frames);
     void dump_mux_close(Demuxer *demuxer);
 } //namespace

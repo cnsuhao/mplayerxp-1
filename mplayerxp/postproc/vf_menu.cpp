@@ -31,10 +31,13 @@ static int go2pause = 0;
 int attribute_used menu_startup = 0;
 
 struct vf_priv_t {
-  menu_t* root;
-  menu_t* current;
-  int passthrough;
-  libinput_t*  libinput;
+    vf_priv_t(libinput_t& _libinput):libinput(_libinput) {}
+    ~vf_priv_t() {}
+
+    menu_t* root;
+    menu_t* current;
+    int passthrough;
+    libinput_t&  libinput;
 };
 
 static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi);
@@ -240,9 +243,8 @@ static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigne
 
 static MPXP_Rc __FASTCALL__ open_vf(vf_instance_t *vf,const char* args){
   if(!st_priv) {
-    st_priv = new(zeromem) vf_priv_t;
+    st_priv = new(zeromem) vf_priv_t(vf->libinput);
     st_priv->root = st_priv->current = menu_open(args,vf->libinput);
-    st_priv->libinput=vf->libinput;
     if(!st_priv->current) {
       delete st_priv;
       st_priv = NULL;

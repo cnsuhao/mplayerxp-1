@@ -47,20 +47,21 @@ extern int v_saturation;
 
 struct decvideo_priv_t : public Opaque {
     public:
-	decvideo_priv_t();
+	decvideo_priv_t(libinput_t&);
 	virtual ~decvideo_priv_t();
 
 	sh_video_t*		parent;
 	const vd_functions_t*	mpvdec;
-	libinput_t*		libinput;
+	libinput_t&		libinput;
 	vd_private_t*		ctx;
 	vf_stream_t*		vfilter;
 	int			vfilter_inited;
 	put_slice_info_t*	psi;
 };
 
-decvideo_priv_t::decvideo_priv_t()
-		:psi(new(zeromem) put_slice_info_t)
+decvideo_priv_t::decvideo_priv_t(libinput_t& _libinput)
+		:libinput(_libinput),
+		psi(new(zeromem) put_slice_info_t)
 {
 }
 
@@ -139,11 +140,10 @@ static void mpcv_print_codec_info(decvideo_priv_t *priv) {
 #endif
 }
 
-video_decoder_t * mpcv_lavc_init(sh_video_t* sh_video,libinput_t* libinput) {
+video_decoder_t * mpcv_lavc_init(sh_video_t* sh_video,libinput_t& libinput) {
     video_decoder_t* handle=new(zeromem) video_decoder_t;
-    decvideo_priv_t* priv = new(zeromem) decvideo_priv_t;
+    decvideo_priv_t* priv = new(zeromem) decvideo_priv_t(libinput);
     priv->parent=sh_video;
-    priv->libinput=libinput;
     handle->vd_private=priv;
     const video_probe_t* vprobe=NULL;
     /* Use lavc's drivers  as last hope */
@@ -168,16 +168,15 @@ video_decoder_t * mpcv_lavc_init(sh_video_t* sh_video,libinput_t* libinput) {
     return handle;
 }
 
-video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,libinput_t*libinput){
+video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,libinput_t&libinput){
     UNUSED(codecname);
     UNUSED(status);
     int done=0;
     const video_probe_t* vprobe=NULL;
     sh_video->codec=NULL;
     video_decoder_t* handle=new(zeromem) video_decoder_t;
-    decvideo_priv_t* priv = new(zeromem) decvideo_priv_t;
+    decvideo_priv_t* priv = new(zeromem) decvideo_priv_t(libinput);
     priv->parent=sh_video;
-    priv->libinput=libinput;
     handle->vd_private=priv;
 
     MP_UNIT("init_video_filters");

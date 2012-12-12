@@ -119,7 +119,7 @@ void		Stream::type(Stream::type_e t) { _type=t; }
 int		Stream::eof() const { return _eof; }
 void		Stream::eof(int e) { if(!e) reset(); _eof = e; }
 
-MPXP_Rc		Stream::open(libinput_t*libinput,const std::string& filename,int* ff)
+MPXP_Rc		Stream::open(libinput_t&libinput,const std::string& filename,int* ff)
 {
     unsigned i,done;
     unsigned mrl_len;

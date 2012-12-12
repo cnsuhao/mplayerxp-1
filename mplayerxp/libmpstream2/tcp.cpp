@@ -225,7 +225,7 @@ void Tcp::open(const std::string& host, int port, tcp_af_e af) {
     }
 }
 
-Tcp::Tcp(libinput_t* _libinput,const std::string& host,int port,tcp_af_e af)
+Tcp::Tcp(libinput_t& _libinput,const std::string& host,int port,tcp_af_e af)
     :_fd(-1),
     _error(Tcp::Err_None),
     libinput(_libinput)
@@ -233,7 +233,7 @@ Tcp::Tcp(libinput_t* _libinput,const std::string& host,int port,tcp_af_e af)
     open(host,port,af);
 }
 
-Tcp::Tcp(libinput_t* _libinput,net_fd_t fd)
+Tcp::Tcp(libinput_t& _libinput,net_fd_t fd)
     :_fd(fd),
     _error(Tcp::Err_None),
     libinput(_libinput)
@@ -267,5 +267,5 @@ int Tcp::read(uint8_t* buf,unsigned len,int flags) { return ::recv(_fd,buf,len,f
 int Tcp::write(const uint8_t* buf,unsigned len,int flags) const { return ::send(_fd,buf,len,flags); }
 int Tcp::established() const { return _fd > 0; }
 Tcp::tcp_error_e Tcp::error() const { return _error; }
-libinput_t* Tcp::get_libinput() const { return libinput; }
+libinput_t& Tcp::get_libinput() const { return libinput; }
 } // namespace mpxp

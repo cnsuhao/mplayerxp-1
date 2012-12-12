@@ -120,7 +120,7 @@ static void __FASTCALL__ play_tree_parser_stop_keeping(play_tree_parser_t* p) {
 }
 
 
-static play_tree_t* parse_asx(libinput_t* libinput,play_tree_parser_t* p) {
+static play_tree_t* parse_asx(libinput_t& libinput,play_tree_parser_t* p) {
   int comments = 0,get_line = 1;
   char* line = NULL;
 
@@ -340,7 +340,7 @@ parse_textplain(play_tree_parser_t* p) {
   return entry;
 }
 
-play_tree_t* parse_playtree(libinput_t*libinput,Stream * stream) {
+play_tree_t* parse_playtree(libinput_t&libinput,Stream * stream) {
   play_tree_parser_t* p;
   play_tree_t* ret;
 
@@ -359,7 +359,7 @@ play_tree_t* parse_playtree(libinput_t*libinput,Stream * stream) {
   return ret;
 }
 
-play_tree_t* parse_playlist_file(libinput_t*libinput,const char* file) {
+play_tree_t* parse_playlist_file(libinput_t&libinput,const char* file) {
   Stream *stream;
   play_tree_t* ret;
   int ff;
@@ -403,7 +403,7 @@ play_tree_parser_free(play_tree_parser_t* p) {
 }
 
 play_tree_t*
-play_tree_parser_get_play_tree(libinput_t* libinput,play_tree_parser_t* p) {
+play_tree_parser_get_play_tree(libinput_t& libinput,play_tree_parser_t* p) {
   play_tree_t* tree = NULL;
 
 #ifdef MP_DEBUG

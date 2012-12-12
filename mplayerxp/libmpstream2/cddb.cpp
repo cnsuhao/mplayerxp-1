@@ -525,12 +525,11 @@ static int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {
 	return 0;
 }
 
-static MPXP_Rc __FASTCALL__ cddb_resolve(libinput_t*libinput,char **xmcd_file) {
+static MPXP_Rc __FASTCALL__ cddb_resolve(libinput_t&libinput,char **xmcd_file) {
     char cddb_cache_dir[] = DEFAULT_CACHE_DIR;
     char *home_dir = NULL;
-    cddb_data_t cddb_data;
+    cddb_data_t cddb_data(libinput);
 
-    cddb_data.libinput=libinput;
     cddb_data.tracks = read_toc();
     cddb_data.disc_id = cddb_discid(cddb_data.tracks);
     cddb_data.anonymous = 1;	// Don't send user info by default
@@ -733,7 +732,7 @@ MPXP_Rc CD_Info::parse_xmcd(const std::string& _xmcd_file) {
     return MPXP_Ok;
 }
 
-MPXP_Rc CDD_Interface::open_cddb(libinput_t *libinput,const std::string& dev, const std::string& track) {
+MPXP_Rc CDD_Interface::open_cddb(libinput_t& libinput,const std::string& dev, const std::string& track) {
     char *xmcd_file = NULL;
     MPXP_Rc ret;
 

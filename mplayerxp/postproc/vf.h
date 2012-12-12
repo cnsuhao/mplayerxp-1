@@ -47,11 +47,14 @@ namespace mpxp {
 
     struct libinput_t;
     struct vf_stream_t {
+	vf_stream_t(libinput_t& _libinput):libinput(_libinput) {}
+	~vf_stream_t() {}
+
 	vf_instance_t*	first;
-	libinput_t*	libinput;
+	libinput_t&	libinput;
     };
 
-    vf_stream_t*	__FASTCALL__ vf_init(libinput_t* libinput,const vf_conf_t* conf);
+    vf_stream_t*	__FASTCALL__ vf_init(libinput_t& libinput,const vf_conf_t* conf);
     void		__FASTCALL__ vf_uninit(vf_stream_t* s);
     void		__FASTCALL__ vf_reinit_vo(vf_stream_t* s,unsigned w,unsigned h,unsigned fmt,int reset_cache);
 

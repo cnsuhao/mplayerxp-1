@@ -581,7 +581,7 @@ int __FASTCALL__ tv_step_chanlist(tvi_handle_t *tvh)
 /* fill demux->video and demux->audio */
     class Tv_Stream_Interface : public Stream_Interface {
 	public:
-	    Tv_Stream_Interface(libinput_t* libinput);
+	    Tv_Stream_Interface(libinput_t& libinput);
 	    virtual ~Tv_Stream_Interface();
 
 	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
@@ -599,7 +599,7 @@ int __FASTCALL__ tv_step_chanlist(tvi_handle_t *tvh)
 	    tvi_handle_t*	priv;
     };
 
-Tv_Stream_Interface::Tv_Stream_Interface(libinput_t*libinput):Stream_Interface(libinput) {}
+Tv_Stream_Interface::Tv_Stream_Interface(libinput_t&libinput):Stream_Interface(libinput) {}
 Tv_Stream_Interface::~Tv_Stream_Interface() { delete priv; }
 
 MPXP_Rc Tv_Stream_Interface::open(const std::string& filename,unsigned flags)
@@ -666,7 +666,7 @@ off_t	Tv_Stream_Interface::size() const { return -1; }
 off_t	Tv_Stream_Interface::sector_size() const { return 0; }
 std::string Tv_Stream_Interface::mime_type() const { return "application/octet-stream"; }
 
-static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Tv_Stream_Interface(libinput); }
+static Stream_Interface* query_interface(libinput_t& libinput) { return new(zeromem) Tv_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t tv_stream =
 {

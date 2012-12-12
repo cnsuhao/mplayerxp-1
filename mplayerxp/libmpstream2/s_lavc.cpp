@@ -13,7 +13,7 @@ using namespace mpxp;
 namespace mpxp {
     class Lavs_Stream_Interface : public Stream_Interface {
 	public:
-	    Lavs_Stream_Interface(libinput_t* libinput);
+	    Lavs_Stream_Interface(libinput_t& libinput);
 	    virtual ~Lavs_Stream_Interface();
 
 	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
@@ -32,7 +32,7 @@ namespace mpxp {
 	    off_t end_pos;
     };
 
-Lavs_Stream_Interface::Lavs_Stream_Interface(libinput_t*libinput)
+Lavs_Stream_Interface::Lavs_Stream_Interface(libinput_t&libinput)
 			:Stream_Interface(libinput),
 			ctx(NULL),end_pos(-1) {}
 Lavs_Stream_Interface::~Lavs_Stream_Interface() {
@@ -87,7 +87,7 @@ off_t	Lavs_Stream_Interface::size() const { return end_pos; }
 off_t	Lavs_Stream_Interface::sector_size() const { return STREAM_BUFFER_SIZE; }
 std::string Lavs_Stream_Interface::mime_type() const { return "application/octet-stream"; }
 
-static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Lavs_Stream_Interface(libinput); }
+static Stream_Interface* query_interface(libinput_t& libinput) { return new(zeromem) Lavs_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t lavs_stream =
 {

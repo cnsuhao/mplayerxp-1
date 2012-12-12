@@ -11,7 +11,7 @@ namespace mpxp {
     /** Stream-driver interface */
     class Stream_Interface : public Opaque {
 	public:
-	    Stream_Interface(libinput_t*) {}
+	    Stream_Interface(libinput_t&) {}
 	    virtual ~Stream_Interface() {}
 		/** Opens stream with given name
 		  * @param libinput	points libinput2
@@ -68,7 +68,7 @@ namespace mpxp {
     struct stream_interface_info_t {
 	const char*		mrl;	/**< MRL of stream driver */
 	const char*		descr;	/**< description of the driver */
-	Stream_Interface*	(*query_interface)(libinput_t*);
+	Stream_Interface*	(*query_interface)(libinput_t&);
     };
 } // namespace mpxp
 #endif

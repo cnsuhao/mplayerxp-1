@@ -23,7 +23,7 @@ using namespace mpxp;
 namespace mpxp {
     class Network_Stream_Interface : public Stream_Interface {
 	public:
-	    Network_Stream_Interface(libinput_t* libinput);
+	    Network_Stream_Interface(libinput_t& libinput);
 	    virtual ~Network_Stream_Interface();
 
 	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
@@ -43,7 +43,7 @@ namespace mpxp {
 	    networking_t*	networking;
     };
 
-Network_Stream_Interface::Network_Stream_Interface(libinput_t* libinput)
+Network_Stream_Interface::Network_Stream_Interface(libinput_t& libinput)
 			:Stream_Interface(libinput),
 			tcp(libinput,-1) {}
 Network_Stream_Interface::~Network_Stream_Interface() {
@@ -114,7 +114,7 @@ MPXP_Rc Network_Stream_Interface::ctrl(unsigned cmd,any_t*args) {
     return MPXP_Unknown;
 }
 
-static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Network_Stream_Interface(libinput); }
+static Stream_Interface* query_interface(libinput_t& libinput) { return new(zeromem) Network_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t network_stream =
 {

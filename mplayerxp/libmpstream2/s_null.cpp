@@ -10,7 +10,7 @@ using namespace mpxp;
 namespace mpxp {
     class Null_Stream_Interface : public Stream_Interface {
 	public:
-	    Null_Stream_Interface(libinput_t* libinput);
+	    Null_Stream_Interface(libinput_t& libinput);
 	    virtual ~Null_Stream_Interface();
 
 	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
@@ -25,7 +25,7 @@ namespace mpxp {
 	    virtual std::string mime_type() const;
     };
 
-Null_Stream_Interface::Null_Stream_Interface(libinput_t*libinput):Stream_Interface(libinput) {}
+Null_Stream_Interface::Null_Stream_Interface(libinput_t&libinput):Stream_Interface(libinput) {}
 Null_Stream_Interface::~Null_Stream_Interface() {}
 
 MPXP_Rc Null_Stream_Interface::open(const std::string& filename,unsigned flags) {
@@ -48,7 +48,7 @@ off_t	Null_Stream_Interface::size() const { return 0; }
 off_t	Null_Stream_Interface::sector_size() const { return 0; }
 std::string Null_Stream_Interface::mime_type() const { return "application/octet-stream"; }
 
-static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) Null_Stream_Interface(libinput); }
+static Stream_Interface* query_interface(libinput_t& libinput) { return new(zeromem) Null_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t null_stream =
 {

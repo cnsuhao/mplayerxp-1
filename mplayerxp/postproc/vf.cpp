@@ -290,7 +290,7 @@ static int __FASTCALL__ vf_default_query_format(vf_instance_t* vf, unsigned int 
     return 1;//vf_next_query_format(vf,fmt,w,h);
 }
 
-static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,const char *name,const char *args,libinput_t* libinput,const vf_conf_t* conf){
+static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,const char *name,const char *args,libinput_t& libinput,const vf_conf_t* conf){
     vf_instance_t* vf;
     int i;
     for(i=0;;i++){
@@ -300,8 +300,8 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,const char
 	}
 	if(!strcmp(filter_list[i]->name,name)) break;
     }
-    vf=new(zeromem) vf_instance_t;
-    fill_false_pointers(vf->antiviral_hole,offsetof(vf_instance_t,pin)-offsetof(vf_instance_t,antiviral_hole));
+    vf=new(zeromem) vf_instance_t(libinput);
+    fill_false_pointers(vf->antiviral_hole,reinterpret_cast<long>(&vf->pin)-reinterpret_cast<long>(&vf->antiviral_hole));
     vf->pin=VF_PIN;
     vf->info=filter_list[i];
     vf->next=next;
@@ -315,7 +315,6 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,const char
     vf->conf.w=conf->w;
     vf->conf.h=conf->h;
     vf->conf.fourcc=conf->fourcc;
-    vf->libinput=libinput;
     if(next) next->prev=vf;
     if(vf->info->open(vf,(char*)args)==MPXP_Ok) return vf; // Success!
     delete vf;
@@ -323,7 +322,7 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,const char
     return NULL;
 }
 
-vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,const char *name,const char *args,libinput_t*libinput,const vf_conf_t* conf){
+vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,const char *name,const char *args,libinput_t&libinput,const vf_conf_t* conf){
     if(strcmp(name,"vo2")) {
 	MSG_V("Open video filter: [%s] <%ux%u %s>\n", name,conf->w,conf->h,vo_format_name(conf->fourcc));
     }
@@ -457,7 +456,7 @@ void __FASTCALL__ vf_uninit_filter_chain(vf_instance_t* vf){
 }
 
 extern vf_cfg_t vf_cfg;
-vf_instance_t* __FASTCALL__ vf_init_filter(libinput_t* libinput,const vf_conf_t* conf)
+vf_instance_t* __FASTCALL__ vf_init_filter(libinput_t& libinput,const vf_conf_t* conf)
 {
     char *vf_last=NULL,*vf_name=vf_cfg.list;
     char *arg;
@@ -677,9 +676,8 @@ void vf_help(){
     MSG_INFO("\n");
 }
 
-vf_stream_t* vf_init(libinput_t* libinput,const vf_conf_t* conf) {
-    vf_stream_t* s = new(zeromem) vf_stream_t;
-    s->libinput=libinput;
+vf_stream_t* vf_init(libinput_t& libinput,const vf_conf_t* conf) {
+    vf_stream_t* s = new(zeromem) vf_stream_t(libinput);
     vf_instance_t* first;
     s->first=first=vf_init_filter(libinput,conf);
     first->parent=s;

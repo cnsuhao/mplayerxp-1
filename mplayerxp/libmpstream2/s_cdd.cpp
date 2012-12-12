@@ -20,7 +20,7 @@ using namespace mpxp;
 namespace mpxp {
     class Cdda_Stream_Interface : public Stream_Interface {
 	public:
-	    Cdda_Stream_Interface(libinput_t* libinput);
+	    Cdda_Stream_Interface(libinput_t& libinput);
 	    virtual ~Cdda_Stream_Interface();
 
 	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
@@ -40,7 +40,7 @@ namespace mpxp {
 	    track_t		track_idx;
     };
 
-Cdda_Stream_Interface::Cdda_Stream_Interface(libinput_t* libinput)
+Cdda_Stream_Interface::Cdda_Stream_Interface(libinput_t& libinput)
 			:Stream_Interface(libinput),
 			priv(new(zeromem) CDD_Interface),
 			track_idx(255) {}
@@ -119,7 +119,7 @@ MPXP_Rc Cdda_Stream_Interface::ctrl(unsigned cmd,any_t*args)
     return MPXP_False;
 }
 
-static Stream_Interface* query_cdda_interface(libinput_t* libinput) { return new(zeromem) Cdda_Stream_Interface(libinput); }
+static Stream_Interface* query_cdda_interface(libinput_t& libinput) { return new(zeromem) Cdda_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t cdda_stream =
 {
@@ -130,14 +130,14 @@ extern const stream_interface_info_t cdda_stream =
 
     class Cddb_Stream_Interface : public Cdda_Stream_Interface {
 	public:
-	    Cddb_Stream_Interface(libinput_t* libinput);
+	    Cddb_Stream_Interface(libinput_t& libinput);
 	    virtual ~Cddb_Stream_Interface();
 
 	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
 	private:
-	    libinput_t*		libinput;
+	    libinput_t&		libinput;
     };
-Cddb_Stream_Interface::Cddb_Stream_Interface(libinput_t*_libinput)
+Cddb_Stream_Interface::Cddb_Stream_Interface(libinput_t&_libinput)
 			:Cdda_Stream_Interface(_libinput),
 			libinput(_libinput) {}
 Cddb_Stream_Interface::~Cddb_Stream_Interface() {}
@@ -162,7 +162,7 @@ MPXP_Rc Cddb_Stream_Interface::open(const std::string& filename,unsigned flags)
 #endif
 }
 
-static Stream_Interface* query_cddb_interface(libinput_t* libinput) { return new(zeromem) Cddb_Stream_Interface(libinput); }
+static Stream_Interface* query_cddb_interface(libinput_t& libinput) { return new(zeromem) Cddb_Stream_Interface(libinput); }
 extern const stream_interface_info_t cddb_stream =
 {
     "cddb://",

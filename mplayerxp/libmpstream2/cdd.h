@@ -7,6 +7,9 @@ namespace mpxp {
     struct libinput_t;
 
     struct cddb_data_t {
+	cddb_data_t(libinput_t& _libinput):libinput(_libinput) {}
+	~cddb_data_t() {}
+
 	std::string	cddb_hello;
 	unsigned long	disc_id;
 	unsigned int	tracks;
@@ -18,7 +21,7 @@ namespace mpxp {
 	char*		xmcd_file;
 	size_t		xmcd_file_size;
 	any_t*		user_data;
-	libinput_t*	libinput;
+	libinput_t&	libinput;
     };
 
     struct cd_toc_t {
@@ -74,7 +77,7 @@ namespace mpxp {
 	    virtual ~CDD_Interface();
 
 	    virtual MPXP_Rc	open_cdda(const std::string& dev,const std::string& track);
-	    virtual MPXP_Rc	open_cddb(libinput_t*,const std::string& dev,const std::string& track);
+	    virtual MPXP_Rc	open_cddb(libinput_t&,const std::string& dev,const std::string& track);
 
 	    virtual int		read(char *buf,track_t* trackidx);
 	    virtual void	seek(off_t pos,track_t *trackidx);

@@ -499,7 +499,7 @@ static void __FASTCALL__ c2_stream_set_eof(cache_vars_t*c,int eof)
 /*
     main interface here!
 */
-Cached_Stream::Cached_Stream(libinput_t* libinput,int size,int _min,int prefill,Stream::type_e t)
+Cached_Stream::Cached_Stream(libinput_t& libinput,int size,int _min,int prefill,Stream::type_e t)
 	    :Stream(t)
 {
     int ss=sector_size()>1?sector_size():STREAM_BUFFER_SIZE;

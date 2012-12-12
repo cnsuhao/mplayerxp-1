@@ -51,7 +51,7 @@ namespace mpxp {
 
     class DvdRead_Stream_Interface : public Stream_Interface {
 	public:
-	    DvdRead_Stream_Interface(libinput_t* libinput);
+	    DvdRead_Stream_Interface(libinput_t& libinput);
 	    virtual ~DvdRead_Stream_Interface();
 
 	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
@@ -112,7 +112,7 @@ namespace mpxp {
 	    off_t		_end_pos;
     };
 
-DvdRead_Stream_Interface::DvdRead_Stream_Interface(libinput_t* libinput)
+DvdRead_Stream_Interface::DvdRead_Stream_Interface(libinput_t& libinput)
 			:Stream_Interface(libinput),
 			dvd_chapter(1),dvd_angle(1) {}
 DvdRead_Stream_Interface::~DvdRead_Stream_Interface() {}
@@ -780,7 +780,7 @@ MPXP_Rc DvdRead_Stream_Interface::ctrl(unsigned cmd,any_t*args)
     return MPXP_False;
 }
 
-static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) DvdRead_Stream_Interface(libinput); }
+static Stream_Interface* query_interface(libinput_t& libinput) { return new(zeromem) DvdRead_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t dvdread_stream =
 {

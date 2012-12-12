@@ -49,7 +49,7 @@ namespace mpxp {
 
     class DvdNav_Stream_Interface : public Stream_Interface {
 	public:
-	    DvdNav_Stream_Interface(libinput_t* libinput);
+	    DvdNav_Stream_Interface(libinput_t& libinput);
 	    virtual ~DvdNav_Stream_Interface();
 
 	    virtual MPXP_Rc	open(const std::string& filename,unsigned flags);
@@ -93,7 +93,7 @@ namespace mpxp {
 	    float		_stream_pts;
     };
 
-DvdNav_Stream_Interface::DvdNav_Stream_Interface(libinput_t* libinput)
+DvdNav_Stream_Interface::DvdNav_Stream_Interface(libinput_t& libinput)
 			:Stream_Interface(libinput),
 			hlev(*new(zeromem) dvdnav_highlight_event_t) {}
 DvdNav_Stream_Interface::~DvdNav_Stream_Interface() {
@@ -590,7 +590,7 @@ MPXP_Rc DvdNav_Stream_Interface::ctrl(unsigned cmd,any_t*args)
     return MPXP_False;
 }
 
-static Stream_Interface* query_interface(libinput_t* libinput) { return new(zeromem) DvdNav_Stream_Interface(libinput); }
+static Stream_Interface* query_interface(libinput_t& libinput) { return new(zeromem) DvdNav_Stream_Interface(libinput); }
 
 extern const stream_interface_info_t dvdnav_stream =
 {

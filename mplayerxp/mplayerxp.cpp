@@ -149,13 +149,13 @@ struct input_state_t {
 
 struct MPXPSystem {
     public:
-	MPXPSystem():inited_flags(0),osd_function(OSD_PLAY) { fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&_demuxer)-reinterpret_cast<long>(&antiviral_hole)); }
+	MPXPSystem():inited_flags(0),osd_function(OSD_PLAY),_libinput(mp_input_open()) { fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&_demuxer)-reinterpret_cast<long>(&antiviral_hole)); }
 	virtual ~MPXPSystem() {}
 
 	void		uninit_player(unsigned int mask);
 	Demuxer*	demuxer() const { return _demuxer; }
 	Demuxer*	assign_demuxer(Demuxer* _d) { uninit_demuxer(); _demuxer=_d; if(_d) inited_flags|=INITED_DEMUXER; return _demuxer; }
-	libinput_t*	libinput() const { return _libinput; }
+	libinput_t&	libinput() const { return _libinput; }
 	void		uninit_demuxer();
 	void		uninit_input();
 
@@ -192,10 +192,9 @@ struct MPXPSystem {
 	int		osd_function;
 	play_tree_t*	playtree;
     private:
-	libinput_t*	assign_libinput(libinput_t* _d)  { uninit_input(); _libinput=_d; if(_d) inited_flags|=INITED_INPUT; return _libinput; }
 	char		antiviral_hole[RND_CHAR0];
 	Demuxer*	_demuxer;
-	libinput_t*	_libinput;
+	libinput_t&	_libinput;
 };
 
 struct MPXPSecureKeys {
@@ -244,7 +243,6 @@ MPXPContext::MPXPContext()
     bench=new(zeromem) time_usage_t;
     use_pts_fix2=-1;
     rtc_fd=-1;
-    _engine->MPXPSys = new(zeromem) MPXPSystem;
 }
 
 MPXPContext::~MPXPContext()
@@ -304,6 +302,7 @@ unsigned get_number_cpu(void) {
 }
 
 static void mpxp_init_structs(void) {
+    mpxp_context().engine().MPXPSys = new(zeromem) MPXPSystem;
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
     memset(&x86,-1,sizeof(x86_features_t));
 #endif
@@ -857,9 +856,6 @@ void MPXPSystem::init_keyboard_fifo()
 #ifdef HAVE_TERMCAP
     load_termcap(NULL); // load key-codes
 #endif
-    /* Init input system */
-    MP_UNIT("init_input");
-    assign_libinput(mp_input_open());
 }
 
 void mplayer_put_key(int code){
@@ -1833,7 +1829,7 @@ play_next_file:
 
     MP_UNIT("demux_open");
 
-    if(!input_state.after_dvdmenu) MPXPSys.assign_demuxer(Demuxer::open(stream,mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id));
+    if(!input_state.after_dvdmenu) MPXPSys.assign_demuxer(Demuxer::open(stream,MPXPSys.libinput(),mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id));
     if(!MPXPSys.demuxer()) goto goto_next_file; // exit_player(MSGTR_Exit_error); // ERROR
     input_state.after_dvdmenu=0;
 
