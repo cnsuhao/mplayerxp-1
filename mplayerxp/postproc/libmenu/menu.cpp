@@ -62,22 +62,22 @@ static int menu_parse_config(const char* buffer) {
   char *element,*body, **attribs, *name;
   menu_info_t* minfo = NULL;
   int r,i;
-  ASX_Parser_t* parser = asx_parser_new();
+  ASX_Parser& parser = *new(zeromem) ASX_Parser;
 
   while(1) {
-    r = asx_get_element(parser,&buffer,&element,&body,&attribs);
+    r = parser.get_element(&buffer,&element,&body,&attribs);
     if(r < 0) {
-      MSG_WARN("[libmenu] Syntax error at line: %i\n",parser->line);
-      asx_parser_free(parser);
+      MSG_WARN("[libmenu] Syntax error at line: %i\n",parser.get_line());
+      delete &parser;
       return 0;
     } else if(r == 0) {
-      asx_parser_free(parser);
+      delete &parser;
       return 1;
     }
     // Has it a name ?
     name = asx_get_attrib("name",attribs);
     if(!name) {
-      MSG_WARN("[libmenu] Menu definitions need a name attrib: %i\n",parser->line);
+      MSG_WARN("[libmenu] Menu definitions need a name attrib: %i\n",parser.get_line());
       delete element;
       if(body) delete body;
       asx_free_attribs(attribs);
@@ -103,12 +103,12 @@ static int menu_parse_config(const char* buffer) {
 	if(strcasecmp(attribs[2*i],"name") == 0) continue;
 	if(!m_struct_set(&minfo->priv_st,menu_list[menu_count].cfg,attribs[2*i], attribs[2*i+1]))
 	  MSG_WARN("[libmenu] Bad attrib: %s %s %s %i\n",attribs[2*i],attribs[2*i+1],
-		 name,parser->line);
+		 name,parser.get_line());
       }
       menu_count++;
       memset(&menu_list[menu_count],0,sizeof(menu_def_t));
     } else {
-      MSG_WARN("[libmenu] Unknown menu type: %s %i\n",element,parser->line);
+      MSG_WARN("[libmenu] Unknown menu type: %s %i\n",element,parser.get_line());
       delete name;
       if(body) delete body;
     }
@@ -116,7 +116,8 @@ static int menu_parse_config(const char* buffer) {
     delete element;
     asx_free_attribs(attribs);
   }
-
+  delete &parser;
+  return 0;
 }
 
 /// This will build the menu_defs list from the cfg file

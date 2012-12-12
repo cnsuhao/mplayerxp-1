@@ -112,16 +112,16 @@ static int parse_args(menu_t* menu,const char* args) {
   char *element,*body, **attribs, *name;
   list_entry_t* m = NULL;
   int r;
-  ASX_Parser_t* parser = asx_parser_new();
+  ASX_Parser& parser = *new(zeromem) ASX_Parser;
 
   while(1) {
-    r = asx_get_element(parser,&args,&element,&body,&attribs);
+    r = parser.get_element(&args,&element,&body,&attribs);
     if(r < 0) {
-      MSG_WARN("[libmenu] Syntax error at line: %i\n",parser->line);
-      asx_parser_free(parser);
+      MSG_WARN("[libmenu] Syntax error at line: %i\n",parser.get_line());
+      delete &parser;
       return -1;
     } else if(r == 0) {
-      asx_parser_free(parser);
+      delete &parser;
       if(!m)
 	MSG_WARN("[libmenu] No entry found in the menu definition\n");
       return m ? 1 : 0;
@@ -129,7 +129,7 @@ static int parse_args(menu_t* menu,const char* args) {
     // Has it a name ?
     name = asx_get_attrib("name",attribs);
     if(!name) {
-      MSG_WARN("[libmenu] ListMenu entry definitions need a name: %i\n",parser->line);
+      MSG_WARN("[libmenu] ListMenu entry definitions need a name: %i\n",parser.get_line());
       delete element;
       if(body) delete body;
       asx_free_attribs(attribs);
@@ -147,6 +147,8 @@ static int parse_args(menu_t* menu,const char* args) {
     if(body) delete body;
     asx_free_attribs(attribs);
   }
+  delete &parser;
+  return -1;
 }
 
 static int open_cmdlist(menu_t* menu, const char* args) {

@@ -6,34 +6,42 @@
 
 using namespace mpxp;
 
-typedef struct _ASX_Parser_t ASX_Parser_t;
+namespace mpxp {
+    struct ASX_LineSave_t {
+	const char* buffer;
+	int line;
+    };
 
-typedef struct {
-  const char* buffer;
-  int line;
-} ASX_LineSave_t;
+    class ASX_Parser : public Opaque {
+	public:
+	    ASX_Parser();
+	    virtual ~ASX_Parser();
 
-struct _ASX_Parser_t {
-  int line; // Curent line
-  ASX_LineSave_t *ret_stack;
-  int ret_stack_size;
-  char* last_body;
-  int deep;
+	    static play_tree_t*	build_tree(libinput_t* libinput,const char* buffer, int ref);
+
+	    virtual int		parse_attribs(char* buffer,char*** _attribs);
+	    /*
+	     * Return -1 on error, 0 when nothing is found, 1 on sucess
+	     */
+	    virtual int		get_element(const char** _buffer,char** _element,char** _body,char*** _attribs);
+	    int			get_line() const { return line; }
+	private:
+	    play_tree_t*	repeat(libinput_t*libinput,const char* buffer,char** _attribs);
+	    void		warning_attrib_invalid(char* elem, char* attrib,const char** valid_vals,char* val);
+	    void		warning_attrib_required(const char *e, const char *a);
+	    void		warning_body_parse_error(const char *e);
+	    int			get_yes_no_attrib(char* element, char* attrib,char** attribs,int def);
+	    void		param(char** attribs, play_tree_t* pt);
+	    void		ref(char** attribs, play_tree_t* pt);
+	    play_tree_t*	entryref(libinput_t* libinput,char* buffer,char** _attribs);
+	    play_tree_t*	entry(const char* buffer,char** _attribs);
+
+	    int			line; // Curent line
+	    ASX_LineSave_t*	ret_stack;
+	    int			ret_stack_size;
+	    char*		last_body;
+	    int			deep;
 };
-
-extern play_tree_t* __FASTCALL__ asx_parser_build_tree(libinput_t* libinput,const char* buffer, int ref);
-
-extern ASX_Parser_t* asx_parser_new(void);
-
-extern void __FASTCALL__ asx_parser_free(ASX_Parser_t* parser);
-
-/*
- * Return -1 on error, 0 when nothing is found, 1 on sucess
- */
-extern int __FASTCALL__ asx_get_element(ASX_Parser_t* parser,const char** _buffer,
-		char** _element,char** _body,char*** _attribs);
-
-extern int __FASTCALL__ asx_parse_attribs(ASX_Parser_t* parser,char* buffer,char*** _attribs);
 
 /////// Attribs utils
 
@@ -48,5 +56,5 @@ typedef void (* __FASTCALL__ ASX_FreeFunc)(any_t* arg);
 extern void __FASTCALL__ asx_list_free(any_t* list_ptr,ASX_FreeFunc free_func);
 
 static inline void asx_free_attribs(any_t*a) { asx_list_free(&a,mp_free); }
-
+} // namespace mpxp
 #endif

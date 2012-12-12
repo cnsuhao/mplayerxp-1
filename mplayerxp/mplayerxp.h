@@ -1,6 +1,8 @@
 #ifndef __MPLAYERXP_MAIN
 #define __MPLAYERXP_MAIN 1
 
+#include <string>
+
 #include <pthread.h>
 #include <stdint.h>
 #include <string.h>
@@ -177,21 +179,20 @@ namespace mpxp {
 
     extern pthread_mutex_t audio_timer_mutex;
 
-    void exit_player(const char* why);
+    void exit_player(const std::string& why);
 
     /* 10 ms or 10'000 microsecs is optimal time for thread sleeping */
-    inline int yield_timeslice() { return usleep(10000); }
+    inline int yield_timeslice() { return ::usleep(10000); }
 
-    inline void escape_player(const char* why,unsigned num_calls) {
+    inline void escape_player(const std::string& why,unsigned num_calls) {
 	show_backtrace(why,num_calls);
 	exit_player(why);
     }
 
-    inline MPXP_Rc check_pin(const char* module,unsigned pin1,unsigned pin2) {
+    inline MPXP_Rc check_pin(const std::string& module,unsigned pin1,unsigned pin2) {
 	if(pin1!=pin2) {
-	    char msg[4096];
-	    strcpy(msg,"Found incorrect PIN in module: ");
-	    strcat(msg,module);
+	    std::string msg;
+	    msg=std::string("Found incorrect PIN in module: ")+module;
 	    escape_player(msg,mp_conf.max_trace);
 	}
 	return MPXP_Ok;

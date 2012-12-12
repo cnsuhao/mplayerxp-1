@@ -420,7 +420,7 @@ void MPXPSystem::uninit_player(unsigned int mask){
     MP_UNIT(NULL);
 }
 
-void exit_player(const char* why){
+void exit_player(const std::string& why){
 
     fflush(stdout);
     fflush(stderr);
@@ -428,11 +428,11 @@ void exit_player(const char* why){
 
     MP_UNIT("exit_player");
 
-    if(why) MSG_HINT(MSGTR_Exiting,why);
+    if(!why.empty()) MSG_HINT(MSGTR_Exiting,why.c_str());
     if(mpxp_context().mconfig) m_config_free(mpxp_context().mconfig);
     mpxp_print_uninit();
     mpxp_uninit_structs();
-    if(why) exit(0);
+    if(!why.empty()) exit(0);
     return; /* Still try coredump!!!*/
 }
 
@@ -447,7 +447,7 @@ void __exit_sighandler(void)
     kill(getpid(),SIGKILL);
     return;
   }
-  exit_player(NULL);
+  exit_player("");
 }
 
 

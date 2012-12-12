@@ -96,17 +96,16 @@ static int parse_args(menu_t* menu,const char* args) {
   list_entry_t* m = NULL;
   int r;
   m_option_t* opt;
-  ASX_Parser_t* parser = asx_parser_new();
-
+  ASX_Parser& parser = *new(zeromem) ASX_Parser;
 
   while(1) {
-    r = asx_get_element(parser,&args,&element,&body,&attribs);
+    r = parser.get_element(&args,&element,&body,&attribs);
     if(r < 0) {
-      MSG_ERR("[libmenu] Syntax error at line: %s\n",parser->line);
-      asx_parser_free(parser);
+      MSG_ERR("[libmenu] Syntax error at line: %s\n",parser.get_line());
+      delete &parser;
       return -1;
     } else if(r == 0) {
-      asx_parser_free(parser);
+      delete &parser;
       if(!m)
 	MSG_WARN("[libmenu] No entry found in the menu definition\n");
       m = new(zeromem) struct list_entry_s;
@@ -133,12 +132,12 @@ static int parse_args(menu_t* menu,const char* args) {
     opt = NULL;
     if(name && mp_property_do(name,M_PROPERTY_GET_TYPE,&opt,menu->ctx) <= 0) {
       MSG_WARN("[libmenu] Invalid property: %s %i\n",
-	     name,parser->line);
+	     name,parser.get_line());
       goto next_element;
     }
     txt = asx_get_attrib("txt",attribs);
     if(!(name || txt)) {
-      MSG_WARN("[libmenu] PrefMenu entry definitions need: %i\n",parser->line);
+      MSG_WARN("[libmenu] PrefMenu entry definitions need: %i\n",parser.get_line());
       if(txt) { delete txt; txt = NULL; }
       goto next_element;
     }
@@ -157,6 +156,8 @@ static int parse_args(menu_t* menu,const char* args) {
     if(name) delete name;
     asx_free_attribs(attribs);
   }
+  delete &parser;
+  return -1;
 }
 
 static void read_key(menu_t* menu,int c) {

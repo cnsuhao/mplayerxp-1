@@ -157,6 +157,7 @@ __asm__ __volatile__(\
     return retval;\
 }
 
+namespace mpxp {
 #undef MEM_STORE
 #undef MEM_SFENCE
 #define MEM_STORE  _ivec_stream
@@ -176,4 +177,5 @@ static inline any_t* PVECTOR_RENAME(fast_memcpy)(any_t* to, const any_t* from, s
     MSG_DBG3("fast_memcpy(%p, %p, %u) [cl_size=%u]\n",to,from,len,gCpuCaps.cl_size);
     FAST_MEMORY_COPY(to,from,len);
 }
+} // namesapce mpxp
 #endif

@@ -8,6 +8,9 @@
  */
 #ifndef __MPLIB_H_INCLUDED__
 #define __MPLIB_H_INCLUDED__ 1
+
+#include <string>
+
 #include <execinfo.h>
 #include <stddef.h>
 #include <sys/mman.h>
@@ -62,9 +65,9 @@ namespace mpxp {
 	MP_DENY_ALL		=0x0,	/* Page can not be accessed.  */
     };
     int	__FASTCALL__ mp_mprotect(any_t* addr,size_t len,enum mp_prot_e flags);
-    void print_backtrace(const char *why,any_t** stack,unsigned num);
+    void print_backtrace(const std::string& why,any_t** stack,unsigned num);
 
-    inline void show_backtrace(const char *why,unsigned num_calls) {
+    inline void show_backtrace(const std::string& why,unsigned num_calls) {
 	any_t*	stack[num_calls];
 	unsigned ncalls;
 	ncalls=backtrace(stack,num_calls);

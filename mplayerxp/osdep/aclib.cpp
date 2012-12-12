@@ -24,7 +24,7 @@ using namespace mpxp;
   see aclib_template.c ... this file only contains runtime cpu detection and config options stuff
   runtime cpu detection by michael niedermayer (michaelni@gmx.at) is under GPL
 */
-
+namespace mpxp {
 static any_t* init_fast_memcpy(any_t* to, const any_t* from, size_t len)
 {
 #ifdef __SSE2__
@@ -89,13 +89,13 @@ static any_t* init_stream_copy(any_t* to, const any_t* from, size_t len)
 #endif
 	{
 		MSG_V("Using generic optimized agpcpy\n");
-		fast_stream_copy_ptr = memcpy; /* prior to mmx we use the standart memcpy */
+		fast_stream_copy_ptr = ::memcpy; /* prior to mmx we use the standart memcpy */
 	}
 	return (*fast_stream_copy_ptr)(to,from,len);
 }
 
 any_t*(*fast_memcpy_ptr)(any_t* to, const any_t* from, size_t len) = init_fast_memcpy;
 any_t*(*fast_stream_copy_ptr)(any_t* to, const any_t* from, size_t len) = init_stream_copy;
-
+} // namespace mpxp
 #endif /* use fastmemcpy */
 

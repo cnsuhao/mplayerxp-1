@@ -211,10 +211,10 @@ static __always_inline void __print_backtrace(unsigned num) {
     uninit_bt_cache(cache);
 }
 
-void print_backtrace(const char *why,any_t** stack,unsigned num) {
+void print_backtrace(const std::string& why,any_t** stack,unsigned num) {
     char result[4096];
     unsigned	i;
-    MSG_INFO(why?why:"*** Backtrace for suspect call ***\n");
+    MSG_INFO(!why.empty()?why.c_str():"*** Backtrace for suspect call ***\n");
     for(i=0;i<num;i++) {
 	MSG_INFO("    %p -> %s\n",stack[i],exec_addr2line(stack[i],result,sizeof(result)));
     }

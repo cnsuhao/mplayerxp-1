@@ -179,7 +179,7 @@ static play_tree_t* parse_asx(libinput_t* libinput,play_tree_parser_t* p) {
     /* NOTHING */;
 
  MSG_DBG3("Parsing asx file : [%s]\n",p->buffer);
- return asx_parser_build_tree(libinput,p->buffer,p->deep);
+ return ASX_Parser::build_tree(libinput,p->buffer,p->deep);
 }
 
 static char* __FASTCALL__ pls_entry_get_value(char* line) {
