@@ -19,7 +19,7 @@ namespace mpxp {
 
 	    static play_tree_t*	build_tree(libinput_t* libinput,const char* buffer, int ref);
 
-	    virtual int		parse_attribs(char* buffer,char*** _attribs);
+	    virtual int		parse_attribs(char* buffer,char*** _attribs) const;
 	    /*
 	     * Return -1 on error, 0 when nothing is found, 1 on sucess
 	     */
@@ -27,13 +27,13 @@ namespace mpxp {
 	    int			get_line() const { return line; }
 	private:
 	    play_tree_t*	repeat(libinput_t*libinput,const char* buffer,char** _attribs);
-	    void		warning_attrib_invalid(char* elem, char* attrib,const char** valid_vals,char* val);
-	    void		warning_attrib_required(const char *e, const char *a);
-	    void		warning_body_parse_error(const char *e);
-	    int			get_yes_no_attrib(char* element, char* attrib,char** attribs,int def);
-	    void		param(char** attribs, play_tree_t* pt);
-	    void		ref(char** attribs, play_tree_t* pt);
-	    play_tree_t*	entryref(libinput_t* libinput,char* buffer,char** _attribs);
+	    void		warning_attrib_invalid(char* elem, char* attrib,const char** valid_vals,char* val) const;
+	    void		warning_attrib_required(const char *e, const char *a) const;
+	    void		warning_body_parse_error(const char *e) const;
+	    int			get_yes_no_attrib(char* element, char* attrib,char** attribs,int def) const;
+	    void		param(char** attribs, play_tree_t* pt) const;
+	    void		ref(char** attribs, play_tree_t* pt) const;
+	    play_tree_t*	entryref(libinput_t* libinput,char* buffer,char** _attribs) const;
 	    play_tree_t*	entry(const char* buffer,char** _attribs);
 
 	    int			line; // Curent line

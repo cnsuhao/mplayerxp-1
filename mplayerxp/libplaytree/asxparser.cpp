@@ -99,7 +99,7 @@ int __FASTCALL__ asx_attrib_to_enum(const char* val,const char** valid_vals) {
 }
 
 void ASX_Parser::warning_attrib_invalid(char* elem, char* attrib,
-					const char** valid_vals,char* val)
+					const char** valid_vals,char* val) const
 {
     char *str,*vals;
     const char **ptr;
@@ -123,7 +123,7 @@ void ASX_Parser::warning_attrib_invalid(char* elem, char* attrib,
     delete str;
 }
 
-int ASX_Parser::get_yes_no_attrib(char* element, char* attrib,char** cattribs,int def) {
+int ASX_Parser::get_yes_no_attrib(char* element, char* attrib,char** cattribs,int def) const {
     char* val = asx_get_attrib(attrib,cattribs);
     const char* valids[] = { "NO", "YES", NULL };
     int r;
@@ -139,13 +139,13 @@ int ASX_Parser::get_yes_no_attrib(char* element, char* attrib,char** cattribs,in
     return r;
 }
 
-void ASX_Parser::warning_attrib_required(const char *e, const char *a) { MSG_WARN("At line %d : element %s don't have the required attribute %s",line,e,a); }
-void ASX_Parser::warning_body_parse_error(const char *e) { MSG_WARN("At line %d : error while parsing %s body",line,e); }
+void ASX_Parser::warning_attrib_required(const char *e, const char *a) const { MSG_WARN("At line %d : element %s don't have the required attribute %s",line,e,a); }
+void ASX_Parser::warning_body_parse_error(const char *e) const { MSG_WARN("At line %d : error while parsing %s body",line,e); }
 
 ASX_Parser::ASX_Parser() {}
 ASX_Parser::~ASX_Parser() { if(ret_stack) delete ret_stack; }
 
-int ASX_Parser::parse_attribs(char* buffer,char*** _attribs) {
+int ASX_Parser::parse_attribs(char* buffer,char*** _attribs) const {
     char *ptr1, *ptr2, *ptr3;
     int n_attrib = 0;
     char **cattribs = NULL;
@@ -420,7 +420,7 @@ int ASX_Parser::get_element(const char** _buffer, char** _element,
     return 1;
 }
 
-void ASX_Parser::param(char** cattribs, play_tree_t* pt) {
+void ASX_Parser::param(char** cattribs, play_tree_t* pt) const {
     const char *name,*val;
 
     name = asx_get_attrib("NAME",cattribs);
@@ -438,7 +438,7 @@ void ASX_Parser::param(char** cattribs, play_tree_t* pt) {
     play_tree_set_param(pt,name,val);
 }
 
-void ASX_Parser::ref(char** cattribs, play_tree_t* pt) {
+void ASX_Parser::ref(char** cattribs, play_tree_t* pt) const {
     char *href;
 
     href = asx_get_attrib("HREF",cattribs);
@@ -459,7 +459,7 @@ void ASX_Parser::ref(char** cattribs, play_tree_t* pt) {
     delete href;
 }
 
-play_tree_t* ASX_Parser::entryref(libinput_t* libinput,char* buffer,char** _attribs) {
+play_tree_t* ASX_Parser::entryref(libinput_t* libinput,char* buffer,char** _attribs) const {
     play_tree_t* pt;
     char *href;
     Stream* stream;
