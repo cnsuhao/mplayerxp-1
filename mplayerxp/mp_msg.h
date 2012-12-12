@@ -2,6 +2,8 @@
 #define __MP_MSG_H 1
 #include "mplayerxp.h"
 
+#include <string>
+
 /* TODO: more highlighted levels */
 #ifndef MSGT_CLASS
 #define MSGT_CLASS MSGT_CPLAYER
@@ -55,51 +57,51 @@ enum {
     void mpxp_print_init(int verbose);
     void mpxp_print_uninit(void);
     void mpxp_print_flush(void);
-    int  mpxp_printf( unsigned x, const char *format, ... );
+    int  mpxp_printf( unsigned x, const std::string& format, ... );
 
-    inline int mpxp_print_dummy(const char* args,...) {
+    inline int mpxp_print_dummy(const std::string& args,...) {
 	UNUSED(args); return 0;
     }
 
 #ifdef __va_arg_pack /* requires gcc-4.3.x */
-__always_inline int MSG_INFO(const char* args,...) {
+__always_inline int MSG_INFO(const std::string& args,...) {
     return mpxp_printf((MSGL_INFO<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-__always_inline int MSG_FATAL(const char* args,...) {
+__always_inline int MSG_FATAL(const std::string& args,...) {
     return mpxp_printf((MSGL_FATAL<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-__always_inline int MSG_WARN(const char* args,...) {
+__always_inline int MSG_WARN(const std::string& args,...) {
     return mpxp_printf((MSGL_WARN<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-__always_inline int MSG_ERR(const char* args,...) {
+__always_inline int MSG_ERR(const std::string& args,...) {
     return mpxp_printf((MSGL_ERR<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-__always_inline int MSG_OK(const char* args,...) {
+__always_inline int MSG_OK(const std::string& args,...) {
     return mpxp_printf((MSGL_OK<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-__always_inline int MSG_HINT(const char* args,...) {
+__always_inline int MSG_HINT(const std::string& args,...) {
     return mpxp_printf((MSGL_HINT<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-__always_inline int MSG_STATUS(const char* args,...) {
+__always_inline int MSG_STATUS(const std::string& args,...) {
     return mpxp_printf((MSGL_STATUS<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ());
 }
-__always_inline int MSG_V(const char* args,...) {
+__always_inline int MSG_V(const std::string& args,...) {
     return mp_conf.verbose ?
 	mpxp_printf((MSGL_V<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ()):
 	0;
 }
 
-__always_inline int MSG_DBG2(const char* args,...) {
+__always_inline int MSG_DBG2(const std::string& args,...) {
     return mp_conf.verbose>1 ?
 	mpxp_printf((MSGL_DBG2<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ()):
 	0;
 }
-__always_inline int MSG_DBG3(const char* args,...) {
+__always_inline int MSG_DBG3(const std::string& args,...) {
     return mp_conf.verbose>2 ?
 	mpxp_printf((MSGL_DBG3<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ()):
 	0;
 }
-__always_inline int MSG_DBG4(const char* args,...) {
+__always_inline int MSG_DBG4(const std::string& args,...) {
     return mp_conf.verbose>3 ?
 	mpxp_printf((MSGL_DBG4<<28)|(MSGT_CLASS&0x0FFFFFFF),args,__va_arg_pack ()):
 	0;

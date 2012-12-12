@@ -83,7 +83,7 @@ static const char * msg_prefix[] =
     "POSTPR"
 };
 
-int mpxp_printf( unsigned x, const char *format, ... ){
+int mpxp_printf( unsigned x, const std::string& format, ... ){
 /* TODO: more useful usage of module_id */
     int rc=0;
     char* sbuf=new char[0xFFFFF];
@@ -112,7 +112,7 @@ int mpxp_printf( unsigned x, const char *format, ... ){
     }
     va_list va;
     va_start(va, format);
-    ssize=vsprintf(sbuf,format, va);
+    ssize=vsprintf(sbuf,format.c_str(), va);
     va_end(va);
     if(strcmp(nls_get_screen_cp(),"UTF-8")!=0) {
 	char *obuf;
@@ -121,7 +121,7 @@ int mpxp_printf( unsigned x, const char *format, ... ){
 	delete obuf;
     }
     else rc=fputs(sbuf,stderr);
-    if(format[strlen(format)-1]=='\n') was_eol=1;
+    if(format[format.length()-1]=='\n') was_eol=1;
     else was_eol=0;
     fflush(stderr);
 //    if(priv) pthread_mutex_unlock(&priv->mp_msg_mutex);
