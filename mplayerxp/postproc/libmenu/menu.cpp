@@ -59,15 +59,14 @@ static int menu_count = 0;
 
 
 static int menu_parse_config(const char* buffer) {
-  char *element,*body;
   std::string name;
-  ASX_Attrib attribs;
+  ASX_Element element;
   menu_info_t* minfo = NULL;
   int r,i;
   ASX_Parser& parser = *new(zeromem) ASX_Parser;
 
   while(1) {
-    r = parser.get_element(&buffer,&element,&body,attribs);
+    r = parser.get_element(&buffer,element);
     if(r < 0) {
       MSG_WARN("[libmenu] Syntax error at line: %i\n",parser.get_line());
       delete &parser;
@@ -77,17 +76,15 @@ static int menu_parse_config(const char* buffer) {
       return 1;
     }
     // Has it a name ?
-    name = attribs.get("name");
+    name = element.attribs().get("name");
     if(name.empty()) {
       MSG_WARN("[libmenu] Menu definitions need a name attrib: %i\n",parser.get_line());
-      delete element;
-      if(body) delete body;
       continue;
     }
 
     // Try to find this menu type in our list
     for(i = 0, minfo = NULL ; menu_info_list[i] ; i++) {
-      if(strcasecmp(element,menu_info_list[i]->name) == 0) {
+      if(strcasecmp(element.name().c_str(),menu_info_list[i]->name) == 0) {
 	minfo = menu_info_list[i];
 	break;
       }
@@ -98,9 +95,9 @@ static int menu_parse_config(const char* buffer) {
 	menu_list[menu_count].name = mp_strdup(name.c_str());
 	menu_list[menu_count].type = minfo;
 	menu_list[menu_count].cfg = m_struct_alloc(&minfo->priv_st);
-	menu_list[menu_count].args = body;
+	menu_list[menu_count].args = mp_strdup(element.body().c_str());
 	std::map<std::string,std::string,ASX_Attrib::stricomp>::iterator it;
-	std::map<std::string,std::string,ASX_Attrib::stricomp>& _map = attribs.map();
+	std::map<std::string,std::string,ASX_Attrib::stricomp>& _map = element.attribs().map();
 	for(it=_map.begin();it!=_map.end();it++) {
 	    std::string sfirst,ssecond;
 	    sfirst=(*it).first;
@@ -114,11 +111,8 @@ static int menu_parse_config(const char* buffer) {
 	menu_count++;
 	memset(&menu_list[menu_count],0,sizeof(menu_def_t));
     } else {
-	MSG_WARN("[libmenu] Unknown menu type: %s %i\n",element,parser.get_line());
-	if(body) delete body;
+	MSG_WARN("[libmenu] Unknown menu type: %s %i\n",element.name().c_str(),parser.get_line());
     }
-
-    delete element;
   }
   delete &parser;
   return 0;
@@ -212,6 +206,10 @@ menu_t* menu_open(const char *name,libinput_t* libinput) {
   menu_t* m;
   int i;
 
+  if(menu_list == NULL) {
+    MSG_WARN("[libmenu] Menu was not initialized\n");
+    return NULL;
+  }
   if(name == NULL) {
     MSG_WARN("[libmenu] Name of menu was not specified\n");
     return NULL;
@@ -286,6 +284,8 @@ static void render_txt(const char *txt)
     int c = utf8_get_char((const char**)&txt);
     render_one_glyph(mpxp_context().video().output->font, c);
   }
+#else
+  UNUSED(txt);
 #endif
 }
 

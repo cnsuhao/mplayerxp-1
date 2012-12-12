@@ -28,6 +28,24 @@ namespace mpxp {
 	    std::map<std::string,std::string,ASX_Attrib::stricomp> _attrib;
     };
 
+    class ASX_Element {
+	public:
+	    ASX_Element() {}
+	    ~ASX_Element() {}
+
+	    const std::string&	name(const std::string& s) { return _name=s; }
+	    const std::string&	body(const std::string& s) { return _body=s; }
+	    ASX_Attrib&		attribs(ASX_Attrib& a) { return _attribs=a; }
+	    const std::string&	name() const { return _name; }
+	    const std::string&	body() const { return _body; }
+	    ASX_Attrib&		attribs() { return _attribs; }
+	    void		clear() { name(""); body(""); attribs().clear(); }
+	private:
+	    std::string		_name;
+	    std::string		_body;
+	    ASX_Attrib		_attribs;
+    };
+
     class ASX_Parser : public Opaque {
 	public:
 	    ASX_Parser();
@@ -35,19 +53,19 @@ namespace mpxp {
 
 	    static play_tree_t*	build_tree(libinput_t* libinput,const char* buffer, int ref);
 
-	    virtual int		parse_attribs(char* buffer,ASX_Attrib& _attribs) const;
+	    virtual int		parse_attribs(const char* buffer,ASX_Attrib& _attribs) const;
 	    /*
 	     * Return -1 on error, 0 when nothing is found, 1 on sucess
 	     */
-	    virtual int		get_element(const char** _buffer,char** _element,char** _body,ASX_Attrib& _attribs);
+	    virtual int		get_element(const char** _buffer,ASX_Element& _attribs);
 	    int			get_line() const { return line; }
 	private:
 	    play_tree_t*	repeat(libinput_t*libinput,const char* buffer,ASX_Attrib& _attribs);
-	    void		warning_attrib_required(const char *e, const char *a) const;
-	    void		warning_body_parse_error(const char *e) const;
+	    void		warning_attrib_required(const char *elem, const char *attr) const;
+	    void		warning_body_parse_error(const char *elem) const;
 	    void		param(ASX_Attrib& attribs, play_tree_t* pt) const;
 	    void		ref(ASX_Attrib& attribs, play_tree_t* pt) const;
-	    play_tree_t*	entryref(libinput_t* libinput,char* buffer,ASX_Attrib& _attribs) const;
+	    play_tree_t*	entryref(libinput_t* libinput,const char* buffer,ASX_Attrib& _attribs) const;
 	    play_tree_t*	entry(const char* buffer,ASX_Attrib& _attribs);
 
 	    int			line; // Curent line

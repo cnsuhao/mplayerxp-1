@@ -92,8 +92,7 @@ static void update_entries(menu_t* menu) {
 }
 
 static int parse_args(menu_t* menu,const char* args) {
-  char *element,*body;
-  ASX_Attrib attribs;
+  ASX_Element element;
   std::string name,txt;
   list_entry_t* m = NULL;
   int r;
@@ -101,7 +100,7 @@ static int parse_args(menu_t* menu,const char* args) {
   ASX_Parser& parser = *new(zeromem) ASX_Parser;
 
   while(1) {
-    r = parser.get_element(&args,&element,&body,attribs);
+    r = parser.get_element(&args,element);
     if(r < 0) {
       MSG_ERR("[libmenu] Syntax error at line: %s\n",parser.get_line());
       delete &parser;
@@ -115,44 +114,40 @@ static int parse_args(menu_t* menu,const char* args) {
       menu_list_add_entry(menu,m);
       return 1;
     }
-    if(!strcmp(element,"menu")) {
-      name = attribs.get("menu");
+    if(!strcasecmp(element.name().c_str(),"menu")) {
+      name = element.attribs().get("menu");
       if(name.empty()) {
 	MSG_WARN("[libmenu] Submenu definition need a menu attribut\n");
-	goto next_element;
+	continue;
       }
       m = new(zeromem) struct list_entry_s;
       m->menu = mp_strdup(name.c_str());
-      m->p.txt = mp_strdup(attribs.get("name").c_str());
+      m->p.txt = mp_strdup(element.attribs().get("name").c_str());
       if(!m->p.txt) m->p.txt = mp_strdup(m->menu);
       menu_list_add_entry(menu,m);
-      goto next_element;
+      continue;
     }
 
-    name = attribs.get("property");
+    name = element.attribs().get("property");
     opt = NULL;
     if(!name.empty() && mp_property_do(name.c_str(),M_PROPERTY_GET_TYPE,&opt,menu->ctx) <= 0) {
       MSG_WARN("[libmenu] Invalid property: %s %i\n",
 	     name.c_str(),parser.get_line());
-      goto next_element;
+      continue;
     }
-    txt = attribs.get("txt");
+    txt = element.attribs().get("txt");
     if(name.empty() || txt.empty()) {
       MSG_WARN("[libmenu] PrefMenu entry definitions need: %i\n",parser.get_line());
-      goto next_element;
+      continue;
     }
     m = new(zeromem) struct list_entry_s;
     m->opt = opt;
     m->txt = mp_strdup(txt.c_str());
     m->prop = mp_strdup(name.c_str());
-    m->name = mp_strdup(attribs.get("name").c_str());
+    m->name = mp_strdup(element.attribs().get("name").c_str());
     if(!m->name) m->name = mp_strdup(opt ? opt->name : "-");
     entry_set_text(menu,m);
     menu_list_add_entry(menu,m);
-
-  next_element:
-    delete element;
-    if(body) delete body;
   }
   delete &parser;
   return -1;

@@ -24,8 +24,8 @@ void ASX_Parser::warning_body_parse_error(const char *e) const { MSG_WARN("At li
 ASX_Parser::ASX_Parser() {}
 ASX_Parser::~ASX_Parser() { if(ret_stack) delete ret_stack; }
 
-int ASX_Parser::parse_attribs(char* buffer,ASX_Attrib& _attribs) const {
-    char *ptr1, *ptr2, *ptr3;
+int ASX_Parser::parse_attribs(const char* buffer,ASX_Attrib& _attribs) const {
+    const char *ptr1, *ptr2, *ptr3;
     int n_attrib = 0;
     char *attrib, *val;
 
@@ -75,8 +75,7 @@ pa_end:
 /*
  * Return -1 on error, 0 when nothing is found, 1 on sucess
  */
-int ASX_Parser::get_element(const char** _buffer, char** _element,
-			    char** _body,ASX_Attrib& _attribs) {
+int ASX_Parser::get_element(const char** _buffer, ASX_Element& _element) {
     const char *ptr1,*ptr2, *ptr3, *ptr4;
     char *cattribs = NULL;
     char *element = NULL, *body = NULL;
@@ -85,13 +84,12 @@ int ASX_Parser::get_element(const char** _buffer, char** _element,
     int n_attrib = 0;
     int body_line = 0,attrib_line,ret_line,in = 0;
 
-    if(_buffer == NULL || _element == NULL || _body == NULL) {
+    if(_buffer == NULL) {
 	MSG_ERR("At line %d : asx_get_element called with invalid value",line);
 	return -1;
     }
 
-    _attribs.clear();
-    *_body = *_element = NULL;
+    _element.clear();
     buffer = *_buffer;
 
     if(buffer == NULL) return 0;
@@ -267,7 +265,7 @@ int ASX_Parser::get_element(const char** _buffer, char** _element,
 
     if(cattribs) {
 	line = attrib_line;
-	n_attrib = parse_attribs(cattribs,_attribs);
+	n_attrib = parse_attribs(cattribs,_element.attribs());
 	delete cattribs;
 	if(n_attrib < 0) {
 	    MSG_WARN("At line %d : error while parsing element %s attributes",line,element);
@@ -275,10 +273,10 @@ int ASX_Parser::get_element(const char** _buffer, char** _element,
 	    delete body;
 	    return -1;
 	}
-    } else _attribs.clear();
+    } else _element.attribs().clear();
 
-    *_element = element;
-    *_body = body;
+    _element.name(element?element:"");
+    _element.body(body?body:"");
 
     last_body = body;
     ret_stack_size++;
@@ -326,7 +324,7 @@ void ASX_Parser::ref(ASX_Attrib& cattribs, play_tree_t* pt) const {
     MSG_V("Adding file %s to element entry\n",href.c_str());
 }
 
-play_tree_t* ASX_Parser::entryref(libinput_t* libinput,char* buffer,ASX_Attrib& _attribs) const {
+play_tree_t* ASX_Parser::entryref(libinput_t* libinput,const char* buffer,ASX_Attrib& _attribs) const {
     play_tree_t* pt;
     std::string href;
     Stream* stream;
@@ -362,8 +360,7 @@ play_tree_t* ASX_Parser::entryref(libinput_t* libinput,char* buffer,ASX_Attrib& 
 }
 
 play_tree_t* ASX_Parser::entry(const char* buffer,ASX_Attrib& _attribs) {
-    char *celement,*body;
-    ASX_Attrib cattribs;
+    ASX_Element element;
     int r,nref=0;
     play_tree_t *pt_ref;
     UNUSED(_attribs);
@@ -371,17 +368,16 @@ play_tree_t* ASX_Parser::entry(const char* buffer,ASX_Attrib& _attribs) {
     pt_ref = play_tree_new();
 
     while(buffer && buffer[0] != '\0') {
-	r = get_element(&buffer,&celement,&body,cattribs);
+	r = get_element(&buffer,element);
 	if(r < 0) {
 	    warning_body_parse_error("ENTRY");
 	    return NULL;
 	} else if (r == 0) break; // No more element
-	if(strcasecmp(celement,"REF") == 0) {
-	    ref(cattribs,pt_ref);
-	    MSG_DBG2("Adding element %s to entry\n",celement);
+	if(strcasecmp(element.name().c_str(),"REF") == 0) {
+	    ref(element.attribs(),pt_ref);
+	    MSG_DBG2("Adding element %s to entry\n",element.name().c_str());
 	    nref++;
-	} else MSG_DBG2("Ignoring element %s\n",celement);
-	if(body) delete body;
+	} else MSG_DBG2("Ignoring element %s\n",element.name().c_str());
     }
     if(nref <= 0) {
 	play_tree_free(pt_ref,1);
@@ -391,8 +387,7 @@ play_tree_t* ASX_Parser::entry(const char* buffer,ASX_Attrib& _attribs) {
 }
 
 play_tree_t* ASX_Parser::repeat(libinput_t*libinput,const char* buffer,ASX_Attrib& _attribs) {
-    char *element,*body;
-    ASX_Attrib cattribs;
+    ASX_Element element;
     play_tree_t *pt_repeat, *list=NULL, *pt_entry;
     std::string count;
     int r;
@@ -410,36 +405,35 @@ play_tree_t* ASX_Parser::repeat(libinput_t*libinput,const char* buffer,ASX_Attri
     }
 
     while(buffer && buffer[0] != '\0') {
-	r = get_element(&buffer,&element,&body,cattribs);
+	r = get_element(&buffer,element);
 	if(r < 0) {
 	    warning_body_parse_error("REPEAT");
 	    return NULL;
 	} else if (r == 0) break; // No more element
-	if(strcasecmp(element,"ENTRY") == 0) {
-	    pt_entry = entry(body,cattribs);
+	if(strcasecmp(element.name().c_str(),"ENTRY") == 0) {
+	    pt_entry = entry(element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
 		else play_tree_append_entry(list,pt_entry);
-		MSG_DBG2("Adding element %s to repeat\n",element);
+		MSG_DBG2("Adding element %s to repeat\n",element.name().c_str());
 	    }
-	} else if(strcasecmp(element,"ENTRYREF") == 0) {
-	    pt_entry = entryref(libinput,body,cattribs);
+	} else if(strcasecmp(element.name().c_str(),"ENTRYREF") == 0) {
+	    pt_entry = entryref(libinput,element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
 		else play_tree_append_entry(list,pt_entry);
-		MSG_DBG2("Adding element %s to repeat\n",element);
+		MSG_DBG2("Adding element %s to repeat\n",element.name().c_str());
 	    }
-	} else if(strcasecmp(element,"REPEAT") == 0) {
-	    pt_entry = repeat(libinput,body,cattribs);
+	} else if(strcasecmp(element.name().c_str(),"REPEAT") == 0) {
+	    pt_entry = repeat(libinput,element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
 		else play_tree_append_entry(list,pt_entry);
-		MSG_DBG2("Adding element %s to repeat\n",element);
+		MSG_DBG2("Adding element %s to repeat\n",element.name().c_str());
 	    }
-	} else if(strcasecmp(element,"PARAM") == 0) {
-	    param(cattribs,pt_repeat);
-	} else MSG_DBG2("Ignoring element %s\n",element);
-	if(body) delete body;
+	} else if(strcasecmp(element.name().c_str(),"PARAM") == 0) {
+	    param(element.attribs(),pt_repeat);
+	} else MSG_DBG2("Ignoring element %s\n",element.name().c_str());
     }
 
     if(!list) {
@@ -451,8 +445,7 @@ play_tree_t* ASX_Parser::repeat(libinput_t*libinput,const char* buffer,ASX_Attri
 }
 
 play_tree_t* ASX_Parser::build_tree(libinput_t*libinput,const char* buffer,int deep) {
-    char *element,*asx_body,*body;
-    ASX_Attrib asx_attribs,attribs;
+    ASX_Element asx_element,element;
     int r;
     play_tree_t *asx,*pt_entry,*list = NULL;
     ASX_Parser& parser = *new(zeromem) ASX_Parser;
@@ -460,7 +453,7 @@ play_tree_t* ASX_Parser::build_tree(libinput_t*libinput,const char* buffer,int d
     parser.line = 1;
     parser.deep = deep;
 
-    r = parser.get_element(&buffer,&element,&asx_body,asx_attribs);
+    r = parser.get_element(&buffer,asx_element);
     if(r < 0) {
 	MSG_ERR("At line %d : Syntax error ???",parser.line);
 	delete &parser;
@@ -471,54 +464,51 @@ play_tree_t* ASX_Parser::build_tree(libinput_t*libinput,const char* buffer,int d
 	return NULL;
     }
 
-    if(strcasecmp(element,"ASX") != 0) {
-	MSG_ERR("first element isn't ASX, it's %s\n",element);
-	if(body) delete body;
+    if(strcasecmp(element.name().c_str(),"ASX") != 0) {
+	MSG_ERR("first element isn't ASX, it's %s\n",element.name().c_str());
 	delete &parser;
 	return NULL;
     }
 
-    if(!asx_body) {
+    if(asx_element.body().empty()) {
 	MSG_ERR("ASX element is empty");
 	delete &parser;
 	return NULL;
     }
 
     asx = play_tree_new();
-    buffer = asx_body;
+    buffer = asx_element.body().c_str();
     while(buffer && buffer[0] != '\0') {
-	r = parser.get_element(&buffer,&element,&body,attribs);
+	r = parser.get_element(&buffer,element);
 	if(r < 0) {
 	    parser.warning_body_parse_error("ASX");
 	    delete &parser;
 	    return NULL;
 	} else if (r == 0) break; // No more element
-	if(strcasecmp(element,"ENTRY") == 0) {
-	    pt_entry = parser.entry(body,attribs);
+	if(strcasecmp(element.name().c_str(),"ENTRY") == 0) {
+	    pt_entry = parser.entry(element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
 		else play_tree_append_entry(list,pt_entry);
-		MSG_DBG2("Adding element %s to asx\n",element);
+		MSG_DBG2("Adding element %s to asx\n",element.name().c_str());
 	    }
-	} else if(strcasecmp(element,"ENTRYREF") == 0) {
-	    pt_entry = parser.entryref(libinput,body,attribs);
+	} else if(strcasecmp(element.name().c_str(),"ENTRYREF") == 0) {
+	    pt_entry = parser.entryref(libinput,element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
 		else play_tree_append_entry(list,pt_entry);
-		MSG_DBG2("Adding element %s to asx\n",element);
+		MSG_DBG2("Adding element %s to asx\n",element.name().c_str());
 	    }
-	} else if(strcasecmp(element,"REPEAT") == 0) {
-	    pt_entry = parser.repeat(libinput,body,attribs);
+	} else if(strcasecmp(element.name().c_str(),"REPEAT") == 0) {
+	    pt_entry = parser.repeat(libinput,element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
 		else play_tree_append_entry(list,pt_entry);
-		MSG_DBG2("Adding element %s to asx\n",element);
+		MSG_DBG2("Adding element %s to asx\n",element.name().c_str());
 	    }
-	} else MSG_DBG2("Ignoring element %s\n",element);
-	if(body) delete body;
+	} else MSG_DBG2("Ignoring element %s\n",element.name().c_str());
     }
 
-    delete asx_body;
     delete &parser;
 
     if(!list) {
