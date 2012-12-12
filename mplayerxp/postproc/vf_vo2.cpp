@@ -158,7 +158,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 
 extern const vf_info_t vf_info_vo2 = {
     "libvo2 wrapper",
-    "vo",
+    "vo2",
     "A'rpi",
     "for internal use",
     VF_FLAGS_THREADS|VF_FLAGS_SLICES,

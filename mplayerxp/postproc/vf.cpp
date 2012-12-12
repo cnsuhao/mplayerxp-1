@@ -324,7 +324,7 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,const char
 }
 
 vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,const char *name,const char *args,libinput_t*libinput,const vf_conf_t* conf){
-    if(strcmp(name,"vo")) {
+    if(strcmp(name,"vo2")) {
 	MSG_V("Open video filter: [%s] <%ux%u %s>\n", name,conf->w,conf->h,vo_format_name(conf->fourcc));
     }
     if(next) check_pin("vfilter",next->pin,VF_PIN);
@@ -463,7 +463,7 @@ vf_instance_t* __FASTCALL__ vf_init_filter(libinput_t* libinput,const vf_conf_t*
     char *arg;
     vf_instance_t* vfi=NULL,*vfi_prev=NULL,*vfi_first;
 //    sh_video=sh;
-    vfi=vf_open_filter(NULL,"vo",NULL,libinput,conf);
+    vfi=vf_open_filter(NULL,"vo2",NULL,libinput,conf);
     vfi_prev=vfi;
     if(vf_name)
     while(vf_name!=vf_last){
@@ -680,8 +680,13 @@ void vf_help(){
 vf_stream_t* vf_init(libinput_t* libinput,const vf_conf_t* conf) {
     vf_stream_t* s = new(zeromem) vf_stream_t;
     s->libinput=libinput;
-    s->first=vf_init_filter(libinput,conf);
-    s->first->parent=s;
+    vf_instance_t* first;
+    s->first=first=vf_init_filter(libinput,conf);
+    first->parent=s;
+    while(first->next) {
+	first=first->next;
+	first->parent=s;
+    }
     return s;
 }
 
