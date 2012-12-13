@@ -35,6 +35,7 @@ using namespace mpxp;
 #include "help_mp.h"
 
 #include "libmpstream2/stream.h"
+#include "libmpstream2/network.h"
 #include "libmpdemux/demuxer.h"
 
 #include "libmpconf/cfgparser.h"

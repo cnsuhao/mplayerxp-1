@@ -22,6 +22,7 @@ using namespace mpxp;
 #include "help_mp.h"
 #include "url.h"
 #include "tcp.h"
+#include "network.h"
 #include "librtsp/rtsp.h"
 #include "librtsp/rtsp_session.h"
 #include "stream_msg.h"

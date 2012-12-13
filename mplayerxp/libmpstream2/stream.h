@@ -10,9 +10,6 @@ using namespace mpxp;
 #include <string.h>
 
 #include "xmpcore/xmp_enums.h"
-#ifdef HAVE_STREAMING
-#include "network.h"
-#endif
 
 struct networking_t;
 namespace mpxp {
@@ -59,11 +56,12 @@ namespace mpxp {
 	    static void		print_drivers();
 
 	    virtual MPXP_Rc	open(libinput_t&libinput,const std::string& filename,int* file_format);
+	    virtual void	close();
+
 	    virtual int		read(any_t* mem,int total);
 	    virtual off_t	seek(off_t off);
 	    virtual int		skip(off_t len);
 	    virtual off_t	tell() const;
-	    virtual void	close();
 	    virtual MPXP_Rc	ctrl(unsigned cmd,any_t* param);
 
 	    virtual void	reset();

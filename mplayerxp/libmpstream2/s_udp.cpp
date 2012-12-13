@@ -21,6 +21,7 @@ using namespace mpxp;
 #include "stream_internal.h"
 #include "help_mp.h"
 #include "tcp.h"
+#include "network.h"
 #include "udp.h"
 #include "url.h"
 #include "stream_msg.h"
