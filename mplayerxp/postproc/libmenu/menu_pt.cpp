@@ -31,7 +31,7 @@ struct list_entry_s {
 
 struct menu_priv_s {
   menu_list_priv_t p;
-  char* title;
+  const char* title;
 };
 
 static struct menu_priv_s cfg_dflt = {
@@ -141,16 +141,19 @@ static int op(menu_t* menu,const char* args) {
   return 1;
 }
 
+static const m_struct_t m_priv =
+{
+    "pt_cfg",
+    sizeof(struct menu_priv_s),
+    &cfg_dflt,
+    cfg_fields
+};
+
 extern const menu_info_t menu_info_pt = {
   "Playtree menu",
   "pt",
   "Albeu",
   "",
-  {
-    "pt_cfg",
-    sizeof(struct menu_priv_s),
-    &cfg_dflt,
-    cfg_fields
-  },
+  &m_priv,
   op
 };

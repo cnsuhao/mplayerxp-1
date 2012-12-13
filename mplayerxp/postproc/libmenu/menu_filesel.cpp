@@ -44,12 +44,12 @@ struct menu_priv_s {
   char* dir; // current dir
   /// Cfg fields
   char* path;
-  char* title;
-  char* file_action;
-  char* dir_action;
+  const char* title;
+  const char* file_action;
+  const char* dir_action;
   int auto_close;
   char** actions;
-  char* filter;
+  const char* filter;
 };
 
 static struct menu_priv_s cfg_dflt = {
@@ -86,14 +86,15 @@ static void free_entry(list_entry_t* entry) {
   delete entry;
 }
 
-static char* replace_path(char* title , char* dir) {
-  char *p = strstr(title,"%p");
+static const char* replace_path(const char* title,const char* dir) {
+  const char *p = strstr(title,"%p");
   if(p) {
     int tl = strlen(title);
     int dl = strlen(dir);
     int t1l = p-title;
     int l = tl - 2 + dl;
-    char *r, *n, *d = dir;
+    char *r, *n;
+    const char *d = dir;
     char term = *(p-1);
 
     do {
@@ -116,7 +117,7 @@ static char* replace_path(char* title , char* dir) {
 
 typedef int (*kill_warn)(const any_t*, const any_t*);
 
-static int mylstat(char *dir, char *file,struct stat* st) {
+static int mylstat(const char *dir,const char *file,struct stat* st) {
   int l = strlen(dir) + strlen(file);
   char s[l+2];
   sprintf(s,"%s/%s",dir,file);
@@ -182,7 +183,7 @@ static void free_extensions(char **extensions){
   }
 }
 
-static int open_dir(menu_t* menu,char* args) {
+static int open_dir(menu_t* menu,const char* args) {
   char **namelist, **tp;
   struct dirent *dp;
   struct stat st;
@@ -201,7 +202,7 @@ static int open_dir(menu_t* menu,char* args) {
   mpriv->dir = mp_strdup(args);
   if(mpriv->p.title && mpriv->p.title != mpriv->title && mpriv->p.title != cfg_dflt.p.title)
     delete mpriv->p.title;
-  p = strstr(mpriv->title,"%p");
+  p = strstr(const_cast<char*>(mpriv->title),"%p");
 
   mpriv->p.title = replace_path(mpriv->title,mpriv->dir);
 
@@ -309,7 +310,7 @@ static void read_cmd(menu_t* menu,int cmd) {
       if(mpriv->dir_action) {
 	int fname_len = strlen(mpriv->dir) + strlen(mpriv->p.current->p.txt) + 1;
 	char filename[fname_len];
-	char* str;
+	const char* str;
 	sprintf(filename,"%s%s",mpriv->dir,mpriv->p.current->p.txt);
 	str = replace_path(mpriv->dir_action,filename);
 	c = mp_input_parse_cmd(str);
@@ -343,7 +344,7 @@ static void read_cmd(menu_t* menu,int cmd) {
     } else { // Files
       int fname_len = strlen(mpriv->dir) + strlen(mpriv->p.current->p.txt) + 1;
       char filename[fname_len];
-      char *str;
+      const char *str;
       sprintf(filename,"%s%s",mpriv->dir,mpriv->p.current->p.txt);
       str = replace_path(mpriv->file_action,filename);
       c = mp_input_parse_cmd(str);
@@ -359,7 +360,7 @@ static void read_cmd(menu_t* menu,int cmd) {
   case MENU_CMD_ACTION: {
     int fname_len = strlen(mpriv->dir) + strlen(mpriv->p.current->p.txt) + 1;
     char filename[fname_len];
-    char *str;
+    const char *str;
     sprintf(filename,"%s%s",mpriv->dir,mpriv->p.current->p.txt);
     str = replace_path(action, filename);
     mp_input_queue_cmd(menu->libinput,mp_input_parse_cmd(str));
@@ -450,16 +451,19 @@ static int open_fs(menu_t* menu,const char* args) {
   return r;
 }
 
+static struct m_struct_t m_priv =
+{
+    "fs_cfg",
+    sizeof(struct menu_priv_s),
+    &cfg_dflt,
+    cfg_fields
+};
+
 extern const menu_info_t menu_info_filesel = {
   "File seletor menu",
   "filesel",
   "Albeu",
   "",
-  {
-    "fs_cfg",
-    sizeof(struct menu_priv_s),
-    &cfg_dflt,
-    cfg_fields
-  },
+  &m_priv,
   open_fs
 };

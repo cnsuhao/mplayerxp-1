@@ -256,16 +256,19 @@ static int openMenu(menu_t* menu,const char* args) {
   return parse_args(menu,args);
 }
 
+static const m_struct_t m_priv =
+{
+    "pref_cfg",
+    sizeof(struct menu_priv_s),
+    &cfg_dflt,
+    cfg_fields
+};
+
 extern const menu_info_t menu_info_pref = {
   "Preferences menu",
   "pref",
   "Albeu",
   "",
-  {
-    "pref_cfg",
-    sizeof(struct menu_priv_s),
-    &cfg_dflt,
-    cfg_fields
-  },
+  &m_priv,
   openMenu
 };

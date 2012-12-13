@@ -162,16 +162,19 @@ static int open_cmdlist(menu_t* menu, const char* args) {
   return 1;
 }
 
+static const m_struct_t m_priv =
+{
+    "cmdlist_cfg",
+    sizeof(struct menu_priv_s),
+    &cfg_dflt,
+    cfg_fields
+};
+
 extern const menu_info_t menu_info_cmdlist = {
   "Command list menu",
   "cmdlist",
   "Albeu",
   "",
-  {
-    "cmdlist_cfg",
-    sizeof(struct menu_priv_s),
-    &cfg_dflt,
-    cfg_fields
-  },
+  &m_priv,
   open_cmdlist
 };

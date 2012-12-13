@@ -94,7 +94,7 @@ static int menu_parse_config(const char* buffer) {
 	menu_list = (menu_def_t*)mp_realloc(menu_list,(menu_count+2)*sizeof(menu_def_t));
 	menu_list[menu_count].name = mp_strdup(name.c_str());
 	menu_list[menu_count].type = minfo;
-	menu_list[menu_count].cfg = m_struct_alloc(&minfo->priv_st);
+	menu_list[menu_count].cfg = m_struct_alloc(minfo->priv_st);
 	menu_list[menu_count].args = mp_strdup(element.body().c_str());
 	std::map<std::string,std::string,ASX_Attrib::stricomp>::iterator it;
 	std::map<std::string,std::string,ASX_Attrib::stricomp>& _map = element.attribs().map();
@@ -104,7 +104,7 @@ static int menu_parse_config(const char* buffer) {
 	    ssecond=(*it).second;
 	    if(strcasecmp(sfirst.c_str(),"name") == 0) continue;
 	    // Setup the attribs
-	    if(!m_struct_set(&minfo->priv_st,menu_list[menu_count].cfg,mp_strdup(sfirst.c_str()),mp_strdup(ssecond.c_str())))
+	    if(!m_struct_set(minfo->priv_st,menu_list[menu_count].cfg,mp_strdup(sfirst.c_str()),mp_strdup(ssecond.c_str())))
 		MSG_WARN("[libmenu] Bad attrib: %s %s %s %i\n"
 		    ,sfirst.c_str(),ssecond.c_str(),name.c_str(),parser.get_line());
 	}
@@ -171,7 +171,7 @@ void menu_uninit(void) {
   int i;
   for(i = 0 ; menu_list && menu_list[i].name ; i++) {
     delete menu_list[i].name;
-    m_struct_free(&menu_list[i].type->priv_st,menu_list[i].cfg);
+    m_struct_free(menu_list[i].type->priv_st,menu_list[i].cfg);
     if(menu_list[i].args) delete menu_list[i].args;
   }
   delete menu_list;
@@ -228,7 +228,7 @@ menu_t* menu_open(const char *name,libinput_t& libinput) {
     return NULL;
   }
   m = new(zeromem) menu_t(libinput);
-  m->priv_st = &(menu_list[i].type->priv_st);
+  m->priv_st = menu_list[i].type->priv_st;
   m->priv = (menu_priv_s*)m_struct_copy(m->priv_st,menu_list[i].cfg);
   m->ctx = menu_ctx;
   if(menu_list[i].type->mopen(m,menu_list[i].args))

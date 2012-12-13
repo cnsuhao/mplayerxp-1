@@ -6,6 +6,7 @@ namespace mpxp {
 }
 
 struct menu_priv_s;
+struct m_struct_t;
 
 struct menu_t {
     menu_t(libinput_t& _libinput):libinput(_libinput) {}
@@ -16,7 +17,7 @@ struct menu_t {
     void (*read_cmd)(menu_t* menu,int cmd);
     void (*read_key)(menu_t* menu,int cmd);
     void (*close)(menu_t* menu);
-    m_struct_t* priv_st;
+    const m_struct_t* priv_st;
     struct menu_priv_s* priv;
     int show; // Draw it ?
     int cl; // Close request (user sent a close cmd or
@@ -29,7 +30,7 @@ typedef struct menu_info_s {
   const char *name;
   const char *author;
   const char *comment;
-  m_struct_t priv_st; // Config struct definition
+  const m_struct_t* priv_st; // Config struct definition
   // cfg is a config struct as defined in cfg_st, it may be used as a priv struct
   // cfg is filled from the attributs found in the cfg file
   // the args param hold the content of the balise in the cfg file (if any)

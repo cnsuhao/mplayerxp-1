@@ -29,7 +29,6 @@ using namespace mpxp;
 #include "mplayerxp.h"
 #include "xmpcore/sig_hand.h"
 
-#include "postproc/swscale.h"
 #include "postproc/af.h"
 #include "postproc/vf.h"
 #define HELP_MP_DEFINE_STATIC
@@ -37,12 +36,9 @@ using namespace mpxp;
 
 #include "libmpstream2/stream.h"
 #include "libmpdemux/demuxer.h"
-#include "libmpdemux/stheader.h"
-#include "libmpdemux/parse_es.h"
 
 #include "libmpconf/cfgparser.h"
 #include "libmpconf/codec-cfg.h"
-#include "libmpconf/m_struct.h"
 
 #include "libmpcodecs/dec_video.h"
 #include "libmpcodecs/dec_audio.h"
@@ -55,15 +51,13 @@ using namespace mpxp;
 
 #include "libvo2/video_out.h"
 
-#include "libvo2/sub.h"
 #include "libao2/audio_out.h"
 #include "libao2/afmt.h"
 
-#include "osdep/keycodes.h"
-#include "osdep/shmem.h"
 #include "osdep/get_path.h"
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"
+#include "osdep/timer.h"
 
 #include "nls/nls.h"
 #include "postproc/libmenu/menu.h"
@@ -75,8 +69,6 @@ using namespace mpxp;
 #include "xmpcore/xmp_core.h"
 #include "xmpcore/xmp_vplayer.h"
 #include "xmpcore/xmp_adecoder.h"
-#include "osdep/timer.h"
-#include "osdep/getch2.h"
 #include "xmpcore/PointerProtector.h"
 #include "dump.h"
 
@@ -302,7 +294,6 @@ unsigned get_number_cpu(void) {
 }
 
 static void mpxp_init_structs(void) {
-    mpxp_context().engine().MPXPSys = new(zeromem) MPXPSystem;
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
     memset(&x86,-1,sizeof(x86_features_t));
 #endif
@@ -902,7 +893,7 @@ char* MPXPSystem::init_output_subsystems() {
     unsigned i;
     // check video_out driver name:
     MP_UNIT("vo_init");
-    vo_inited = (mpxp_context().video().output->init(mp_conf.video_driver?mp_conf.video_driver:"")!=NULL)?1:0;
+    vo_inited = (mpxp_context().video().output->init(mp_conf.video_driver?mp_conf.video_driver:"")==MPXP_Ok)?1:0;
 
     if(!vo_inited){
 	MSG_FATAL(MSGTR_InvalidVOdriver,mp_conf.video_driver?mp_conf.video_driver:"?");
@@ -1685,18 +1676,20 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     secure_keys=ptr_protector.protect(new(zeromem) MPXPSecureKeys(10));
 
     mpxp_init_structs();
-    MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
+
     mpxp_context().video().output=new(zeromem) Video_Output;
     init_signal_handling();
 
     xmp_init();
     xmp_register_main(exit_sighandler);
 
-    MPXPSys.init_keyboard_fifo();
-
     mpxp_print_init(mp_conf.verbose+MSGL_STATUS);
     MSG_INFO("%s",banner_text);
-  /* Test for cpu capabilities (and corresponding OS support) for optimizing */
+
+    /* currently it's lowest point of MPXPSystem initialization */
+    mpxp_context().engine().MPXPSys = new(zeromem) MPXPSystem;
+    MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
+    MPXPSys.init_keyboard_fifo();
 
     MPXPSys.playtree = play_tree_new();
 
@@ -1724,10 +1717,6 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
     get_mmx_optimizations();
 #endif
-    if(!sws_init()) {
-	MSG_ERR("MPlayerXP requires working copy of libswscaler\n");
-	exit_player(MSGTR_Exit_quit);
-    }
     if(mp_conf.shuffle_playback) MPXPSys.playtree->flags|=PLAY_TREE_RND;
     else			 MPXPSys.playtree->flags&=~PLAY_TREE_RND;
 

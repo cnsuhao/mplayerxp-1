@@ -12,7 +12,7 @@
 /// \ingroup OptionTypes
 typedef struct m_option_type m_option_type_t;
 typedef struct m_option m_option_t;
-struct m_struct_st;
+struct m_struct_t;
 
 /// \defgroup OptionTypes Options types
 /// \ingroup Options
@@ -74,8 +74,8 @@ extern const m_option_type_t m_option_type_obj_settings_list;
 
 /// Extra definition needed for \ref m_option_type_obj_presets options.
 typedef struct {
-    struct m_struct_st* in_desc; /// Description of the struct holding the presets.
-    struct m_struct_st* out_desc; /// Description of the struct that should be set by the presets.
+    struct m_struct_t* in_desc; /// Description of the struct holding the presets.
+    struct m_struct_t* out_desc; /// Description of the struct that should be set by the presets.
     any_t* presets; /// Pointer to an array of structs defining the various presets.
     any_t* name_off; /// Offset of the preset's name inside the in_struct.
 } m_obj_presets_t;
@@ -98,7 +98,7 @@ extern const m_option_type_t m_option_type_custom_url;
 #endif
 /// Extra definition needed for \ref m_option_type_obj_params options.
 typedef struct {
-    const struct m_struct_st* desc; /// Field descriptions.
+    const struct m_struct_t* desc; /// Field descriptions.
     char separator; /// Field separator to use.
 } m_obj_params_t;
 

@@ -187,16 +187,19 @@ static int open_txt(menu_t* menu,const char* args) {
   return 1;
 }
 
+static const m_struct_t m_priv =
+{
+    "txt_cfg",
+    sizeof(struct menu_priv_s),
+    &cfg_dflt,
+    cfg_fields
+};
+
 extern const menu_info_t menu_info_txt = {
   "Text file viewer",
   "txt",
   "Albeu",
   "",
-  {
-    "txt_cfg",
-    sizeof(struct menu_priv_s),
-    &cfg_dflt,
-    cfg_fields
-  },
+  &m_priv,
   open_txt,
 };

@@ -1410,7 +1410,7 @@ static const m_option_t m_span_params_fields[] = {
   {"end", M_ST_OFF(m_span_t,end), MCONF_TYPE_INT, M_OPT_MIN , 1 ,0, NULL},
   { NULL, NULL, 0, 0, 0, 0,  NULL }
 };
-static const struct m_struct_st m_span_opts = {
+static const struct m_struct_t m_span_opts = {
   "m_span",
   sizeof(m_span_t),
   &m_span_params_dflts,

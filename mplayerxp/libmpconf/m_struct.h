@@ -11,7 +11,7 @@
 struct m_option;
 
 /// Struct definition
-typedef struct m_struct_st {
+struct m_struct_t {
     const char* name; /// For error messages and debugging
     unsigned int size; /// size of the whole struct
     const any_t* defaults; /// Pointer to a struct filled with the default settings
@@ -20,7 +20,7 @@ typedef struct m_struct_st {
    *  of the member in the struct (use M_ST_OFF macro for this).
    */
     const struct m_option* fields;
-} m_struct_t;
+};
 
 
 // From glib.h (modified ;-)
