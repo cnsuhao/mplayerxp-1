@@ -38,6 +38,7 @@ using namespace mpxp;
 #include "libmpdemux/demuxer.h"
 
 #include "libmpconf/codec-cfg.h"
+#include "libplaytree/playtree.h"
 
 #include "libmpcodecs/dec_video.h"
 #include "libmpcodecs/dec_audio.h"
@@ -426,7 +427,7 @@ static const char* default_config=
 //"nosound=nein"
 "\n";
 
-void parse_cfgfiles( m_config_t* conf )
+void parse_cfgfiles( m_config_t& conf )
 {
     char *conffile;
     int conffile_fd;
@@ -604,7 +605,7 @@ void show_help(void) {
 
 void show_long_help(void) {
     MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
-    m_config_show_options(mpxp_context().mconfig);
+    m_config_show_options(*mpxp_context().mconfig);
     mp_input_print_binds(MPXPSys.libinput());
     Stream::print_drivers();
     mpxp_context().video().output->print_help();
@@ -1633,7 +1634,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     int stream_dump_type=0;
     input_state_t input_state = { 0, 0, 0 };
     char *ao_subdevice;
-    char* filename=NULL; //"MI2-Trailer.avi";
+    const char* filename=NULL; //"MI2-Trailer.avi";
     int file_format=Demuxer::Type_UNKNOWN;
 
 // movie info:
@@ -1666,13 +1667,14 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 
     MPXPSys.playtree = play_tree_new();
 
-    mpxp_context().mconfig = m_config_new(MPXPSys.playtree,MPXPSys.libinput());
-    m_config_register_options(mpxp_context().mconfig,mplayer_opts);
+    m_config_t& m_config=m_config_new(MPXPSys.playtree,MPXPSys.libinput());
+    mpxp_context().mconfig = &m_config;
+    m_config_register_options(m_config,mplayer_opts);
     // TODO : add something to let modules register their options
-    mp_register_options(mpxp_context().mconfig);
-    parse_cfgfiles(mpxp_context().mconfig);
+    mp_register_options(m_config);
+    parse_cfgfiles(m_config);
 
-    if(m_config_parse_command_line(mpxp_context().mconfig, argc, argv, envp)!=MPXP_Ok)
+    if(m_config_parse_command_line(m_config, argc, argv, envp)!=MPXP_Ok)
 	exit_player("Error parse command line"); // error parsing cmdline
 
     if(!mp_conf.xp) {
@@ -1695,7 +1697,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 
     MPXPSys.playtree = play_tree_cleanup(MPXPSys.playtree);
     if(MPXPSys.playtree) {
-      playtree_iter = play_tree_iter_new(MPXPSys.playtree,mpxp_context().mconfig);
+      playtree_iter = play_tree_iter_new(MPXPSys.playtree,m_config);
       if(playtree_iter) {
 	if(play_tree_iter_step(playtree_iter,0,0) != PLAY_TREE_ITER_ENTRY) {
 	  play_tree_iter_free(playtree_iter);

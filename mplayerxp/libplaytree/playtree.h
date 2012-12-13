@@ -37,10 +37,6 @@ enum {
 /// \defgroup Playtree
 ///@{
 
-typedef struct play_tree play_tree_t;
-typedef struct play_tree_iter play_tree_iter_t;
-typedef struct play_tree_param play_tree_param_t;
-
 #include "libmpconf/cfgparser.h"
 
 #if 0
@@ -55,12 +51,12 @@ struct play_tree_info {
 }
 #endif
 
-struct play_tree_param {
+struct play_tree_param_t {
   char* name;
   char* value;
 };
 
-struct play_tree {
+struct play_tree_t {
   play_tree_t* parent;
   play_tree_t* child;
   play_tree_t* next;
@@ -74,18 +70,18 @@ struct play_tree {
   int flags;
 };
 
-struct play_tree_iter {
-  play_tree_t* root; // Iter root tree
-  play_tree_t* tree; // Current tree
-  m_config_t* config;
-  int loop;  // Looping status
-  int file;
-  int num_files;
-  int entry_pushed;
-  int mode;
+struct play_tree_iter_t {
+    play_tree_t* root; // Iter root tree
+    play_tree_t* tree; // Current tree
+    m_config_t* config;
+    int loop;  // Looping status
+    int file;
+    int num_files;
+    int entry_pushed;
+    int mode;
 
-  int* status_stack; //  loop/valid stack to save/revert status when we go up/down
-  int stack_size;  // status stack size
+    int* status_stack; //  loop/valid stack to save/revert status when we go up/down
+    int stack_size;  // status stack size
 };
 
 play_tree_t* play_tree_new(void);
@@ -145,7 +141,7 @@ play_tree_set_params_from(play_tree_t* dest,const play_tree_t* src);
 /// Iterator
 
 play_tree_iter_t*
-play_tree_iter_new(play_tree_t* pt, m_config_t* config);
+play_tree_iter_new(play_tree_t* pt, m_config_t& config);
 
 play_tree_iter_t*
 play_tree_iter_new_copy(play_tree_iter_t const* old);
@@ -165,7 +161,7 @@ play_tree_iter_up_step(play_tree_iter_t* iter, int d,int with_nodes);
 int // Enter a node child list
 play_tree_iter_down_step(play_tree_iter_t* iter, int d,int with_nodes);
 
-char* play_tree_iter_get_file(play_tree_iter_t* iter, int d);
+const char* play_tree_iter_get_file(play_tree_iter_t* iter, int d);
 
 play_tree_t* parse_playtree(libinput_t& libinput,Stream * stream);
 
@@ -186,11 +182,11 @@ play_tree_iter_t* pt_iter_create(play_tree_t** pt, struct m_config* config);
 void pt_iter_destroy(play_tree_iter_t** iter);
 
 /// Gets the next available file in the direction (d=-1 || d=+1).
-char* pt_iter_get_file(play_tree_iter_t* iter, int d);
+const char* pt_iter_get_file(play_tree_iter_t* iter, int d);
 
 // Two Macros that implement forward and backward direction.
-static inline char* pt_iter_get_next_file(play_tree_iter_t* iter) { return pt_iter_get_file(iter, 1); }
-static inline char* pt_iter_get_prev_file(play_tree_iter_t* iter) { return pt_iter_get_file(iter, -1); }
+static inline const char* pt_iter_get_next_file(play_tree_iter_t* iter) { return pt_iter_get_file(iter, 1); }
+static inline const char* pt_iter_get_prev_file(play_tree_iter_t* iter) { return pt_iter_get_file(iter, -1); }
 
 /// Inserts entry into the playtree.
 void pt_iter_insert_entry(play_tree_iter_t* iter, play_tree_t* entry);

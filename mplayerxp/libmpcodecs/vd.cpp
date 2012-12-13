@@ -73,7 +73,7 @@ static const vd_functions_t* mpcodecs_vd_drivers[] = {
 };
 static unsigned int nddrivers=sizeof(mpcodecs_vd_drivers)/sizeof(vd_functions_t*);
 
-void libmpcodecs_vd_register_options(m_config_t* cfg)
+void libmpcodecs_vd_register_options(m_config_t& cfg)
 {
     unsigned i;
     for(i=0;i<nddrivers;i++) {

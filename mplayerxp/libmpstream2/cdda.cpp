@@ -33,7 +33,7 @@ static const config_t cdda_conf[] = {
   { NULL,NULL, 0, 0, 0, 0, NULL}
 };
 
-void cdda_register_options(m_config_t* cfg) {
+void cdda_register_options(m_config_t& cfg) {
   m_config_register_options(cfg,cdda_conf);
 }
 

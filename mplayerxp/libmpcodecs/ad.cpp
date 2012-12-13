@@ -66,7 +66,7 @@ static const ad_functions_t* mpcodecs_ad_drivers[] = {
 
 static unsigned int nddrivers=sizeof(mpcodecs_ad_drivers)/sizeof(ad_functions_t*);
 
-void libmpcodecs_ad_register_options(m_config_t* cfg)
+void libmpcodecs_ad_register_options(m_config_t& cfg)
 {
     unsigned i;
     for(i=0;i<nddrivers;i++) {

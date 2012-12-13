@@ -442,7 +442,7 @@ play_tree_iter_push_params(play_tree_iter_t* iter) {
   play_tree_t* pt;
 #ifdef MP_DEBUG
   assert(iter != NULL);
-  assert(iter->config != NULL);
+  assert(*iter->config != NULL);
   assert(iter->tree != NULL);
 #endif
 
@@ -450,7 +450,7 @@ play_tree_iter_push_params(play_tree_iter_t* iter) {
 
   // We always push a config because we can set some option
   // while playing
-  m_config_push(iter->config);
+  m_config_push(*iter->config);
 
   if(pt->params == NULL)
     return;
@@ -458,7 +458,7 @@ play_tree_iter_push_params(play_tree_iter_t* iter) {
 
   for(n = 0; pt->params[n].name != NULL ; n++) {
     int e;
-    if((e = m_config_set_option(iter->config,pt->params[n].name,pt->params[n].value)) < 0) {
+    if((e = m_config_set_option(*iter->config,pt->params[n].name,pt->params[n].value)) < 0) {
       MSG_ERR("Error %d while setting option '%s' with value '%s'\n",e,
 	     pt->params[n].name,pt->params[n].value);
     }
@@ -470,7 +470,7 @@ play_tree_iter_push_params(play_tree_iter_t* iter) {
 }
 
 play_tree_iter_t*
-play_tree_iter_new(play_tree_t* pt,m_config_t* config) {
+play_tree_iter_new(play_tree_t* pt,m_config_t& config) {
   play_tree_iter_t* iter;
 
 #ifdef MP_DEBUG
@@ -485,7 +485,7 @@ play_tree_iter_new(play_tree_t* pt,m_config_t* config) {
   if(! iter) return NULL;
   iter->root = pt;
   iter->tree = NULL;
-  iter->config = config;
+  iter->config = &config;
 
   if(pt->parent)
     iter->loop = pt->parent->loop;
@@ -562,7 +562,7 @@ play_tree_iter_step(play_tree_iter_t* iter, int d,int with_nodes) {
 
   if(iter->config && iter->entry_pushed > 0) {
     iter->entry_pushed = 0;
-    m_config_pop(iter->config);
+    m_config_pop(*iter->config);
   }
 
   if(iter->tree->parent && (iter->tree->parent->flags & PLAY_TREE_RND))
@@ -712,7 +712,7 @@ play_tree_iter_up_step(play_tree_iter_t* iter, int d,int with_nodes) {
 
   // Pop subtree params
   if(iter->config) {
-    m_config_pop(iter->config);
+    m_config_pop(*iter->config);
     if(iter->mode == PLAY_TREE_ITER_RND)
       iter->tree->flags |= PLAY_TREE_RND_PLAYED;
   }
@@ -759,9 +759,9 @@ play_tree_iter_down_step(play_tree_iter_t* iter, int d,int with_nodes) {
 // This is used as a file name for vcd/tv/dvd
 char playtree_ret_filename[256];
 
-char*
+const char*
 play_tree_iter_get_file(play_tree_iter_t* iter, int d) {
-  char* entry;
+  const char* entry;
 #ifdef MP_DEBUG
   assert(iter != NULL);
   assert(iter->tree->child == NULL);
@@ -794,22 +794,23 @@ play_tree_iter_get_file(play_tree_iter_t* iter, int d) {
   case PLAY_TREE_ENTRY_DVD :
     if(strlen(entry) == 0) entry = "1";
     if(iter->config)
-      m_config_set_option(iter->config,"dvd",entry);
+      m_config_set_option(*iter->config,"dvd",entry);
     snprintf(playtree_ret_filename,255,"DVD title %s",entry);
     return playtree_ret_filename;
   case PLAY_TREE_ENTRY_VCD :
     if(strlen(entry) == 0) entry = "1";
     if(iter->config)
-      m_config_set_option(iter->config,"vcd",entry);
+      m_config_set_option(*iter->config,"vcd",entry);
     snprintf(playtree_ret_filename,255,"vcd://%s",entry);
     return playtree_ret_filename;
   case PLAY_TREE_ENTRY_TV :
     {
       if(strlen(entry) != 0) {
-	char *s,*e, *val = (char*)mp_malloc(strlen(entry) + 11 + 1);
+	char *s,*val = (char*)mp_malloc(strlen(entry) + 11 + 1);
+	const char* e;
 	sprintf(val,"on:channel=%s",entry);
 	if(iter->config)
-	  m_config_set_option(iter->config,"tv",val);
+	  m_config_set_option(*iter->config,"tv",val);
 	s = playtree_ret_filename + sprintf(playtree_ret_filename,"TV channel ");
 	e = strchr(entry,':');
 	if(!e) strncpy(s,entry,255-11);
@@ -822,7 +823,7 @@ play_tree_iter_get_file(play_tree_iter_t* iter, int d) {
 	return playtree_ret_filename;
       } else {
 	if(iter->config)
-	  m_config_set_option(iter->config,"tv","on");
+	  m_config_set_option(*iter->config,"tv","on");
 	return "TV";
       }
     }
@@ -895,7 +896,7 @@ play_tree_iter_t* play_tree_iter_new_copy(play_tree_iter_t const* old) {
 
 // HIGH Level API, by Fabian Franz (mplayer@fabian-franz.de)
 //
-play_tree_iter_t* pt_iter_create(play_tree_t** ppt, m_config_t* config)
+play_tree_iter_t* pt_iter_create(play_tree_t** ppt, m_config_t& config)
 {
   play_tree_iter_t* r=NULL;
 #ifdef MP_DEBUG
@@ -925,10 +926,10 @@ void pt_iter_destroy(play_tree_iter_t** iter)
   }
 }
 
-char* pt_iter_get_file(play_tree_iter_t* iter, int d)
+const char* pt_iter_get_file(play_tree_iter_t* iter, int d)
 {
   int i=0;
-  char* r;
+  const char* r;
 
   if (iter==NULL)
     return NULL;

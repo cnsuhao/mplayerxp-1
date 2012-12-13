@@ -17,6 +17,7 @@
 
 struct audio_decoder_t;
 struct video_decoder_t;
+struct play_tree_iter_t;
 namespace mpxp {
     /* List of all modules which require protection by pin-code */
     enum {
@@ -225,7 +226,7 @@ namespace mpxp {
 
     void mplayer_put_key(int code);
 
-    void mp_register_options(m_config_t* cfg);
+    void mp_register_options(m_config_t& cfg);
 
     extern play_tree_iter_t* playtree_iter;
 }

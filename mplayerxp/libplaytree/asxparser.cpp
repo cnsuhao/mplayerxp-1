@@ -299,7 +299,7 @@ void ASX_Parser::param(ASX_Attrib& cattribs, play_tree_t* pt) const {
 	return;
     }
     val = cattribs.get("VALUE");
-    if(m_config_get_option(mpxp_context().mconfig,name.c_str()) == NULL) {
+    if(m_config_get_option(*mpxp_context().mconfig,name.c_str()) == NULL) {
 	MSG_WARN("Found unknow param in asx: %s",name.c_str());
 	if(!val.empty())MSG_WARN("=%s\n",val.c_str());
 	else		MSG_WARN("\n");

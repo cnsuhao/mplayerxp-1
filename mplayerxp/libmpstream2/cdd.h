@@ -100,6 +100,6 @@ namespace mpxp {
 	    lsn_t end_sector;
     };
 
-    void cdda_register_options(m_config_t* cfg);
+    void cdda_register_options(m_config_t& cfg);
 } // namespace mpxp
 #endif // __CDD_H__
