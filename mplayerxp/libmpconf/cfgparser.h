@@ -37,15 +37,12 @@ enum {
     CONF_GLOBAL		=(1<<4),
     CONF_NOSAVE		=(1<<5)
 };
-typedef struct config config_t;
 typedef struct m_config m_config_t;
 typedef struct config_save config_save_t;
 
 #include "libplaytree/playtree.h"
 
-typedef void (*cfg_default_func_t)(config_t *,const char*);
-
-struct config {
+struct config_t {
     const char *name;
     any_t* const p;
     unsigned int type;
@@ -53,6 +50,7 @@ struct config {
     float min,max;
     const char *help;
 };
+typedef void (*cfg_default_func_t)(config_t*,const char*);
 
 struct m_config {
     m_config(libinput_t& _libinput):libinput(_libinput) {}

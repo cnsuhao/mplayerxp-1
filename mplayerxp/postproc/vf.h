@@ -38,6 +38,7 @@ namespace mpxp {
 	char* list;	/* list of names of filters that are added to filter
 		   list during first initialization of stream */
     };
+    extern vf_cfg_t vf_cfg; // Configuration for audio filters
 
     struct vf_conf_t {
 	unsigned	w;

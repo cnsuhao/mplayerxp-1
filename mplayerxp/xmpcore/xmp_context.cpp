@@ -1,6 +1,14 @@
-/*
- * config for cfgparser
- */
+#include "mp_config.h"
+#include "osdep/mplib.h"
+using namespace mpxp;
+
+#include "mplayerxp.h"
+#include "xmp_context.h"
+#include "libmpconf/cfgparser.h"
+#include "postproc/af.h"
+#include "postproc/vf.h"
+#include "libmpsub/spudec.h"
+#include "libmpstream2/network.h"
 
 extern const char *oss_mixer_device;
 #ifdef HAVE_SDL
@@ -11,9 +19,7 @@ extern int sdl_forcegl;
 //extern char *sdl_adriver;
 #endif
 
-extern af_cfg_t af_cfg; // Configuration for audio filters
-extern vf_cfg_t vf_cfg; // Configuration for audio filters
-
+namespace mpxp {
 static const config_t xpcore_config[]={
 	{"xp", &mp_conf.xp, CONF_TYPE_INT, CONF_RANGE, 0, UINT_MAX, "specifies number cpus to use for playback"},
 	{"dump", &mp_conf.stream_dump, CONF_TYPE_STRING, 0, 0, 0, "specifies dump type and name for the dump of stream"},
@@ -52,34 +58,34 @@ static const config_t net_config[]={
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
 static const config_t cpu_config[]={
-	{"simd", &x86.simd, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SIMD extensions of CPU"},
-	{"nosimd", &x86.simd, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SIMD extensions of CPU"},
-	{"mmx", &x86.mmx, CONF_TYPE_FLAG, 0, 0, 1, "enables using of MMX extensions of CPU"},
-	{"nommx", &x86.mmx, CONF_TYPE_FLAG, 0, 1, 0, "disables using of MMX extensions of CPU"},
-	{"mmx2", &x86.mmx2, CONF_TYPE_FLAG, 0, 0, 1, "enables using of MMX2 extensions of CPU"},
-	{"nommx2", &x86.mmx2, CONF_TYPE_FLAG, 0, 1, 0, "disables using of MMX2 extensions of CPU"},
-	{"3dnow", &x86._3dnow, CONF_TYPE_FLAG, 0, 0, 1, "enables using of 3DNow! extensions of CPU"},
-	{"no3dnow", &x86._3dnow, CONF_TYPE_FLAG, 0, 1, 0, "disables using of 3DNow! extensions of CPU"},
-	{"3dnow2", &x86._3dnow2, CONF_TYPE_FLAG, 0, 0, 1, "enables using of 3DNow-2! extensions of CPU"},
-	{"no3dnow2", &x86._3dnow2, CONF_TYPE_FLAG, 0, 1, 0, "disables using of 3DNow-2! extensions of CPU"},
-	{"sse", &x86.sse, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SSE extensions of CPU"},
-	{"nosse", &x86.sse, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SSE extensions of CPU"},
-	{"sse2", &x86.sse2, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SSE2 extensions of CPU"},
-	{"nosse2", &x86.sse2, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SSE2 extensions of CPU"},
-	{"sse3", &x86.sse3, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SSE3 extensions of CPU"},
-	{"nosse3", &x86.sse3, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SSE3 extensions of CPU"},
-	{"ssse3", &x86.ssse3, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SSSE3 extensions of CPU"},
-	{"nossse3", &x86.ssse3, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SSSE3 extensions of CPU"},
-	{"sse41", &x86.sse41, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SSE41 extensions of CPU"},
-	{"nosse41", &x86.sse41, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SSE41 extensions of CPU"},
-	{"sse42", &x86.sse42, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SSE42 extensions of CPU"},
-	{"nosse42", &x86.sse42, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SSE42 extensions of CPU"},
-	{"aes", &x86.aes, CONF_TYPE_FLAG, 0, 0, 1, "enables using of AES extensions of CPU"},
-	{"noaes", &x86.aes, CONF_TYPE_FLAG, 0, 1, 0, "disables using of AES extensions of CPU"},
-	{"avx", &x86.avx, CONF_TYPE_FLAG, 0, 0, 1, "enables using of AVX extensions of CPU"},
-	{"noavx", &x86.avx, CONF_TYPE_FLAG, 0, 1, 0, "disables using of AVX extensions of CPU"},
-	{"fma", &x86.fma, CONF_TYPE_FLAG, 0, 0, 1, "enables using of FMA extensions of CPU"},
-	{"nofma", &x86.fma, CONF_TYPE_FLAG, 0, 1, 0, "disables using of FMA extensions of CPU"},
+	{"simd", &mp_conf.x86.simd, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SIMD extensions of CPU"},
+	{"nosimd", &mp_conf.x86.simd, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SIMD extensions of CPU"},
+	{"mmx", &mp_conf.x86.mmx, CONF_TYPE_FLAG, 0, 0, 1, "enables using of MMX extensions of CPU"},
+	{"nommx", &mp_conf.x86.mmx, CONF_TYPE_FLAG, 0, 1, 0, "disables using of MMX extensions of CPU"},
+	{"mmx2", &mp_conf.x86.mmx2, CONF_TYPE_FLAG, 0, 0, 1, "enables using of MMX2 extensions of CPU"},
+	{"nommx2", &mp_conf.x86.mmx2, CONF_TYPE_FLAG, 0, 1, 0, "disables using of MMX2 extensions of CPU"},
+	{"3dnow", &mp_conf.x86._3dnow, CONF_TYPE_FLAG, 0, 0, 1, "enables using of 3DNow! extensions of CPU"},
+	{"no3dnow", &mp_conf.x86._3dnow, CONF_TYPE_FLAG, 0, 1, 0, "disables using of 3DNow! extensions of CPU"},
+	{"3dnow2", &mp_conf.x86._3dnow2, CONF_TYPE_FLAG, 0, 0, 1, "enables using of 3DNow-2! extensions of CPU"},
+	{"no3dnow2", &mp_conf.x86._3dnow2, CONF_TYPE_FLAG, 0, 1, 0, "disables using of 3DNow-2! extensions of CPU"},
+	{"sse", &mp_conf.x86.sse, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SSE extensions of CPU"},
+	{"nosse", &mp_conf.x86.sse, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SSE extensions of CPU"},
+	{"sse2", &mp_conf.x86.sse2, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SSE2 extensions of CPU"},
+	{"nosse2", &mp_conf.x86.sse2, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SSE2 extensions of CPU"},
+	{"sse3", &mp_conf.x86.sse3, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SSE3 extensions of CPU"},
+	{"nosse3", &mp_conf.x86.sse3, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SSE3 extensions of CPU"},
+	{"ssse3", &mp_conf.x86.ssse3, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SSSE3 extensions of CPU"},
+	{"nossse3", &mp_conf.x86.ssse3, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SSSE3 extensions of CPU"},
+	{"sse41", &mp_conf.x86.sse41, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SSE41 extensions of CPU"},
+	{"nosse41", &mp_conf.x86.sse41, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SSE41 extensions of CPU"},
+	{"sse42", &mp_conf.x86.sse42, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SSE42 extensions of CPU"},
+	{"nosse42", &mp_conf.x86.sse42, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SSE42 extensions of CPU"},
+	{"aes", &mp_conf.x86.aes, CONF_TYPE_FLAG, 0, 0, 1, "enables using of AES extensions of CPU"},
+	{"noaes", &mp_conf.x86.aes, CONF_TYPE_FLAG, 0, 1, 0, "disables using of AES extensions of CPU"},
+	{"avx", &mp_conf.x86.avx, CONF_TYPE_FLAG, 0, 0, 1, "enables using of AVX extensions of CPU"},
+	{"noavx", &mp_conf.x86.avx, CONF_TYPE_FLAG, 0, 1, 0, "disables using of AVX extensions of CPU"},
+	{"fma", &mp_conf.x86.fma, CONF_TYPE_FLAG, 0, 0, 1, "enables using of FMA extensions of CPU"},
+	{"nofma", &mp_conf.x86.fma, CONF_TYPE_FLAG, 0, 1, 0, "disables using of FMA extensions of CPU"},
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
 #endif
@@ -226,8 +232,7 @@ static const config_t playback_config[]={
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
 
-
-static const config_t mplayer_opts[]={
+static const config_t mplayer_options[]={
 	/* name, pointer, type, flags, min, max, help */
 	{"include", NULL, CONF_TYPE_INCLUDE, CONF_NOSAVE, 0, 0, ""}, /* this don't need anymore to be the first!!! */
 
@@ -264,3 +269,29 @@ static const config_t mplayer_opts[]={
 // ------------------------- codec/pp options --------------------
 	{NULL, NULL, 0, 0, 0, 0, NULL}
 };
+const config_t* mplayer_opts=mplayer_options;
+
+} // namespace mpxp
+extern void libmpcodecs_ad_register_options(m_config_t* cfg);
+extern void libmpcodecs_vd_register_options(m_config_t* cfg);
+
+namespace mpxp {
+#ifdef HAVE_LIBCDIO
+extern void cdda_register_options(m_config_t* cfg);
+#endif
+extern void mp_input_register_options(m_config_t* cfg);
+extern void libmpdemux_register_options(m_config_t* cfg);
+extern void demuxer_register_options(m_config_t* cfg);
+void mp_register_options(m_config_t* cfg)
+{
+    mp_input_register_options(cfg);
+    libmpdemux_register_options(cfg);
+    demuxer_register_options(cfg);
+#ifdef HAVE_LIBCDIO
+    cdda_register_options(cfg);
+#endif
+    libmpcodecs_ad_register_options(cfg);
+    libmpcodecs_vd_register_options(cfg);
+}
+
+} // namespace mpxp

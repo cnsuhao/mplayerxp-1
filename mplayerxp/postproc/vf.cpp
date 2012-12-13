@@ -456,7 +456,6 @@ void __FASTCALL__ vf_uninit_filter_chain(vf_instance_t* vf){
     }
 }
 
-extern vf_cfg_t vf_cfg;
 vf_instance_t* __FASTCALL__ vf_init_filter(libinput_t& libinput,const vf_conf_t* conf)
 {
     char *vf_last=NULL,*vf_name=vf_cfg.list;
@@ -759,4 +758,5 @@ const char * __FASTCALL__ vf_get_first_name(vf_stream_t* s) {
     vf_instance_t* first=s->first;
     return first->info->name;
 }
+vf_cfg_t vf_cfg;
 } // namespace mpxp

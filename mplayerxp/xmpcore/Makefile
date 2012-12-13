@@ -2,7 +2,13 @@ include ../mp_config.mak
 
 LIBNAME = libxmpcore.a
 
-SRCS=xmp_core.cpp xmp_aplayer.cpp xmp_vplayer.cpp xmp_vdecoder.cpp xmp_adecoder.cpp
+SRCS=xmp_context.cpp \
+     xmp_core.cpp \
+     xmp_aplayer.cpp \
+     xmp_vplayer.cpp \
+     xmp_vdecoder.cpp \
+     xmp_adecoder.cpp
+
 SRCS+=sig_hand.cpp mp_image.cpp mp_aframe.cpp
 OBJS=$(SRCS:.cpp=.o)
 

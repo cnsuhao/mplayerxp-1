@@ -21,7 +21,7 @@ DO_MAKE_ALL = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 MANDIR = ${prefix}/man
 LDFLAGS += -Wl,-rpath,${CODECDIR}/codecs
 
-SRCS = mplayerxp.cpp mp-opt-reg.cpp dump.cpp mp_msg.cpp
+SRCS = mplayerxp.cpp dump.cpp mp_msg.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 

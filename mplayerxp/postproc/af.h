@@ -73,6 +73,7 @@ struct af_cfg_t{
   char* list;	/* list of names of filters that are added to filter
 		   list during first initialization of stream */
 };
+extern af_cfg_t af_cfg; // Configuration for audio filters
 
 struct af_instance_t;
 // Current audio stream

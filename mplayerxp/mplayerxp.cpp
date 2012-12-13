@@ -35,25 +35,18 @@ using namespace mpxp;
 #include "help_mp.h"
 
 #include "libmpstream2/stream.h"
-#include "libmpstream2/network.h"
 #include "libmpdemux/demuxer.h"
 
-#include "libmpconf/cfgparser.h"
 #include "libmpconf/codec-cfg.h"
 
 #include "libmpcodecs/dec_video.h"
 #include "libmpcodecs/dec_audio.h"
 
-#ifdef USE_SUB
-#include "libmpsub/subreader.h"
-#endif
 #include "libmpsub/spudec.h"
 #include "libmpsub/vobsub.h"
 
 #include "libvo2/video_out.h"
-
 #include "libao2/audio_out.h"
-#include "libao2/afmt.h"
 
 #include "osdep/get_path.h"
 #include "osdep/cpudetect.h"
@@ -70,6 +63,7 @@ using namespace mpxp;
 #include "xmpcore/xmp_core.h"
 #include "xmpcore/xmp_vplayer.h"
 #include "xmpcore/xmp_adecoder.h"
+#include "xmpcore/xmp_context.h"
 #include "xmpcore/PointerProtector.h"
 #include "dump.h"
 
@@ -78,31 +72,9 @@ namespace mpxp {
 	     Private data
 **************************************************************************/
 static volatile char antiviral_hole1[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
-#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
-typedef struct x86_features_s {
-    int simd;
-    int mmx;
-    int mmx2;
-    int _3dnow;
-    int _3dnow2;
-    int sse;
-    int sse2;
-    int sse3;
-    int ssse3;
-    int sse41;
-    int sse42;
-    int aes;
-    int avx;
-    int fma;
-}x86_features_t;
-static x86_features_t x86;
-#endif
-}
-#include "cfg-mplayerxp.h"
 /**************************************************************************
 	     Config file
 **************************************************************************/
-namespace mpxp {
 enum {
     INITED_VO		=0x00000001,
     INITED_AO		=0x00000002,
@@ -296,7 +268,7 @@ unsigned get_number_cpu(void) {
 
 static void mpxp_init_structs(void) {
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
-    memset(&x86,-1,sizeof(x86_features_t));
+    memset(&mp_conf.x86,-1,sizeof(x86_features_t));
 #endif
 }
 
@@ -510,20 +482,20 @@ static void get_mmx_optimizations( void )
 {
   GetCpuCaps(&gCpuCaps);
 
-  if(x86.simd) {
-    if(x86.mmx != -1) gCpuCaps.hasMMX=x86.mmx;
-    if(x86.mmx2 != -1) gCpuCaps.hasMMX2=x86.mmx2;
-    if(x86._3dnow != -1) gCpuCaps.has3DNow=x86._3dnow;
-    if(x86._3dnow2 != -1) gCpuCaps.has3DNowExt=x86._3dnow2;
-    if(x86.sse != -1) gCpuCaps.hasSSE=x86.sse;
-    if(x86.sse2 != -1) gCpuCaps.hasSSE2=x86.sse2;
-    if(x86.sse3 != -1) gCpuCaps.hasSSE2=x86.sse3;
-    if(x86.ssse3 != -1) gCpuCaps.hasSSSE3=x86.ssse3;
-    if(x86.sse41 != -1) gCpuCaps.hasSSE41=x86.sse41;
-    if(x86.sse42 != -1) gCpuCaps.hasSSE42=x86.sse42;
-    if(x86.aes != -1) gCpuCaps.hasAES=x86.aes;
-    if(x86.avx != -1) gCpuCaps.hasAVX=x86.avx;
-    if(x86.fma != -1) gCpuCaps.hasFMA=x86.fma;
+  if(mp_conf.x86.simd) {
+    if(mp_conf.x86.mmx != -1) gCpuCaps.hasMMX=mp_conf.x86.mmx;
+    if(mp_conf.x86.mmx2 != -1) gCpuCaps.hasMMX2=mp_conf.x86.mmx2;
+    if(mp_conf.x86._3dnow != -1) gCpuCaps.has3DNow=mp_conf.x86._3dnow;
+    if(mp_conf.x86._3dnow2 != -1) gCpuCaps.has3DNowExt=mp_conf.x86._3dnow2;
+    if(mp_conf.x86.sse != -1) gCpuCaps.hasSSE=mp_conf.x86.sse;
+    if(mp_conf.x86.sse2 != -1) gCpuCaps.hasSSE2=mp_conf.x86.sse2;
+    if(mp_conf.x86.sse3 != -1) gCpuCaps.hasSSE2=mp_conf.x86.sse3;
+    if(mp_conf.x86.ssse3 != -1) gCpuCaps.hasSSSE3=mp_conf.x86.ssse3;
+    if(mp_conf.x86.sse41 != -1) gCpuCaps.hasSSE41=mp_conf.x86.sse41;
+    if(mp_conf.x86.sse42 != -1) gCpuCaps.hasSSE42=mp_conf.x86.sse42;
+    if(mp_conf.x86.aes != -1) gCpuCaps.hasAES=mp_conf.x86.aes;
+    if(mp_conf.x86.avx != -1) gCpuCaps.hasAVX=mp_conf.x86.avx;
+    if(mp_conf.x86.fma != -1) gCpuCaps.hasFMA=mp_conf.x86.fma;
   } else {
     gCpuCaps.hasMMX=
     gCpuCaps.hasMMX2=

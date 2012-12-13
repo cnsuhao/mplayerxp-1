@@ -32,6 +32,25 @@ namespace mpxp {
 	Module_MPContext
     };
 
+#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
+    struct x86_features_t {
+	int simd;
+	int mmx;
+	int mmx2;
+	int _3dnow;
+	int _3dnow2;
+	int sse;
+	int sse2;
+	int sse3;
+	int ssse3;
+	int sse41;
+	int sse42;
+	int aes;
+	int avx;
+	int fma;
+    };
+#endif
+
     struct MP_Config {
 	MP_Config();
 	~MP_Config() {}
@@ -98,6 +117,9 @@ namespace mpxp {
 	unsigned	ao_channels;
 	int		z_compression;
 	float		monitor_pixel_aspect;
+#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
+	x86_features_t	x86;
+#endif
     };
     extern MP_Config mp_conf;
 
