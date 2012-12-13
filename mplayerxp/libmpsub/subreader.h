@@ -27,15 +27,14 @@ enum {
     SUB_MAX_TEXT	=5
 };
 
-typedef struct {
-
+struct subtitle {
     int lines;
 
     unsigned long start;
     unsigned long end;
 
     char *text[SUB_MAX_TEXT];
-} subtitle;
+};
 
 extern subtitle* sub_read_file (const char *filename, float pts);
 extern char * sub_filename(const char *path,const char *fname);

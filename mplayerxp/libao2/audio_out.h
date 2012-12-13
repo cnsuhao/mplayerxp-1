@@ -4,16 +4,16 @@
 #include "xmpcore/xmp_enums.h"
 
 /** Text description of AO-driver */
-typedef struct ao_info_s
+struct ao_info_t
 {
     const char *name;	/**< driver name ("alsa driver") */
     const char *short_name; /**< short name (for config strings) ("alsa") */
     const char *author;	/**< author ("Aaron Holtzman <aholtzma@ess.engr.uvic.ca>") */
     const char *comment;/**< any additional comments */
-} ao_info_t;
+};
 
 /** Global data used by mplayerxp and plugins */
-typedef struct ao_data_s
+struct ao_data_t
 {
     char*	subdevice;
     char	antiviral_hole[RND_CHAR2];
@@ -26,10 +26,10 @@ typedef struct ao_data_s
     float	pts;		/**< PTS of audio buffer  */
     any_t*	opaque;		/**< for internal use */
     any_t*	priv;
-} ao_data_t;
+};
 
 /** AO-driver interface */
-typedef struct ao_functions_s
+struct ao_functions_t
 {
     const ao_info_t *info;	/**< text-info about this driver */
 
@@ -80,7 +80,7 @@ typedef struct ao_functions_s
 
     /** Resumes playing, after audio_pause() */
     void (* __FASTCALL__ resume)(ao_data_t*);
-} ao_functions_t;
+};
 
 enum {
     AOCONTROL_SET_DEVICE	=1, /**< Sets new audio device (example: /dev/dsp2) */
@@ -91,10 +91,11 @@ enum {
     AOCONTROL_GET_VOLUME	=6, /**< Query volume level */
     AOCONTROL_SET_VOLUME	=7 /**< Sets new volume level */
 };
-typedef struct ao_control_vol_s {
+
+struct ao_control_vol_t {
     float left;
     float right;
-} ao_control_vol_t;
+};
 
 /* prototypes */
 extern const char *	 __FASTCALL__ ao_format_name(int format);

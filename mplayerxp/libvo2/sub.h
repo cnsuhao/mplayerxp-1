@@ -4,9 +4,9 @@
 #include "osd_render.h"
 
 namespace mpxp {
-    typedef struct mp_osd_bbox_s {
+    struct mp_osd_bbox_t {
 	int x1,y1,x2,y2;
-    } mp_osd_bbox_t;
+    };
 
     enum {
 	OSDTYPE_OSD		=1,
@@ -31,8 +31,8 @@ namespace mpxp {
 	MAX_UCSLINES	=16
     };
 
-    typedef struct mp_osd_obj_s {
-	struct mp_osd_obj_s* next;
+    struct mp_osd_obj_t {
+	mp_osd_obj_t* next;
 	unsigned char type;
 	unsigned char alignment; // 2 bits: x;y percents, 2 bits: x;y relative to parent; 2 bits: alignment left/right/center
 	unsigned short flags;
@@ -56,7 +56,7 @@ namespace mpxp {
 	int allocated;
 	unsigned char *alpha_buffer;
 	unsigned char *bitmap_buffer;
-    } mp_osd_obj_t;
+    };
 
     enum {
 	OSD_PLAY	=0x01,
@@ -78,14 +78,14 @@ namespace mpxp {
 	OSD_PB_1	=0x13
     };
 
-    typedef struct sub_data_s {
+    struct sub_data_t {
 	char *	cp;
 	int	unicode;
 	int	utf8;
 	int	pos;
 	int	bg_color; /* subtitles background color */
 	int	bg_alpha;
-    }sub_data_t;
+    };
     extern sub_data_t sub_data;
 
     class Video_Output;

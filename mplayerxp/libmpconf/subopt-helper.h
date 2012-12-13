@@ -19,25 +19,22 @@ enum {
 typedef int (*opt_test_f)(any_t*);
 
 /** simple structure for defining the option name, type and storage location */
-typedef struct opt_s
-{
+struct opt_t {
   const char * name; ///< string that identifies the option
   int type;    ///< option type as defined in subopt-helper.h
   any_t* valp; ///< pointer to the mem where the value should be stored
   opt_test_f test; ///< argument test func ( optional )
-} opt_t;
+};
 
 /** parses the string for the options specified in opt */
 int subopt_parse( char const * const str, const opt_t * opts );
 
 
 /*------------------ arg specific types and declaration -------------------*/
-typedef struct strarg_s
-{
+typedef struct strarg_t {
   int len; ///< length of the string determined by the parser
   char const * str;  ///< pointer to position inside the parse string
-} strarg_t;
-
+};
 
 int int_non_neg( int * i );
 int int_pos( int * i );

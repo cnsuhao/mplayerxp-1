@@ -42,7 +42,6 @@ int spu_aamode = 3;
 int spu_alignment = -1;
 float spu_gaussvar = 1.0;
 
-typedef struct packet_t packet_t;
 struct packet_t {
   unsigned char *packet;
   unsigned int palette[4];
@@ -59,7 +58,7 @@ struct packet_t {
   packet_t *next;
 };
 
-typedef struct {
+struct spudec_handle_t {
   packet_t *queue_head;
   packet_t *queue_tail;
   unsigned int global_palette[16];
@@ -92,7 +91,7 @@ typedef struct {
   int spu_changed;
   unsigned int forced_subs_only;     /* flag: 0=display all subtitle, !0 display only forced subtitles */
   unsigned int is_forced_sub;         /* true if current subtitle is a forced subtitle */
-} spudec_handle_t;
+};
 
 static void __FASTCALL__ spudec_queue_packet(spudec_handle_t *self, packet_t *packet)
 {
@@ -670,12 +669,11 @@ static inline int __FASTCALL__ canon_alpha(int alpha)
   return alpha ? 256 - alpha : 0;
 }
 
-typedef struct {
+struct scale_pixel {
   unsigned position;
   unsigned left_up;
   unsigned right_down;
-}scale_pixel;
-
+};
 
 static void  __FASTCALL__ scale_table(unsigned int start_src, unsigned int start_tar, unsigned int end_src, unsigned int end_tar, scale_pixel * table)
 {

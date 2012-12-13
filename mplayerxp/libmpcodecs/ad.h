@@ -8,13 +8,12 @@
 #include "xmpcore/xmp_enums.h"
 #include "libao2/afmt.h"
 
-typedef struct ad_info_s
-{
+struct ad_info_t {
     const char *descr; /* driver description ("Autodesk FLI/FLC Animation decoder" */
     const char *driver_name; /* driver name ("dshow") */
     const char *author; /* interface author/maintainer */
     const char *url; /* URL of homepage */
-} ad_info_t;
+};
 
 enum {
     ADCTRL_RESYNC_STREAM=0,
@@ -32,13 +31,13 @@ typedef enum {
     ACodecStatus_NotWorking	=0,
 }acodec_status_e;
 
-typedef struct audio_probe_s {
+struct audio_probe_t {
     const char*		driver;
     const char*		codec_dll;
     uint32_t		wtag;
     acodec_status_e	status;
     unsigned		sample_fmt[Audio_MaxOutSample];
-}audio_probe_t;
+};
 
 struct audio_filter_info_t {
     af_stream_t*	afilter;
@@ -47,7 +46,7 @@ struct audio_filter_info_t {
 
 /* interface of video decoder drivers */
 struct ad_private_t;
-typedef struct ad_functions_s
+struct ad_functions_t
 {
     const ad_info_t*	info;
     const config_t*	options;/**< Optional: MPlayerXP's option related */
@@ -57,7 +56,7 @@ typedef struct ad_functions_s
     void		(* __FASTCALL__ uninit)(ad_private_t *ctx);
     MPXP_Rc		(*control_ad)(ad_private_t *ctx,int cmd,any_t* arg, ...);
     unsigned		(* __FASTCALL__ decode)(ad_private_t *ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts);
-} ad_functions_t;
+};
 
 extern const ad_functions_t* afm_find_driver(const char *name);
 extern const audio_probe_t* afm_probe_driver(ad_private_t*ctx,sh_audio_t*sh,audio_filter_info_t* afi);

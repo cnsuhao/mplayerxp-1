@@ -154,7 +154,7 @@ enum {
     MATROSKA_SUBTYPE_VOBSUB	=3
 };
 
-typedef struct {
+struct mkv_sh_sub_t {
   char type;                    // t = text, v = VobSub
   int has_palette;              // If we have a valid palette
   unsigned int palette[16];     // for VobSubs
@@ -162,7 +162,7 @@ typedef struct {
   int custom_colors;
   unsigned int colors[4];
   int forced_subs_only;
-} mkv_sh_sub_t;
+};
 
 #if 0
 int demux_mkv_num_subs(demuxer_t *demuxer);

@@ -13,14 +13,14 @@ using namespace mpxp;
 #include "mp_msg.h"
 
 namespace mpxp {
-#define _bg(x) ((x) >> 4)
-#define _fg(x) ((x) & 0x0f)
-typedef struct priv_s {
+inline int _bg(int x) { return x >> 4; }
+inline int _fg(int x) { return x & 0x0f; }
+struct priv_t {
     int		_color[8];
     char	vtmp[100];
     char	scol[9][20];
     pthread_mutex_t mp_msg_mutex;
-}priv_t;
+};
 const char hl[9] = { 0xC, 0x4, 0xE, 0xA, 0xB, 0x7, 0x9, 0x3, 0x7 };
 
 static char *_2ansi(unsigned char attr)

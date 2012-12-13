@@ -16,18 +16,18 @@ enum {
 };
 #include "demuxer_r.h"
 
-typedef struct muxer_packet_s{
+struct muxer_packet_t {
     float pts;
     any_t*data;
     unsigned length;
     unsigned flags;
-    struct muxer_packet_s *next;
-}muxer_packet_t;
+    muxer_packet_t *next;
+};
 
 muxer_packet_t* new_muxer_packet(float pts,any_t*data,unsigned length,unsigned flags);
 void free_muxer_packet(muxer_packet_t *packet);
 
-typedef struct {
+struct muxer_stream_t {
   // muxer data:
   int type;  // audio or video
   int id;    // stream no
@@ -54,14 +54,14 @@ typedef struct {
   muxer_packet_t *first;
   muxer_packet_t *last;
   any_t*priv;
-} muxer_stream_t;
+};
 
-typedef struct {
+struct muxer_info_t {
   uint32_t id;
   const char *text;
-} muxer_info_t;
+};
 
-typedef struct muxer_t{
+struct muxer_t {
   // encoding:
   MainAVIHeader avih;
   muxer_stream_t* def_v;  // default video stream (for general headers)
@@ -73,7 +73,7 @@ typedef struct muxer_t{
   muxer_stream_t* (*cont_new_stream)(struct muxer_t *,int);
   FILE* file;
   any_t*priv;
-} muxer_t;
+};
 
 muxer_t *muxer_new_muxer(const char *type,const char *subtype,FILE *f);
 #define muxer_new_stream(muxer,a) muxer->cont_new_stream(muxer,a)

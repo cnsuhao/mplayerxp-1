@@ -37,10 +37,10 @@ namespace mpxp {
 	DEMUX_SEEK_PERCENTS	=0x02
     };
 
-    typedef struct seek_args_s {
+    struct seek_args_t {
 	float		secs;
 	unsigned	flags;
-    }seek_args_t;
+    };
 
     struct sh_audio_t;
     struct sh_video_t;

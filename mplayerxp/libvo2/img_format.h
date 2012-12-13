@@ -142,12 +142,12 @@ static inline int IMGFMT_IS_YUVP16(uint32_t fmt)    { return (IMGFMT_IS_YUVP16_L
 static inline int IMGFMT_IS_XVMC(uint32_t fmt)  { return ((fmt)&IMGFMT_XVMC_MASK)==IMGFMT_XVMC; }
 static inline int IMGFMT_IS_VDPAU(uint32_t fmt) { return ((fmt)&IMGFMT_VDPAU_MASK)==IMGFMT_VDPAU; }
 
-typedef struct {
+struct vo_mpegpes_t {
     any_t* data;
     int size;
     int id;        // stream id. usually 0x1E0
     int timestamp; // pts, 90000 Hz counter based
-} vo_mpegpes_t;
+};
 
 /** Returns human-readable fourcc description
  * @param format	fourcc of image

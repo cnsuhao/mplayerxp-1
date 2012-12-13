@@ -23,7 +23,7 @@
  */
 
 
-typedef struct {
+struct jpeg_enc_t {
 	struct MpegEncContext *s;
 	int cheap_upsample;
 	int bw;
@@ -33,7 +33,7 @@ typedef struct {
 	int y_rs;
 	int u_rs;
 	int v_rs;
-} jpeg_enc_t;
+};
 
 jpeg_enc_t *jpeg_enc_init(int w, int h, int y_psize, int y_rsize,
 		int u_psize, int u_rsize, int v_psize, int v_rsize,

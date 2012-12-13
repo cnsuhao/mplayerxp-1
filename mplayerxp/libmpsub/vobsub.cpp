@@ -73,7 +73,7 @@ static ssize_t __FASTCALL__ __getline (char **lineptr, size_t *n, FILE *stream)
  * MPEG parsing
  **********************************************************************/
 
-typedef struct {
+struct mpeg_t {
     Stream *stream;
     unsigned int pts;
     int aid;
@@ -81,7 +81,7 @@ typedef struct {
     unsigned int packet_reserve;
     unsigned int packet_size;
     int fd;
-} mpeg_t;
+};
 
 static mpeg_t *  __FASTCALL__ mpeg_open(const char *filename)
 {
@@ -290,20 +290,20 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
  * Packet queue
  **********************************************************************/
 
-typedef struct {
+struct packet_t {
     unsigned int pts100;
     off_t filepos;
     unsigned int size;
     unsigned char *data;
-} packet_t;
+};
 
-typedef struct {
+struct packet_queue_t {
     char *id;
     packet_t *packets;
     unsigned int packets_reserve;
     unsigned int packets_size;
     unsigned int current_index;
-} packet_queue_t;
+};
 
 static void __FASTCALL__ packet_construct(packet_t *pkt)
 {
@@ -397,7 +397,7 @@ static int __FASTCALL__ packet_queue_insert(packet_queue_t *queue)
  * Vosub
  **********************************************************************/
 
-typedef struct {
+struct vobsub_t {
     unsigned int palette[16];
     unsigned int cuspal[4];
     int delay;
@@ -410,7 +410,7 @@ typedef struct {
     packet_queue_t *spu_streams;
     unsigned int spu_streams_size;
     unsigned int spu_streams_current;
-} vobsub_t;
+};
 
 /* Make sure that the spu stream idx exists. */
 static int __FASTCALL__ vobsub_ensure_spu_stream(vobsub_t *vob, unsigned int _index)

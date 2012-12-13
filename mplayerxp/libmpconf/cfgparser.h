@@ -37,8 +37,6 @@ enum {
     CONF_GLOBAL		=(1<<4),
     CONF_NOSAVE		=(1<<5)
 };
-typedef struct m_config m_config_t;
-typedef struct config_save config_save_t;
 
 struct config_t {
     const char *name;
@@ -50,9 +48,10 @@ struct config_t {
 };
 typedef void (*cfg_default_func_t)(config_t*,const char*);
 
-struct m_config {
-    m_config(libinput_t& _libinput):libinput(_libinput) {}
-    ~m_config() {}
+struct config_save_t;
+struct m_config_t {
+    m_config_t(libinput_t& _libinput):libinput(_libinput) {}
+    ~m_config_t() {}
 
     const config_t** opt_list;
     config_save_t** config_stack;
@@ -69,7 +68,7 @@ struct m_config {
     libinput_t&	libinput;
 };
 
-struct config_save {
+struct config_save_t {
     const config_t* opt;
     union {
 	int as_int;

@@ -125,7 +125,7 @@ namespace mpxp {
     extern MP_Config mp_conf;
 
     /* Benchmarking */
-    typedef struct time_usage_s {
+    struct time_usage_t {
 	double video;
 	double vout;
 	double audio_decode_correction;
@@ -146,7 +146,7 @@ namespace mpxp {
 	double cur_vout;
 	double min_vout;
 	double total_start;
-    }time_usage_t;
+    };
 
     struct MPXPSystem;
     struct xp_core_t;

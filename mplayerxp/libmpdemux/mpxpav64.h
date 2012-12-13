@@ -8,7 +8,7 @@ enum {
     MPXPAV64_FP_FCNT_UTF16	=0x00000002ULL,
     MPXPAV64_FP_FCNT_UTF32	=0x00000003ULL
 };
-typedef struct __attribute__((__packed__)) mpxpav64FileProperties_s /* FPRP */
+struct __attribute__((__packed__)) mpxpav64FileProperties_t /* FPRP */
 {
     uint64_t num_packets;  //Number of 'DATx' packets
     uint64_t num_bytes;    //Number of 'DATx' bytes
@@ -18,19 +18,19 @@ typedef struct __attribute__((__packed__)) mpxpav64FileProperties_s /* FPRP */
     uint32_t MaxBitrate;   //Maximum bitrate of the media (sum of all the stream)
     uint32_t AveBitrate;   //Average bitrate of the media (sum of all the stream)
     uint16_t StreamCount;  //Number of StreamProp Objects
-}mpxpav64FileProperties_t;
-#define le2me_mpxpav64FileProperties(h) {				\
-    (h)->num_packets = le2me_64((h)->num_packets);			\
-    (h)->num_bytes = le2me_64((h)->num_bytes);				\
-    (h)->flags = le2me_64((h)->flags);					\
-    (h)->PlayDuration = le2me_64((h)->PlayDuration);			\
-    (h)->Preroll = le2me_32((h)->Preroll);				\
-    (h)->MaxBitrate = le2me_32((h)->MaxBitrate);			\
-    (h)->AveBitrate = le2me_32((h)->AveBitrate);			\
-    (h)->StreamCount = le2me_16((h)->StreamCount);			\
+};
+inline void le2me_mpxpav64FileProperties(mpxpav64FileProperties_t* h) {
+    h->num_packets = le2me_64(h->num_packets);
+    h->num_bytes = le2me_64(h->num_bytes);
+    h->flags = le2me_64(h->flags);
+    h->PlayDuration = le2me_64(h->PlayDuration);
+    h->Preroll = le2me_32(h->Preroll);
+    h->MaxBitrate = le2me_32(h->MaxBitrate);
+    h->AveBitrate = le2me_32(h->AveBitrate);
+    h->StreamCount = le2me_16(h->StreamCount);
 }
 
-typedef struct __attribute__((__packed__)) mpxpav64StreamProperties_s
+struct __attribute__((__packed__)) mpxpav64StreamProperties_t
 {
     uint64_t num_packets;  //Number of 'DATx' packets of this stream type
     uint64_t num_bytes;    //Number of 'DATx' bytes of this stream type
@@ -50,24 +50,24 @@ typedef struct __attribute__((__packed__)) mpxpav64StreamProperties_s
     uint64_t size_scaler;  //Numerator of SIZE fields to get size in bytes (default: 1)
     uint8_t  mimetype_len; //length of mime-type
     uint8_t  ascii[0];//mime-type: video/x-video audio/x-audio text/x-text
-}mpxpav64StreamProperties_t;
-#define le2me_mpxpav64StreamProperties(h) {				\
-    (h)->num_packets = le2me_64((h)->num_packets);			\
-    (h)->num_bytes = le2me_64((h)->num_bytes);				\
-    (h)->flags = le2me_64((h)->flags);					\
-    (h)->PlayDuration = le2me_64((h)->PlayDuration);			\
-    (h)->Preroll = le2me_32((h)->Preroll);				\
-    (h)->MaxPacketSize = le2me_32((h)->MaxPacketSize);			\
-    (h)->AvePacketSize = le2me_32((h)->AvePacketSize);			\
-    (h)->MinPacketSize = le2me_32((h)->MinPacketSize);			\
-    (h)->MaxFrameDuration = le2me_32((h)->MaxFrameDuration);		\
-    (h)->AveFrameDuration = le2me_32((h)->AveFrameDuration);		\
-    (h)->MinFrameDuration = le2me_32((h)->MinFrameDuration);		\
-    (h)->MaxBitrate = le2me_32((h)->MaxBitrate);			\
-    (h)->AveBitrate = le2me_32((h)->AveBitrate);			\
-    (h)->MinBitrate = le2me_32((h)->MinBitrate);			\
-    (h)->pts_rate = le2me_64((h)->pts_rate);				\
-    (h)->size_scaler = le2me_64((h)->size_scaler);			\
+};
+static void le2me_mpxpav64StreamProperties(mpxpav64StreamProperties_t *h) {
+    h->num_packets = le2me_64(h->num_packets);
+    h->num_bytes = le2me_64(h->num_bytes);
+    h->flags = le2me_64(h->flags);
+    h->PlayDuration = le2me_64(h->PlayDuration);
+    h->Preroll = le2me_32(h->Preroll);
+    h->MaxPacketSize = le2me_32(h->MaxPacketSize);
+    h->AvePacketSize = le2me_32(h->AvePacketSize);
+    h->MinPacketSize = le2me_32(h->MinPacketSize);
+    h->MaxFrameDuration = le2me_32(h->MaxFrameDuration);
+    h->AveFrameDuration = le2me_32(h->AveFrameDuration);
+    h->MinFrameDuration = le2me_32(h->MinFrameDuration);
+    h->MaxBitrate = le2me_32(h->MaxBitrate);
+    h->AveBitrate = le2me_32(h->AveBitrate);
+    h->MinBitrate = le2me_32(h->MinBitrate);
+    h->pts_rate = le2me_64(h->pts_rate);
+    h->size_scaler = le2me_64(h->size_scaler);
 }
 
 #endif

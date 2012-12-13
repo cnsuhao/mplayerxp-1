@@ -12,14 +12,14 @@ typedef enum enc_frame_type {
     VideoFrame=RND_NUMBER1
 }enc_frame_type_e;
 
-typedef struct enc_frame_s {
+struct enc_frame_t {
     enc_frame_type_e	type;
     float		pts;
     float		duration;
     unsigned		len;
     uint8_t*		data;
     unsigned		flags; // codec specific flags. filled by video_decode
-}enc_frame_t;
+};
 
 extern	enc_frame_t*	new_enc_frame(enc_frame_type_e type,unsigned len,float pts,float duration);
 extern	void		free_enc_frame(enc_frame_t* frame);

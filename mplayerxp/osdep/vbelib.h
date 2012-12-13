@@ -13,10 +13,10 @@ namespace mpxp {
 /* Note: every pointer within structures is 32-bit protected mode pointer.
    So you don't need to convert it from real mode. */
 
-    typedef struct tagFarPtr {
+    struct FarPtr {
 	unsigned short off;
 	unsigned short seg;
-    }FarPtr;
+    };
 
     enum {
 	VBE_DAC_8BIT	=(1 << 0),

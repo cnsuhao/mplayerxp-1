@@ -75,14 +75,14 @@ namespace mpxp {
     inline vo_flags_e operator^=(vo_flags_e a, vo_flags_e b) { return (a=static_cast<vo_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
     /** Request for supported FOURCC by VO-driver */
-    typedef struct vo_query_fourcc_s {
+    struct vo_query_fourcc_t {
 	uint32_t	fourcc;	/**< Fourcc of decoded image */
 	unsigned	w,h;	/**< Width and height of decoded image */
 	unsigned	flags;  /**< Flags for this fourcc VOCAP_*  */
-    }vo_query_fourcc_t;
+    };
 
     /** Named video equalizer */
-    typedef struct vo_videq_s {
+    struct vo_videq_t {
 #define VO_EC_BRIGHTNESS "Brightness"
 #define VO_EC_CONTRAST	 "Contrast"
 #define VO_EC_GAMMA	 "Gamma"
@@ -93,9 +93,9 @@ namespace mpxp {
 #define VO_EC_BLUE_INTENSITY "BlueIntensity"
 	const char *name;	/**< name of equalizer control */
 	int	    value;	/**< value of equalizer control in range -1000 +1000 */
-    }vo_videq_t;
+    };
 
-    typedef struct vo_gamma_s{
+    struct vo_gamma_t{
 	int		brightness;
 	int		saturation;
 	int		contrast;
@@ -103,11 +103,11 @@ namespace mpxp {
 	int		red_intensity;
 	int		green_intensity;
 	int		blue_intensity;
-    }vo_gamma_t;
+    };
 
-    typedef struct vo_rect_s {
+    struct vo_rect_t {
 	unsigned x,y,w,h;
-    }vo_rect_t;
+    };
 
     struct vo_rect2 {
 	int left, right, top, bottom, width, height;
@@ -242,12 +242,12 @@ namespace mpxp {
 	vo_adjust_size_t	adjust_size;
     };
     /** Contains geometry of fourcc */
-    typedef struct s_vo_format_desc {
+    struct vo_format_desc {
 	unsigned bpp;
 	/* in some strange fourccs (NV12) horz period != vert period of UV */
 	unsigned x_mul[4],x_div[4];
 	unsigned y_mul[4],y_div[4];
-    }vo_format_desc;
+    };
     extern int	__FASTCALL__	vo_describe_fourcc(uint32_t fourcc,vo_format_desc *vd);
 } // namespace mpxp
 #endif

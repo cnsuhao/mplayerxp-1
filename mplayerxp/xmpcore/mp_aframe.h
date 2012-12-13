@@ -62,7 +62,7 @@ namespace mpxp {
 	MP_AFLG_FINALIZED		=0x80000000
     };
 
-    typedef struct mp_audio_frame_s {
+    struct mp_aframe_t {
 	unsigned	flags; /* currently unused */
 	float		pts;   /* PTS if this frame */
 	unsigned	xp_idx;/* index in ring buffer */
@@ -72,7 +72,7 @@ namespace mpxp {
 	unsigned	rate;  /* rate of audio */
 	unsigned	nch;   /* number of channels */
 	mpaf_format_e	format;/* PCM format of audio */
-    }mp_aframe_t;
+    };
 
     mp_aframe_t*	new_mp_aframe(unsigned rate,unsigned nch,mpaf_format_e format,unsigned xp_idx);
     mp_aframe_t*	new_mp_aframe_genome(const mp_aframe_t* in);

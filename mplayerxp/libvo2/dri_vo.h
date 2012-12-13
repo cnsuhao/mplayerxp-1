@@ -22,22 +22,20 @@ enum {
     DRI_CAP_HWOSD	=0x00000100UL,/**< Driver supports OSD painting */
     DRI_CAP_BUSMASTERING=0x80000000UL /**< Means: final video buffer but allocated in RAM */
 };
-typedef struct dri_surface_cap_s
-{
+struct dri_surface_cap_t {
     unsigned	caps;		/**< Capabilities of surface (see DRI_CAP_* for detail) */
     unsigned	fourcc;		/**< real fourcc of vo2 surface */
     unsigned	width,height;	/**< specify total dimension of surface */
     unsigned	x,y,w,h;	/**< specify movie position within surface */
     unsigned	strides[4];	/**< drv->app:specify strides of each plane */
-}dri_surface_cap_t;
+};
 
 enum {
     MAX_DRI_BUFFERS=1024	/**< Maximal number of surfaces */
 };
 /** Contains surface address */
-typedef struct dri_surface_s
-{
+struct dri_surface_t {
     unsigned idx;		/**< app->drv:specify number of surface (0 default for single buffering) */
     uint8_t* planes[4];		/**< drv->app:specify planes (include alpha channel) */
-}dri_surface_t;
+};
 #endif

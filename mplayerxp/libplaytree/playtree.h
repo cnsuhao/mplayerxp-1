@@ -1,8 +1,10 @@
 #ifndef __PLAYTREE_H
 #define __PLAYTREE_H
 
+struct m_config_t;
 namespace mpxp {
     struct Stream;
+    struct libinput_t;
 }
 
 enum {
@@ -36,20 +38,6 @@ enum {
 };
 /// \defgroup Playtree
 ///@{
-
-#include "libmpconf/cfgparser.h"
-
-#if 0
-typedef struct play_tree_info play_tree_info_t;
-// TODO : a attrib,val pair system and not something hardcoded
-struct play_tree_info {
-  char* title;
-  char* author;
-  char* copyright;
-  char* abstract;
-  // Some more ??
-}
-#endif
 
 struct play_tree_param_t {
   char* name;

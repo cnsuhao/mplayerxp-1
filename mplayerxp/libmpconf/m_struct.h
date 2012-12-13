@@ -8,7 +8,7 @@
 
 /// \file m_struct.h
 
-struct m_option;
+struct m_option_t;
 
 /// Struct definition
 struct m_struct_t {
@@ -19,7 +19,7 @@ struct m_struct_t {
   /** The p field of the \ref m_option struct must contain the offset
    *  of the member in the struct (use M_ST_OFF macro for this).
    */
-    const struct m_option* fields;
+    const struct m_option_t* fields;
 };
 
 
@@ -97,7 +97,7 @@ m_struct_free(const m_struct_t* st, any_t* obj);
  *  \param f Name of the field.
  *  \return The \ref m_option struct describing the field or NULL if not found.
  */
-const struct m_option*
+const struct m_option_t*
 m_struct_get_field(const m_struct_t* st,const char* f);
 
 ///@}

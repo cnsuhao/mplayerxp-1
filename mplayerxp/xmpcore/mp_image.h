@@ -65,7 +65,7 @@ namespace mpxp {
     };
 
     enum { XP_IDX_INVALID=UINT_MAX };
-    typedef struct mp_image_s {
+    struct mp_image_t {
 	unsigned		xp_idx; /* index of xp_frame associated with this image */
 	unsigned int	flags;
 	unsigned char	type;
@@ -87,7 +87,7 @@ namespace mpxp {
 	int		chroma_x_shift; // horizontal
 	int		chroma_y_shift; // vertical
 	any_t*		priv; /* for private use by filter or vo driver (to store buffer id or dmpi) */
-    } mp_image_t;
+    };
 
     void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt);
     mp_image_t* new_mp_image(unsigned w,unsigned h,unsigned xp_idx);

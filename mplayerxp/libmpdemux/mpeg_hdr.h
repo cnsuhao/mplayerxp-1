@@ -1,5 +1,5 @@
 
-typedef struct {
+struct mp_mpeg_header_t {
     // video info:
     int mpeg1; // 0=mpeg2  1=mpeg1
     int display_picture_width;
@@ -18,7 +18,7 @@ typedef struct {
     //the following are for mpeg4
     int timeinc_resolution, timeinc_bits, timeinc_unit;
     int picture_type;
-} mp_mpeg_header_t;
+};
 
 int mp_header_process_sequence_header (mp_mpeg_header_t * picture, unsigned char * buffer);
 int mp_header_process_extension (mp_mpeg_header_t * picture, unsigned char * buffer);

@@ -38,7 +38,7 @@ namespace mpxp {
 	CPUTYPE_I686=6
     };
 
-    typedef struct cpucaps_s {
+    struct CpuCaps {
 	int cpuType;
 	int cpuStepping;
 	int hasMMX;
@@ -56,7 +56,7 @@ namespace mpxp {
 	int hasAVX;
 	int isX86;
 	unsigned cl_size; /* size of cache line */
-    } CpuCaps;
+    };
 
     extern CpuCaps gCpuCaps;
 

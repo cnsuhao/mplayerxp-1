@@ -10,8 +10,8 @@
 /// \file m_option.h
 
 /// \ingroup OptionTypes
-typedef struct m_option_type m_option_type_t;
-typedef struct m_option m_option_t;
+struct m_option_type_t;
+struct m_option_t;
 struct m_struct_t;
 
 /// \defgroup OptionTypes Options types
@@ -46,24 +46,25 @@ enum {
     END_AT_TIME=1,
     END_AT_SIZE=2
 };
-typedef struct {
+
+struct m_time_size_t {
     double pos;
     int type;
-} m_time_size_t;
+};
 
 /// Extra definition needed for \ref m_option_type_obj_settings_list options.
-typedef struct {
+struct m_obj_list_t {
     any_t** list; /// Pointer to an array of pointer to some object type description struct.
     any_t* name_off; /// Offset of the object type name (char*) in the description struct.
     any_t* info_off; /// Offset of the object type info string (char*) in the description struct.
     any_t* desc_off; /// \brief Offset of the object type parameter description (\ref m_struct_st) in the description struct.
-} m_obj_list_t;
+};
 
 /// The data type used by \ref m_option_type_obj_settings_list.
-typedef struct m_obj_settings {
+struct m_obj_settings_t {
     const char* name; /// Type of the object.
     char** attribs; /// NULL terminated array of parameter/value pairs.
-} m_obj_settings_t;
+};
 
 /// A parser to set up a list of objects.
 /** It creates a NULL terminated array \ref m_obj_settings. The option priv
@@ -73,12 +74,12 @@ typedef struct m_obj_settings {
 extern const m_option_type_t m_option_type_obj_settings_list;
 
 /// Extra definition needed for \ref m_option_type_obj_presets options.
-typedef struct {
+struct m_obj_presets_t {
     struct m_struct_t* in_desc; /// Description of the struct holding the presets.
     struct m_struct_t* out_desc; /// Description of the struct that should be set by the presets.
     any_t* presets; /// Pointer to an array of structs defining the various presets.
     any_t* name_off; /// Offset of the preset's name inside the in_struct.
-} m_obj_presets_t;
+};
 
 /// Set several fields in a struct at once.
 /** For this two struct descriptions are used. One for the struct holding the
@@ -97,10 +98,10 @@ extern const m_option_type_t m_option_type_obj_presets;
 extern const m_option_type_t m_option_type_custom_url;
 #endif
 /// Extra definition needed for \ref m_option_type_obj_params options.
-typedef struct {
+struct m_obj_params_t {
     const struct m_struct_t* desc; /// Field descriptions.
     char separator; /// Field separator to use.
-} m_obj_params_t;
+};
 
 /// Parse a set of parameters.
 /** Parameters are separated by the given separator and each one
@@ -109,10 +110,10 @@ typedef struct {
  */
 extern const m_option_type_t m_option_type_obj_params;
 
-typedef struct {
+struct m_span_t {
     int start;
     int end;
-} m_span_t;
+};
 /// Ready made settings to parse a \ref m_span_t with a start-end syntax.
 extern const m_obj_params_t m_span_params_def;
 
@@ -143,7 +144,7 @@ extern const m_obj_params_t m_span_params_def;
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Option type description
-struct m_option_type {
+struct m_option_type_t {
     const char* name;
     const char* comments; /// Syntax description, etc
     unsigned int size; /// Size needed for the data.
@@ -214,7 +215,7 @@ struct m_option_type {
 /// Option description
 /** \ingroup Options
  */
-struct m_option {
+struct m_option_t {
     const char *name; /// Option name.
   /** The suboption parser and func types do use it. They should instead
    *  use the priv field but this was inherited from older versions of the

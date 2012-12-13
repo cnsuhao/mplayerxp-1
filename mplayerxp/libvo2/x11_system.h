@@ -21,13 +21,13 @@
 #include "dri_vo.h"
 
 namespace mpxp {
-    typedef struct {
+    struct MotifWmHints_t {
 	long flags;
 	long functions;
 	long decorations;
 	long input_mode;
 	long state;
-    }MotifWmHints_t;
+    };
 
     class X11_System {
 	public:

@@ -192,11 +192,11 @@ static char* __FASTCALL__ pls_entry_get_value(char* line) {
     return i+1;
 }
 
-typedef struct pls_entry {
+struct pls_entry_t {
   char* file;
   char* title;
   char* length;
-} pls_entry_t;
+};
 
 static int __FASTCALL__ pls_read_entry(char* line,pls_entry_t** _e,int* _max_entry,char** val) {
   int num,max_entry = (*_max_entry);

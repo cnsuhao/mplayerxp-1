@@ -52,11 +52,11 @@ enum {
 ///@{
 
 /// Argument for \ref M_PROPERTY_KEY_ACTION
-typedef struct {
+struct m_property_action_t {
     const char* key;
     int action;
     const any_t* arg;
-} m_property_action_t;
+};
 
 ///@}
 

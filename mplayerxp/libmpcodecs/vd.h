@@ -30,22 +30,21 @@ typedef enum {
     VCodecStatus_NotWorking	=0,
 }vcodec_status_e;
 
-typedef struct video_probe_s {
+struct video_probe_t {
     const char*		driver;
     const char*		codec_dll;
     uint32_t		fourcc;
     vcodec_status_e	status;
     uint32_t		pix_fmt[Video_MaxOutFmt];
     video_flags_e	flags[Video_MaxOutFmt];
-}video_probe_t;
+};
 
-typedef struct vd_info_s
-{
+struct vd_info_t {
     const char *descr; /* driver description ("Autodesk FLI/FLC Animation decoder" */
     const char *driver_name; /* driver name ("dshow") */
     const char *author; /* interface author/maintainer */
     const char *url; /* URL of homepage */
-} vd_info_t;
+};
 
 struct put_slice_info_t {
     int			vf_flags;
@@ -53,8 +52,7 @@ struct put_slice_info_t {
 };
 /* interface of video decoder drivers */
 struct vd_private_t;
-typedef struct vd_functions_s
-{
+struct vd_functions_t {
     const vd_info_t*	info;
     const config_t*	options;/**< Optional: MPlayerXP's option related */
     const video_probe_t*(*__FASTCALL__ probe)(uint32_t fourcc);
@@ -63,7 +61,7 @@ typedef struct vd_functions_s
     void		(*__FASTCALL__ uninit)(vd_private_t *ctx);
     MPXP_Rc		(*control_vd)(vd_private_t *ctx,int cmd,any_t* arg, ...);
     mp_image_t*		(*__FASTCALL__ decode)(vd_private_t *ctx,const enc_frame_t* frame);
-} vd_functions_t;
+};
 
 extern const vd_functions_t* vfm_find_driver(const char *name);
 extern const video_probe_t* vfm_driver_probe(vd_private_t*ctx,sh_video_t *sh,put_slice_info_t* psi);
