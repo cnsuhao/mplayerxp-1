@@ -21,18 +21,17 @@ using namespace mpxp;
 namespace mpxp {
 HTTP_Header::HTTP_Header() {}
 HTTP_Header::~HTTP_Header() {
-    if( reason_phrase!=NULL ) delete reason_phrase ;
     if( buffer!=NULL ) delete buffer ;
 }
 
-int HTTP_Header::response_append(const char *response, int length ) {
-    if( response==NULL || length<0 ) return -1;
+int HTTP_Header::response_append(const uint8_t* response, size_t length ) {
+    if( response==NULL) return -1;
 
     if( (unsigned)length > std::numeric_limits<size_t>::max() - buffer_size - 1) {
 	MSG_FATAL("Bad size in memory (re)allocation\n");
 	return -1;
     }
-    buffer = (char*)mp_realloc( buffer, buffer_size+length+1 );
+    buffer = (uint8_t*)mp_realloc( buffer, buffer_size+length+1 );
     if(buffer ==NULL ) {
 	MSG_FATAL("Memory allocation failed\n");
 	return -1;
@@ -46,8 +45,8 @@ int HTTP_Header::response_append(const char *response, int length ) {
 int HTTP_Header::is_header_entire() const {
     if( buffer==NULL ) return 0; // empty
 
-    if( strstr(buffer, "\r\n\r\n")==NULL &&
-	strstr(buffer, "\n\n")==NULL ) return 0;
+    if( strstr((char*)buffer, "\r\n\r\n")==NULL &&
+	strstr((char*)buffer, "\n\n")==NULL ) return 0;
     return 1;
 }
 
@@ -59,13 +58,13 @@ int HTTP_Header::response_parse( ) {
     if( is_parsed ) return 0;
 
     // Get the protocol
-    hdr_ptr = strstr( buffer, " " );
+    hdr_ptr = strstr( (char*)buffer, " " );
     if( hdr_ptr==NULL ) {
 	MSG_FATAL("Malformed answer. No space separator found.\n");
 	return -1;
     }
-    len = hdr_ptr-buffer;
-    protocol.assign(buffer,len);
+    len = hdr_ptr-(char*)buffer;
+    protocol.assign((char*)buffer,len);
     std::string sstr=protocol.substr(0,4);
     std::transform(sstr.begin(), sstr.end(),sstr.begin(), ::toupper);
     if(sstr=="HTTP") {
@@ -89,32 +88,28 @@ int HTTP_Header::response_parse( ) {
 	return -1;
     }
     len = ptr-hdr_ptr;
-    reason_phrase = new char[len+1];
-    if( reason_phrase==NULL ) {
-	MSG_FATAL("Memory allocation failed\n");
-	return -1;
-    }
-    strncpy( reason_phrase, hdr_ptr, len );
+    reason_phrase.assign(hdr_ptr, len);
     if( reason_phrase[len-1]=='\r' ) {
 	len--;
+	reason_phrase.resize(len);
     }
     reason_phrase[len]='\0';
 
     // Set the position of the header separator: \r\n\r\n
     hdr_sep_len = 4;
-    ptr = strstr( buffer, "\r\n\r\n" );
+    ptr = strstr( (char*)buffer, "\r\n\r\n" );
     if( ptr==NULL ) {
-	ptr = strstr( buffer, "\n\n" );
+	ptr = strstr( (char*)buffer, "\n\n" );
 	if( ptr==NULL ) {
 	    MSG_ERR("Header may be incomplete. No CRLF CRLF found.\n");
 	    return -1;
 	}
 	hdr_sep_len = 2;
     }
-    pos_hdr_sep = ptr-buffer;
+    pos_hdr_sep = ptr-(char*)buffer;
 
     // Point to the first line after the method line.
-    hdr_ptr = strstr( buffer, "\n" )+1;
+    hdr_ptr = strstr( (char*)buffer, "\n" )+1;
     do {
 	ptr = hdr_ptr;
 	while( *ptr!='\r' && *ptr!='\n' ) ptr++;
@@ -129,14 +124,13 @@ int HTTP_Header::response_parse( ) {
 	field[len]='\0';
 	set_field( field );
 	hdr_ptr = ptr+((*ptr=='\r')?2:1);
-    } while( hdr_ptr<(buffer+pos_hdr_sep) );
+    } while( hdr_ptr<((char*)buffer+pos_hdr_sep) );
 
     if( field!=NULL ) delete field ;
 
     if( pos_hdr_sep+hdr_sep_len<buffer_size ) {
 	// Response has data!
-	body = buffer+pos_hdr_sep+hdr_sep_len;
-	body_size = buffer_size-(pos_hdr_sep+hdr_sep_len);
+	body.assign((char*)buffer+pos_hdr_sep+hdr_sep_len,buffer_size-(pos_hdr_sep+hdr_sep_len));
     }
 
     is_parsed = 1;
@@ -159,15 +153,15 @@ const char* HTTP_Header::build_request() {
     // Add the CRLF
     len += 2;
     // Add the body
-    if( body!=NULL ) {
-	len += body_size;
+    if( !body.empty() ) {
+	len += body.length();
     }
     // Free the buffer if it was previously used
     if( buffer!=NULL ) {
 	delete buffer ;
 	buffer = NULL;
     }
-    buffer = new char [len+1];
+    buffer = new uint8_t [len+1];
     if( buffer==NULL ) {
 	MSG_FATAL("Memory allocation failed\n");
 	return NULL;
@@ -175,21 +169,21 @@ const char* HTTP_Header::build_request() {
     buffer_size = len;
 
     //*** Building the request
-    ptr = buffer;
+    ptr = (char*)buffer;
     // Add the method line
     ptr += sprintf( ptr, "%s %s HTTP/1.%d\r\n", method.c_str(),uri.c_str(), http_minor_version );
     // Add the field
     for(unsigned i=0;i<sz;i++) ptr += sprintf( ptr, "%s\r\n", fields[i].c_str());
     ptr += sprintf( ptr, "\r\n" );
     // Add the body
-    if( body!=NULL ) {
-	memcpy( ptr, body, body_size );
+    if( !body.empty()) {
+	memcpy( ptr, body.c_str(), body.size());
     }
 
-    return buffer;
+    return (char *)buffer;
 }
 
-const char* HTTP_Header::get_field(const char *field_name ) {
+const char* HTTP_Header::get_field(const std::string& field_name ) {
     search_pos=0;
     field_search=field_name;
     return get_next_field();
@@ -215,36 +209,34 @@ const char* HTTP_Header::get_next_field() {
     return NULL;
 }
 
-void HTTP_Header::set_field(const char *field_name ) {
-    if( field_name==NULL ) return;
+void HTTP_Header::set_field(const std::string& field_name ) {
+    if(field_name.empty()) return;
     fields.push_back(field_name);
 }
 
-void HTTP_Header::set_method( const char *_method ) {
-    if( _method==NULL ) return;
+void HTTP_Header::set_method( const std::string& _method ) {
     method=_method;
 }
 
-void HTTP_Header::set_uri(const char *_uri ) {
-    if(_uri==NULL ) return;
+void HTTP_Header::set_uri(const std::string& _uri ) {
     uri=_uri;
 }
 
-int HTTP_Header::add_basic_authentication( const char *username, const char *password ) {
+int HTTP_Header::add_basic_authentication( const std::string& username, const std::string& password ) {
     char *auth=NULL, *usr_pass=NULL, *b64_usr_pass=NULL;
     int encoded_len, pass_len=0, out_len;
     int res = -1;
-    if( username==NULL ) return -1;
+    if( username.empty() ) return -1;
 
-    if( password!=NULL ) pass_len = strlen(password);
+    if( !password.empty() ) pass_len = password.length();
 
-    usr_pass = new char [strlen(username)+pass_len+2];
+    usr_pass = new char [username.length()+pass_len+2];
     if( usr_pass==NULL ) {
 	MSG_FATAL("Memory allocation failed\n");
 	goto out;
     }
 
-    sprintf( usr_pass, "%s:%s", username, (password==NULL)?"":password );
+    sprintf( usr_pass, "%s:%s", username.c_str(), password.c_str() );
 
     // Base 64 encode with at least 33% more data than the original size
     encoded_len = strlen(usr_pass)*2;
@@ -280,8 +272,7 @@ out:
 }
 
 void HTTP_Header::erase_body() {
-    body=NULL;
-    body_size=0;
+    body.clear();
 }
 
 void HTTP_Header::debug_hdr( ) {
@@ -300,8 +291,8 @@ void HTTP_Header::debug_hdr( ) {
 		,uri.c_str()
 		,method.c_str()
 		,status_code
-		,reason_phrase
-		,body_size );
+		,reason_phrase.c_str()
+		,body.length() );
 
     MSG_V("Fields:\n");
     std::vector<std::string>::size_type sz = fields.size();

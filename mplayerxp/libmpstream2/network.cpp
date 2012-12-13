@@ -171,7 +171,7 @@ MPXP_Rc http_send_request(Tcp& tcp, URL *url, off_t pos ) {
 	if (net_conf.cookies_enabled) http_hdr.cookies_set( server_url->hostname, server_url->url );
 
 	http_hdr.set_field( "Connection: closed");
-	http_hdr.add_basic_authentication( url->username, url->password );
+	http_hdr.add_basic_authentication( url->username?url->username:"", url->password?url->password:"");
 	if( http_hdr.build_request( )==NULL ) {
 		goto err_out;
 	}
@@ -207,13 +207,13 @@ err_out:
 
 HTTP_Header* http_read_response( Tcp& tcp ) {
 	HTTP_Header* http_hdr = new(zeromem) HTTP_Header;
-	char response[BUFFER_SIZE];
+	uint8_t response[BUFFER_SIZE];
 	int i;
 
 	if( http_hdr==NULL ) return NULL;
 
 	do {
-		i = tcp.read((uint8_t*)response, BUFFER_SIZE);
+		i = tcp.read(response, BUFFER_SIZE);
 		if( i<0 ) {
 			MSG_ERR("Read failed\n");
 			delete http_hdr;
@@ -224,7 +224,7 @@ HTTP_Header* http_read_response( Tcp& tcp ) {
 			delete http_hdr;
 			return NULL;
 		}
-		http_hdr->response_append(response, i );
+		http_hdr->response_append(response,i);
 	} while( !http_hdr->is_header_entire() );
 	http_hdr->response_parse();
 	return http_hdr;

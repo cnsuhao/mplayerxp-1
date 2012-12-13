@@ -221,7 +221,7 @@ static struct cookie_list_type *load_cookies(void)
 }
 
 /* Take an HTTP_header_t, and insert the correct headers. The cookie files are read if necessary. */
-void HTTP_Header::cookies_set(const char *domain, const char *url)
+void HTTP_Header::cookies_set(const std::string& domain, const std::string& url)
 {
     int found_cookies = 0;
     struct cookie_list_type *cookies[MAX_COOKIES];
@@ -230,7 +230,7 @@ void HTTP_Header::cookies_set(const char *domain, const char *url)
     const char *path;
     char *buf;
 
-    path = strchr(url, '/');
+    path = strchr(url.c_str(), '/');
     if (!path)
 	path = "";
 
@@ -243,7 +243,7 @@ void HTTP_Header::cookies_set(const char *domain, const char *url)
     /* Find which cookies we want, removing duplicates. Cookies with the longest domain, then longest path take priority */
     while (list) {
 	/* Check the cookie domain and path. Also, we never send "secure" cookies. These should only be sent over HTTPS. */
-	if ((right_hand_strcmp(list->domain, domain) == 0)
+	if ((right_hand_strcmp(list->domain, domain.c_str()) == 0)
 	    && (left_hand_strcmp(list->path, path) == 0) && !list->secure) {
 	    int replacing = 0;
 	    for (i = 0; i < found_cookies; i++) {

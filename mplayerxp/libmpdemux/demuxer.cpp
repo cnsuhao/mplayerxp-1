@@ -366,6 +366,7 @@ static const demuxer_driver_t* demuxer_driver_by_name(const std::string& name)
     unsigned i=0;
     while(mime_type_table[i].driver!=&demux_null) {
 	if(name==mime_type_table[i].mime_type) return mime_type_table[i].driver;
+	i++;
     }
     return &demux_null;
 }

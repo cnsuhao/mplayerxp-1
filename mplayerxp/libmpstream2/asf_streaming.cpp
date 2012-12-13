@@ -583,7 +583,7 @@ static HTTP_Header* asf_http_request(networking_t *networking) {
 	// Common header for all requests.
 	http_hdr->set_field("Accept: */*" );
 	http_hdr->set_field("User-Agent: NSPlayer/4.1.0.3856" );
-	http_hdr->add_basic_authentication(url->username, url->password );
+	http_hdr->add_basic_authentication(url->username?url->username:"", url->password?url->password:"" );
 
 	// Check if we are using a proxy
 	if( !strcasecmp( url->protocol, "http_proxy" ) ) {
@@ -721,7 +721,7 @@ static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
     HTTP_Header *http_hdr=NULL;
     URL *url = networking->url;
     asf_http_networking_t *asf_http_ctrl;
-    char buffer[BUFFER_SIZE];
+    uint8_t buffer[BUFFER_SIZE];
     int i, ret;
     int done;
     int auth_retry = 0;
@@ -762,7 +762,7 @@ static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
 	delete http_hdr;
 	http_hdr = new(zeromem) HTTP_Header;
 	do {
-	    i = tcp.read((uint8_t*)buffer, BUFFER_SIZE);
+	    i = tcp.read(buffer, BUFFER_SIZE);
 	    if( i<=0 ) {
 		perror("read");
 		delete http_hdr;

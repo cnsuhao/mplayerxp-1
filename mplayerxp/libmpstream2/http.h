@@ -10,6 +10,7 @@
 
 #include <string>
 #include <vector>
+#include <stdint.h>
 
 namespace mpxp {
     class HTTP_Header : public Opaque {
@@ -17,33 +18,33 @@ namespace mpxp {
 	    HTTP_Header();
 	    virtual ~HTTP_Header();
 
-	    virtual int		response_append(const char *data, int length );
+	    virtual int		response_append(const uint8_t* data,size_t length);
 	    virtual int		response_parse();
 	    virtual int		is_header_entire() const;
 	    virtual const char*	build_request();
-	    virtual const char*	get_field(const char *field_name );
+	    virtual const char*	get_field(const std::string& field_name );
 	    virtual const char*	get_next_field();
-	    virtual void	set_field(const char *field_name );
-	    virtual void	set_method(const char *method );
-	    virtual void	set_uri(const char *uri );
-	    virtual int		add_basic_authentication(const char *username, const char *password );
+	    virtual void	set_field(const std::string& field_name );
+	    virtual void	set_method(const std::string& method );
+	    virtual void	set_uri(const std::string& uri );
+	    virtual int		add_basic_authentication(const std::string& username, const std::string& password );
 
 	    virtual void	debug_hdr();
-	    virtual void	cookies_set(const char *hostname, const char *url);
+	    virtual void	cookies_set(const std::string& hostname, const std::string& url);
 
-	    const char*		get_reason_phrase() const { return reason_phrase; }
+	    const char*		get_reason_phrase() const { return reason_phrase.c_str(); }
 	    const char*		get_protocol() const { return protocol.c_str(); }
 	    unsigned		get_status() const { return status_code; }
-	    const char*		get_body() const { return body; }
-	    size_t		get_body_size() const { return body_size; }
+	    const char*		get_body() const { return body.c_str(); }
+	    size_t		get_body_size() const { return body.length(); }
 	    virtual void	erase_body();
-	    const char*		get_buffer() const { return buffer; }
+	    const uint8_t*	get_buffer() const { return buffer; }
 	    size_t		get_buffer_size() const { return buffer_size; }
 	private:
 	    std::string		protocol;
 	    std::string		method;
 	    std::string		uri;
-	    char*		reason_phrase;
+	    std::string		reason_phrase;
 	    unsigned int	http_minor_version;
 	    // Field variables
 	    std::vector<std::string> fields;
@@ -51,11 +52,10 @@ namespace mpxp {
 	    std::vector<std::string>::size_type search_pos;
 	    // Body variables
 	    unsigned int	status_code;
-	    char*		body;
-	    size_t		body_size;
+	    std::string		body;
 	    unsigned int	is_parsed;
-	    char*		buffer;
-	    size_t		buffer_size;
+	    uint8_t*		buffer;
+	    unsigned		buffer_size;
     };
 
     extern int		base64_encode(const any_t*enc, int encLen, char *out, int outMax);
