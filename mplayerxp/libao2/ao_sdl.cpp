@@ -67,18 +67,19 @@ class SDL_AO_Interface : public AO_Interface {
 	unsigned	buf_write;
 	unsigned	buf_read_pos;
 	unsigned	buf_write_pos;
-	unsigned	volume;
+	unsigned*	volume;
 	int		full_buffers;
 	int		buffered_bytes;
 };
 
 SDL_AO_Interface::SDL_AO_Interface(const std::string& _subdevice)
-		:AO_Interface(_subdevice) {}
+		:AO_Interface(_subdevice),volume(new unsigned) {}
 
 SDL_AO_Interface::~SDL_AO_Interface() {
     MSG_V("SDL: Audio Subsystem shutting down!\n");
     SDL_CloseAudio();
     SDL_QuitSubSystem(SDL_INIT_AUDIO);
+    delete volume;
 }
 
 int SDL_AO_Interface::write_buffer(const uint8_t* data,int len){
@@ -107,7 +108,7 @@ int SDL_AO_Interface::read_buffer(uint8_t* data,int len){
 	if(full_buffers==0) break; // no more data buffered!
 	x=std::min(unsigned(len),BUFFSIZE-buf_read_pos);
 	memcpy(data+len2,buffer[buf_read]+buf_read_pos,x);
-	SDL_MixAudio(data+len2, data+len2, x, volume);
+	SDL_MixAudio(data+len2, data+len2, x, *volume);
 	len2+=x; len-=x;
 	buffered_bytes-=x; buf_read_pos+=x;
 	if(buf_read_pos>=BUFFSIZE){
@@ -143,15 +144,15 @@ MPXP_Rc SDL_AO_Interface::ctrl(int cmd,long arg) const {
     switch (cmd) {
 	case AOCONTROL_GET_VOLUME: {
 	    ao_control_vol_t* vol = (ao_control_vol_t*)arg;
-	    vol->left = vol->right = (float)((volume + 127)/2.55);
+	    vol->left = vol->right = (float)((*volume + 127)/2.55);
 	    return MPXP_Ok;
 	}
 	case AOCONTROL_SET_VOLUME: {
 	    float diff;
 	    ao_control_vol_t* vol = (ao_control_vol_t*)arg;
 	    diff = (vol->left+vol->right) / 2;
-//	    volume = (int)(diff * 2.55) - 127;
-//	    return MPXP_Ok;
+	    *volume = (int)(diff * 2.55) - 127;
+	    return MPXP_Ok;
 	    return MPXP_False;
 	}
     }
@@ -170,7 +171,7 @@ MPXP_Rc SDL_AO_Interface::open(unsigned flags)
 {
     unsigned i;
     UNUSED(flags);
-    volume=127;
+    *volume=127;
     /* Allocate ring-priv->buffer memory */
     for(i=0;i<NUM_BUFS;i++) buffer[i]=new uint8_t[BUFFSIZE];
 

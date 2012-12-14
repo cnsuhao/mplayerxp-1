@@ -10,6 +10,7 @@ using namespace mpxp;
 #include "libmpsub/spudec.h"
 #include "libmpstream2/network.h"
 
+namespace mpxp {
 #ifdef HAVE_SDL
 //extern char *sdl_driver;
 extern int sdl_noxv;
@@ -17,8 +18,6 @@ extern int sdl_forcexv;
 extern int sdl_forcegl;
 //extern char *sdl_adriver;
 #endif
-
-namespace mpxp {
 extern const char *oss_mixer_device;
 
 static const config_t xpcore_config[]={

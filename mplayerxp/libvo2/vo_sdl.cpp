@@ -135,13 +135,12 @@ using namespace mpxp;
 #endif
 #include "vo_msg.h"
 
-int sdl_noxv;
-int sdl_forcexv;
-int sdl_forcegl;
-
 #include <SDL/SDL.h>
 
 namespace mpxp {
+int sdl_noxv;
+int sdl_forcexv;
+int sdl_forcegl;
 #if	defined(sun) && defined(__svr4__)
 /* setenv is missing on solaris */
 static void setenv(const char *name, const char *val, int _xx)
