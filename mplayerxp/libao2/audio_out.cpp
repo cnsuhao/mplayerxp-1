@@ -6,37 +6,39 @@ using namespace mpxp;
 #include <stdlib.h>
 
 #include "audio_out.h"
+#include "audio_out_internal.h"
 #include "afmt.h"
 #include "ao_msg.h"
 
-extern const ao_functions_t audio_out_wav;
-extern const ao_functions_t audio_out_null;
+namespace mpxp {
+extern const ao_info_t audio_out_wav;
+extern const ao_info_t audio_out_null;
 #ifdef USE_OSS_AUDIO
-extern const ao_functions_t audio_out_oss;
+extern const ao_info_t audio_out_oss;
 #endif
 #ifdef HAVE_ALSA
-extern const ao_functions_t audio_out_alsa;
+extern const ao_info_t audio_out_alsa;
 #endif
 #ifdef HAVE_SDL
-extern const ao_functions_t audio_out_sdl;
+extern const ao_info_t audio_out_sdl;
 #endif
 #ifdef HAVE_ARTS
-extern const ao_functions_t audio_out_arts;
+extern const ao_info_t audio_out_arts;
 #endif
 #ifdef HAVE_ESD
-extern const ao_functions_t audio_out_esd;
+extern const ao_info_t audio_out_esd;
 #endif
 #ifdef HAVE_OPENAL
-extern const ao_functions_t audio_out_openal;
+extern const ao_info_t audio_out_openal;
 #endif
 #ifdef HAVE_NAS
-extern const ao_functions_t audio_out_nas;
+extern const ao_info_t audio_out_nas;
 #endif
 #ifdef HAVE_JACK
-extern const ao_functions_t audio_out_jack;
+extern const ao_info_t audio_out_jack;
 #endif
-
-static const ao_functions_t* audio_out_drivers[] =
+} // namespace mpxp
+static const ao_info_t* audio_out_drivers[] =
 {
 #ifdef USE_OSS_AUDIO
 	&audio_out_oss,
@@ -68,8 +70,9 @@ static const ao_functions_t* audio_out_drivers[] =
 };
 
 typedef struct priv_s {
-    char			antiviral_hole[RND_CHAR5];
-    const ao_functions_t*	audio_out;
+    char		antiviral_hole[RND_CHAR5];
+    const ao_info_t*	info;
+    AO_Interface*	driver;
 }priv_t;
 
 const char * __FASTCALL__ ao_format_name(int format)
@@ -180,7 +183,7 @@ void ao_print_help( void )
     MSG_INFO("Available audio output drivers:\n");
     i=0;
     while (audio_out_drivers[i]) {
-	const ao_info_t *info = audio_out_drivers[i++]->info;
+	const ao_info_t *info = audio_out_drivers[i++];
 	MSG_INFO("\t%s\t%s\n", info->short_name, info->name);
     }
     MSG_INFO("\n");
@@ -190,23 +193,27 @@ MPXP_Rc __FASTCALL__ ao_register(ao_data_t* ao,const char *driver_name,unsigned 
 {
     priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
     unsigned i;
-    if(!driver_name)
-	priv->audio_out=audio_out_drivers[0];
+    if(!driver_name) {
+	priv->info=audio_out_drivers[0];
+	priv->driver=audio_out_drivers[0]->query_interface(ao->subdevice);
+    }
     else
     for (i=0; audio_out_drivers[i] != &audio_out_null; i++) {
-	const ao_info_t *info = audio_out_drivers[i]->info;
+	const ao_info_t *info = audio_out_drivers[i];
 	if(strcmp(info->short_name,driver_name) == 0){
-	    priv->audio_out = audio_out_drivers[i];break;
+	    priv->info = audio_out_drivers[i];
+	    priv->driver = audio_out_drivers[i]->query_interface(ao->subdevice?ao->subdevice:"");
+	    break;
 	}
     }
-    if(priv->audio_out->init(ao,flags)==MPXP_Ok) return MPXP_Ok;
+    if(priv->driver->open(flags)==MPXP_Ok) return MPXP_Ok;
     return MPXP_False;
 }
 
 const ao_info_t* ao_get_info( const ao_data_t* ao )
 {
     priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-    return priv->audio_out->info;
+    return priv->info;
 }
 
 ao_data_t* __FASTCALL__ ao_init(const char *subdevice)
@@ -214,36 +221,104 @@ ao_data_t* __FASTCALL__ ao_init(const char *subdevice)
     ao_data_t* ao;
     ao=new(zeromem) ao_data_t;
     if(subdevice) ao->subdevice=mp_strdup(subdevice);
-    ao->outburst=OUTBURST;
-    ao->buffersize=-1;
-    ao->opaque=mp_malloc(sizeof(priv_t));
-    priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-    fill_false_pointers(ao->antiviral_hole,offsetof(ao_data_t,samplerate)-offsetof(ao_data_t,antiviral_hole));
-    priv->audio_out=NULL;
+    priv_t* priv=new(zeromem) priv_t;
+    ao->opaque=priv;
+    fill_false_pointers(ao->antiviral_hole,offsetof(ao_data_t,opaque)-offsetof(ao_data_t,antiviral_hole));
+    priv->driver=NULL;
     return ao;
 }
 
 MPXP_Rc __FASTCALL__ ao_configure(ao_data_t*ao,unsigned rate,unsigned channels,unsigned format)
 {
     priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-    return priv->audio_out->config_ao(ao,rate,channels,format);
+    return priv->driver->configure(rate,channels,format);
 }
 
 void ao_uninit(ao_data_t*ao)
 {
     priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-    priv->audio_out->uninit(ao);
+    delete priv->driver;
     if(ao->subdevice) delete ao->subdevice;
     delete priv;
     delete ao;
     ao=NULL;
 }
 
+unsigned ao_channels(ao_data_t* ao) {
+    if(ao) {
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
+	return priv->driver->channels();
+    }
+    return 0;
+}
+unsigned ao_samplerate(ao_data_t* ao) {
+    if(ao) {
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
+	return priv->driver->samplerate();
+    }
+    return 0;
+}
+unsigned ao_format(ao_data_t* ao) {
+    if(ao) {
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
+	return priv->driver->format();
+    }
+    return 0;
+}
+
+MPXP_Rc ao_test_channels(ao_data_t* ao,unsigned c) {
+    if(ao) {
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
+	return priv->driver->test_channels(c);
+    }
+    return MPXP_False;
+}
+MPXP_Rc ao_test_rate(ao_data_t* ao,unsigned s) {
+    if(ao) {
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
+	return priv->driver->test_rate(s);
+    }
+    return MPXP_False;
+}
+MPXP_Rc ao_test_format(ao_data_t* ao,unsigned f) {
+    if(ao) {
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
+	return priv->driver->test_format(f);
+    }
+    return MPXP_False;
+}
+
+unsigned ao_bps(ao_data_t* ao) {
+    if(ao) {
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
+	return	priv->driver->channels()*
+		priv->driver->samplerate()*
+		afmt2bps(priv->driver->format());
+    }
+    return 0;
+}
+
+unsigned ao_buffersize(ao_data_t* ao) {
+    if(ao) {
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
+	return priv->driver->buffersize();
+    }
+    return 0;
+}
+
+unsigned ao_outburst(ao_data_t* ao) {
+    if(ao) {
+	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
+	return priv->driver->outburst();
+    }
+    return 0;
+}
+
 void ao_reset(ao_data_t*ao)
 {
     if(ao) {
 	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	priv->audio_out->reset(ao);
+	priv->driver->reset();
     }
 }
 
@@ -251,7 +326,7 @@ unsigned ao_get_space(const ao_data_t*ao)
 {
     if(ao) {
 	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->audio_out->get_space(ao);
+	return priv->driver->get_space();
     }
     return 0;
 }
@@ -260,7 +335,7 @@ float ao_get_delay(const ao_data_t*ao)
 {
     if(ao) {
 	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->audio_out->get_delay(ao);
+	return priv->driver->get_delay();
     }
     return 0;
 }
@@ -269,7 +344,7 @@ unsigned __FASTCALL__ ao_play(ao_data_t*ao,const any_t* data,unsigned len,unsign
 {
     if(ao) {
 	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->audio_out->play(ao,data,len,flags);
+	return priv->driver->play(data,len,flags);
     } return 0;
 }
 
@@ -277,7 +352,7 @@ void ao_pause(ao_data_t*ao)
 {
     if(ao) {
 	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	priv->audio_out->pause(ao);
+	priv->driver->pause();
     }
 }
 
@@ -285,7 +360,7 @@ void ao_resume(ao_data_t*ao)
 {
     if(ao) {
 	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	priv->audio_out->resume(ao);
+	priv->driver->resume();
     }
 }
 
@@ -293,7 +368,7 @@ MPXP_Rc __FASTCALL__ ao_control(const ao_data_t*ao,int cmd,long arg)
 {
     if(ao) {
 	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->audio_out->control_ao(ao,cmd,arg);
+	return priv->driver->ctrl(cmd,arg);
     }
     return MPXP_Error;
 }

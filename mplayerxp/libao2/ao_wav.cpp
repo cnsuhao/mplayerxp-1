@@ -39,16 +39,7 @@ using namespace mpxp;
 #include <windows.h>
 #endif
 
-static const ao_info_t info =
-{
-    "RAW WAVE file writer audio output",
-    "wav",
-    "Atmosfear",
-    ""
-};
-
-LIBAO_EXTERN(wav)
-
+namespace mpxp {
 #define WAV_ID_RIFF 0x46464952 /* "RIFF" */
 #define WAV_ID_WAVE 0x45564157 /* "WAVE" */
 #define WAV_ID_FMT  0x20746d66 /* "fmt " */
@@ -72,22 +63,67 @@ struct WaveHeader
     uint32_t data;
     uint32_t data_length;
 };
+class Wave_AO_Interface : public AO_Interface {
+    public:
+	Wave_AO_Interface(const std::string& subdevice);
+	virtual ~Wave_AO_Interface();
 
-typedef struct priv_s {
-    char *		out_filename;
-    int			pcm_waveheader;
-    int			fast;
+	virtual MPXP_Rc		open(unsigned flags);
+	virtual MPXP_Rc		configure(unsigned rate,unsigned channels,unsigned format);
+	virtual unsigned	samplerate() const;
+	virtual unsigned	channels() const;
+	virtual unsigned	format() const;
+	virtual unsigned	buffersize() const;
+	virtual unsigned	outburst() const;
+	virtual MPXP_Rc		test_rate(unsigned r) const;
+	virtual MPXP_Rc		test_channels(unsigned c) const;
+	virtual MPXP_Rc		test_format(unsigned f) const;
+	virtual void		reset();
+	virtual unsigned	get_space();
+	virtual float		get_delay();
+	virtual unsigned	play(const any_t* data,unsigned len,unsigned flags);
+	virtual void		pause();
+	virtual void		resume();
+	virtual MPXP_Rc		ctrl(int cmd,long arg) const;
+    private:
+	unsigned	bps() const { return _channels*_samplerate*afmt2bps(_format); }
+	std::string	out_filename;
+	int		pcm_waveheader;
+	int		fast;
 
-    uint64_t		data_length;
-    FILE *		fp;
-    struct WaveHeader	wavhdr;
-}priv_t;
+	uint64_t	data_length;
+	FILE*		fp;
+	WaveHeader	wavhdr;
+	unsigned	_channels,_samplerate,_format;
+	unsigned	_buffersize,_outburst;
+};
 
-/* init with default values */
+Wave_AO_Interface::Wave_AO_Interface(const std::string& _subdevice)
+		:AO_Interface(_subdevice) {}
+Wave_AO_Interface::~Wave_AO_Interface() {
+    if(pcm_waveheader){ /* Rewrite wave header */
+	int broken_seek = 0;
+#ifdef __MINGW32__
+	// Windows, in its usual idiocy "emulates" seeks on pipes so it always looks
+	// like they work. So we have to detect them brute-force.
+	broken_seek = GetFileType((HANDLE)_get_osfhandle(_fileno(fp))) != FILE_TYPE_DISK;
+#endif
+	if (broken_seek || fseek(fp, 0, SEEK_SET) != 0)
+	    MSG_ERR("Could not seek to start, WAV size headers not updated!\n");
+	else if (data_length > 0x7ffff000)
+	    MSG_ERR("File larger than allowed for WAV files, may play truncated!\n");
+	else {
+	    wavhdr.file_length = data_length + sizeof(wavhdr) - 8;
+	    wavhdr.file_length = le2me_32(wavhdr.file_length);
+	    wavhdr.data_length = le2me_32(data_length);
+	    ::fwrite(&wavhdr,sizeof(wavhdr),1,fp);
+	}
+    }
+    ::fclose(fp);
+}
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_ao(const ao_data_t* ao,int cmd,long arg){
-    UNUSED(ao);
+MPXP_Rc Wave_AO_Interface::ctrl(int cmd,long arg) const {
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_False;
@@ -95,27 +131,23 @@ static MPXP_Rc control_ao(const ao_data_t* ao,int cmd,long arg){
 
 // open & setup audio device
 // return: 1=success 0=fail
-static MPXP_Rc init(ao_data_t* ao,unsigned flags) {
+MPXP_Rc Wave_AO_Interface::open(unsigned flags) {
     // set defaults
     UNUSED(flags);
-    priv_t* priv;
-    priv=new(zeromem) priv_t;
-    ao->priv=priv;
-    priv->pcm_waveheader=1;
+    pcm_waveheader=1;
     return MPXP_Ok;
 }
 
-static MPXP_Rc config_ao(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format){
-    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
+MPXP_Rc Wave_AO_Interface::configure(unsigned r,unsigned c,unsigned f){
     unsigned bits;
 
-    if(ao->subdevice)	priv->out_filename = ao->subdevice;
-    else		priv->out_filename = mp_strdup("mpxp_adump.wav");
+    if(!subdevice.empty())	out_filename = subdevice;
+    else			out_filename = "mpxp_adump.wav";
 
     bits=8;
-    switch(format){
+    switch(f){
     case AFMT_S32_BE:
-	format=AFMT_S32_LE;
+	f=AFMT_S32_LE;
     case AFMT_S32_LE:
 	bits=32;
 	break;
@@ -123,126 +155,104 @@ static MPXP_Rc config_ao(ao_data_t* ao,unsigned rate,unsigned channels,unsigned 
 	bits=32;
 	break;
     case AFMT_S8:
-	format=AFMT_U8;
+	f=AFMT_U8;
     case AFMT_U8:
 	break;
     case AFMT_AC3:
 	bits=16;
 	break;
     default:
-	format=AFMT_S16_LE;
+	f=AFMT_S16_LE;
 	bits=16;
 	break;
     }
 
-    ao->outburst = 65536;
-    ao->buffersize= 2*65536;
-    ao->channels=channels;
-    ao->samplerate=rate;
-    ao->format=format;
-    ao->bps=channels*rate*(bits/8);
+    _outburst = 65536;
+    _buffersize= 2*65536;
+    _channels=c;
+    _samplerate=r;
+    _format=f;
 
-    priv->wavhdr.riff = le2me_32(WAV_ID_RIFF);
-    priv->wavhdr.wave = le2me_32(WAV_ID_WAVE);
-    priv->wavhdr.fmt = le2me_32(WAV_ID_FMT);
-    priv->wavhdr.fmt_length = le2me_32(16);
-    priv->wavhdr.fmt_tag = le2me_16(format == AFMT_FLOAT32 ? WAV_ID_FLOAT_PCM : WAV_ID_PCM);
-    priv->wavhdr.channels = le2me_16(ao->channels);
-    priv->wavhdr.sample_rate = le2me_32(ao->samplerate);
-    priv->wavhdr.bytes_per_second = le2me_32(ao->bps);
-    priv->wavhdr.bits = le2me_16(bits);
-    priv->wavhdr.block_align = le2me_16(ao->channels * (bits / 8));
+    wavhdr.riff = le2me_32(WAV_ID_RIFF);
+    wavhdr.wave = le2me_32(WAV_ID_WAVE);
+    wavhdr.fmt = le2me_32(WAV_ID_FMT);
+    wavhdr.fmt_length = le2me_32(16);
+    wavhdr.fmt_tag = le2me_16(_format == AFMT_FLOAT32 ? WAV_ID_FLOAT_PCM : WAV_ID_PCM);
+    wavhdr.channels = le2me_16(_channels);
+    wavhdr.sample_rate = le2me_32(_samplerate);
+    wavhdr.bytes_per_second = le2me_32(bps());
+    wavhdr.bits = le2me_16(bits);
+    wavhdr.block_align = le2me_16(_channels * (bits / 8));
 
-    priv->wavhdr.data = le2me_32(WAV_ID_DATA);
-    priv->wavhdr.data_length=le2me_32(0x7ffff000);
-    priv->wavhdr.file_length = priv->wavhdr.data_length + sizeof(priv->wavhdr) - 8;
+    wavhdr.data = le2me_32(WAV_ID_DATA);
+    wavhdr.data_length=le2me_32(0x7ffff000);
+    wavhdr.file_length = wavhdr.data_length + sizeof(wavhdr) - 8;
 
     MSG_INFO("ao_wav: %s %d-%s %s\n"
-		,priv->out_filename
-		,rate
-		,(channels > 1) ? "Stereo" : "Mono"
-		,afmt2str(format));
+		,out_filename.c_str()
+		,_samplerate
+		,(_channels > 1) ? "Stereo" : "Mono"
+		,afmt2str(_format));
 
-    priv->fp = fopen(priv->out_filename, "wb");
-    if(priv->fp) {
-	if(priv->pcm_waveheader){ /* Reserve space for wave header */
-	    fwrite(&priv->wavhdr,sizeof(priv->wavhdr),1,priv->fp);
+    fp = ::fopen(out_filename.c_str(), "wb");
+    if(fp) {
+	if(pcm_waveheader){ /* Reserve space for wave header */
+	    ::fwrite(&wavhdr,sizeof(wavhdr),1,fp);
 	}
 	return MPXP_Ok;
     }
-    MSG_ERR("ao_wav: can't open output file: %s\n", priv->out_filename);
+    MSG_ERR("ao_wav: can't open output file: %s\n", out_filename.c_str());
     return MPXP_False;
 }
 
-// close audio device
-static void uninit(ao_data_t* ao){
-    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
-    if(priv->pcm_waveheader){ /* Rewrite wave header */
-	int broken_seek = 0;
-#ifdef __MINGW32__
-	// Windows, in its usual idiocy "emulates" seeks on pipes so it always looks
-	// like they work. So we have to detect them brute-force.
-	broken_seek = GetFileType((HANDLE)_get_osfhandle(_fileno(priv->fp))) != FILE_TYPE_DISK;
-#endif
-	if (broken_seek || fseek(priv->fp, 0, SEEK_SET) != 0)
-	    MSG_ERR("Could not seek to start, WAV size headers not updated!\n");
-	else if (priv->data_length > 0x7ffff000)
-	    MSG_ERR("File larger than allowed for WAV files, may play truncated!\n");
-	else {
-	    priv->wavhdr.file_length = priv->data_length + sizeof(priv->wavhdr) - 8;
-	    priv->wavhdr.file_length = le2me_32(priv->wavhdr.file_length);
-	    priv->wavhdr.data_length = le2me_32(priv->data_length);
-	    fwrite(&priv->wavhdr,sizeof(priv->wavhdr),1,priv->fp);
-	}
-    }
-    fclose(priv->fp);
-    if (priv->out_filename)
-	delete priv->out_filename;
-    delete priv;
-}
-
 // stop playing and empty buffers (for seeking/pause)
-static void reset(ao_data_t* ao){
-    UNUSED(ao);
-}
+void Wave_AO_Interface::reset(){}
 
 // stop playing, keep buffers (for pause)
-static void audio_pause(ao_data_t* ao)
-{
-    // for now, just call reset();
-    reset(ao);
-}
+void Wave_AO_Interface::pause() { reset(); }
 
 // resume playing, after audio_pause()
-static void audio_resume(ao_data_t* ao)
-{
-    UNUSED(ao);
-}
+void Wave_AO_Interface::resume() {}
 
 // return: how many bytes can be played without blocking
-static unsigned get_space(const ao_data_t* ao){
-    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
+unsigned Wave_AO_Interface::get_space() {
     float pts=dae_played_frame(mpxp_context().engine().xp_core->video).v_pts;
     if(pts)
-	return ao->pts < pts + priv->fast * 30000 ? ao->outburst : 0;
-    return ao->outburst;
+	return mpxp_context().audio().output->pts < pts + fast * 30000 ? _outburst : 0;
+    return _outburst;
 }
 
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static unsigned play(ao_data_t* ao,const any_t* data,unsigned len,unsigned flags){
-    priv_t* priv=reinterpret_cast<priv_t*>(ao->priv);
+unsigned Wave_AO_Interface::play(const any_t* data,unsigned len,unsigned flags){
     UNUSED(flags);
-    fwrite(data,len,1,priv->fp);
-    if(priv->pcm_waveheader)
-	priv->data_length += len;
-
+    ::fwrite(data,len,1,fp);
+    if(pcm_waveheader) data_length += len;
     return len;
 }
 
 // return: delay in seconds between first and last sample in buffer
-static float get_delay(const ao_data_t* ao){
-    UNUSED(ao);
-    return 0.0;
-}
+float Wave_AO_Interface::get_delay() { return 0.0f; }
+
+unsigned Wave_AO_Interface::samplerate() const { return _samplerate; }
+unsigned Wave_AO_Interface::channels() const { return _channels; }
+unsigned Wave_AO_Interface::format() const { return _format; }
+unsigned Wave_AO_Interface::buffersize() const { return _buffersize; }
+unsigned Wave_AO_Interface::outburst() const { return _outburst; }
+MPXP_Rc  Wave_AO_Interface::test_channels(unsigned c) const { UNUSED(c); return MPXP_Ok; }
+MPXP_Rc  Wave_AO_Interface::test_rate(unsigned r) const { UNUSED(r); return MPXP_Ok; }
+MPXP_Rc  Wave_AO_Interface::test_format(unsigned f) const { UNUSED(f); return MPXP_Ok; }
+
+static AO_Interface* query_interface(const std::string& sd) { return new Wave_AO_Interface(sd); }
+
+extern const ao_info_t audio_out_wav =
+{
+    "RAW WAVE file writer audio output",
+    "wav",
+    "Atmosfear",
+    "",
+    query_interface
+};
+} // namesapce mpxp
+

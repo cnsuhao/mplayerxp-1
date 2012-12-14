@@ -32,33 +32,57 @@ using namespace mpxp;
 #include "afmt.h"
 #include "ao_msg.h"
 
+namespace mpxp {
 /* Feel mp_free to experiment with the following values: */
 #define ARTS_PACKETS 10 /* Number of audio packets */
 #define ARTS_PACKET_SIZE_LOG2 11 /* Log2 of audio packet size */
 
+class Arts_AO_Interface : public AO_Interface {
+    public:
+	Arts_AO_Interface(const std::string& subdevice);
+	virtual ~Arts_AO_Interface();
 
-static const ao_info_t info =
-{
-    "aRts audio output",
-    "arts",
-    "Michele Balistreri <brain87@gmx.net>",
-    ""
+	virtual MPXP_Rc		open(unsigned flags);
+	virtual MPXP_Rc		configure(unsigned rate,unsigned channels,unsigned format);
+	virtual unsigned	samplerate() const;
+	virtual unsigned	channels() const;
+	virtual unsigned	format() const;
+	virtual unsigned	buffersize() const;
+	virtual unsigned	outburst() const;
+	virtual MPXP_Rc		test_rate(unsigned r) const;
+	virtual MPXP_Rc		test_channels(unsigned c) const;
+	virtual MPXP_Rc		test_format(unsigned f) const;
+	virtual void		reset();
+	virtual unsigned	get_space();
+	virtual float		get_delay();
+	virtual unsigned	play(const any_t* data,unsigned len,unsigned flags);
+	virtual void		pause();
+	virtual void		resume();
+	virtual MPXP_Rc		ctrl(int cmd,long arg) const;
+    private:
+	unsigned	_channels,_samplerate,_format;
+	unsigned	_buffersize,_outburst;
+	unsigned	bps() const { return _channels*_samplerate*afmt2bps(_format); }
+
+	arts_stream_t	stream;
 };
 
-LIBAO_EXTERN(arts)
+Arts_AO_Interface::Arts_AO_Interface(const std::string& _subdevice)
+		:AO_Interface(_subdevice) {}
+Arts_AO_Interface::~Arts_AO_Interface() {
+    arts_close_stream(stream);
+    arts_free();
+}
 
-static MPXP_Rc control_ao(const ao_data_t* ao,int cmd, long arg)
-{
-    UNUSED(ao);
+MPXP_Rc Arts_AO_Interface::ctrl(int cmd, long arg) const {
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
 }
 
-static MPXP_Rc init(ao_data_t* ao,unsigned flags)
+MPXP_Rc Arts_AO_Interface::open(unsigned flags)
 {
     int err;
-    UNUSED(ao);
     UNUSED(flags);
 
     if( (err=arts_init()) ) {
@@ -70,9 +94,7 @@ static MPXP_Rc init(ao_data_t* ao,unsigned flags)
     return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ config_ao(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format)
-{
-    arts_stream_t stream;
+MPXP_Rc Arts_AO_Interface::configure(unsigned r,unsigned c,unsigned f) {
     unsigned frag_spec,samplesize;
     /*
      * arts supports 8bit unsigned and 16bit signed sample formats
@@ -82,10 +104,13 @@ static MPXP_Rc __FASTCALL__ config_ao(ao_data_t* ao,unsigned rate,unsigned chann
      * Unsupported formats are translated to one of these two formats
      * using mplayer's audio filters.
      */
-    switch (format) {
+    _samplerate=r;
+    _channels=c;
+    _format=f;
+    switch (f) {
 	case AFMT_U8:
 	case AFMT_S8:
-	    format = AFMT_U8;
+	    _format = AFMT_U8;
 	    samplesize=1;
 	    break;
 #if 0
@@ -93,30 +118,24 @@ static MPXP_Rc __FASTCALL__ config_ao(ao_data_t* ao,unsigned rate,unsigned chann
 	case AFMT_S24_BE:
 	case AFMT_U24_LE:
 	case AFMT_U24_BE:
-	    format = AFMT_S24_LE;
+	    _format = AFMT_S24_LE;
 	    samplesize=3;
 	    break;
 	case AFMT_S32_LE:
 	case AFMT_S32_BE:
 	case AFMT_U32_LE:
 	case AFMT_U32_BE:
-	    format = AFMT_S32_LE;
+	    _format = AFMT_S32_LE;
 	    samplesize=4;
 	    break;
 #endif
 	default:
 	    samplesize=2;
-	    format = AFMT_S16_LE;    /* artsd always expects little endian?*/
+	    _format = AFMT_S16_LE;    /* artsd always expects little endian?*/
 	    break;
     }
 
-    ao->format = format;
-    ao->channels = channels;
-    ao->samplerate = rate;
-    ao->bps = rate*channels*samplesize;
-
-    stream=arts_play_stream(rate, samplesize*8, channels, "MPlayerXP");
-    ao->priv=stream;
+    stream=arts_play_stream(_samplerate, samplesize*8, _channels, "MPlayerXP");
 
     if(stream == NULL) {
 	MSG_ERR("[aRts] Can't open stream\n");
@@ -129,47 +148,61 @@ static MPXP_Rc __FASTCALL__ config_ao(ao_data_t* ao,unsigned rate,unsigned chann
     arts_stream_set(stream, ARTS_P_BLOCKING, 1);
     frag_spec = ARTS_PACKET_SIZE_LOG2 | ARTS_PACKETS << 16;
     arts_stream_set(stream, ARTS_P_PACKET_SETTINGS, frag_spec);
-    ao->buffersize = arts_stream_get(stream, ARTS_P_BUFFER_SIZE);
+    _buffersize = arts_stream_get(stream, ARTS_P_BUFFER_SIZE);
     MSG_INFO("[aRts] Stream opened\n");
 
-    MSG_V("[aRts] buffersize=%u\n",ao->buffersize);
+    MSG_V("[aRts] buffersize=%u\n",_buffersize);
     MSG_V("[aRts] buffersize=%u\n", arts_stream_get(stream, ARTS_P_PACKET_SIZE));
 
     return MPXP_Ok;
 }
 
-static void uninit(ao_data_t* ao)
+unsigned Arts_AO_Interface::play(const any_t* data,unsigned len,unsigned flags)
 {
-    arts_stream_t stream=ao->priv;
-    arts_close_stream(stream);
-    arts_free();
-}
-
-static unsigned play(ao_data_t* ao,const any_t* data,unsigned len,unsigned flags)
-{
-    arts_stream_t stream=ao->priv;
     UNUSED(flags);
     return arts_write(stream, data, len);
 }
 
-static void audio_pause(ao_data_t* ao)
-{
-    UNUSED(ao);
-}
-
-static void audio_resume(ao_data_t* ao) { UNUSED(ao); }
-static void reset(ao_data_t* ao) { UNUSED(ao); }
-
-static unsigned get_space(const ao_data_t* ao)
-{
-    arts_stream_t stream=ao->priv;
+void Arts_AO_Interface::pause() {}
+void Arts_AO_Interface::resume() {}
+void Arts_AO_Interface::reset() {}
+unsigned Arts_AO_Interface::get_space() {
     return arts_stream_get(stream, ARTS_P_BUFFER_SPACE);
 }
 
-static float get_delay(const ao_data_t* ao)
-{
-    arts_stream_t stream=ao->priv;
-    return ((float) (ao->buffersize - arts_stream_get(stream,
-		ARTS_P_BUFFER_SPACE))) / ((float) ao->bps);
+float Arts_AO_Interface::get_delay() {
+    return ((float) (_buffersize - arts_stream_get(stream,
+		ARTS_P_BUFFER_SPACE))) / ((float) bps());
 }
 
+unsigned Arts_AO_Interface::samplerate() const { return _samplerate; }
+unsigned Arts_AO_Interface::channels() const { return _channels; }
+unsigned Arts_AO_Interface::format() const { return _format; }
+unsigned Arts_AO_Interface::buffersize() const { return _buffersize; }
+unsigned Arts_AO_Interface::outburst() const { return _outburst; }
+MPXP_Rc  Arts_AO_Interface::test_channels(unsigned c) const { UNUSED(c); return MPXP_Ok; }
+MPXP_Rc  Arts_AO_Interface::test_rate(unsigned r) const { UNUSED(r); return MPXP_Ok; }
+MPXP_Rc  Arts_AO_Interface::test_format(unsigned f) const {
+    switch (f) {
+	case AFMT_U8:
+	case AFMT_S8:
+	case AFMT_U16_LE:
+	case AFMT_S16_LE:
+	case AFMT_U16_BE:
+	case AFMT_S16_BE: return MPXP_Ok;
+	default: break;
+    }
+    return MPXP_False;
+}
+
+static AO_Interface* query_interface(const std::string& sd) { return new Arts_AO_Interface(sd); }
+
+extern const ao_info_t audio_out_arts =
+{
+    "aRts audio output",
+    "arts",
+    "Michele Balistreri <brain87@gmx.net>",
+    "",
+    query_interface
+};
+} // namespace mpxp

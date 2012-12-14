@@ -1224,26 +1224,29 @@ int MPXPSystem::configure_audio() {
 	MSG_V("AO: Comment: %s\n", info->comment);
 
     MP_UNIT("af_preinit");
-    mpxp_context().audio().output->samplerate=mp_conf.force_srate?mp_conf.force_srate:sh_audio->rate;
-    mpxp_context().audio().output->channels=mp_conf.ao_channels?mp_conf.ao_channels:sh_audio->nch;
-    mpxp_context().audio().output->format=sh_audio->afmt;
+    unsigned samplerate,channels,format;
+    samplerate=mp_conf.force_srate?mp_conf.force_srate:sh_audio->rate;
+    channels=mp_conf.ao_channels?mp_conf.ao_channels:sh_audio->nch;
+    format=sh_audio->afmt;
 
     if(mpca_preinit_filters(mpxp_context().audio().decoder,
 	    // input:
 	    (int)(sh_audio->rate),
 	    sh_audio->nch, sh_audio->afmt,
 	    // output:
-	    &mpxp_context().audio().output->samplerate, &mpxp_context().audio().output->channels, &mpxp_context().audio().output->format)!=MPXP_Ok){
+	    &samplerate, &channels, &format)!=MPXP_Ok){
 	    MSG_ERR("Audio filter chain preinit failed\n");
     } else {
 	MSG_V("AF_pre: %dHz %dch (%s) afmt=%08X sh_audio_min=%i\n",
-		mpxp_context().audio().output->samplerate, mpxp_context().audio().output->channels,
-		ao_format_name(mpxp_context().audio().output->format),mpxp_context().audio().output->format
+		samplerate, channels,
+		ao_format_name(format),format
 		,sh_audio->audio_out_minsize);
     }
 
-    if(MPXP_Ok!=ao_configure(mpxp_context().audio().output,mp_conf.force_srate?mp_conf.force_srate:mpxp_context().audio().output->samplerate,
-		    mpxp_context().audio().output->channels,mpxp_context().audio().output->format)) {
+    if(MPXP_Ok!=ao_configure(mpxp_context().audio().output,
+		    samplerate,
+		    channels,
+		    format)) {
 	MSG_ERR("Can't configure audio device\n");
 	d_audio->sh=NULL;
 	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
@@ -1254,8 +1257,8 @@ int MPXPSystem::configure_audio() {
 	if(mpca_init_filters(mpxp_context().audio().decoder,
 	    sh_audio->rate,
 	    sh_audio->nch, mpaf_format_e(sh_audio->afmt),
-	    mpxp_context().audio().output->samplerate, mpxp_context().audio().output->channels, mpaf_format_e(mpxp_context().audio().output->format),
-	    mpxp_context().audio().output->outburst*4, mpxp_context().audio().output->buffersize)!=MPXP_Ok) {
+	    ao_samplerate(mpxp_context().audio().output), ao_channels(mpxp_context().audio().output), mpaf_format_e(ao_format(mpxp_context().audio().output)),
+	    ao_outburst(mpxp_context().audio().output)*4, ao_buffersize(mpxp_context().audio().output))!=MPXP_Ok) {
 		MSG_ERR("No matching audio filter found!\n");
 	    }
     }

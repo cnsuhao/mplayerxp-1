@@ -39,42 +39,71 @@ using namespace mpxp;
 #include "mp_conf_lavc.h"
 #include <jack/jack.h>
 
-static const ao_info_t info =
-{
-  "JACK audio output",
-  "jack",
-  "Reimar Döffinger <Reimar.Doeffinger@stud.uni-karlsruhe.de>",
-  "based on ao_sdl.c"
-};
-
-LIBAO_EXTERN(jack)
+namespace mpxp {
 
 //! maximum number of channels supported, avoids lots of mallocs
 #define MAX_CHANS 6
-typedef struct priv_s {
-    jack_port_t *	ports[MAX_CHANS];
-    unsigned		num_ports; ///< Number of used ports == number of channels
-    jack_client_t *	client;
-    float		latency;
-    int			estimate;
-    volatile int	paused; ///< set if paused
-    volatile int	underrun; ///< signals if an priv->underrun occured
+class Jack_AO_Interface : public AO_Interface {
+    public:
+	Jack_AO_Interface(const std::string& subdevice);
+	virtual ~Jack_AO_Interface();
 
-    volatile float	callback_interval;
-    volatile float	callback_time;
+	virtual MPXP_Rc		open(unsigned flags);
+	virtual MPXP_Rc		configure(unsigned rate,unsigned channels,unsigned format);
+	virtual unsigned	samplerate() const;
+	virtual unsigned	channels() const;
+	virtual unsigned	format() const;
+	virtual unsigned	buffersize() const;
+	virtual unsigned	outburst() const;
+	virtual MPXP_Rc		test_rate(unsigned r) const;
+	virtual MPXP_Rc		test_channels(unsigned c) const;
+	virtual MPXP_Rc		test_format(unsigned f) const;
+	virtual void		reset();
+	virtual unsigned	get_space();
+	virtual float		get_delay();
+	virtual unsigned	play(const any_t* data,unsigned len,unsigned flags);
+	virtual void		pause();
+	virtual void		resume();
+	virtual MPXP_Rc		ctrl(int cmd,long arg) const;
+	static void		deinterleave_data(any_t*_info, any_t*src, int len);
+	static int		outputaudio(jack_nframes_t nframes, any_t* _ao);
+    private:
+	unsigned	_channels,_samplerate,_format;
+	unsigned	_buffersize,_outburst;
+	unsigned	bps() const { return _channels*_samplerate*afmt2bps(_format); }
+	unsigned	read_buffer(float **bufs, unsigned cnt, unsigned num_bufs);
+	int		write_buffer(const unsigned char* data, int len);
+	static void	silence(float **bufs, int cnt, int num_bufs);
 
-    AVFifoBuffer *	buffer; //! buffer for audio data
-}priv_t;
+	jack_port_t *	ports[MAX_CHANS];
+	unsigned	num_ports; ///< Number of used ports == number of channels
+	jack_client_t *	client;
+	float		latency;
+	int		estimate;
+	volatile int	paused; ///< set if paused
+	volatile int	underrun; ///< signals if an priv->underrun occured
 
+	volatile float	callback_interval;
+	volatile float	callback_time;
 
+	AVFifoBuffer *	buffer; //! buffer for audio data
+};
 //! size of one chunk, if this is too small MPlayer will start to "stutter"
 //! after a short time of playback
 #define CHUNK_SIZE (16 * 1024)
 //! number of "virtual" chunks the priv->buffer consists of
 #define NUM_CHUNKS 8
 #define BUFFSIZE (NUM_CHUNKS * CHUNK_SIZE)
-
-
+Jack_AO_Interface::Jack_AO_Interface(const std::string& _subdevice)
+		:AO_Interface(_subdevice) {}
+Jack_AO_Interface::~Jack_AO_Interface() {
+    // HACK, make sure jack doesn't loop-output dirty priv->buffers
+    reset();
+    usec_sleep(100 * 1000);
+    jack_client_close(client);
+    av_fifo_free(buffer);
+    buffer = NULL;
+}
 /**
  * \brief insert len bytes into priv->buffer
  * \param data data to insert
@@ -83,14 +112,11 @@ typedef struct priv_s {
  *
  * If there is not enough room, the priv->buffer is filled up
  */
-static int write_buffer(ao_data_t* ao,const unsigned char* data, int len) {
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
-    int _free = av_fifo_space(priv->buffer);
+int Jack_AO_Interface::write_buffer(const unsigned char* data, int len) {
+    int _free = av_fifo_space(buffer);
     if (len > _free) len = _free;
-    return av_fifo_generic_write(priv->buffer, const_cast<unsigned char *>(data), len, NULL);
+    return av_fifo_generic_write(buffer, const_cast<unsigned char *>(data), len, NULL);
 }
-
-static void silence(float **bufs, int cnt, int num_bufs);
 
 struct deinterleave {
   float **bufs;
@@ -99,7 +125,7 @@ struct deinterleave {
   int pos;
 };
 
-static void deinterleave_data(any_t*_info, any_t*src, int len) {
+void Jack_AO_Interface::deinterleave_data(any_t*_info, any_t*src, int len) {
   struct deinterleave *di = reinterpret_cast<struct deinterleave*>(_info);
   float *s = reinterpret_cast<float*>(src);
   int i;
@@ -126,22 +152,20 @@ static void deinterleave_data(any_t*_info, any_t*src, int len) {
  * If there is not enough data in the priv->buffer remaining parts will be filled
  * with silence.
  */
-static unsigned read_buffer(ao_data_t* ao,float **bufs, unsigned cnt, unsigned num_bufs) {
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
-  struct deinterleave di = {bufs, num_bufs, 0, 0};
-  unsigned buffered = av_fifo_size(priv->buffer);
-  if (cnt * sizeof(float) * num_bufs > buffered) {
-    silence(bufs, cnt, num_bufs);
-    cnt = buffered / sizeof(float) / num_bufs;
-  }
-  av_fifo_generic_read(priv->buffer, &di, cnt * num_bufs * sizeof(float), deinterleave_data);
-  return cnt;
+unsigned Jack_AO_Interface::read_buffer(float **bufs, unsigned cnt, unsigned num_bufs) {
+    struct deinterleave di = {bufs, num_bufs, 0, 0};
+    unsigned buffered = av_fifo_size(buffer);
+    if (cnt * sizeof(float) * num_bufs > buffered) {
+	silence(bufs, cnt, num_bufs);
+	cnt = buffered / sizeof(float) / num_bufs;
+    }
+    av_fifo_generic_read(buffer, &di, cnt * num_bufs * sizeof(float), deinterleave_data);
+    return cnt;
 }
 
 // end ring priv->buffer stuff
 
-static MPXP_Rc control_ao(const ao_data_t* ao,int cmd, long arg) {
-    UNUSED(ao);
+MPXP_Rc Jack_AO_Interface::ctrl(int cmd, long arg) const {
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
@@ -153,7 +177,7 @@ static MPXP_Rc control_ao(const ao_data_t* ao,int cmd, long arg) {
  * \param cnt number of samples in each priv->buffer
  * \param num_bufs number of priv->buffers
  */
-static void silence(float **bufs, int cnt, int num_bufs) {
+void Jack_AO_Interface::silence(float **bufs, int cnt, int num_bufs) {
   int i;
   for (i = 0; i < num_bufs; i++)
     memset(bufs[i], 0, cnt * sizeof(float));
@@ -167,148 +191,104 @@ static void silence(float **bufs, int cnt, int num_bufs) {
  *
  * Write silence into priv->buffers if priv->paused or an priv->underrun occured
  */
-static int outputaudio(jack_nframes_t nframes, any_t* _ao) {
-    ao_data_t* ao=reinterpret_cast<ao_data_t*>(_ao);
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
-  float *bufs[MAX_CHANS];
-  unsigned i;
-  for (i = 0; i < priv->num_ports; i++)
-    bufs[i] = (float*)jack_port_get_buffer(priv->ports[i], nframes);
-  if (priv->paused || priv->underrun)
-    silence(bufs, nframes, priv->num_ports);
-  else
-    if (read_buffer(ao,bufs, nframes, priv->num_ports) < nframes)
-      priv->underrun = 1;
-  if (priv->estimate) {
-    float now = (float)GetTimer() / 1000000.0;
-    float diff = priv->callback_time + priv->callback_interval - now;
-    if ((diff > -0.002) && (diff < 0.002))
-      priv->callback_time += priv->callback_interval;
-    else
-      priv->callback_time = now;
-    priv->callback_interval = (float)nframes / (float)((ao_data_t*)ao)->samplerate;
-  }
-  return 0;
+int Jack_AO_Interface::outputaudio(jack_nframes_t nframes, any_t* _priv) {
+    Jack_AO_Interface& _this=*reinterpret_cast<Jack_AO_Interface*>(_priv);
+    float *bufs[MAX_CHANS];
+    unsigned i;
+    for (i = 0; i < _this.num_ports; i++)
+	bufs[i] = (float*)jack_port_get_buffer(_this.ports[i], nframes);
+    if (_this.paused || _this.underrun)
+	silence(bufs, nframes, _this.num_ports);
+    else if (_this.read_buffer(bufs, nframes, _this.num_ports) < nframes)
+      _this.underrun = 1;
+    if (_this.estimate) {
+	float now = (float)GetTimer() / 1000000.0;
+	float diff = _this.callback_time + _this.callback_interval - now;
+	if ((diff > -0.002) && (diff < 0.002))
+	    _this.callback_time += _this.callback_interval;
+	else
+	    _this.callback_time = now;
+	_this.callback_interval = (float)nframes / (float)_this._samplerate;
+    }
+    return 0;
 }
 
-#if 0
-/**
- * \brief print suboption usage help
- */
-static void print_help (void)
-{
-  MSG_FATAL(
-	   "\n-ao jack commandline help:\n"
-	   "Example: mplayer -ao jack:port=myout\n"
-	   "  connects MPlayer to the jack priv->ports named myout\n"
-	   "\nOptions:\n"
-	   "  port=<port name>\n"
-	   "    Connects to the given priv->ports instead of the default physical ones\n"
-	   "  name=<client name>\n"
-	   "    priv->client name to pass to JACK\n"
-	   "  priv->estimate\n"
-	   "    priv->estimates the amount of data in priv->buffers (experimental)\n"
-	   "  autostart\n"
-	   "    Automatically start JACK server if necessary\n"
-	 );
-}
-#endif
-static MPXP_Rc init(ao_data_t* ao,unsigned flags) {
-    priv_t* priv;
-    priv=new(zeromem) priv_t;
-    ao->priv=priv;
+MPXP_Rc Jack_AO_Interface::open(unsigned flags) {
     UNUSED(flags);
     return MPXP_Ok;
 }
 
-static MPXP_Rc config_ao(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format) {
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+MPXP_Rc Jack_AO_Interface::configure(unsigned r,unsigned c,unsigned f) {
     const char **matching_ports = NULL;
     char *port_name = NULL;
     char *client_name = NULL;
     int autostart = 0;
-/*
-  const opt_t subopts[] = {
-    {"port", OPT_ARG_MSTRZ, &port_name, NULL},
-    {"name", OPT_ARG_MSTRZ, &client_name, NULL},
-    {"priv->estimate", OPT_ARG_BOOL, &priv->estimate, NULL},
-    {"autostart", OPT_ARG_BOOL, &autostart, NULL},
-    {NULL}
-  };
-*/
+
     jack_options_t open_options = JackUseExactName;
     int port_flags = JackPortIsInput;
     unsigned i;
-    priv->estimate = 1;
-    UNUSED(format);
-/*
-  if (subopt_parse(ao->subdevice, subopts) != 0) {
-    print_help();
-    return 0;
-  }
-*/
-    if (channels > MAX_CHANS) {
-	MSG_FATAL("[JACK] Invalid number of channels: %i\n", channels);
+    estimate = 1;
+    UNUSED(f);
+
+    if (c > MAX_CHANS) {
+	MSG_FATAL("[JACK] Invalid number of channels: %i\n", c);
 	goto err_out;
     }
     if (!client_name) {
 	client_name = new char [40];
 	sprintf(client_name, "MPlayerXP [%d]", getpid());
     }
-    if (!autostart)
-	open_options = jack_options_t(open_options|JackNoStartServer);
-    priv->client = jack_client_open(client_name, open_options, NULL);
-    if (!priv->client) {
+    if (!autostart) open_options = jack_options_t(open_options|JackNoStartServer);
+    client = jack_client_open(client_name, open_options, NULL);
+    if (!client) {
 	MSG_FATAL("[JACK] cannot open server\n");
 	goto err_out;
     }
-    priv->buffer = av_fifo_alloc(BUFFSIZE);
-    jack_set_process_callback(priv->client, outputaudio, ao);
+    buffer = av_fifo_alloc(BUFFSIZE);
+    jack_set_process_callback(client, outputaudio, this);
 
     // list matching priv->ports
-    if (!port_name)
-	port_flags |= JackPortIsPhysical;
-    matching_ports = jack_get_ports(priv->client, ao->subdevice, NULL, port_flags);
+    if (!port_name) port_flags |= JackPortIsPhysical;
+    matching_ports = jack_get_ports(client, subdevice.c_str(), NULL, port_flags);
     if (!matching_ports || !matching_ports[0]) {
 	MSG_FATAL("[JACK] no physical priv->ports available\n");
 	goto err_out;
     }
     i = 1;
     while (matching_ports[i]) i++;
-    if (channels > i) channels = i;
-    priv->num_ports = channels;
+    if (c > i) c = i;
+    num_ports = c;
 
     // create out output priv->ports
-    for (i = 0; i < priv->num_ports; i++) {
+    for (i = 0; i < num_ports; i++) {
 	char pname[30];
 	snprintf(pname, 30, "out_%d", i);
-	priv->ports[i] = jack_port_register(priv->client, pname, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-	if (!priv->ports[i]) {
+	ports[i] = jack_port_register(client, pname, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+	if (!ports[i]) {
 	    MSG_FATAL("[JACK] not enough priv->ports available\n");
 	    goto err_out;
 	}
     }
-    if (jack_activate(priv->client)) {
+    if (jack_activate(client)) {
 	MSG_FATAL("[JACK] activate failed\n");
 	goto err_out;
     }
-    for (i = 0; i < priv->num_ports; i++) {
-	if (jack_connect(priv->client, jack_port_name(priv->ports[i]), matching_ports[i])) {
+    for (i = 0; i < num_ports; i++) {
+	if (jack_connect(client, jack_port_name(ports[i]), matching_ports[i])) {
 	    MSG_FATAL( "[JACK] connecting failed\n");
 	    goto err_out;
 	}
     }
-    rate = jack_get_sample_rate(priv->client);
-    priv->latency = (float)(jack_port_get_total_latency(priv->client, priv->ports[0]) +
-			    jack_get_buffer_size(priv->client)) / (float)rate;
-    priv->callback_interval = 0;
+    r = jack_get_sample_rate(client);
+    latency = (float)(jack_port_get_total_latency(client, ports[0]) +
+			jack_get_buffer_size(client)) / (float)r;
+    callback_interval = 0;
 
-    ao->channels = channels;
-    ao->samplerate = rate;
-    ao->format = AFMT_FLOAT32;
-    ao->bps = channels * rate * sizeof(float);
-    ao->buffersize = CHUNK_SIZE * NUM_CHUNKS;
-    ao->outburst = CHUNK_SIZE;
+    _channels = c;
+    _samplerate = r;
+    _format = AFMT_FLOAT32;
+    _buffersize = CHUNK_SIZE * NUM_CHUNKS;
+    _outburst = CHUNK_SIZE;
     delete matching_ports;
     delete port_name;
     delete client_name;
@@ -318,74 +298,71 @@ err_out:
     delete matching_ports;
     delete port_name;
     delete client_name;
-    if (priv->client) jack_client_close(priv->client);
-    av_fifo_free(priv->buffer);
-    priv->buffer = NULL;
+    if (client) jack_client_close(client);
+    av_fifo_free(buffer);
+    buffer = NULL;
     return MPXP_False;
-}
-
-// close audio device
-static void uninit(ao_data_t* ao) {
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
-  // HACK, make sure jack doesn't loop-output dirty priv->buffers
-  reset(ao);
-  usec_sleep(100 * 1000);
-  jack_client_close(priv->client);
-  av_fifo_free(priv->buffer);
-  priv->buffer = NULL;
-  delete priv;
 }
 
 /**
  * \brief stop playing and empty priv->buffers (for seeking/pause)
  */
-static void reset(ao_data_t* ao) {
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
-    priv->paused = 1;
-    av_fifo_reset(priv->buffer);
-    priv->paused = 0;
+void Jack_AO_Interface::reset() {
+    paused = 1;
+    av_fifo_reset(buffer);
+    paused = 0;
 }
 
 /**
  * \brief stop playing, keep priv->buffers (for pause)
  */
-static void audio_pause(ao_data_t* ao) {
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
-    priv->paused = 1;
-}
+void Jack_AO_Interface::pause() { paused = 1; }
 
 /**
  * \brief resume playing, after audio_pause()
  */
-static void audio_resume(ao_data_t* ao) {
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
-    priv->paused = 0;
-}
+void Jack_AO_Interface::resume() { paused = 0; }
 
-static unsigned get_space(const ao_data_t* ao) {
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
-    return av_fifo_space(priv->buffer);
+unsigned Jack_AO_Interface::get_space() {
+    return av_fifo_space(buffer);
 }
 
 /**
  * \brief write data into priv->buffer and reset priv->underrun flag
  */
-static unsigned play(ao_data_t* ao,const any_t*data, unsigned len, unsigned flags) {
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
-    priv->underrun = 0;
+unsigned Jack_AO_Interface::play(const any_t*data, unsigned len, unsigned flags) {
+    underrun = 0;
     UNUSED(flags);
-    return write_buffer(ao,reinterpret_cast<const unsigned char*>(data), len);
+    return write_buffer(reinterpret_cast<const unsigned char*>(data), len);
 }
 
-static float get_delay(const ao_data_t* ao) {
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
-    int buffered = av_fifo_size(priv->buffer); // could be less
-    float in_jack = priv->latency;
-    if (priv->estimate && priv->callback_interval > 0) {
-	float elapsed = (float)GetTimer() / 1000000.0 - priv->callback_time;
-	in_jack += priv->callback_interval - elapsed;
+float Jack_AO_Interface::get_delay() {
+    int buffered = av_fifo_size(buffer); // could be less
+    float in_jack = latency;
+    if (estimate && callback_interval > 0) {
+	float elapsed = (float)GetTimer() / 1000000.0f - callback_time;
+	in_jack += callback_interval - elapsed;
 	if (in_jack < 0) in_jack = 0;
     }
-    return (float)buffered / (float)ao->bps + in_jack;
+    return (float)buffered / (float)bps() + in_jack;
 }
 
+unsigned Jack_AO_Interface::samplerate() const { return _samplerate; }
+unsigned Jack_AO_Interface::channels() const { return _channels; }
+unsigned Jack_AO_Interface::format() const { return _format; }
+unsigned Jack_AO_Interface::buffersize() const { return _buffersize; }
+unsigned Jack_AO_Interface::outburst() const { return _outburst; }
+MPXP_Rc  Jack_AO_Interface::test_channels(unsigned c) const { UNUSED(c); return MPXP_Ok; }
+MPXP_Rc  Jack_AO_Interface::test_rate(unsigned r) const { UNUSED(r); return MPXP_Ok; }
+MPXP_Rc  Jack_AO_Interface::test_format(unsigned f) const { return f==AFMT_FLOAT32?MPXP_Ok:MPXP_False; }
+
+static AO_Interface* query_interface(const std::string& sd) { return new Jack_AO_Interface(sd); }
+
+extern const ao_info_t audio_out_jack = {
+    "JACK audio output",
+    "jack",
+    "Reimar Döffinger <Reimar.Doeffinger@stud.uni-karlsruhe.de>",
+    "based on ao_sdl.c",
+    query_interface
+};
+} // namespace mpxp

@@ -19,24 +19,24 @@ static unsigned rates[] =
 static unsigned __FASTCALL__ find_best_rate(unsigned irate)
 {
     unsigned i,ii;
-    int rval;
-    rval=ao_control(mpxp_context().audio().output,AOCONTROL_QUERY_RATE,irate);
+    MPXP_Rc rval;
+    rval=ao_test_rate(mpxp_context().audio().output,irate);
     if(rval == MPXP_True) return irate;
     for(i=0;i<sizeof(rates)/sizeof(unsigned)-1;i++) {
 	if(irate >= rates[i] && irate < rates[i+1]) break;
     }
     ii=i;
     for(;i<sizeof(rates)/sizeof(unsigned);i++) {
-	rval=ao_control(mpxp_context().audio().output,AOCONTROL_QUERY_RATE,rates[i]);
+	rval=ao_test_rate(mpxp_context().audio().output,rates[i]);
 	if(rval == MPXP_True) return rates[i];
     }
     i=ii;
     for(;i<sizeof(rates)/sizeof(unsigned);i--) {
-	rval=ao_control(mpxp_context().audio().output,AOCONTROL_QUERY_RATE,rates[i]);
+	rval=ao_test_rate(mpxp_context().audio().output,rates[i]);
 	if(rval == MPXP_True) return rates[i];
     }
     for(i=0;i<sizeof(rates)/sizeof(unsigned);i++) {
-	rval=ao_control(mpxp_context().audio().output,AOCONTROL_QUERY_RATE,rates[i]);
+	rval=ao_test_rate(mpxp_context().audio().output,rates[i]);
 	if(rval == MPXP_True) return rates[i];
     }
     return 44100;
@@ -45,15 +45,15 @@ static unsigned __FASTCALL__ find_best_rate(unsigned irate)
 static unsigned __FASTCALL__ find_best_ch(unsigned ich)
 {
     unsigned i;
-    int rval;
-    rval=ao_control(mpxp_context().audio().output,AOCONTROL_QUERY_CHANNELS,ich);
+    MPXP_Rc rval;
+    rval=ao_test_channels(mpxp_context().audio().output,ich);
     if(rval == MPXP_True) return ich;
     for(i=ich>1?ich:1;i<AF_NCH;i++) {
-	rval=ao_control(mpxp_context().audio().output,AOCONTROL_QUERY_CHANNELS,i);
+	rval=ao_test_channels(mpxp_context().audio().output,i);
 	if(rval == MPXP_True) return i;
     }
     for(i=1;i<AF_NCH;i++) {
-	rval=ao_control(mpxp_context().audio().output,AOCONTROL_QUERY_CHANNELS,i);
+	rval=ao_test_channels(mpxp_context().audio().output,i);
 	if(rval == MPXP_True) return i;
     }
     return 2;
@@ -85,19 +85,19 @@ static fmt_cvt_t cvt_list[] =
 
 static unsigned __FASTCALL__ find_best_fmt(unsigned ifmt)
 {
-    unsigned i,j;
-    int rval;
-    rval=ao_control(mpxp_context().audio().output,AOCONTROL_QUERY_FORMAT,ifmt);
+    unsigned i,j,idx;
+    MPXP_Rc rval;
+    rval=ao_test_format(mpxp_context().audio().output,ifmt);
     if(rval == MPXP_True) return ifmt;
-    rval=-1;
+    idx=-1;
     for(i=0;i<sizeof(cvt_list)/sizeof(fmt_cvt_t);i++) {
-	if(ifmt==cvt_list[i].base_fourcc) { rval=i; break; }
+	if(ifmt==cvt_list[i].base_fourcc) { idx=i; break; }
     }
-    if(rval==-1) return 0; /* unknown format */
-    i=rval;
+    if(idx==-1) return 0; /* unknown format */
+    i=idx;
     for(j=0;j<20;j++) {
 	if(cvt_list[i].cvt_fourcc[j]==0) break;
-	rval=ao_control(mpxp_context().audio().output,AOCONTROL_QUERY_FORMAT,cvt_list[i].cvt_fourcc[j]);
+	rval=ao_test_format(mpxp_context().audio().output,cvt_list[i].cvt_fourcc[j]);
 	if(rval == MPXP_True) return cvt_list[i].cvt_fourcc[j];
     }
     return AFMT_S16_LE;

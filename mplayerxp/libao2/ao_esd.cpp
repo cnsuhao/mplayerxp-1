@@ -56,6 +56,8 @@ using namespace mpxp;
 #include "afmt.h"
 #include "ao_msg.h"
 
+
+namespace mpxp {
 #define ESD_RESAMPLES 0
 #define ESD_DEBUG 0
 
@@ -65,37 +67,68 @@ using namespace mpxp;
 #define	dprintf(...)	/**/
 #endif
 
-
 #define	ESD_CLIENT_NAME	"MPlayerXP"
 #define	ESD_MAX_DELAY	(1.0f)	/* max amount of data buffered in esd (#sec) */
 
-static const ao_info_t info =
-{
-    "EsounD audio output",
-    "esd",
-    "Juergen Keil <jk@tools.de>",
-    ""
+class Esd_AO_Interface : public AO_Interface {
+    public:
+	Esd_AO_Interface(const std::string& subdevice);
+	virtual ~Esd_AO_Interface();
+
+	virtual MPXP_Rc		open(unsigned flags);
+	virtual MPXP_Rc		configure(unsigned rate,unsigned channels,unsigned format);
+	virtual unsigned	samplerate() const;
+	virtual unsigned	channels() const;
+	virtual unsigned	format() const;
+	virtual unsigned	buffersize() const;
+	virtual unsigned	outburst() const;
+	virtual MPXP_Rc		test_rate(unsigned r) const;
+	virtual MPXP_Rc		test_channels(unsigned c) const;
+	virtual MPXP_Rc		test_format(unsigned f) const;
+	virtual void		reset();
+	virtual unsigned	get_space();
+	virtual float		get_delay();
+	virtual unsigned	play(const any_t* data,unsigned len,unsigned flags);
+	virtual void		pause();
+	virtual void		resume();
+	virtual MPXP_Rc		ctrl(int cmd,long arg) const;
+    private:
+	unsigned	_channels,_samplerate,_format;
+	unsigned	_buffersize,_outburst;
+	unsigned	bps() const { return _channels*_samplerate*afmt2bps(_format); }
+
+	int		fd;
+	int		play_fd;
+	esd_server_info_t*svinfo;
+	int		latency;
+	int		bytes_per_sample;
+	unsigned long	samples_written;
+	struct timeval	play_start;
+	float		audio_delay;
 };
 
-LIBAO_EXTERN(esd)
+Esd_AO_Interface::Esd_AO_Interface(const std::string& _subdevice)
+		:AO_Interface(_subdevice) {}
+Esd_AO_Interface::~Esd_AO_Interface() {
+    if (play_fd >= 0) {
+	esd_close(play_fd);
+	play_fd = -1;
+    }
 
-typedef struct priv_s {
-    int			fd;
-    int			play_fd;
-    esd_server_info_t*	svinfo;
-    int			latency;
-    int			bytes_per_sample;
-    unsigned long	samples_written;
-    struct timeval	play_start;
-    float		audio_delay;
-}priv_t;
+    if (svinfo) {
+	esd_free_server_info(svinfo);
+	svinfo = NULL;
+    }
 
+    if (fd >= 0) {
+	esd_close(fd);
+	fd = -1;
+    }
+}
 /*
  * to set/get/query special features/parameters
  */
-static MPXP_Rc control_ao(const ao_data_t* ao,int cmd, long arg)
-{
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+MPXP_Rc Esd_AO_Interface::ctrl(int cmd, long arg) const {
     esd_player_info_t *esd_pi;
     esd_info_t        *esd_i;
     time_t	       now;
@@ -111,7 +144,7 @@ static MPXP_Rc control_ao(const ao_data_t* ao,int cmd, long arg)
 	}
 
 	dprintf("esd: get vol\n");
-	if ((esd_i = esd_get_all_info(priv->fd)) == NULL)
+	if ((esd_i = esd_get_all_info(fd)) == NULL)
 	    return MPXP_Error;
 
 	for (esd_pi = esd_i->player_list; esd_pi != NULL; esd_pi = esd_pi->next)
@@ -132,7 +165,7 @@ static MPXP_Rc control_ao(const ao_data_t* ao,int cmd, long arg)
 
     case AOCONTROL_SET_VOLUME:
 	dprintf("esd: set vol\n");
-	if ((esd_i = esd_get_all_info(priv->fd)) == NULL)
+	if ((esd_i = esd_get_all_info(fd)) == NULL)
 	    return MPXP_Error;
 
 	for (esd_pi = esd_i->player_list; esd_pi != NULL; esd_pi = esd_pi->next)
@@ -141,7 +174,7 @@ static MPXP_Rc control_ao(const ao_data_t* ao,int cmd, long arg)
 
 	if (esd_pi != NULL) {
 	    ao_control_vol_t *vol = (ao_control_vol_t *)arg;
-	    esd_set_stream_pan(priv->fd, esd_pi->source_id,
+	    esd_set_stream_pan(fd, esd_pi->source_id,
 			       vol->left  * ESD_VOLUME_BASE / 100,
 			       vol->right * ESD_VOLUME_BASE / 100);
 
@@ -161,17 +194,12 @@ static MPXP_Rc control_ao(const ao_data_t* ao,int cmd, long arg)
  * open & setup audio device
  * return: 1=success 0=fail
  */
-static MPXP_Rc init(ao_data_t* ao,unsigned flags)
-{
-    priv_t*priv;
-    ao->priv=new(zeromem) priv_t;
-    ao->priv=priv;
-    priv->fd=priv->play_fd=-1;
-    char *server = ao->subdevice;  /* NULL for localhost */
+MPXP_Rc Esd_AO_Interface::open(unsigned flags) {
+    fd=play_fd=-1;
     UNUSED(flags);
-    if (priv->fd < 0) {
-	priv->fd = esd_open_sound(server);
-	if (priv->fd < 0) {
+    if (fd < 0) {
+	fd = esd_open_sound(subdevice.c_str());
+	if (fd < 0) {
 	    MSG_ERR("ESD: Can't open sound: %s\n", strerror(errno));
 	    return MPXP_False;
 	}
@@ -179,67 +207,60 @@ static MPXP_Rc init(ao_data_t* ao,unsigned flags)
     return MPXP_Ok;
 }
 
-static MPXP_Rc config_ao(ao_data_t* ao,unsigned rate_hz,unsigned channels,unsigned format)
+MPXP_Rc Esd_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
-    char *server = ao->subdevice;  /* NULL for localhost */
+    std::string server = subdevice;  /* NULL for localhost */
     esd_format_t esd_fmt;
-    int bytes_per_sample;
+    int _bytes_per_sample;
     int fl;
     float lag_seconds, lag_net, lag_serv;
     struct timeval proto_start, proto_end;
-	/* get server info, and measure network latency */
-	gettimeofday(&proto_start, NULL);
-	priv->svinfo = esd_get_server_info(priv->fd);
-	if(server) {
-	    gettimeofday(&proto_end, NULL);
-	    lag_net  = (proto_end.tv_sec  - proto_start.tv_sec) +
-		(proto_end.tv_usec - proto_start.tv_usec) / 1000000.0;
-	    lag_net /= 2.0; /* round trip -> one way */
-	} else
-	    lag_net = 0.0;  /* no network lag */
 
-	/*
-	if (priv->svinfo) {
-	    mp_msg(MSGT_AO, MSGL_INFO, "AO: [esd] server info:\n");
-	    esd_print_server_info(priv->svinfo);
-	}
-	*/
+    /* get server info, and measure network latency */
+    gettimeofday(&proto_start, NULL);
+    svinfo = esd_get_server_info(fd);
+    if(!server.empty()) {
+	gettimeofday(&proto_end, NULL);
+	lag_net  = (proto_end.tv_sec  - proto_start.tv_sec) +
+	    (proto_end.tv_usec - proto_start.tv_usec) / 1000000.0;
+	lag_net /= 2.0; /* round trip -> one way */
+    } else
+	lag_net = 0.0;  /* no network lag */
     esd_fmt = ESD_STREAM | ESD_PLAY;
 
 #if	ESD_RESAMPLES
     /* let the esd daemon convert sample rate */
 #else
     /* let mplayer's audio filter convert the sample rate */
-    if (priv->svinfo != NULL)
-	rate_hz = priv->svinfo->rate;
+    if (svinfo != NULL)
+	r = svinfo->rate;
 #endif
-    ao->samplerate = rate_hz;
+    _samplerate = r;
 
-    /* EsounD can play mono or stereo */
-    switch (channels) {
-    case 1:
-	esd_fmt |= ESD_MONO;
-	ao->channels = bytes_per_sample = 1;
-	break;
-    default:
-	esd_fmt |= ESD_STEREO;
-	ao->channels = bytes_per_sample = 2;
+    /* EsounDscan play mono or stereo */
+    switch (c) {
+	case 1:
+	    esd_fmt |= ESD_MONO;
+	    _channels = _bytes_per_sample = 1;
+	    break;
+	default:
+	    esd_fmt |= ESD_STEREO;
+	    _channels = _bytes_per_sample = 2;
 	break;
     }
 
     /* EsounD can play 8bit unsigned and 16bit signed native */
-    switch (format) {
-    case AFMT_S8:
-    case AFMT_U8:
-	esd_fmt |= ESD_BITS8;
-	ao->format = AFMT_U8;
-	break;
-    default:
-	esd_fmt |= ESD_BITS16;
-	ao->format = AFMT_S16_NE;
-	bytes_per_sample *= 2;
-	break;
+    switch (f) {
+	case AFMT_S8:
+	case AFMT_U8:
+	    esd_fmt |= ESD_BITS8;
+	    _format = AFMT_U8;
+	    break;
+	default:
+	    esd_fmt |= ESD_BITS16;
+	    _format = AFMT_S16_NE;
+	    _bytes_per_sample *= 2;
+	    break;
     }
 
     /* modify priv->audio_delay depending on priv->latency
@@ -247,86 +268,57 @@ static MPXP_Rc config_ao(ao_data_t* ao,unsigned rate_hz,unsigned channels,unsign
      * adjust according to rate_hz & bytes_per_sample
      */
 #ifdef CONFIG_ESD_LATENCY
-    priv->latency = esd_get_latency(priv->fd);
+    latency = esd_get_latency(fd);
 #else
-    priv->latency = ((channels == 1 ? 2 : 1) * ESD_DEFAULT_RATE *
-		   (ESD_BUF_SIZE + 64 * (4.0f / bytes_per_sample))
-		   ) / rate_hz;
-    priv->latency += ESD_BUF_SIZE * 2;
+    latency = ((_channels == 1 ? 2 : 1) * ESD_DEFAULT_RATE *
+		   (ESD_BUF_SIZE + 64 * (4.0f / _bytes_per_sample))
+		   ) / _samplerate;
+    latency += ESD_BUF_SIZE * 2;
 #endif
-    if(priv->latency > 0) {
-	lag_serv = (priv->latency * 4.0f) / (bytes_per_sample * rate_hz);
+    if(latency > 0) {
+	lag_serv = (latency * 4.0f) / (_bytes_per_sample * _samplerate);
 	lag_seconds = lag_net + lag_serv;
-	priv->audio_delay += lag_seconds;
+	audio_delay += lag_seconds;
 	MSG_INFO("ESD: LatencyInfo: %f %f %f\n",lag_serv, lag_net, lag_seconds);
     }
 
-    priv->play_fd = esd_play_stream_fallback(esd_fmt, rate_hz,
-					   server, ESD_CLIENT_NAME);
-    if (priv->play_fd < 0) {
+    play_fd = esd_play_stream_fallback(esd_fmt, _samplerate,
+					server.c_str(), ESD_CLIENT_NAME);
+    if (play_fd < 0) {
 	MSG_ERR("ESD: Can't open play stream: %s\n", strerror(errno));
 	return MPXP_False;
     }
 
     /* enable non-blocking i/o on the socket connection to the esd server */
-    if ((fl = fcntl(priv->play_fd, F_GETFL)) >= 0)
-	fcntl(priv->play_fd, F_SETFL, O_NDELAY|fl);
+    if ((fl = ::fcntl(play_fd, F_GETFL)) >= 0) ::fcntl(play_fd, F_SETFL, O_NDELAY|fl);
 
 #if ESD_DEBUG
     {
 	int sbuf, rbuf, len;
 	len = sizeof(sbuf);
-	getsockopt(priv->play_fd, SOL_SOCKET, SO_SNDBUF, &sbuf, &len);
+	getsockopt(play_fd, SOL_SOCKET, SO_SNDBUF, &sbuf, &len);
 	len = sizeof(rbuf);
-	getsockopt(priv->play_fd, SOL_SOCKET, SO_RCVBUF, &rbuf, &len);
+	getsockopt(play_fd, SOL_SOCKET, SO_RCVBUF, &rbuf, &len);
 	dprintf("esd: send/receive socket buffer space %d/%d bytes\n",
 		sbuf, rbuf);
     }
 #endif
 
-    ao->bps = bytes_per_sample * rate_hz;
-    ao->outburst = ao->bps > 100000 ? 4*ESD_BUF_SIZE : 2*ESD_BUF_SIZE;
+    _outburst = bps() > 100000 ? 4*ESD_BUF_SIZE : 2*ESD_BUF_SIZE;
 
-    priv->play_start.tv_sec = 0;
-    priv->samples_written = 0;
-    priv->bytes_per_sample = bytes_per_sample;
+    play_start.tv_sec = 0;
+    samples_written = 0;
+    bytes_per_sample = _bytes_per_sample;
 
     return MPXP_Ok;
 }
-
-
-/*
- * close audio device
- */
-static void uninit(ao_data_t* ao)
-{
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
-    if (priv->play_fd >= 0) {
-	esd_close(priv->play_fd);
-	priv->play_fd = -1;
-    }
-
-    if (priv->svinfo) {
-	esd_free_server_info(priv->svinfo);
-	priv->svinfo = NULL;
-    }
-
-    if (priv->fd >= 0) {
-	esd_close(priv->fd);
-	priv->fd = -1;
-    }
-    delete priv;
-}
-
 
 /*
  * plays 'len' bytes of 'data'
  * it should round it down to outburst*n
  * return: number of bytes played
  */
-static unsigned play(ao_data_t* ao,const any_t* data, unsigned len, unsigned flags)
-{
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+unsigned Esd_AO_Interface::play(const any_t* data, unsigned len, unsigned flags) {
     unsigned offs;
     unsigned nwritten;
     int nsamples;
@@ -337,14 +329,14 @@ static unsigned play(ao_data_t* ao,const any_t* data, unsigned len, unsigned fla
 
 #define	SINGLE_WRITE 0
 #if	SINGLE_WRITE
-    nwritten = write(priv->play_fd, data, len);
+    nwritten = ::write(play_fd, data, len);
 #else
     for (offs = 0, nwritten=0; offs + ESD_BUF_SIZE <= len; offs += ESD_BUF_SIZE) {
 	/*
 	 * note: we're writing to a non-blocking socket here.
 	 * A partial write means, that the socket buffer is full.
 	 */
-	n = write(priv->play_fd, (char*)data + offs, ESD_BUF_SIZE);
+	n = ::write(play_fd, (char*)data + offs, ESD_BUF_SIZE);
 	if ( n < 0 ) {
 	    if ( errno != EAGAIN ) {
 		dprintf("esd play: write failed: %s\n", strerror(errno));
@@ -359,39 +351,26 @@ static unsigned play(ao_data_t* ao,const any_t* data, unsigned len, unsigned fla
 #endif
 
     if (nwritten > 0) {
-	if (!priv->play_start.tv_sec)
-	    gettimeofday(&priv->play_start, NULL);
-	nsamples = nwritten / priv->bytes_per_sample;
-	priv->samples_written += nsamples;
+	if (!play_start.tv_sec)
+	    ::gettimeofday(&play_start, NULL);
+	nsamples = nwritten / bytes_per_sample;
+	samples_written += nsamples;
 
-	dprintf("esd play: %d %lu\n", nsamples, priv->samples_written);
+	dprintf("esd play: %d %lu\n", nsamples, samples_written);
     } else {
-	dprintf("esd play: blocked / %lu\n", priv->samples_written);
+	dprintf("esd play: blocked / %lu\n", samples_written);
     }
-
     return nwritten;
 }
-
 
 /*
  * stop playing, keep buffers (for pause)
  */
-static void audio_pause(ao_data_t* ao)
-{
-    /*
-     * not possible with priv->  the esd daemom will continue playing
-     * buffered data (not more than ESD_MAX_DELAY seconds of samples)
-     */
-    UNUSED(ao);
-}
-
-
+void Esd_AO_Interface::pause() {}
 /*
  * resume playing, after audio_pause()
  */
-static void audio_resume(ao_data_t* ao)
-{
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+void Esd_AO_Interface::resume() {
     /*
      * not possible with priv->
      *
@@ -399,33 +378,25 @@ static void audio_resume(ao_data_t* ao)
      * buffered data;  we restart our time based delay computation
      * for an audio resume.
      */
-    priv->play_start.tv_sec = 0;
-    priv->samples_written = 0;
+    play_start.tv_sec = 0;
+    samples_written = 0;
 }
-
 
 /*
  * stop playing and empty buffers (for seeking/pause)
  */
-static void reset(ao_data_t* ao)
-{
+void Esd_AO_Interface::reset() {
 #ifdef	__svr4__
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     /* throw away data buffered in the esd connection */
-    if (ioctl(priv->play_fd, I_FLUSH, FLUSHW))
-	perror("I_FLUSH");
-#else
-    UNUSED(ao);
+    if (::ioctl(play_fd, I_FLUSH, FLUSHW)) perror("I_FLUSH");
 #endif
 }
-
 
 /*
  * return: how many bytes can be played without blocking
  */
-static unsigned get_space(const ao_data_t* ao)
+unsigned Esd_AO_Interface::get_space()
 {
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
     struct timeval tmout;
     fd_set wfds;
     float current_delay;
@@ -438,24 +409,24 @@ static unsigned get_space(const ao_data_t* ao)
      * device, and the consequence is a huge slow down for things like
      * esd_get_all_info().
      */
-    if ((current_delay = get_delay(ao)) >= ESD_MAX_DELAY) {
+    if ((current_delay = get_delay()) >= ESD_MAX_DELAY) {
 	dprintf("esd get_space: too much data buffered\n");
 	return 0;
     }
 
     FD_ZERO(&wfds);
-    FD_SET(priv->play_fd, &wfds);
+    FD_SET(play_fd, &wfds);
     tmout.tv_sec = 0;
     tmout.tv_usec = 0;
 
-    if (select(priv->play_fd + 1, NULL, &wfds, NULL, &tmout) != 1)
+    if (::select(play_fd + 1, NULL, &wfds, NULL, &tmout) != 1)
 	return 0;
 
-    if (!FD_ISSET(priv->play_fd, &wfds))
+    if (!FD_ISSET(play_fd, &wfds))
 	return 0;
 
     /* try to fill 50% of the remaining "mp_free" buffer space */
-    space = (ESD_MAX_DELAY - current_delay) * ao->bps * 0.5f;
+    space = (ESD_MAX_DELAY - current_delay) * bps() * 0.5f;
 
     /* round up to next multiple of ESD_BUF_SIZE */
     space = (space + ESD_BUF_SIZE-1) / ESD_BUF_SIZE * ESD_BUF_SIZE;
@@ -464,34 +435,50 @@ static unsigned get_space(const ao_data_t* ao)
     return space;
 }
 
-
 /*
  * return: delay in seconds between first and last sample in buffer
  */
-static float get_delay(const ao_data_t* ao)
-{
-    priv_t*priv=reinterpret_cast<priv_t*>(ao->priv);
+float Esd_AO_Interface::get_delay() {
     struct timeval now;
     double buffered_samples_time;
     double play_time;
 
-    if (!priv->play_start.tv_sec)
-	return 0;
+    if (!play_start.tv_sec) return 0;
 
-    buffered_samples_time = (float)priv->samples_written / ao->samplerate;
-    gettimeofday(&now, NULL);
-    play_time  =  now.tv_sec  - priv->play_start.tv_sec;
-    play_time += (now.tv_usec - priv->play_start.tv_usec) / 1000000.;
+    buffered_samples_time = (float)samples_written / _samplerate;
+    ::gettimeofday(&now, NULL);
+    play_time  =  now.tv_sec  - play_start.tv_sec;
+    play_time += (now.tv_usec - play_start.tv_usec) / 1000000.;
 
     /* dprintf("esd delay: %f %f\n", play_time, buffered_samples_time); */
 
     if (play_time > buffered_samples_time) {
 	dprintf("esd: underflow\n");
-	priv->play_start.tv_sec = 0;
-	priv->samples_written = 0;
+	play_start.tv_sec = 0;
+	samples_written = 0;
 	return 0;
     }
 
     dprintf("esd: get_delay %f\n", buffered_samples_time - play_time);
     return buffered_samples_time - play_time;
 }
+
+unsigned Esd_AO_Interface::samplerate() const { return _samplerate; }
+unsigned Esd_AO_Interface::channels() const { return _channels; }
+unsigned Esd_AO_Interface::format() const { return _format; }
+unsigned Esd_AO_Interface::buffersize() const { return _buffersize; }
+unsigned Esd_AO_Interface::outburst() const { return _outburst; }
+MPXP_Rc  Esd_AO_Interface::test_channels(unsigned c) const { UNUSED(c); return MPXP_Ok; }
+MPXP_Rc  Esd_AO_Interface::test_rate(unsigned r) const { UNUSED(r); return MPXP_Ok; }
+MPXP_Rc  Esd_AO_Interface::test_format(unsigned f) const { UNUSED(f); return MPXP_Ok; }
+
+static AO_Interface* query_interface(const std::string& sd) { return new Esd_AO_Interface(sd); }
+
+extern const ao_info_t audio_out_esd = {
+    "EsounD audio output",
+    "esd",
+    "Juergen Keil <jk@tools.de>",
+    "",
+    query_interface
+};
+} // namespace mpxp

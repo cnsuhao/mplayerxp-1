@@ -8,6 +8,8 @@ using namespace mpxp;
 #include <limits.h>
 #include <sys/time.h>
 
+#include <limits>
+
 #include "osdep/bswap.h"
 
 #include "libmpstream2/mrl.h"
@@ -16,45 +18,26 @@ using namespace mpxp;
 #include "audio_out_internal.h"
 #include "ao_msg.h"
 
-static ao_info_t info = {
-    "Null audio output",
-    "null",
-    "Tobias Diedrich",
-    ""
-};
-
-LIBAO_EXTERN(null)
-
-typedef struct priv_s
-{
-    struct	timeval last_tv;
-    int		buffer;
-    FILE*	fd;
-    int		fast_mode;
-    int		wav_mode;
-}priv_t;
-
+namespace mpxp {
 #define WAV_ID_RIFF FOURCC_TAG(0x46,0x46,0x49,0x52) /* "RIFF" */
 #define WAV_ID_WAVE FOURCC_TAG(0x45,0x56,0x41,0x57) /* "WAVE" */
 #define WAV_ID_FMT  FOURCC_TAG(0x20,0x74,0x6d,0x66) /* "fmt " */
 #define WAV_ID_DATA FOURCC_TAG(0x61,0x74,0x61,0x64) /* "data" */
 #define WAV_ID_PCM  TWOCC_TAG (0x00,0x01)
-
-struct WaveHeader
-{
-	uint32_t riff;
-	uint32_t file_length;
-	uint32_t wave;
-	uint32_t fmt;
-	uint32_t fmt_length;
-	uint16_t fmt_tag;
-	uint16_t channels;
-	uint32_t sample_rate;
-	uint32_t bytes_per_second;
-	uint16_t block_align;
-	uint16_t bits;
-	uint32_t data;
-	uint32_t data_length;
+struct WaveHeader {
+    uint32_t riff;
+    uint32_t file_length;
+    uint32_t wave;
+    uint32_t fmt;
+    uint32_t fmt_length;
+    uint16_t fmt_tag;
+    uint16_t channels;
+    uint32_t sample_rate;
+    uint32_t bytes_per_second;
+    uint16_t block_align;
+    uint16_t bits;
+    uint32_t data;
+    uint32_t data_length;
 };
 
 /* init with default values */
@@ -75,30 +58,75 @@ static struct WaveHeader wavhdr = {
     0, //le2me_32(0x7ffff000)
 };
 
-static void drain(const ao_data_t* ao){
-    priv_t*priv = (priv_t*)ao->priv;
+class Null_AO_Interface : public AO_Interface {
+    public:
+	Null_AO_Interface(const std::string& subdevice);
+	virtual ~Null_AO_Interface();
+
+	virtual MPXP_Rc		open(unsigned flags);
+	virtual MPXP_Rc		configure(unsigned rate,unsigned channels,unsigned format);
+	virtual unsigned	samplerate() const;
+	virtual unsigned	channels() const;
+	virtual unsigned	format() const;
+	virtual unsigned	buffersize() const;
+	virtual unsigned	outburst() const;
+	virtual MPXP_Rc		test_rate(unsigned r) const;
+	virtual MPXP_Rc		test_channels(unsigned c) const;
+	virtual MPXP_Rc		test_format(unsigned f) const;
+	virtual void		reset();
+	virtual unsigned	get_space();
+	virtual float		get_delay();
+	virtual unsigned	play(const any_t* data,unsigned len,unsigned flags);
+	virtual void		pause();
+	virtual void		resume();
+	virtual MPXP_Rc		ctrl(int cmd,long arg) const;
+    private:
+	unsigned	_channels,_samplerate,_format;
+	unsigned	_buffersize,_outburst;
+	unsigned	bps() const { return _channels*_samplerate*afmt2bps(_format); }
+	void		drain();
+
+	struct		timeval last_tv;
+	int		buffer;
+	FILE*		fd;
+	int		fast_mode;
+	int		wav_mode;
+};
+
+Null_AO_Interface::Null_AO_Interface(const std::string& _subdevice)
+		:AO_Interface(_subdevice) {}
+Null_AO_Interface::~Null_AO_Interface() {
+    if(fd && wav_mode && fseeko(fd, 0, SEEK_SET) == 0){ /* Write wave header */
+	wavhdr.file_length = wavhdr.data_length + sizeof(wavhdr) - 8;
+	wavhdr.file_length = le2me_32(wavhdr.file_length);
+	wavhdr.data_length = le2me_32(wavhdr.data_length);
+	::fwrite(&wavhdr,sizeof(wavhdr),1,fd);
+    }
+    if(fd) ::fclose(fd);
+}
+
+void Null_AO_Interface::drain() {
     struct timeval now_tv;
     int temp, temp2;
 
-    gettimeofday(&now_tv, 0);
-    temp = now_tv.tv_sec - priv->last_tv.tv_sec;
-    temp *= ao->bps;
+    ::gettimeofday(&now_tv, 0);
+    temp = now_tv.tv_sec - last_tv.tv_sec;
+    temp *= bps();
 
-    temp2 = now_tv.tv_usec - priv->last_tv.tv_usec;
+    temp2 = now_tv.tv_usec - last_tv.tv_usec;
     temp2 /= 1000;
-    temp2 *= ao->bps;
+    temp2 *= bps();
     temp2 /= 1000;
     temp += temp2;
 
-    priv->buffer-=temp;
-    if (priv->buffer<0) priv->buffer=0;
+    buffer-=temp;
+    if (buffer<0) buffer=0;
 
-    if(temp>0) priv->last_tv = now_tv;//mplayer is fast
+    if(temp>0) last_tv = now_tv;//mplayer is fast
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc __FASTCALL__ control_ao(const ao_data_t* ao,int cmd,long arg){
-    UNUSED(ao);
+MPXP_Rc Null_AO_Interface::ctrl(int cmd,long arg) const {
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_True;
@@ -106,136 +134,125 @@ static MPXP_Rc __FASTCALL__ control_ao(const ao_data_t* ao,int cmd,long arg){
 
 // open & setup audio device
 // return: 1=success 0=fail
-static MPXP_Rc __FASTCALL__ init(ao_data_t* ao,unsigned flags){
-    ao->priv=mp_mallocz(sizeof(priv_t));
-    priv_t*priv = (priv_t*)ao->priv;
+MPXP_Rc Null_AO_Interface::open(unsigned flags) {
     char *null_dev=NULL,*mode=NULL;
     UNUSED(flags);
-    if (ao->subdevice) {
-	mrl_parse_line(ao->subdevice,NULL,NULL,&null_dev,&mode);
-	priv->fd=NULL;
-	if(null_dev) priv->fd = fopen(null_dev, "wb");
-	//if(priv->fd) priv->fast_mode=1;
-	if(strcmp(mode,"wav")==0) priv->wav_mode=1;
-    } //end parsing ao->subdevice
+    if (!subdevice.empty()) {
+	mrl_parse_line(subdevice,NULL,NULL,&null_dev,&mode);
+	fd=NULL;
+	if(null_dev) fd = ::fopen(null_dev, "wb");
+	if(::strcmp(mode,"wav")==0) wav_mode=1;
+    } //end parsing subdevice
     return MPXP_Ok;
 }
 
-static MPXP_Rc __FASTCALL__ config_ao(ao_data_t* ao,unsigned rate,unsigned channels,unsigned format){
-    priv_t*priv = (priv_t*)ao->priv;
+MPXP_Rc Null_AO_Interface::configure(unsigned r,unsigned c,unsigned f){
     unsigned bits;
-    ao->buffersize= 0xFFFFF;
-    ao->outburst=0xFFFF;//4096;
-    ao->channels=channels;
-    ao->samplerate=rate;
-    ao->format=format;
-    ao->bps=channels*rate;
+    _buffersize= 0xFFFFF;
+    _outburst=0xFFFF;//4096;
+    _channels=c;
+    _samplerate=r;
+    _format=f;
     bits=8;
-    switch(format)
-      {
-      case AFMT_S16_LE:
-      case AFMT_U16_LE:
-      case AFMT_S16_BE:
-      case AFMT_U16_BE:
-	bits=16;
-	ao->bps *= 2;
-	break;
-      case AFMT_S32_LE:
-      case AFMT_S32_BE:
-      case AFMT_U32_LE:
-      case AFMT_U32_BE:
-      case AFMT_FLOAT32:
-	bits=32;
-	ao->bps *= 4;
-	break;
-      case AFMT_S24_LE:
-      case AFMT_S24_BE:
-      case AFMT_U24_LE:
-      case AFMT_U24_BE:
-	bits=24;
-	ao->bps *= 3;
-	break;
-      default:
-	break;
-      }
-    priv->buffer=0;
-    gettimeofday(&priv->last_tv, 0);
-    if(priv->fd && priv->wav_mode)
-    {
-	wavhdr.channels = le2me_16(ao->channels);
-	wavhdr.sample_rate = le2me_32(ao->samplerate);
-	wavhdr.bytes_per_second = le2me_32(ao->bps);
+    switch(_format) {
+	case AFMT_S16_LE:
+	case AFMT_U16_LE:
+	case AFMT_S16_BE:
+	case AFMT_U16_BE:
+	    bits=16;
+	    break;
+	case AFMT_S32_LE:
+	case AFMT_S32_BE:
+	case AFMT_U32_LE:
+	case AFMT_U32_BE:
+	case AFMT_FLOAT32:
+	    bits=32;
+	    break;
+	case AFMT_S24_LE:
+	case AFMT_S24_BE:
+	case AFMT_U24_LE:
+	case AFMT_U24_BE:
+	    bits=24;
+	    break;
+	default:
+	    break;
+    }
+    buffer=0;
+    gettimeofday(&last_tv, 0);
+    if(fd && wav_mode) {
+	wavhdr.channels = le2me_16(_channels);
+	wavhdr.sample_rate = le2me_32(_samplerate);
+	wavhdr.bytes_per_second = le2me_32(afmt2bps(_format));
 	wavhdr.bits = le2me_16(bits);
-	wavhdr.block_align = le2me_16(ao->channels * (bits / 8));
+	wavhdr.block_align = le2me_16(_channels * (bits / 8));
 	wavhdr.data_length=le2me_32(0x7ffff000);
 	wavhdr.file_length = wavhdr.data_length + sizeof(wavhdr) - 8;
 
-	fwrite(&wavhdr,sizeof(wavhdr),1,priv->fd);
+	::fwrite(&wavhdr,sizeof(wavhdr),1,fd);
 	wavhdr.file_length=wavhdr.data_length=0;
     }
     return MPXP_Ok;
 }
 
-// close audio device
-static void uninit(ao_data_t* ao){
-    priv_t*priv = (priv_t*)ao->priv;
-    if(priv->fd && priv->wav_mode && fseeko(priv->fd, 0, SEEK_SET) == 0){ /* Write wave header */
-	wavhdr.file_length = wavhdr.data_length + sizeof(wavhdr) - 8;
-	wavhdr.file_length = le2me_32(wavhdr.file_length);
-	wavhdr.data_length = le2me_32(wavhdr.data_length);
-	fwrite(&wavhdr,sizeof(wavhdr),1,priv->fd);
-    }
-    if(priv->fd) fclose(priv->fd);
-    delete priv;
-}
-
 // stop playing and empty priv->buffers (for seeking/pause)
-static void reset(ao_data_t* ao) {
-    priv_t*priv = (priv_t*)ao->priv;
-    priv->buffer=0;
+void Null_AO_Interface::reset() {
+    buffer=0;
 }
 
 // stop playing, keep priv->buffers (for pause)
-static void audio_pause(ao_data_t* ao)
-{
+void Null_AO_Interface::pause() {
     // for now, just call reset();
-    reset(ao);
+    reset();
 }
 
 // resume playing, after audio_pause()
-static void audio_resume(ao_data_t* ao) { UNUSED(ao); }
+void Null_AO_Interface::resume() { }
 
 // return: how many bytes can be played without blocking
-static unsigned get_space(const ao_data_t* ao){
-    priv_t*priv = (priv_t*)ao->priv;
-    drain(ao);
-    return priv->fast_mode?INT_MAX:ao->outburst - priv->buffer;
+unsigned Null_AO_Interface::get_space() {
+    drain();
+    return fast_mode?std::numeric_limits<int>::max():_outburst-buffer;
 }
 
 // plays 'len' bytes of 'data'
 // it should round it down to outburst*n
 // return: number of bytes played
-static unsigned __FASTCALL__ play(ao_data_t* ao,const any_t* data,unsigned len,unsigned flags)
-{
-    priv_t*priv = (priv_t*)ao->priv;
-    unsigned maxbursts = (ao->buffersize - priv->buffer) / ao->outburst;
-    unsigned playbursts = len / ao->outburst;
+unsigned Null_AO_Interface::play(const any_t* data,unsigned len,unsigned flags) {
+    unsigned maxbursts = (_buffersize - buffer) / _outburst;
+    unsigned playbursts = len / _outburst;
     unsigned bursts = playbursts > maxbursts ? maxbursts : playbursts;
-    priv->buffer += bursts * ao->outburst;
+    buffer += bursts * _outburst;
     UNUSED(flags);
-    if(priv->fd && len)
-    {
+    if(fd && len) {
 	MSG_DBG2("writing %u bytes into file\n",len);
-	fwrite(data,len,1,priv->fd);
+	::fwrite(data,len,1,fd);
 	wavhdr.data_length += len;
     }
-
-    return priv->fast_mode?bursts * ao->outburst:len;
+    return fast_mode?bursts*_outburst:len;
 }
 
 // return: delay in seconds between first and last sample in priv->buffer
-static float get_delay(const ao_data_t* ao){
-    priv_t*priv = (priv_t*)ao->priv;
-    drain(ao);
-    return priv->fast_mode?0.0:(float) priv->buffer / (float) ao->bps;
+float Null_AO_Interface::get_delay() {
+    drain();
+    return fast_mode?0.0:(float) buffer / (float) bps();
 }
+
+unsigned Null_AO_Interface::samplerate() const { return _samplerate; }
+unsigned Null_AO_Interface::channels() const { return _channels; }
+unsigned Null_AO_Interface::format() const { return _format; }
+unsigned Null_AO_Interface::buffersize() const { return _buffersize; }
+unsigned Null_AO_Interface::outburst() const { return _outburst; }
+MPXP_Rc  Null_AO_Interface::test_channels(unsigned c) const { UNUSED(c); return MPXP_Ok; }
+MPXP_Rc  Null_AO_Interface::test_rate(unsigned r) const { UNUSED(r); return MPXP_Ok; }
+MPXP_Rc  Null_AO_Interface::test_format(unsigned f) const { UNUSED(f); return MPXP_Ok; }
+
+static AO_Interface* query_interface(const std::string& sd) { return new Null_AO_Interface(sd); }
+
+extern const ao_info_t audio_out_null = {
+    "Null audio output",
+    "null",
+    "Tobias Diedrich",
+    "",
+    query_interface
+};
+} // namespace mpxp

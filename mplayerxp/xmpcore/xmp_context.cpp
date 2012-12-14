@@ -10,7 +10,6 @@ using namespace mpxp;
 #include "libmpsub/spudec.h"
 #include "libmpstream2/network.h"
 
-extern const char *oss_mixer_device;
 #ifdef HAVE_SDL
 //extern char *sdl_driver;
 extern int sdl_noxv;
@@ -20,6 +19,8 @@ extern int sdl_forcegl;
 #endif
 
 namespace mpxp {
+extern const char *oss_mixer_device;
+
 static const config_t xpcore_config[]={
 	{"xp", &mp_conf.xp, CONF_TYPE_INT, CONF_RANGE, 0, UINT_MAX, "specifies number cpus to use for playback"},
 	{"dump", &mp_conf.stream_dump, CONF_TYPE_STRING, 0, 0, 0, "specifies dump type and name for the dump of stream"},
