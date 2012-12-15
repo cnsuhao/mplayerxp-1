@@ -356,7 +356,7 @@ MPXP_Rc  Jack_AO_Interface::test_channels(unsigned c) const { UNUSED(c); return 
 MPXP_Rc  Jack_AO_Interface::test_rate(unsigned r) const { UNUSED(r); return MPXP_Ok; }
 MPXP_Rc  Jack_AO_Interface::test_format(unsigned f) const { return f==AFMT_FLOAT32?MPXP_Ok:MPXP_False; }
 
-static AO_Interface* query_interface(const std::string& sd) { return new Jack_AO_Interface(sd); }
+static AO_Interface* query_interface(const std::string& sd) { return new(zeromem) Jack_AO_Interface(sd); }
 
 extern const ao_info_t audio_out_jack = {
     "JACK audio output",

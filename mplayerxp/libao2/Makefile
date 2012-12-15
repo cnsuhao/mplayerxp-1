@@ -4,7 +4,7 @@ include ../mp_config.mak
 LIBNAME = libao2.a
 
 # TODO: moveout ao_sdl.c so it's only used when SDL is detected
-CXXSRCS=audio_out.cpp mixer.cpp afmt.cpp
+CXXSRCS=audio_out.cpp afmt.cpp
 CXXSRCS+=ao_null.cpp ao_wav.cpp
 ifeq ($(HAVE_SDL),yes)
 CXXSRCS+=ao_sdl.cpp
@@ -13,7 +13,7 @@ ifeq ($(USE_OSS_AUDIO),yes)
 CXXSRCS+=ao_oss.cpp
 endif
 ifeq ($(HAVE_ALSA),yes)
-CXXSRCS+=ao_alsa9.cpp
+CXXSRCS+=ao_alsa.cpp
 endif
 ifeq ($(HAVE_ARTS),yes)
 CXXSRCS+=ao_arts.cpp

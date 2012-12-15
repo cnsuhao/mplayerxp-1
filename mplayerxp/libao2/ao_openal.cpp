@@ -264,7 +264,7 @@ MPXP_Rc  OpenAL_AO_Interface::test_channels(unsigned c) const { return c>MAX_CHA
 MPXP_Rc  OpenAL_AO_Interface::test_rate(unsigned r) const { UNUSED(r); return MPXP_Ok; }
 MPXP_Rc  OpenAL_AO_Interface::test_format(unsigned f) const { return f==AFMT_S16_NE?MPXP_Ok:MPXP_False; }
 
-static AO_Interface* query_interface(const std::string& sd) { return new OpenAL_AO_Interface(sd); }
+static AO_Interface* query_interface(const std::string& sd) { return new(zeromem) OpenAL_AO_Interface(sd); }
 
 extern  const ao_info_t audio_out_openal = {
     "OpenAL audio output",

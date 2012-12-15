@@ -13,8 +13,6 @@ using namespace mpxp;
 #include <errno.h>
 #include <string.h>
 
-#include "mixer.h"
-
 #include "afmt.h"
 #include "audio_out.h"
 #include "audio_out_internal.h"
@@ -439,7 +437,7 @@ MPXP_Rc  Oss_AO_Interface::test_format(unsigned arg) const {
     return MPXP_False;
 }
 
-static AO_Interface* query_interface(const std::string& sd) { return new Oss_AO_Interface(sd); }
+static AO_Interface* query_interface(const std::string& sd) { return new(zeromem) Oss_AO_Interface(sd); }
 
 extern const ao_info_t audio_out_oss = {
     "OSS/ioctl audio output",

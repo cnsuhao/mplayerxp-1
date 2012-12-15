@@ -343,7 +343,7 @@ MPXP_Rc  SDL_AO_Interface::test_format(unsigned f) const {
     return MPXP_False;
 }
 
-static AO_Interface* query_interface(const std::string& sd) { return new SDL_AO_Interface(sd); }
+static AO_Interface* query_interface(const std::string& sd) { return new(zeromem) SDL_AO_Interface(sd); }
 
 extern const ao_info_t audio_out_sdl = {
     "SDLlib audio output",

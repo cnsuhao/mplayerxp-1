@@ -244,7 +244,7 @@ MPXP_Rc  Wave_AO_Interface::test_channels(unsigned c) const { UNUSED(c); return 
 MPXP_Rc  Wave_AO_Interface::test_rate(unsigned r) const { UNUSED(r); return MPXP_Ok; }
 MPXP_Rc  Wave_AO_Interface::test_format(unsigned f) const { UNUSED(f); return MPXP_Ok; }
 
-static AO_Interface* query_interface(const std::string& sd) { return new Wave_AO_Interface(sd); }
+static AO_Interface* query_interface(const std::string& sd) { return new(zeromem) Wave_AO_Interface(sd); }
 
 extern const ao_info_t audio_out_wav =
 {

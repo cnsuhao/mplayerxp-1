@@ -56,7 +56,6 @@ using namespace mpxp;
 
 #include "nls/nls.h"
 #include "postproc/libmenu/menu.h"
-#include "libao2/mixer.h"
 
 #include "input2/input.h"
 #define MSGT_CLASS MSGT_CPLAYER

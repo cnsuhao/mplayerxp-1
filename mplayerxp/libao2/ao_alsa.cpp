@@ -1010,7 +1010,7 @@ MPXP_Rc  Alsa_AO_Interface::test_format(unsigned f) const {
 	    MPXP_True:MPXP_False;
 }
 
-static AO_Interface* query_interface(const std::string& sd) { return new Alsa_AO_Interface(sd); }
+static AO_Interface* query_interface(const std::string& sd) { return new(zeromem) Alsa_AO_Interface(sd); }
 
 extern const ao_info_t audio_out_alsa =
 {

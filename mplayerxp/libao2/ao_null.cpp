@@ -246,7 +246,7 @@ MPXP_Rc  Null_AO_Interface::test_channels(unsigned c) const { UNUSED(c); return 
 MPXP_Rc  Null_AO_Interface::test_rate(unsigned r) const { UNUSED(r); return MPXP_Ok; }
 MPXP_Rc  Null_AO_Interface::test_format(unsigned f) const { UNUSED(f); return MPXP_Ok; }
 
-static AO_Interface* query_interface(const std::string& sd) { return new Null_AO_Interface(sd); }
+static AO_Interface* query_interface(const std::string& sd) { return new(zeromem) Null_AO_Interface(sd); }
 
 extern const ao_info_t audio_out_null = {
     "Null audio output",

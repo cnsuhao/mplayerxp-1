@@ -472,7 +472,7 @@ MPXP_Rc  Esd_AO_Interface::test_channels(unsigned c) const { UNUSED(c); return M
 MPXP_Rc  Esd_AO_Interface::test_rate(unsigned r) const { UNUSED(r); return MPXP_Ok; }
 MPXP_Rc  Esd_AO_Interface::test_format(unsigned f) const { UNUSED(f); return MPXP_Ok; }
 
-static AO_Interface* query_interface(const std::string& sd) { return new Esd_AO_Interface(sd); }
+static AO_Interface* query_interface(const std::string& sd) { return new(zeromem) Esd_AO_Interface(sd); }
 
 extern const ao_info_t audio_out_esd = {
     "EsounD audio output",
