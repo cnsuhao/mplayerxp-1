@@ -346,11 +346,14 @@ MPXP_Rc init(ad_private_t *priv)
 
 void uninit(ad_private_t *priv)
 {
-    mpg123_close(priv->mh);
-    mpg123_delete(priv->mh);
-    mpg123_exit();
+    if(priv->mh) {
+	mpg123_close(priv->mh);
+	mpg123_delete(priv->mh);
+	mpg123_exit();
+    }
     delete priv;
-    dlclose(dll_handle);
+    if(dll_handle) dlclose(dll_handle);
+    dll_handle=NULL;
 }
 
 MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)

@@ -19,7 +19,7 @@ using namespace mpxp;
 #define __USE_ISOC99 1
 #include <math.h>
 #ifndef HAVE_LRINTF
-#define lrintf(x) ((int)(x))
+template <class T> int lrintf ( T x ) { return (int)x; }
 #endif
 #include "aflib.h"
 

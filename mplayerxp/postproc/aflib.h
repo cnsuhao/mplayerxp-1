@@ -163,7 +163,9 @@ extern void (* __FASTCALL__ int2float)(const mp_aframe_t* in, mp_aframe_t* out);
 extern int32_t (* __FASTCALL__ FIR_i16)(const int16_t *x,const int16_t *w);
 extern float (* __FASTCALL__ FIR_f32)(const float *x,const float *w);
 
-#ifndef SATURATE
-#define SATURATE(x,_min,_max) {if((x)<(_min)) (x)=(_min); else if((x)>(_max)) (x)=(_max);}
-#endif
+template <class T> const T& saturate ( T& x, const T& _min, const T& _max ) {
+    if(x<_min) x=_min;
+    else if(x>_max) x=_max;
+    return x;
+}
 #endif

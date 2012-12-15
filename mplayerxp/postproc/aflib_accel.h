@@ -346,7 +346,7 @@ static void __FASTCALL__ PVECTOR_RENAME(float_to_int32)(const float* in, int32_t
     if(!_ivec_aligned(out))
     for(;i<insamples;i++) {
       ftmp=in[i];
-      SATURATE(ftmp,-0.999998,+0.999998);
+      saturate(ftmp,-0.999998f,+0.999998f);
       out[i]=(int32_t)lrintf((std::numeric_limits<int32_t>::max()-1)*ftmp);
       if(_ivec_aligned(out)) break;
     }
@@ -371,7 +371,7 @@ static void __FASTCALL__ PVECTOR_RENAME(float_to_int32)(const float* in, int32_t
 #endif
     for(;i<insamples;i++) {
       ftmp=in[i];
-      SATURATE(ftmp,-0.999998,+0.999998);
+      saturate(ftmp,-0.999998f,+0.999998f);
       out[i]=(int32_t)lrintf((std::numeric_limits<int32_t>::max()-1)*ftmp);
     }
 }
@@ -424,7 +424,7 @@ static void __FASTCALL__ PVECTOR_RENAME(float2int)(const mp_aframe_t* in, mp_afr
 	case 1:
 	for(i=0;i<in->len;i++) {
 	    ftmp=((float*)in->audio)[i];
-	    SATURATE(ftmp,-1.0,+1.0);
+	    saturate(ftmp,-1.0f,+1.0f);
 	    ((int8_t*)out->audio)[i]=(int8_t)lrintf(std::numeric_limits<int16_t>::max()*ftmp);
 	}
 	break;
@@ -439,7 +439,7 @@ static void __FASTCALL__ PVECTOR_RENAME(float2int)(const mp_aframe_t* in, mp_afr
 #else
 	    for(i=0;i<in->len;i++) {
 		ftmp=((float*)in->audio)[i];
-		SATURATE(ftmp,-1.0,+1.0);
+		saturate(ftmp,-1.0f,+1.0f);
 		((int16_t*)out->audio)[i]=(int16_t)lrintf(std::numeric_limits<int16_t>::max()*ftmp);
 	    }
 #endif
@@ -447,7 +447,7 @@ static void __FASTCALL__ PVECTOR_RENAME(float2int)(const mp_aframe_t* in, mp_afr
 	case 3:
 	    for(i=0;i<in->len;i++) {
 		ftmp=((float*)in->audio)[i];
-		SATURATE(ftmp,-1.0,+1.0);
+		saturate(ftmp,-1.0f,+1.0f);
 		store24bit(out->audio, i, (int32_t)lrintf((std::numeric_limits<int32_t>::max()-1)*ftmp));
 	    }
 	    break;
