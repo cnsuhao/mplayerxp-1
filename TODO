@@ -1,5 +1,16 @@
 TODO for mplayerxp:
 
+- Implement libmpdemux3:
+    class Demuxer_Driver {
+	Demuxer_Driver(Demuxer& parent);
+	virtual ~Demuxer_Driver();
+	virtual	MPXP_Rc	probe(int force);
+	virtual MPXP_Rc	open();
+	virtual void	close();
+	virtual MPXP_Rc	seek(float secs_from_begin_of_stream);
+	virtual Demuxer_Packet*	read_new_packet();
+    };
+    driver must not perform demultiplexing - just packet reading.
 - Implement demux_rawstream.cpp specially for libmpstream/s_tv.cpp
 - Problem: it seems that demuxer doesn't differ bitmap-based subtitles from
   Closed Caption (plain ascii-text) ones. Because of this some demuxer's
@@ -36,7 +47,3 @@ TODO for mplayerxp:
 - implement distributed video playback with using of PVM. (need volunteers)
 - run filters in independent threads (useful for encoding)
 - use original wine instead of loader. (adapt DMO_filter.so for wine)
-- redesign demux_mkv and other in demux_asf like manner. (will allow to avoid 1
-  unnecessary memcpy for input video bandwidth)
-- remove DEMUXER_TYPE_* and STREAMTYPE_* (make modules in libmpdemux more
-  independent ones)
