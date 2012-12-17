@@ -360,8 +360,7 @@ static int interp_header (uint8_t *header, int header_len)
 
 }
 
-
-static int get_media_packet (Tcp& tcp, int padding, Networking& stream_ctrl) {
+int Asf_Mmst_Networking::get_media_packet (Tcp& tcp, int padding) {
   unsigned char  pre_header[8];
   unsigned char  data[BUF_SIZE];
 
@@ -392,7 +391,7 @@ static int get_media_packet (Tcp& tcp, int padding, Networking& stream_ctrl) {
       return 0;
     }
 
-    stream_ctrl.bufferize(data, padding);
+    bufferize(data, padding);
 
   } else {
 
@@ -452,39 +451,35 @@ static int get_media_packet (Tcp& tcp, int padding, Networking& stream_ctrl) {
 
 static int packet_length1;
 
-static int asf_mmst_networking_read(Tcp& tcp, char *buffer, int size, Networking& stream_ctrl )
+int Asf_Mmst_Networking::read(Tcp& tcp, char *_buffer, int size)
 {
-  int len;
+    int len;
 
-  while( stream_ctrl.buffer_size==0 ) {
-	  // buffer is empty - fill it!
-	  int ret = get_media_packet(tcp, packet_length1, stream_ctrl);
-	  if( ret<0 ) {
-		  MSG_ERR("get_media_packet error : %s\n",strerror(errno));
-		  return -1;
-	  } else if (ret==0) //EOF?
-		  return ret;
-  }
-
-	  len = stream_ctrl.buffer_size-stream_ctrl.buffer_pos;
-	  if(len>size) len=size;
-	  memcpy( buffer, (stream_ctrl.buffer)+(stream_ctrl.buffer_pos), len );
-	  stream_ctrl.buffer_pos += len;
-	  if( stream_ctrl.buffer_pos>=stream_ctrl.buffer_size ) {
-		  delete stream_ctrl.buffer ;
-		  stream_ctrl.buffer = NULL;
-		  stream_ctrl.buffer_size = 0;
-		  stream_ctrl.buffer_pos = 0;
-	  }
-	  return len;
-
+    while( buffer_size==0 ) {
+	// buffer is empty - fill it!
+	int ret = get_media_packet(tcp, packet_length1);
+	if( ret<0 ) {
+	    MSG_ERR("get_media_packet error : %s\n",strerror(errno));
+	    return -1;
+	} else if (ret==0) return ret; // EOF?
+    }
+    len = buffer_size-buffer_pos;
+    if(len>size) len=size;
+    memcpy( _buffer, buffer+buffer_pos, len );
+    buffer_pos += len;
+    if( buffer_pos>=buffer_size ) {
+	delete buffer ;
+	buffer = NULL;
+	buffer_size = 0;
+	buffer_pos = 0;
+    }
+    return len;
 }
 
-static int asf_mmst_networking_seek(Tcp& tcp, off_t pos, Networking& networking )
+int Asf_Mmst_Networking::seek(Tcp& tcp, off_t pos)
 {
     UNUSED(tcp);
     UNUSED(pos);
-    UNUSED(networking);
     return -1;
 }
 
@@ -664,4 +659,6 @@ Networking* Asf_Mmst_Networking::start(Tcp& tcp, network_protocol_t& protocol)
 #endif
     return rv;
 }
+Asf_Mmst_Networking::Asf_Mmst_Networking() {}
+Asf_Mmst_Networking::~Asf_Mmst_Networking() {}
 } // namespace mpxp

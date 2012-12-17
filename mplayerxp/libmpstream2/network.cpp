@@ -241,10 +241,7 @@ off_t http_seek(Tcp& tcp, Networking& networking, off_t pos ) {
 	    tcp.close();
     }
 
-    if( http_hdr ) {
-	delete http_hdr;
-	networking.data = NULL;
-    }
+    if( http_hdr ) delete http_hdr;
 
     return pos;
 }
@@ -254,8 +251,8 @@ Networking::Networking()
 
 Networking::~Networking() {
     if( url ) delete url;
-    if( buffer ) delete buffer ;
-    if( data ) delete data ;
+    if( buffer ) delete buffer;
+    if( data ) delete data;
 }
 
 // By using the protocol, the extension of the file or the content-type
@@ -443,8 +440,7 @@ Networking* Networking::start(Tcp& tcp, URL *_url) {
 	    MSG_INFO("Can't connect with pnm, retrying with http.\n");
 	    return NULL;
 	}
-    }
-    else if( !strcasecmp( url->protocol, "rtsp")) {
+    } else if( !strcasecmp( url->protocol, "rtsp")) {
 	if ((rc = RealRtsp_Networking::start( tcp, net_protocol )) == NULL) {
 	    MSG_INFO("Not a Realmedia rtsp url. Trying standard rtsp protocol.\n");
 #ifdef STREAMING_LIVE_DOT_COM
@@ -456,12 +452,19 @@ Networking* Networking::start(Tcp& tcp, URL *_url) {
 	    return NULL;
 #endif
 	}
-    }
-    else if(!strcasecmp( url->protocol, "udp")) {
+    } else if(!strcasecmp( url->protocol, "udp")) {
 	tcp.close();
 	rc = Rtp_Networking::start(tcp, net_protocol, 1);
 	if(!rc) {
 	    MSG_ERR("rtp_networking_start(udp) failed\n");
+	    return NULL;
+	}
+    } else if(!strncasecmp(url->protocol, "mms", 3) ||
+	      !strncasecmp(url->protocol, "mmst", 4) ||
+	      !strncasecmp(url->protocol, "mmsu", 4)) {
+	rc=Asf_Mmst_Networking::start(tcp,net_protocol);
+	if(!rc) {
+	    MSG_ERR("asf_mmst_networking_start() failed\n");
 	    return NULL;
 	}
     } else {

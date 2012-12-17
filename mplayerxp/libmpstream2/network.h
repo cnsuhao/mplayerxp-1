@@ -71,22 +71,23 @@ namespace mpxp {
 	    virtual void	fixup_cache();
 	    virtual int		bufferize(unsigned char *buffer, int size);
 
-	    URL *url;
-	    std::string mime;
-	    networking_status status;
-	    int buffering;	// boolean
-	    unsigned int prebuffer_size;
-	    char *buffer;
-	    unsigned int buffer_size;
-	    unsigned int buffer_pos;
-	    unsigned int bandwidth;	// The downstream available
 	    virtual int read( Tcp& fd, char *buffer, int buffer_size) = 0;
 	    virtual int seek( Tcp& fd, off_t pos) = 0;
-	    Opaque* data;
+
+	    std::string		mime;
+	    URL*		url;
+	    networking_status	status;
+	    unsigned int	bandwidth;	// The downstream available
 	protected:
 	    Networking();
+	    unsigned int	prebuffer_size;
+	    int			buffering; // boolean
+	    char*		buffer;
+	    unsigned int	buffer_size;
+	    unsigned int	buffer_pos;
+	    Opaque*		data;
 	private:
-	    static MPXP_Rc		autodetectProtocol(network_protocol_t& protocol,Tcp& tcp);
+	    static MPXP_Rc	autodetectProtocol(network_protocol_t& protocol,Tcp& tcp);
     };
 
     extern URL* check4proxies( URL* url );

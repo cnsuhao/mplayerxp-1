@@ -70,8 +70,6 @@ MPXP_Rc Rtsp_Stream_Interface::ctrl(unsigned cmd,any_t*args)
 
 void Rtsp_Stream_Interface::close()
 {
-    Rtsp_Session* rtsp = static_cast<Rtsp_Session*>(networking->data);
-    if (rtsp) rtsp->end ();
     delete networking;
     networking=NULL;
 }

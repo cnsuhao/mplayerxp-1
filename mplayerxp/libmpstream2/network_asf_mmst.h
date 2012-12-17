@@ -14,6 +14,7 @@ namespace mpxp {
 	private:
 	    Asf_Mmst_Networking();
 	    int		get_header (Tcp& tcp, uint8_t *header);
+	    int		get_media_packet (Tcp& tcp, int padding);
     };
 } // namespace mpxp
 #endif

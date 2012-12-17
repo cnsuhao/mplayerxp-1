@@ -77,5 +77,8 @@ int Rtsp_Networking::read(Tcp& tcp, char *_buffer, int size) {
 }
 
 Rtsp_Networking::Rtsp_Networking() {}
-Rtsp_Networking::~Rtsp_Networking() {}
+Rtsp_Networking::~Rtsp_Networking() {
+    Rtsp_Session* rtsp = static_cast<Rtsp_Session*>(data);
+    if (rtsp) rtsp->end();
+}
 } // namespace mpxp
