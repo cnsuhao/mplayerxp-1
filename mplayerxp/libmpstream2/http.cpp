@@ -16,7 +16,9 @@ using namespace mpxp;
 
 #include "http.h"
 #include "url.h"
+#include "help_mp.h"
 #include "stream_msg.h"
+#include "network.h"
 
 namespace mpxp {
 HTTP_Header::HTTP_Header() {}
@@ -299,6 +301,57 @@ void HTTP_Header::debug_hdr( ) {
     for(i=0;i<sz;i++) MSG_V(" %d - %s\n", i, fields[i].c_str());
     MSG_V("--- HTTP DEBUG HEADER --- END ---\n");
 }
+
+int HTTP_Header::authenticate(URL *url, int *auth_retry) {
+    const char *aut;
+
+	if( *auth_retry==1 ) {
+		MSG_ERR(MSGTR_ConnAuthFailed);
+		return -1;
+	}
+	if( *auth_retry>0 ) {
+		if( url->username ) {
+			delete url->username ;
+			url->username = NULL;
+		}
+		if( url->password ) {
+			delete url->password ;
+			url->password = NULL;
+		}
+	}
+
+	aut = get_field("WWW-Authenticate");
+	if( aut!=NULL ) {
+		const char *aut_space;
+		aut_space = strstr(aut, "realm=");
+		if( aut_space!=NULL ) aut_space += 6;
+		MSG_INFO("Authentication required for %s\n", aut_space);
+	} else {
+		MSG_INFO("Authentication required\n");
+	}
+	if( net_conf.username ) {
+		url->username = mp_strdup(net_conf.username);
+		if( url->username==NULL ) {
+			MSG_FATAL(MSGTR_OutOfMemory);
+			return -1;
+		}
+	} else {
+		MSG_ERR(MSGTR_ConnAuthFailed);
+		return -1;
+	}
+	if( net_conf.password ) {
+		url->password = mp_strdup(net_conf.password);
+		if( url->password==NULL ) {
+			MSG_FATAL(MSGTR_OutOfMemory);
+			return -1;
+		}
+	} else {
+		MSG_INFO("No password provided, trying blank password\n");
+	}
+	(*auth_retry)++;
+	return 0;
+}
+
 
 int
 base64_encode(const any_t*enc, int encLen, char *out, int outMax) {

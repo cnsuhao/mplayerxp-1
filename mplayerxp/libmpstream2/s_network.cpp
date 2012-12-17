@@ -40,7 +40,7 @@ namespace mpxp {
 	    URL*		url;
 	    off_t		spos;
 	    Tcp			tcp;
-	    networking_t*	networking;
+	    Networking*	networking;
     };
 
 Network_Stream_Interface::Network_Stream_Interface(libinput_t& libinput)
@@ -55,13 +55,10 @@ MPXP_Rc Network_Stream_Interface::open(const std::string& filename,unsigned flag
     UNUSED(flags);
     url = url_new(filename);
     if(url) {
-	networking=new_networking();
-	if(networking_start(tcp,*networking,url)!=MPXP_Ok){
+	if((networking=Networking::start(tcp,url))==NULL){
 	    MSG_ERR(MSGTR_UnableOpenURL, filename.c_str());
 	    delete url;
 	    url=NULL;
-	    free_networking(*networking);
-	    networking=NULL;
 	    return MPXP_False;
 	}
 	MSG_INFO(MSGTR_ConnToServer, url->hostname);
@@ -78,7 +75,7 @@ std::string Network_Stream_Interface::mime_type() const { return networking->mim
 int Network_Stream_Interface::read(stream_packet_t*sp)
 {
     sp->type=0;
-    if(networking!=NULL)sp->len=networking->networking_read(tcp,sp->buf,STREAM_BUFFER_SIZE, *networking);
+    if(networking!=NULL)sp->len=networking->read(tcp,sp->buf,STREAM_BUFFER_SIZE);
     else		sp->len=TEMP_FAILURE_RETRY(tcp.read((uint8_t*)sp->buf,STREAM_BUFFER_SIZE));
     spos += sp->len;
     return sp->len;
@@ -88,7 +85,7 @@ off_t Network_Stream_Interface::seek(off_t pos)
 {
     off_t newpos=0;
     if(networking!=NULL) {
-	newpos=networking->networking_seek(tcp, pos, *networking );
+	newpos=networking->seek(tcp, pos);
 	if( newpos<0 ) {
 	    MSG_WARN("Stream not seekable!\n");
 	    return 1;

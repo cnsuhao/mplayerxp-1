@@ -19,7 +19,13 @@ using namespace mpxp;
 #include <ctype.h>
 
 #include "mplayerxp.h"
-#include "asf_streaming.h"
+#include "network_asf.h"
+#include "network_asf_mmst.h"
+#include "network_nop.h"
+#include "network_pnm.h"
+#include "network_real_rtsp.h"
+#include "network_rtp.h"
+#include "network_rtsp.h"
 #ifndef HAVE_WINSOCK2
 #define closesocket close
 #else
@@ -27,8 +33,8 @@ using namespace mpxp;
 #include <ws2tcpip.h>
 #endif
 
-#include "stream.h"
 #include "libmpconf/cfgparser.h"
+#include "stream.h"
 #include "help_mp.h"
 
 #include "tcp.h"
@@ -37,14 +43,10 @@ using namespace mpxp;
 #include "cookies.h"
 #include "url.h"
 #include "udp.h"
-#include "pnm.h"
-#ifndef STREAMING_LIVE_DOT_COM
-#include "rtp.h"
-#endif
-#include "librtsp/rtsp_session.h"
 #include "version.h"
 #include "stream_msg.h"
 
+namespace mpxp {
 /* Variables for the command line option -user, -passwd & -bandwidth */
 net_config_t::net_config_t()
 	    :username(NULL),
@@ -59,19 +61,6 @@ net_config_t::net_config_t()
 }
 net_config_t::~net_config_t() {}
 net_config_t net_conf;
-
-networking_t* new_networking() {
-    networking_t* networking = new(zeromem) networking_t;
-    networking->mime="application/octet-stream";
-    return networking;
-}
-
-void free_networking( networking_t& networking ) {
-    if( networking.url ) delete networking.url;
-    if( networking.buffer ) delete networking.buffer ;
-    if( networking.data ) delete networking.data ;
-    delete &networking;
-}
 
 URL*
 check4proxies( URL *url ) {
@@ -225,58 +214,7 @@ HTTP_Header* http_read_response( Tcp& tcp ) {
 	return http_hdr;
 }
 
-int
-http_authenticate(HTTP_Header& http_hdr, URL *url, int *auth_retry) {
-    const char *aut;
-
-	if( *auth_retry==1 ) {
-		MSG_ERR(MSGTR_ConnAuthFailed);
-		return -1;
-	}
-	if( *auth_retry>0 ) {
-		if( url->username ) {
-			delete url->username ;
-			url->username = NULL;
-		}
-		if( url->password ) {
-			delete url->password ;
-			url->password = NULL;
-		}
-	}
-
-	aut = http_hdr.get_field("WWW-Authenticate");
-	if( aut!=NULL ) {
-		const char *aut_space;
-		aut_space = strstr(aut, "realm=");
-		if( aut_space!=NULL ) aut_space += 6;
-		MSG_INFO("Authentication required for %s\n", aut_space);
-	} else {
-		MSG_INFO("Authentication required\n");
-	}
-	if( net_conf.username ) {
-		url->username = mp_strdup(net_conf.username);
-		if( url->username==NULL ) {
-			MSG_FATAL(MSGTR_OutOfMemory);
-			return -1;
-		}
-	} else {
-		MSG_ERR(MSGTR_ConnAuthFailed);
-		return -1;
-	}
-	if( net_conf.password ) {
-		url->password = mp_strdup(net_conf.password);
-		if( url->password==NULL ) {
-			MSG_FATAL(MSGTR_OutOfMemory);
-			return -1;
-		}
-	} else {
-		MSG_INFO("No password provided, trying blank password\n");
-	}
-	(*auth_retry)++;
-	return 0;
-}
-
-off_t http_seek(Tcp& tcp, networking_t& networking, off_t pos ) {
+off_t http_seek(Tcp& tcp, Networking& networking, off_t pos ) {
     HTTP_Header* http_hdr = NULL;
 
     tcp.close();
@@ -292,7 +230,7 @@ off_t http_seek(Tcp& tcp, networking_t& networking, off_t pos ) {
 	    MSG_V("Content-Type: [%s]\n", http_hdr->get_field("Content-Type") );
 	    MSG_V("Content-Length: [%s]\n", http_hdr->get_field("Content-Length") );
 	    if( http_hdr->get_body_size()>0 ) {
-		if( networking_bufferize( networking, (unsigned char *)http_hdr->get_body(), http_hdr->get_body_size() )<0 ) {
+		if( networking.bufferize((unsigned char *)http_hdr->get_body(), http_hdr->get_body_size() )<0 ) {
 		    delete http_hdr;
 		    return 0;
 		}
@@ -311,9 +249,18 @@ off_t http_seek(Tcp& tcp, networking_t& networking, off_t pos ) {
     return pos;
 }
 
+Networking::Networking()
+	    :mime("application/octet-stream") {}
+
+Networking::~Networking() {
+    if( url ) delete url;
+    if( buffer ) delete buffer ;
+    if( data ) delete data ;
+}
+
 // By using the protocol, the extension of the file or the content-type
 // we might be able to guess the networking type.
-static MPXP_Rc autodetectProtocol(networking_t& networking, Tcp& tcp) {
+MPXP_Rc Networking::autodetectProtocol(network_protocol_t& networking, Tcp& tcp) {
     HTTP_Header *http_hdr=NULL;
     int redirect;
     int auth_retry=0;
@@ -432,7 +379,7 @@ static MPXP_Rc autodetectProtocol(networking_t& networking, Tcp& tcp) {
 			}
 			break;
 		    case 401: // Authentication required
-			if( http_authenticate(*http_hdr,url, &auth_retry)<0 ) goto err_out;
+			if( http_hdr->authenticate(url, &auth_retry)<0 ) goto err_out;
 			redirect = 1;
 			break;
 		    default:
@@ -450,301 +397,72 @@ err_out:
     return MPXP_False;
 }
 
-int
-networking_bufferize( networking_t& networking,unsigned char *buffer, int size) {
+int Networking::bufferize(unsigned char *_buffer, int size) {
 //printf("networking_bufferize\n");
-    networking.buffer = new char [size];
-    if( networking.buffer==NULL ) {
+    buffer = new char [size];
+    if( buffer==NULL ) {
 	MSG_FATAL(MSGTR_OutOfMemory);
 	return -1;
     }
-    memcpy( networking.buffer, buffer, size );
-    networking.buffer_size = size;
+    memcpy( buffer, _buffer, size );
+    buffer_size = size;
     return size;
 }
 
-int
-nop_networking_read(Tcp& tcp, char *buffer, int size, networking_t& stream_ctrl ) {
-    int len=0;
-//printf("nop_networking_read\n");
-    if( stream_ctrl.buffer_size!=0 ) {
-	int buffer_len = stream_ctrl.buffer_size-stream_ctrl.buffer_pos;
-//printf("%d bytes in buffer\n", stream_ctrl.buffer_size);
-	len = (size<buffer_len)?size:buffer_len;
-	memcpy( buffer, (stream_ctrl.buffer)+(stream_ctrl.buffer_pos), len );
-	stream_ctrl.buffer_pos += len;
-//printf("buffer_pos = %d\n", stream_ctrl.buffer_pos );
-	if( stream_ctrl.buffer_pos>=stream_ctrl.buffer_size ) {
-	    delete stream_ctrl.buffer ;
-	    stream_ctrl.buffer = NULL;
-	    stream_ctrl.buffer_size = 0;
-	    stream_ctrl.buffer_pos = 0;
-//printf("buffer cleaned\n");
-	}
-//printf("read %d bytes from buffer\n", len );
-    }
-    if( len<size ) {
-	int ret;
-	ret = tcp.read((uint8_t*)(buffer+len), size-len);
-	if( ret<0 ) {
-	    MSG_ERR("nop_networking_read error : %s\n",strerror(errno));
-	}
-	len += ret;
-//printf("read %d bytes from network\n", len );
-    }
-    return len;
-}
-
-int
-nop_networking_seek(Tcp& tcp, off_t pos, networking_t& n ) {
-    UNUSED(tcp);
-    UNUSED(pos);
-    UNUSED(n);
-    return -1;
-}
-
-MPXP_Rc nop_networking_start(Tcp& tcp,networking_t& networking ) {
-    HTTP_Header *http_hdr = NULL;
-    const char *next_url=NULL;
-    URL *rd_url=NULL;
-    MPXP_Rc ret;
-
-    if( !tcp.established() ) {
-	http_send_request(tcp, networking.url,0);
-	if( !tcp.established() ) return MPXP_False;
-	http_hdr = http_read_response(tcp);
-	if( http_hdr==NULL ) return MPXP_False;
-
-	switch( http_hdr->get_status() ) {
-	    case 200: // OK
-		MSG_V("Content-Type: [%s]\n", http_hdr->get_field("Content-Type") );
-		MSG_V("Content-Length: [%s]\n", http_hdr->get_field("Content-Length") );
-		if( http_hdr->get_body_size()>0 ) {
-		    if( networking_bufferize( networking, (unsigned char *)http_hdr->get_body(), http_hdr->get_body_size() )<0 ) {
-			delete http_hdr;
-			return MPXP_False;
-		    }
-		}
-		break;
-	    // Redirect
-	    case 301: // Permanently
-	    case 302: // Temporarily
-		ret=MPXP_False;
-		next_url = http_hdr->get_field("Location" );
-
-		if (next_url != NULL)
-		    rd_url=url_new(next_url);
-
-		if (next_url != NULL && rd_url != NULL) {
-		    MSG_STATUS("Redirected: Using this url instead %s\n",next_url);
-		    networking.url=check4proxies(rd_url);
-		    ret=nop_networking_start(tcp,networking); //recursively get networking started
-		} else {
-		    MSG_ERR("Redirection failed\n");
-		    tcp.close();
-		}
-		return ret;
-		break;
-	    case 401: //Authorization required
-	    case 403: //Forbidden
-	    case 404: //Not found
-	    case 500: //Server Error
-	    default:
-		MSG_ERR("Server return %d: %s\n", http_hdr->get_status(), http_hdr->get_reason_phrase());
-		tcp.close();
-		return MPXP_False;
-		break;
-	}
-    } else {
-	http_hdr = (HTTP_Header*)networking.data;
-	if( http_hdr->get_body_size()>0 ) {
-	    if( networking_bufferize( networking, (unsigned char*)http_hdr->get_body(), http_hdr->get_body_size() )<0 ) {
-		delete http_hdr;
-		networking.data = NULL;
-		return MPXP_False;
-	    }
-	}
-    }
-
-    if( http_hdr ) {
-	delete http_hdr;
-	networking.data = NULL;
-    }
-
-    networking.networking_read = nop_networking_read;
-    networking.networking_seek = nop_networking_seek;
-    networking.prebuffer_size = 64*1024;	// KBytes
-    networking.buffering = 1;
-    networking.status = networking_playing_e;
-    return MPXP_Ok;
-}
-
-void fixup_network_stream_cache(networking_t& networking) {
-  if(networking.buffering) {
+void Networking::fixup_cache() {
+  if(buffering) {
     if(mp_conf.s_cache_size<0) {
       // cache option not set, will use our computed value.
       // buffer in KBytes, *5 because the prefill is 20% of the buffer.
-      mp_conf.s_cache_size = (networking.prebuffer_size/1024)*5;
+      mp_conf.s_cache_size = (prebuffer_size/1024)*5;
       if( mp_conf.s_cache_size<64 ) mp_conf.s_cache_size = 64;	// 16KBytes min buffer
     }
     MSG_INFO("[network] cache size set to: %i\n", mp_conf.s_cache_size);
   }
 }
 
-int
-pnm_networking_read(Tcp& tcp, char *buffer, int size, networking_t& stream_ctrl ) {
-    Pnm& pnm=*static_cast<Pnm*>(stream_ctrl.data);
-    UNUSED(tcp);
-    return pnm.read(buffer, size);
-}
+Networking* Networking::start(Tcp& tcp, URL *_url) {
+    Networking* rc;
+    network_protocol_t net_protocol;
+    URL* url = check4proxies( _url );
 
-MPXP_Rc pnm_networking_start(Tcp& tcp,networking_t& networking ) {
-    Pnm* pnm = new(zeromem) Pnm(tcp);
+    net_protocol.url=url;
 
-    tcp.open(networking.url->hostname,
-	    networking.url->port ? networking.url->port : 7070);
-    if(!tcp.established()) return MPXP_False;
-
-    if(pnm->connect(networking.url->file)!=MPXP_Ok) {
-	delete pnm;
-	return MPXP_NA;
-    }
-    networking.data=pnm;
-    networking.networking_read = pnm_networking_read;
-    networking.prebuffer_size = 8*1024;  // 8 KBytes
-    networking.buffering = 1;
-    networking.status = networking_playing_e;
-    return MPXP_Ok;
-}
-
-int
-realrtsp_networking_read( Tcp& tcp, char *buffer, int size, networking_t& networking ) {
-    Rtsp_Session& rtsp=*static_cast<Rtsp_Session*>(networking.data);
-    return rtsp.read(tcp, buffer, size);
-}
-
-MPXP_Rc realrtsp_networking_start( Tcp& tcp, networking_t& networking ) {
-    Rtsp_Session* rtsp;
-    char *mrl;
-    char *file;
-    int port;
-    int redirected, temp;
-
-    temp = 5; // counter so we don't get caught in infinite redirections (you never know)
-
-    do {
-	redirected = 0;
-	port = networking.url->port ? networking.url->port : 554;
-	tcp.close();
-	tcp.open( networking.url->hostname, port, Tcp::IP4);
-	if(!tcp.established() && !networking.url->port)
-	    tcp.open( networking.url->hostname,port = 7070, Tcp::IP4);
-	if(!tcp.established()) return MPXP_False;
-
-	file = networking.url->file;
-	if (file[0] == '/') file++;
-	mrl = new char [strlen(networking.url->hostname)+strlen(file)+16];
-	sprintf(mrl,"rtsp://%s:%i/%s",networking.url->hostname,port,file);
-	rtsp = rtsp_session_start(tcp,&mrl, file,
-			networking.url->hostname, port, &redirected,
-			net_conf.bandwidth,networking.url->username,
-			networking.url->password);
-
-	if ( redirected == 1 ) {
-	    delete networking.url;
-	    networking.url = url_new(mrl);
-	    tcp.close();
-	}
-	delete mrl;
-	temp--;
-
-    } while( (redirected != 0) && (temp > 0) );
-
-    if(!rtsp) return MPXP_False;
-
-    networking.data=rtsp;
-
-    networking.networking_read = realrtsp_networking_read;
-    networking.prebuffer_size = 128*1024;  // 8 KBytes
-    networking.buffering = 1;
-    networking.status = networking_playing_e;
-    return MPXP_Ok;
-}
-
-
-#ifndef STREAMING_LIVE_DOT_COM
-
-static int
-rtp_networking_read(Tcp& tcp, char *buffer, int size, networking_t& networking ) {
-    UNUSED(networking);
-    return read_rtp_from_server(tcp, buffer, size );
-}
-
-static MPXP_Rc rtp_networking_start(Tcp& tcp,networking_t& networking, int raw_udp ) {
-
-    if( !tcp.established() ) {
-	Udp* udp(new(zeromem) Udp(networking.url));
-	tcp = udp->socket();
-	if( !tcp.established()) return MPXP_False;
-    }
-
-    if(raw_udp)
-	networking.networking_read = nop_networking_read;
-    else
-	networking.networking_read = rtp_networking_read;
-    networking.networking_read = rtp_networking_read;
-    networking.networking_seek = nop_networking_seek;
-    networking.prebuffer_size = 64*1024;	// KBytes
-    networking.buffering = 0;
-    networking.status = networking_playing_e;
-    return MPXP_Ok;
-}
-#endif
-
-MPXP_Rc networking_start(Tcp& tcp,networking_t& networking, URL *url) {
-    MPXP_Rc rc;
-
-    networking.url = check4proxies( url );
-
-    rc = autodetectProtocol( networking, tcp);
-
-    if( rc!=MPXP_Ok ) return MPXP_False;
-    rc = MPXP_False;
-
-    // Get the bandwidth available
-    networking.bandwidth = net_conf.bandwidth;
+    if( autodetectProtocol(net_protocol,tcp)!=MPXP_Ok ) return NULL;
+    rc = NULL;
+    url=net_protocol.url;
 
     // For RTP streams, we usually don't know the stream type until we open it.
-    if( !strcasecmp( networking.url->protocol, "rtp")) {
+    if( !strcasecmp( url->protocol, "rtp")) {
 	if(tcp.established()) tcp.close();
-	rc = rtp_networking_start(tcp, networking, 0);
-    } else if( !strcasecmp( networking.url->protocol, "pnm")) {
+	rc = Rtp_Networking::start(tcp, net_protocol, 0);
+    } else if( !strcasecmp( url->protocol, "pnm")) {
 	tcp.close();
-	rc = pnm_networking_start(tcp, networking);
-	if (rc == MPXP_False) {
+	rc = Pnm_Networking::start(tcp, net_protocol);
+	if (!rc) {
 	    MSG_INFO("Can't connect with pnm, retrying with http.\n");
-	    return MPXP_False;
+	    return NULL;
 	}
     }
-    else if( !strcasecmp( networking.url->protocol, "rtsp")) {
-	if ((rc = realrtsp_networking_start( tcp, networking )) < 0) {
+    else if( !strcasecmp( url->protocol, "rtsp")) {
+	if ((rc = RealRtsp_Networking::start( tcp, net_protocol )) == NULL) {
 	    MSG_INFO("Not a Realmedia rtsp url. Trying standard rtsp protocol.\n");
 #ifdef STREAMING_LIVE_DOT_COM
-	    rc = rtsp_networking_start( tcp, networking );
-	    if(rc==MPXP_FAlse ) MSG_ERR("rtsp_networking_start failed\n");
+	    rc = Rtsp_Networking::start( tcp, net_protocol );
+	    if(!rc) MSG_ERR("rtsp_networking_start failed\n");
 	    return rc;
 #else
 	    MSG_ERR("RTSP support requires the \"LIVE.COM Streaming Media\" libraries!\n");
-	    return MPXP_False;
+	    return NULL;
 #endif
 	}
     }
-    else if(!strcasecmp( networking.url->protocol, "udp")) {
+    else if(!strcasecmp( url->protocol, "udp")) {
 	tcp.close();
-	rc = rtp_networking_start(tcp, networking, 1);
-	if(rc==MPXP_False) {
+	rc = Rtp_Networking::start(tcp, net_protocol, 1);
+	if(!rc) {
 	    MSG_ERR("rtp_networking_start(udp) failed\n");
-	    return MPXP_False;
+	    return NULL;
 	}
     } else {
 	// Send the appropriate HTTP request
@@ -752,37 +470,35 @@ MPXP_Rc networking_start(Tcp& tcp,networking_t& networking, URL *url) {
 	// ASF raw stream is encapsulated.
 	// It can also be a playlist (redirector)
 	// so we need to pass demuxer_type too
-	rc = asf_networking_start(tcp,networking);
-	if( rc==MPXP_False ) {
+	rc = Asf_Networking::start(tcp,net_protocol);
+	if( !rc ) {
 	    //sometimes a file is just on a webserver and it is not streamed.
 	    //try loading them default method as last resort for http protocol
-	    if ( !strcasecmp(networking.url->protocol, "http") ) {
+	    if ( !strcasecmp(url->protocol, "http") ) {
 		MSG_STATUS("Trying default networking for http protocol\n ");
 		//reset stream
 		tcp.close();
-		rc=nop_networking_start(tcp,networking);
+		rc=Nop_Networking::start(tcp,net_protocol);
 	    }
-	    if (rc==MPXP_False) {
+	    if (!rc) {
 		MSG_ERR("asf_networking_start failed\n");
 		MSG_STATUS("Check if this is a playlist which requires -playlist option\nExample: mplayer -playlist <url>\n");
 	    }
 	}
     }
-    if( rc==MPXP_False ) ;
-    else if( networking.buffering ) {
-	if(mp_conf.s_cache_size<0) {
-	    // cache option not set, will use our computed value.
-	    // buffer in KBytes, *5 because the prefill is 20% of the buffer.
-	    mp_conf.s_cache_size = (networking.prebuffer_size/1024)*5;
-	    if( mp_conf.s_cache_size<64 ) mp_conf.s_cache_size = 64;	// 16KBytes min buffer
-	}
-	MSG_INFO("Cache size set to %d KBytes\n", mp_conf.s_cache_size);
+    if( rc ) {
+	// Get the bandwidth available
+	rc->bandwidth = net_conf.bandwidth;
+	rc->fixup_cache();
+	rc->url=net_protocol.url;
+	rc->mime=net_protocol.mime;
+	rc->data=net_protocol.data;
     }
     return rc;
 }
 
-int
-networking_stop( networking_t& networking) {
-    networking.status = networking_stopped_e;
+int Networking::stop() {
+    status = networking_stopped_e;
     return 0;
 }
+} // namespace mpxp

@@ -20,6 +20,7 @@
 #ifndef UDP_H_INCLUDED
 #define UDP_H_INCLUDED 1
 
+#include "url.h"
 namespace mpxp {
     typedef int net_fd_t;
     class Udp {

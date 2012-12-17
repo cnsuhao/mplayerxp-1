@@ -21,7 +21,7 @@ using namespace mpxp;
 #include "stream_internal.h"
 #include "help_mp.h"
 #include "tcp.h"
-#include "network.h"
+#include "network_nop.h"
 #include "udp.h"
 #include "url.h"
 #include "stream_msg.h"
@@ -43,9 +43,9 @@ namespace mpxp {
 	    virtual off_t	sector_size() const;
 	    virtual std::string mime_type() const;
 	private:
-	    MPXP_Rc		start ();
+	    MPXP_Rc		start (unsigned);
 
-	    networking_t*	networking;
+	    Networking*	networking;
 	    Udp			udp;
 	    Tcp			tcp;
     };
@@ -58,7 +58,7 @@ Udp_Stream_Interface::~Udp_Stream_Interface() {}
 
 int Udp_Stream_Interface::read(stream_packet_t*sp)
 {
-  return nop_networking_read(tcp,sp->buf,sp->len,*networking);
+  return networking->read(tcp,sp->buf,sp->len);
 }
 
 off_t Udp_Stream_Interface::seek(off_t newpos) { return newpos; }
@@ -73,22 +73,22 @@ MPXP_Rc Udp_Stream_Interface::ctrl(unsigned cmd,any_t*args)
 
 void Udp_Stream_Interface::close()
 {
-    free_networking(*networking);
+    delete networking;
     networking=NULL;
 }
 
-MPXP_Rc Udp_Stream_Interface::start ()
+MPXP_Rc Udp_Stream_Interface::start (unsigned bandwidth)
 {
     if (!udp.established()) {
 	udp.open(networking->url);
 	if (!udp.established()) return MPXP_False;
     }
     tcp=udp.socket();
-    networking->networking_read = nop_networking_read;
-    networking->networking_seek = nop_networking_seek;
-    networking->prebuffer_size = 64 * 1024; /* 64 KBytes */
-    networking->buffering = 0;
-    networking->status = networking_playing_e;
+    Nop_Networking* rv = new(zeromem) Nop_Networking;
+    rv->bandwidth = bandwidth;
+    rv->prebuffer_size = 64 * 1024; /* 64 KBytes */
+    rv->buffering = 0;
+    rv->status = networking_playing_e;
     return MPXP_Ok;
 }
 
@@ -97,25 +97,18 @@ MPXP_Rc Udp_Stream_Interface::open(const std::string& filename,unsigned flags)
     URL *url;
     UNUSED(flags);
     MSG_V("STREAM_UDP, URL: %s\n", filename.c_str());
-    networking = new_networking();
-    if (!networking) return MPXP_False;
 
-    networking->bandwidth = net_conf.bandwidth;
     url = url_new (filename);
-    networking->url = check4proxies (url);
+    url = check4proxies (url);
     if (url->port == 0) {
 	MSG_ERR("You must enter a port number for UDP streams!\n");
-	free_networking (*networking);
-	networking = NULL;
 	return MPXP_False;
     }
-    if (start () !=MPXP_Ok) {
+    if (start(net_conf.bandwidth) != MPXP_Ok) {
 	MSG_ERR("udp_networking_start failed\n");
-	free_networking (*networking);
-	networking = NULL;
 	return MPXP_False;
     }
-    fixup_network_stream_cache (*networking);
+    networking->fixup_cache ();
     return MPXP_Ok;
 }
 Stream::type_e Udp_Stream_Interface::type() const { return Stream::Type_Stream; }
@@ -126,7 +119,7 @@ std::string Udp_Stream_Interface::mime_type() const { return "application/octet-
 static Stream_Interface* query_interface(libinput_t& libinput) { return new(zeromem) Udp_Stream_Interface(libinput); }
 
 /* "reuse a bit of code from ftplib written by Thomas Pfau", */
-extern const stream_interface_info_t rtsp_stream =
+extern const stream_interface_info_t udp_stream =
 {
     "udp://",
     "reads multimedia stream directly from User Datagram Protocol (UDP)",

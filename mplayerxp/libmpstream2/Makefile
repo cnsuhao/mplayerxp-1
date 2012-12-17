@@ -31,11 +31,16 @@ endif
 SUBDIRS = tvi
 ifeq ($(HAVE_STREAMING),yes)
 SUBDIRS += freesdp librtsp realrtsp
-CXXSRCS += asf_streaming.cpp \
-           asf_mmst_streaming.cpp \
-           cookies.cpp \
+CXXSRCS += cookies.cpp \
            http.cpp \
            network.cpp \
+           network_asf.cpp \
+           network_asf_mmst.cpp \
+           network_nop.cpp \
+           network_pnm.cpp \
+           network_real_rtsp.cpp \
+           network_rtp.cpp \
+           network_rtsp.cpp \
            pnm.cpp \
            rtp.cpp \
            tcp.cpp \

@@ -33,59 +33,66 @@ namespace mpxp {
     struct Stream;
     struct libinput_t;
     class Tcp;
-}
 
-struct net_config_t {
-    public:
-	net_config_t();
-	virtual ~net_config_t();
+    struct net_config_t {
+	public:
+	    net_config_t();
+	    virtual ~net_config_t();
 
-	char*	username;
-	char*	password;
-	int	bandwidth;
-	int	cookies_enabled;
-	char*	cookies_file;
-	char*	useragent;
+	    char*	username;
+	    char*	password;
+	    int		bandwidth;
+	    int		cookies_enabled;
+	    char*	cookies_file;
+	    char*	useragent;
 /* IPv6 options */
-	int	prefer_ipv4;
-	int	ipv4_only_proxy;
-};
-extern net_config_t net_conf;
+	    int		prefer_ipv4;
+	    int		ipv4_only_proxy;
+    };
+    extern net_config_t net_conf;
 
-enum networking_status {
-    networking_stopped_e,
-    networking_playing_e
-};
+    enum networking_status {
+	networking_stopped_e,
+	networking_playing_e
+    };
 
-struct networking_t {
-    URL *url;
-    std::string mime;
-    networking_status status;
-    int buffering;	// boolean
-    unsigned int prebuffer_size;
-    char *buffer;
-    unsigned int buffer_size;
-    unsigned int buffer_pos;
-    unsigned int bandwidth;	// The downstream available
-    int (*networking_read)( Tcp& fd, char *buffer, int buffer_size, networking_t& stream_ctrl );
-    int (*networking_seek)( Tcp& fd, off_t pos, networking_t& stream_ctrl );
-    Opaque* data;
-};
+    struct network_protocol_t {
+	URL*	url;
+	Opaque*	data;
+	std::string mime;
+    };
 
-extern void fixup_network_stream_cache(networking_t& s);
-extern MPXP_Rc networking_start(Tcp& fd,networking_t& n, URL *url);
-extern int networking_bufferize(networking_t& networking,unsigned char *buffer, int size);
-extern networking_t* new_networking();
-extern void free_networking( networking_t& networking );
-extern URL* check4proxies( URL* url );
+    struct Networking : public Opaque {
+	public:
+	    virtual ~Networking();
 
-int nop_networking_read(Tcp& fd, char *buffer, int size, networking_t& stream_ctrl );
-int nop_networking_seek(Tcp& fd, off_t pos, networking_t& stream_ctrl );
+	    static Networking*	start(Tcp& tcp, URL *url);
+	    virtual int		stop();
+	    virtual void	fixup_cache();
+	    virtual int		bufferize(unsigned char *buffer, int size);
 
-MPXP_Rc http_send_request(Tcp& tcp,URL* url, off_t pos);
-HTTP_Header* http_read_response(Tcp& fd);
+	    URL *url;
+	    std::string mime;
+	    networking_status status;
+	    int buffering;	// boolean
+	    unsigned int prebuffer_size;
+	    char *buffer;
+	    unsigned int buffer_size;
+	    unsigned int buffer_pos;
+	    unsigned int bandwidth;	// The downstream available
+	    virtual int read( Tcp& fd, char *buffer, int buffer_size) = 0;
+	    virtual int seek( Tcp& fd, off_t pos) = 0;
+	    Opaque* data;
+	protected:
+	    Networking();
+	private:
+	    static MPXP_Rc		autodetectProtocol(network_protocol_t& protocol,Tcp& tcp);
+    };
 
-int http_authenticate(HTTP_Header& http_hdr, URL* url, int *auth_retry);
+    extern URL* check4proxies( URL* url );
+
+    MPXP_Rc http_send_request(Tcp& tcp,URL* url, off_t pos);
+    HTTP_Header* http_read_response(Tcp& fd);
 
 /*
  * Joey Parrish <joey@yunamusic.com>:
@@ -98,7 +105,7 @@ int http_authenticate(HTTP_Header& http_hdr, URL* url, int *auth_retry);
  * implement inet_pton(), configure will decide not to use this code.
  */
 #ifdef USE_ATON
-# define inet_pton(a, b, c) inet_aton(b, c)
+    inline int inet_pton(int a, const char* b, any_t* c) { return inet_aton(b, c); }
 #endif
-
+} // namespace mpxp
 #endif

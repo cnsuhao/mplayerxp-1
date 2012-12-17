@@ -12,6 +12,8 @@
 #include <vector>
 #include <stdint.h>
 
+#include "url.h"
+
 namespace mpxp {
     class HTTP_Header : public Opaque {
 	public:
@@ -28,6 +30,7 @@ namespace mpxp {
 	    virtual void	set_method(const std::string& method );
 	    virtual void	set_uri(const std::string& uri );
 	    virtual int		add_basic_authentication(const std::string& username, const std::string& password );
+	    virtual int		authenticate(URL *url, int *auth_retry);
 
 	    virtual void	debug_hdr();
 	    virtual void	cookies_set(const std::string& hostname, const std::string& url);

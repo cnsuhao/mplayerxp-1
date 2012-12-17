@@ -42,7 +42,9 @@ extern const stream_interface_info_t tv_stream;
 #endif
 #ifdef HAVE_STREAMING
 extern const stream_interface_info_t ftp_stream;
+extern const stream_interface_info_t rtsp_stream;
 extern const stream_interface_info_t network_stream;
+extern const stream_interface_info_t udp_stream;
 #endif
 #ifdef USE_OSS_AUDIO
 extern const stream_interface_info_t oss_stream;
@@ -80,6 +82,8 @@ static const stream_interface_info_t* sdrivers[] =
 #endif
 #ifdef HAVE_STREAMING
     &ftp_stream,
+    &rtsp_stream,
+    &udp_stream,
     &network_stream,
 #endif
     &lavs_stream,
