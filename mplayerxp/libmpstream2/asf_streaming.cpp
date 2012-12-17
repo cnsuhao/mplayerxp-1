@@ -51,7 +51,7 @@ static inline uint32_t ASF_LOAD_GUID_PREFIX(uint8_t* guid) { return bswap_32(*(u
 // 		WMP sequence is MMSU then MMST and then HTTP.
 // 		In MPlayer case since HTTP support is more reliable,
 // 		we are doing HTTP first then we try MMST if HTTP fail.
-static MPXP_Rc asf_http_networking_start(Tcp& fd, networking_t *networking );
+static MPXP_Rc asf_http_networking_start(Tcp& fd, networking_t& networking );
 
 /*
  ASF networking support several network protocol.
@@ -73,9 +73,9 @@ static MPXP_Rc asf_http_networking_start(Tcp& fd, networking_t *networking );
 		In MPlayer case since HTTP support is more reliable,
 		we are doing HTTP first then we try MMST if HTTP fail.
 */
-MPXP_Rc asf_networking_start(Tcp& tcp, networking_t *networking) {
-    char *proto = networking->url->protocol;
-    int port = networking->url->port;
+MPXP_Rc asf_networking_start(Tcp& tcp,networking_t& networking) {
+    char *proto = networking.url->protocol;
+    int port = networking.url->port;
     MPXP_Rc rc;
 
     // Is protocol even valid mms,mmsu,mmst,http,http_proxy?
@@ -99,7 +99,7 @@ MPXP_Rc asf_networking_start(Tcp& tcp, networking_t *networking) {
     if (!strncasecmp(proto, "mmst", 4) || !strncasecmp(proto, "mms", 3)) {
 	MSG_V("Trying ASF/TCP...\n");
 	rc = asf_mmst_networking_start(tcp,networking);
-	networking->url->port = port;
+	networking.url->port = port;
 	if( rc==MPXP_Ok ) return MPXP_Ok;
 	MSG_V("  ===> ASF/TCP failed\n");
 	return MPXP_False;
@@ -110,7 +110,7 @@ MPXP_Rc asf_networking_start(Tcp& tcp, networking_t *networking) {
 	!strncasecmp(proto, "mms", 3)) {
 	MSG_V("Trying ASF/HTTP...\n");
 	rc = asf_http_networking_start(tcp,networking);
-	networking->url->port = port;
+	networking.url->port = port;
 	if( rc==MPXP_Ok ) return MPXP_Ok;
 	MSG_V("  ===> ASF/HTTP failed\n");
 	return MPXP_False;
@@ -185,16 +185,16 @@ static int max_idx(int s_count, int *s_rates, int bound) {
 }
 
 static MPXP_Rc
-asf_networking_parse_header(Tcp& tcp, networking_t* networking) {
+asf_networking_parse_header(Tcp& tcp, networking_t& networking) {
     ASF_header_t asfh;
     ASF_stream_chunck_t chunk;
-    asf_http_networking_t* asf_ctrl = (asf_http_networking_t*) networking->data;
+    asf_http_networking_t* asf_ctrl = (asf_http_networking_t*) networking.data;
     char* buffer=NULL, *chunk_buffer=NULL;
     int i,r,size,pos = 0;
     int start;
     int buffer_size = 0;
     int chunk_size2read = 0;
-    int bw = networking->bandwidth;
+    int bw = networking.bandwidth;
     int *v_rates = NULL, *a_rates = NULL;
     int v_rate = 0, a_rate = 0, a_idx = -1, v_idx = -1;
 
@@ -275,7 +275,7 @@ asf_networking_parse_header(Tcp& tcp, networking_t* networking) {
 	asf_ctrl->packet_size = fileh->max_packet_size;
 	// before playing.
 	// preroll: time in ms to bufferize before playing
-	networking->prebuffer_size = (unsigned int)(((double)fileh->preroll/1000.0)*((double)fileh->max_bitrate/8.0));
+	networking.prebuffer_size = (unsigned int)(((double)fileh->preroll/1000.0)*((double)fileh->max_bitrate/8.0));
     }
 
     pos = start;
@@ -416,11 +416,11 @@ len_err_out:
 }
 
 static int
-asf_http_networking_read( Tcp& tcp, char *buffer, int size, networking_t *networking ) {
+asf_http_networking_read( Tcp& tcp, char *buffer, int size, networking_t& networking ) {
   static ASF_stream_chunck_t chunk;
   int read,chunk_size = 0;
   static int rest = 0, drop_chunk = 0, waiting = 0;
-  asf_http_networking_t *asf_http_ctrl = (asf_http_networking_t*)networking->data;
+  asf_http_networking_t* asf_http_ctrl = (asf_http_networking_t*)networking.data;
 
   while(1) {
     if (rest == 0 && waiting == 0) {
@@ -492,7 +492,7 @@ asf_http_networking_read( Tcp& tcp, char *buffer, int size, networking_t *networ
 }
 
 static int
-asf_http_networking_seek( Tcp& tcp, off_t pos, networking_t *networking ) {
+asf_http_networking_seek( Tcp& tcp, off_t pos, networking_t& networking ) {
     UNUSED(tcp);
     UNUSED(pos);
     UNUSED(networking);
@@ -562,11 +562,11 @@ asf_http_networking_type(const char *content_type,const char *features, HTTP_Hea
 	return ASF_Unknown_e;
 }
 
-static HTTP_Header* asf_http_request(networking_t *networking) {
+static HTTP_Header* asf_http_request(networking_t& networking) {
 	HTTP_Header* http_hdr = new(zeromem) HTTP_Header;
 	URL *url = NULL;
 	URL *server_url = NULL;
-	asf_http_networking_t *asf_http_ctrl;
+	asf_http_networking_t* asf_http_ctrl;
 	char str[250];
 	char *ptr;
 	int i, enable;
@@ -575,9 +575,8 @@ static HTTP_Header* asf_http_request(networking_t *networking) {
 	int asf_nb_stream=0, stream_id;
 
 	// Sanity check
-	if( networking==NULL ) return NULL;
-	url = networking->url;
-	asf_http_ctrl = (asf_http_networking_t*)networking->data;
+	url = networking.url;
+	asf_http_ctrl = (asf_http_networking_t*)networking.data;
 	if( url==NULL || asf_http_ctrl==NULL ) return NULL;
 
 	// Common header for all requests.
@@ -660,7 +659,7 @@ static HTTP_Header* asf_http_request(networking_t *networking) {
 }
 
 static int
-asf_http_parse_response(asf_http_networking_t *asf_http_ctrl, HTTP_Header& http_hdr ) {
+asf_http_parse_response(asf_http_networking_t& asf_http_ctrl, HTTP_Header& http_hdr ) {
 	const char *content_type, *pragma;
 	char features[64] = "\0";
 	size_t len;
@@ -713,14 +712,14 @@ asf_http_parse_response(asf_http_networking_t *asf_http_ctrl, HTTP_Header& http_
 		} while( comma_ptr!=NULL );
 		pragma = http_hdr.get_next_field();
 	}
-	asf_http_ctrl->networking_type = asf_http_networking_type( content_type, features, http_hdr );
+	asf_http_ctrl.networking_type = asf_http_networking_type( content_type, features, http_hdr );
 	return 0;
 }
 
-static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
+static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t& networking) {
     HTTP_Header *http_hdr=NULL;
-    URL *url = networking->url;
-    asf_http_networking_t *asf_http_ctrl;
+    URL *url = networking.url;
+    asf_http_networking_t* asf_http_ctrl;
     uint8_t buffer[BUFFER_SIZE];
     int i, ret;
     int done;
@@ -735,7 +734,7 @@ static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
     asf_http_ctrl->request = 1;
     asf_http_ctrl->audio_streams = asf_http_ctrl->video_streams = NULL;
     asf_http_ctrl->n_audio = asf_http_ctrl->n_video = 0;
-    networking->data = asf_http_ctrl;
+    networking.data = asf_http_ctrl;
 
     do {
 	done = 1;
@@ -773,7 +772,7 @@ static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
 	if( mp_conf.verbose>0 ) {
 	    MSG_DBG2("Response [%s]\n", http_hdr->get_buffer() );
 	}
-	ret = asf_http_parse_response(asf_http_ctrl, *http_hdr);
+	ret = asf_http_parse_response(*asf_http_ctrl, *http_hdr);
 	if( ret<0 ) {
 	    MSG_ERR("Failed to parse header\n");
 	    delete http_hdr;
@@ -829,14 +828,14 @@ static MPXP_Rc asf_http_networking_start(Tcp& tcp, networking_t *networking) {
     } while(!done);
 
     if( asf_http_ctrl->networking_type==ASF_PlainText_e || asf_http_ctrl->networking_type==ASF_Redirector_e ) {
-	networking->networking_read = nop_networking_read;
-	networking->networking_seek = nop_networking_seek;
+	networking.networking_read = nop_networking_read;
+	networking.networking_seek = nop_networking_seek;
     } else {
-	networking->networking_read = asf_http_networking_read;
-	networking->networking_seek = asf_http_networking_seek;
-	networking->buffering = 1;
+	networking.networking_read = asf_http_networking_read;
+	networking.networking_seek = asf_http_networking_seek;
+	networking.buffering = 1;
     }
-    networking->status = networking_playing_e;
+    networking.status = networking_playing_e;
 
     delete http_hdr;
     return MPXP_Ok;

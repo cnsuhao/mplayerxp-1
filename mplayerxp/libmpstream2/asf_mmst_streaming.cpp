@@ -204,7 +204,7 @@ static int get_data (Tcp& tcp,unsigned char *buf, size_t count)
 
 }
 
-static int get_header (Tcp& tcp, uint8_t *header, networking_t *networking)
+static int get_header (Tcp& tcp, uint8_t *header, networking_t& networking)
 {
   unsigned char  pre_header[8];
   int            header_len;
@@ -362,7 +362,7 @@ static int interp_header (uint8_t *header, int header_len)
 }
 
 
-static int get_media_packet (Tcp& tcp, int padding, networking_t *stream_ctrl) {
+static int get_media_packet (Tcp& tcp, int padding, networking_t& stream_ctrl) {
   unsigned char  pre_header[8];
   unsigned char  data[BUF_SIZE];
 
@@ -453,11 +453,11 @@ static int get_media_packet (Tcp& tcp, int padding, networking_t *stream_ctrl) {
 
 static int packet_length1;
 
-static int asf_mmst_networking_read(Tcp& tcp, char *buffer, int size, networking_t *stream_ctrl )
+static int asf_mmst_networking_read(Tcp& tcp, char *buffer, int size, networking_t& stream_ctrl )
 {
   int len;
 
-  while( stream_ctrl->buffer_size==0 ) {
+  while( stream_ctrl.buffer_size==0 ) {
 	  // buffer is empty - fill it!
 	  int ret = get_media_packet(tcp, packet_length1, stream_ctrl);
 	  if( ret<0 ) {
@@ -467,21 +467,21 @@ static int asf_mmst_networking_read(Tcp& tcp, char *buffer, int size, networking
 		  return ret;
   }
 
-	  len = stream_ctrl->buffer_size-stream_ctrl->buffer_pos;
+	  len = stream_ctrl.buffer_size-stream_ctrl.buffer_pos;
 	  if(len>size) len=size;
-	  memcpy( buffer, (stream_ctrl->buffer)+(stream_ctrl->buffer_pos), len );
-	  stream_ctrl->buffer_pos += len;
-	  if( stream_ctrl->buffer_pos>=stream_ctrl->buffer_size ) {
-		  delete stream_ctrl->buffer ;
-		  stream_ctrl->buffer = NULL;
-		  stream_ctrl->buffer_size = 0;
-		  stream_ctrl->buffer_pos = 0;
+	  memcpy( buffer, (stream_ctrl.buffer)+(stream_ctrl.buffer_pos), len );
+	  stream_ctrl.buffer_pos += len;
+	  if( stream_ctrl.buffer_pos>=stream_ctrl.buffer_size ) {
+		  delete stream_ctrl.buffer ;
+		  stream_ctrl.buffer = NULL;
+		  stream_ctrl.buffer_size = 0;
+		  stream_ctrl.buffer_pos = 0;
 	  }
 	  return len;
 
 }
 
-static int asf_mmst_networking_seek(Tcp& tcp, off_t pos, networking_t *networking )
+static int asf_mmst_networking_seek(Tcp& tcp, off_t pos, networking_t& networking )
 {
     UNUSED(tcp);
     UNUSED(pos);
@@ -489,7 +489,7 @@ static int asf_mmst_networking_seek(Tcp& tcp, off_t pos, networking_t *networkin
     return -1;
 }
 
-MPXP_Rc asf_mmst_networking_start(Tcp& tcp, networking_t *networking)
+MPXP_Rc asf_mmst_networking_start(Tcp& tcp, networking_t& networking)
 {
     char	str[1024];
     uint8_t	data[BUF_SIZE];
@@ -497,7 +497,7 @@ MPXP_Rc asf_mmst_networking_start(Tcp& tcp, networking_t *networking)
     int		asf_header_len;
     int		len, i, packet_length;
     char*	path, *unescpath;
-    URL* url1 = networking->url;
+    URL* url1 = networking.url;
 
     tcp.close();
 
@@ -634,10 +634,10 @@ MPXP_Rc asf_mmst_networking_start(Tcp& tcp, networking_t *networking)
 
     send_command (tcp, 0x07, 1, 0xFFFF | stream_ids[0] << 16, 24, data);
 
-    networking->networking_read = asf_mmst_networking_read;
-    networking->networking_seek = asf_mmst_networking_seek;
-    networking->buffering = 1;
-    networking->status = networking_playing_e;
+    networking.networking_read = asf_mmst_networking_read;
+    networking.networking_seek = asf_mmst_networking_seek;
+    networking.buffering = 1;
+    networking.status = networking_playing_e;
 
     packet_length1 = packet_length;
     MSG_V("mmst packet_length = %d\n",packet_length);

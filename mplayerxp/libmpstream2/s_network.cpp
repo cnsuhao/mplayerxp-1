@@ -56,11 +56,11 @@ MPXP_Rc Network_Stream_Interface::open(const std::string& filename,unsigned flag
     url = url_new(filename);
     if(url) {
 	networking=new_networking();
-	if(networking_start(tcp,networking,url)!=MPXP_Ok){
+	if(networking_start(tcp,*networking,url)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_UnableOpenURL, filename.c_str());
 	    delete url;
 	    url=NULL;
-	    free_networking(networking);
+	    free_networking(*networking);
 	    networking=NULL;
 	    return MPXP_False;
 	}
@@ -78,7 +78,7 @@ std::string Network_Stream_Interface::mime_type() const { return networking->mim
 int Network_Stream_Interface::read(stream_packet_t*sp)
 {
     sp->type=0;
-    if(networking!=NULL)sp->len=networking->networking_read(tcp,sp->buf,STREAM_BUFFER_SIZE, networking);
+    if(networking!=NULL)sp->len=networking->networking_read(tcp,sp->buf,STREAM_BUFFER_SIZE, *networking);
     else		sp->len=TEMP_FAILURE_RETRY(tcp.read((uint8_t*)sp->buf,STREAM_BUFFER_SIZE));
     spos += sp->len;
     return sp->len;
@@ -88,7 +88,7 @@ off_t Network_Stream_Interface::seek(off_t pos)
 {
     off_t newpos=0;
     if(networking!=NULL) {
-	newpos=networking->networking_seek(tcp, pos, networking );
+	newpos=networking->networking_seek(tcp, pos, *networking );
 	if( newpos<0 ) {
 	    MSG_WARN("Stream not seekable!\n");
 	    return 1;

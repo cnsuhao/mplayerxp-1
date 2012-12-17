@@ -78,7 +78,7 @@ void Rtsp_Stream_Interface::close()
     Rtsp_Session* rtsp = static_cast<Rtsp_Session*>(networking->data);
     if (rtsp) rtsp->end ();
     delete networking->url;
-    free_networking(networking);
+    free_networking(*networking);
     networking=NULL;
 }
 
@@ -155,12 +155,12 @@ MPXP_Rc Rtsp_Stream_Interface::open(const std::string& filename,unsigned flags)
     tcp.close();
     index_mode = -1; /* prevent most RTSP streams from locking due to -idx */
     if (start() != MPXP_Ok) {
-	free_networking(networking);
+	free_networking(*networking);
 	networking = NULL;
 	return MPXP_False;
     }
 
-    fixup_network_stream_cache (networking);
+    fixup_network_stream_cache (*networking);
     return MPXP_Ok;
 }
 Stream::type_e Rtsp_Stream_Interface::type() const { return Stream::Type_Stream; }

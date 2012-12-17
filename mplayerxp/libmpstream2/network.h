@@ -67,20 +67,20 @@ struct networking_t {
     unsigned int buffer_size;
     unsigned int buffer_pos;
     unsigned int bandwidth;	// The downstream available
-    int (*networking_read)( Tcp& fd, char *buffer, int buffer_size, networking_t *stream_ctrl );
-    int (*networking_seek)( Tcp& fd, off_t pos, networking_t *stream_ctrl );
+    int (*networking_read)( Tcp& fd, char *buffer, int buffer_size, networking_t& stream_ctrl );
+    int (*networking_seek)( Tcp& fd, off_t pos, networking_t& stream_ctrl );
     Opaque* data;
 };
 
-extern void fixup_network_stream_cache(networking_t *s);
-extern MPXP_Rc networking_start(Tcp& fd,networking_t *n, URL *url);
-extern int networking_bufferize(networking_t *networking,unsigned char *buffer, int size);
-extern networking_t *new_networking();
-extern void free_networking( networking_t *networking );
+extern void fixup_network_stream_cache(networking_t& s);
+extern MPXP_Rc networking_start(Tcp& fd,networking_t& n, URL *url);
+extern int networking_bufferize(networking_t& networking,unsigned char *buffer, int size);
+extern networking_t* new_networking();
+extern void free_networking( networking_t& networking );
 extern URL* check4proxies( URL* url );
 
-int nop_networking_read(Tcp& fd, char *buffer, int size, networking_t *stream_ctrl );
-int nop_networking_seek(Tcp& fd, off_t pos, networking_t *stream_ctrl );
+int nop_networking_read(Tcp& fd, char *buffer, int size, networking_t& stream_ctrl );
+int nop_networking_seek(Tcp& fd, off_t pos, networking_t& stream_ctrl );
 
 MPXP_Rc http_send_request(Tcp& tcp,URL* url, off_t pos);
 HTTP_Header* http_read_response(Tcp& fd);

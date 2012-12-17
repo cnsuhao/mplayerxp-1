@@ -58,7 +58,7 @@ Udp_Stream_Interface::~Udp_Stream_Interface() {}
 
 int Udp_Stream_Interface::read(stream_packet_t*sp)
 {
-  return nop_networking_read(tcp,sp->buf,sp->len,networking);
+  return nop_networking_read(tcp,sp->buf,sp->len,*networking);
 }
 
 off_t Udp_Stream_Interface::seek(off_t newpos) { return newpos; }
@@ -73,7 +73,7 @@ MPXP_Rc Udp_Stream_Interface::ctrl(unsigned cmd,any_t*args)
 
 void Udp_Stream_Interface::close()
 {
-    free_networking(networking);
+    free_networking(*networking);
     networking=NULL;
 }
 
@@ -105,17 +105,17 @@ MPXP_Rc Udp_Stream_Interface::open(const std::string& filename,unsigned flags)
     networking->url = check4proxies (url);
     if (url->port == 0) {
 	MSG_ERR("You must enter a port number for UDP streams!\n");
-	free_networking (networking);
+	free_networking (*networking);
 	networking = NULL;
 	return MPXP_False;
     }
     if (start () !=MPXP_Ok) {
 	MSG_ERR("udp_networking_start failed\n");
-	free_networking (networking);
+	free_networking (*networking);
 	networking = NULL;
 	return MPXP_False;
     }
-    fixup_network_stream_cache (networking);
+    fixup_network_stream_cache (*networking);
     return MPXP_Ok;
 }
 Stream::type_e Udp_Stream_Interface::type() const { return Stream::Type_Stream; }

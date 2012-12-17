@@ -6,6 +6,7 @@ using namespace mpxp;
 
 #include "stream.h"
 
+struct networking_t;
 namespace mpxp {
     class Tcp;
 }
@@ -32,7 +33,7 @@ struct asf_http_networking_t : public Opaque {
 	int audio_id, video_id;
 };
 
-extern MPXP_Rc asf_networking_start(Tcp& fd, networking_t *networking);
-extern MPXP_Rc asf_mmst_networking_start(Tcp& fd, networking_t *networking);
+extern MPXP_Rc asf_networking_start(Tcp& fd, networking_t& networking);
+extern MPXP_Rc asf_mmst_networking_start(Tcp& fd, networking_t& networking);
 
 #endif

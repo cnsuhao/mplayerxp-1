@@ -11,7 +11,6 @@ using namespace mpxp;
 
 #include "xmpcore/xmp_enums.h"
 
-struct networking_t;
 namespace mpxp {
     struct libinput_t;
     enum {
