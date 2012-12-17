@@ -67,8 +67,7 @@ namespace mpxp {
 	    char*	subdevice;
 	    float	pts;		/**< PTS of audio buffer  */
 	private:
-	    char	antiviral_hole[RND_CHAR2];
-	    any_t*	opaque;		/**< for internal use */
+	    Opaque&	opaque;		/**< for internal use */
     };
     /* prototypes */
     extern const char *	 __FASTCALL__ ao_format_name(int format);

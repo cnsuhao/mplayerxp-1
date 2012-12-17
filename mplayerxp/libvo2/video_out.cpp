@@ -134,22 +134,20 @@ vo_priv_t::~vo_priv_t() {
     delete vo_iface;
 }
 
-Video_Output::Video_Output() {
+Video_Output::Video_Output()
+	    :vo_priv(*new(zeromem) vo_priv_t) {
     inited=0;
     osd_progbar_type=-1;
     osd_progbar_value=100;   // 0..256
 
-    vo_priv_t* priv;
-    priv=new(zeromem) vo_priv_t;
-    vo_priv=priv;
-    fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&flags)-reinterpret_cast<long>(&antiviral_hole));
+    fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&flags)-reinterpret_cast<long>(&antiviral_hole[0]));
 }
 
 Video_Output::~Video_Output() {
-    vo_priv_t* priv=static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_uninit\n");
     inited--;
-    delete priv;
+    delete &priv;
 }
 
 void Video_Output::print_help() const
@@ -166,7 +164,7 @@ void Video_Output::print_help() const
 
 const vo_info_t* Video_Output::get_info() const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     return priv.video_out;
 }
 
@@ -180,7 +178,7 @@ MPXP_Rc Video_Output::init(const std::string& driver_name) const
 	offset=drv_name.find(':');
 	if(offset!=std::string::npos) subdev = drv_name.substr(offset+1);
     }
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     unsigned i;
     if(drv_name.empty()) priv.video_out=vo_infos[0];
     else
@@ -200,7 +198,7 @@ MPXP_Rc Video_Output::init(const std::string& driver_name) const
 
 void Video_Output::dri_config(uint32_t fourcc) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     priv.dri.is_planar = vo_describe_fourcc(fourcc,&priv.vod);
     priv.dri.bpp=priv.vod.bpp;
     if(!priv.dri.bpp) priv.dri.has_dri=0; /*unknown fourcc*/
@@ -212,7 +210,7 @@ void Video_Output::dri_config(uint32_t fourcc) const
 
 void Video_Output::ps_tune(unsigned width,unsigned height) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     int src_is_planar;
     unsigned src_stride,ps_x,ps_y;
     vo_format_desc vd;
@@ -238,7 +236,7 @@ void Video_Output::ps_tune(unsigned width,unsigned height) const
 
 void Video_Output::dri_tune(unsigned width,unsigned height) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     priv.dri.sstride=priv.dri.is_planar?width:width*((priv.dri.bpp+7)/8);
     priv.dri.off[0] = priv.dri.off[1] = priv.dri.off[2] = priv.dri.off[3] = 0;
     if(!priv.dri.is_planar) {
@@ -292,7 +290,7 @@ void Video_Output::dri_tune(unsigned width,unsigned height) const
 
 void Video_Output::dri_reconfig(int is_resize ) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     priv.dri.has_dri = 1;
     priv.vo_iface->get_surface_caps(&priv.dri.cap);
     dri_config(priv.dri.cap.fourcc);
@@ -315,7 +313,7 @@ MPXP_Rc Video_Output::configure(vf_stream_t* s,uint32_t width, uint32_t height, 
 		   uint32_t d_height, vo_flags_e _fullscreen, const std::string& title,
 		   uint32_t format)
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     priv.parent=s;
     MPXP_Rc retval;
     unsigned dest_fourcc,w,d_w,h,d_h;
@@ -374,7 +372,7 @@ MPXP_Rc Video_Output::configure(vf_stream_t* s,uint32_t width, uint32_t height, 
 /* if vo_driver doesn't support dri then it won't work with this logic */
 uint32_t Video_Output::query_format(uint32_t* fourcc, unsigned src_w, unsigned src_h) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     uint32_t dri_forced_fourcc;
     vo_query_fourcc_t qfourcc;
     MSG_DBG3("dri_vo_dbg: vo_query_format(%08lX)\n",*fourcc);
@@ -390,14 +388,14 @@ uint32_t Video_Output::query_format(uint32_t* fourcc, unsigned src_w, unsigned s
 
 MPXP_Rc Video_Output::reset() const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_reset\n");
     return priv.vo_iface->reset();
 }
 
 MPXP_Rc Video_Output::screenshot(unsigned idx) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     char buf[256];
     MSG_DBG3("dri_vo_dbg: vo_screenshot\n");
     sprintf(buf,"%llu",priv.frame_counter);
@@ -409,27 +407,27 @@ MPXP_Rc Video_Output::screenshot(unsigned idx) const
 
 MPXP_Rc Video_Output::pause() const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_pause\n");
     return priv.vo_iface->pause();
 }
 
 MPXP_Rc Video_Output::resume() const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_resume\n");
     return priv.vo_iface->resume();
 }
 
 MPXP_Rc Video_Output::get_surface_caps(dri_surface_cap_t*caps) const {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     priv.vo_iface->get_surface_caps(caps);
     return MPXP_Ok;
 }
 
 MPXP_Rc Video_Output::get_surface(mp_image_t* mpi) const 
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     int width_less_stride;
     MSG_DBG2("dri_vo_dbg: vo_get_surface type=%X flg=%X\n",mpi->type,mpi->flags);
     width_less_stride = 0;
@@ -483,7 +481,7 @@ MPXP_Rc Video_Output::get_surface(mp_image_t* mpi) const
 
 int Video_Output::adjust_size(unsigned cw,unsigned ch,unsigned *nw,unsigned *nh) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     MSG_DBG3("dri_vo_dbg: adjust_size was called %u %u %u %u\n",cw,ch,*nw,*nh);
     if((priv.dri.flags & VOFLAG_SWSCALE) && (cw != *nw || ch != *nh) && !(priv.dri.flags & VOFLAG_FULLSCREEN))
     {
@@ -514,7 +512,7 @@ static int __FASTCALL__ adjust_size(const Video_Output*vo,unsigned cw,unsigned c
 
 int Video_Output::check_events() const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     uint32_t retval;
     int need_repaint;
     vo_resize_t vrest;
@@ -536,7 +534,7 @@ int Video_Output::check_events() const
 
 MPXP_Rc Video_Output::fullscreen() const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     MPXP_Rc retval;
     MSG_DBG3("dri_vo_dbg: vo_fullscreen\n");
     retval = priv.vo_iface->toggle_fullscreen();
@@ -547,13 +545,13 @@ MPXP_Rc Video_Output::fullscreen() const
 }
 
 unsigned Video_Output::get_num_frames() const {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     return priv.dri.num_xp_frames;
 }
 
 MPXP_Rc Video_Output::draw_slice(const mp_image_t *mpi) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     unsigned i,_w[4],_h[4],x,y;
     MSG_DBG3("dri_vo_dbg: vo_draw_slice xywh=%i %i %i %i\n",mpi->x,mpi->y,mpi->w,mpi->h);
     if(priv.dri.has_dri) {
@@ -591,14 +589,14 @@ MPXP_Rc Video_Output::draw_slice(const mp_image_t *mpi) const
 
 void Video_Output::select_frame(unsigned play_idx) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     MSG_DBG2("dri_vo_dbg: vo_select_frame(play_idx=%u)\n",play_idx);
     priv.vo_iface->select_frame(play_idx);
 }
 
 void Video_Output::flush_page(unsigned decoder_idx) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_flush_pages [idx=%u]\n",decoder_idx);
     priv.frame_counter++;
     if((priv.dri.cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
@@ -608,7 +606,7 @@ void Video_Output::flush_page(unsigned decoder_idx) const
 /* DRAW OSD */
 void Video_Output::clear_rect(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler) const
 {
-  vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+  vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
   unsigned i;
   for(i=0;i<h;i++)
   {
@@ -619,7 +617,7 @@ void Video_Output::clear_rect(unsigned _y0,unsigned h,uint8_t *dest,unsigned str
 
 void Video_Output::clear_rect2(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler) const
 {
-  vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+  vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
   unsigned i;
   unsigned _y1 = priv.dri.cap.y/2;
   unsigned _y2 = (priv.dri.cap.y+priv.dri.cap.h)/2;
@@ -632,7 +630,7 @@ void Video_Output::clear_rect2(unsigned _y0,unsigned h,uint8_t *dest,unsigned st
 
 void Video_Output::clear_rect4(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride,uint8_t filler) const
 {
-  vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+  vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
   unsigned i;
   unsigned _y1 = priv.dri.cap.y/4;
   unsigned _y2 = (priv.dri.cap.y+priv.dri.cap.h)/4;
@@ -645,7 +643,7 @@ void Video_Output::clear_rect4(unsigned _y0,unsigned h,uint8_t *dest,unsigned st
 
 void Video_Output::clear_rect_rgb(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride) const
 {
-  vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+  vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
   unsigned i;
   for(i=0;i<h;i++)
   {
@@ -656,7 +654,7 @@ void Video_Output::clear_rect_rgb(unsigned _y0,unsigned h,uint8_t *dest,unsigned
 
 void Video_Output::clear_rect_yuy2(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride) const
 {
-  vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+  vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
   unsigned i;
   for(i=0;i<h;i++)
   {
@@ -677,7 +675,7 @@ void Video_Output::clear_rect_yuy2(unsigned _y0,unsigned h,uint8_t *dest,unsigne
 
 void Video_Output::dri_remove_osd(unsigned idx,int x0,int _y0, int w,int h) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     dri_surface_t surf;
     surf.idx=idx;
     priv.vo_iface->get_surface(&surf);
@@ -732,7 +730,7 @@ void Video_Output::dri_remove_osd(unsigned idx,int x0,int _y0, int w,int h) cons
 
 void Video_Output::dri_draw_osd(unsigned idx,int x0,int _y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     int finalize=is_final();
     if(unsigned(x0+w)<=priv.dri.cap.width&&unsigned(_y0+h)<=priv.dri.cap.height)
     {
@@ -757,7 +755,7 @@ static void dri_draw_osd(const Video_Output* vo,unsigned idx,int x0,int _y0, int
 
 void Video_Output::draw_osd(unsigned idx) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_draw_osd\n");
     if(priv.dri.has_dri && !(priv.dri.cap.caps & DRI_CAP_HWOSD))
     {
@@ -770,7 +768,7 @@ void Video_Output::draw_osd(unsigned idx) const
 
 void Video_Output::draw_spudec_direct(unsigned idx) const
 {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     MSG_DBG3("dri_vo_dbg: vo_draw_osd\n");
     if(priv.dri.has_dri && !(priv.dri.cap.caps & DRI_CAP_HWOSD))
     {
@@ -785,14 +783,14 @@ void Video_Output::draw_spudec_direct(unsigned idx) const
 MPXP_Rc Video_Output::ctrl(uint32_t request, any_t*data) const
 {
     MPXP_Rc rval;
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     rval=priv.vo_iface->ctrl(request,data);
     MSG_DBG3("dri_vo_dbg: %u=vo_control( %u, %p )\n",rval,request,data);
     return rval;
 }
 
 int Video_Output::is_final() const {
-    vo_priv_t& priv=*static_cast<vo_priv_t*>(vo_priv);
+    vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     int mmaped=priv.dri.cap.caps&DRI_CAP_VIDEO_MMAPED;
     int busmaster=priv.dri.cap.caps&DRI_CAP_BUSMASTERING;
     return mmaped||busmaster||(priv.dri.num_xp_frames>1);

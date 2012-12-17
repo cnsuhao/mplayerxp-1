@@ -148,7 +148,7 @@ namespace mpxp {
     };
 
     struct vf_stream_t;
-    class Video_Output {
+    class Video_Output : public Opaque {
 	public:
 	    Video_Output();
 	    virtual ~Video_Output();
@@ -222,8 +222,8 @@ namespace mpxp {
 	    void		clear_rect_rgb(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride) const;
 	    void		clear_rect_yuy2(unsigned _y0,unsigned h,uint8_t *dest,unsigned stride,unsigned dstride) const;
 
+	    video_private&	vo_priv;/* private data of vo structure */
 	    int			inited;
-	    video_private*	vo_priv;/* private data of vo structure */
     };
 
     /** Notification event when windowed output has been resized (as data of VOCTRL_CHECK_EVENT) */

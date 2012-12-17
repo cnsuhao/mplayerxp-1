@@ -92,7 +92,6 @@ namespace mpxp {
 	private:
 	    int			read(stream_packet_t* sp);
 	    Stream_Interface*	driver; /**< low-level stream driver */
-	    Opaque*		priv;	/**< private data used by stream driver */
 	    type_e		_type;
 	    int			_eof;	/**< indicates EOF */
     };
