@@ -10,7 +10,7 @@ using namespace mpxp;
 #include "codecs_ld.h"
 #include "loader/wineacm.h"
 #include "libmpdemux/aviprint.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "help_mp.h"
 
 static const ad_info_t info = {

@@ -6,7 +6,7 @@
 
 #include "libmpconf/cfgparser.h"
 #include "xmpcore/xmp_enums.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 
 struct ad_info_t {
     const char *descr; /* driver description ("Autodesk FLI/FLC Animation decoder" */

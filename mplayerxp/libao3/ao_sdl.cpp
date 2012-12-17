@@ -2,7 +2,7 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
- * ao_sdl.c - libao2 SDLlib Audio Output Driver for MPlayer
+ * ao_sdl.c - libao3 SDLlib Audio Output Driver for MPlayer
  *
  * This driver is under the same license as MPlayer.
  * (http://mplayer.sf.net)

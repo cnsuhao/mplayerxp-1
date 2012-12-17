@@ -18,7 +18,7 @@ using namespace mpxp;
 #include "demuxer_internal.h"
 #include "stheader.h"
 #include "osdep/bswap.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "aviprint.h"
 #include "demux_msg.h"
 

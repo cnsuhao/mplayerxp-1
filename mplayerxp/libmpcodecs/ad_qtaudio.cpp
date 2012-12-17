@@ -11,7 +11,7 @@ using namespace mpxp;
 #include "osdep/bswap.h"
 #include "codecs_ld.h"
 #include "mplayerxp.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #ifdef WIN32_LOADER
 #include "loader/ldt_keeper.h"
 #endif

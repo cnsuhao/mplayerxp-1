@@ -8,7 +8,7 @@ using namespace mpxp;
 #include "af.h"
 #include "af_internal.h"
 #include "help_mp.h"
-#include "libao2/audio_out.h"
+#include "libao3/audio_out.h"
 #include "pp_msg.h"
 
 // Static list of filters
@@ -359,7 +359,7 @@ MPXP_Rc af_init(af_stream_t* s, int force_output)
   if(!s->first){
     // Add all filters in the list (if there are any)
     if(!s->cfg.list){      // To make automatic format conversion work
-      if(!af_append(s,s->first,"ao2"))
+      if(!af_append(s,s->first,"ao3"))
 	return MPXP_False;
     }
     else{
@@ -373,7 +373,7 @@ MPXP_Rc af_init(af_stream_t* s, int force_output)
       }
     }
   }
-  if(strcmp(s->last->info->name,"ao2")!=0) if(!af_append(s,s->last,"ao2")) return MPXP_False;
+  if(strcmp(s->last->info->name,"ao3")!=0) if(!af_append(s,s->last,"ao3")) return MPXP_False;
 
   // Init filters
   if(MPXP_Ok != af_reinit(s,s->first))
@@ -575,8 +575,8 @@ MPXP_Rc __FASTCALL__ af_control_any_rev (af_stream_t* s, int cmd, any_t* arg) {
 MPXP_Rc __FASTCALL__ af_query_fmt (const af_stream_t* s,mpaf_format_e fmt)
 {
     af_instance_t* filt = s?s->first:NULL;
-    const char *filt_name=filt?filt->info->name:"ao2";
-    if(strcmp(filt_name,"ao2")==0) return mpxp_context().audio().output->test_format(mpaf2afmt(fmt));
+    const char *filt_name=filt?filt->info->name:"ao3";
+    if(strcmp(filt_name,"ao3")==0) return mpxp_context().audio().output->test_format(mpaf2afmt(fmt));
     else if(afmt2mpaf(fmt)==filt->conf.format) return MPXP_True;
     return MPXP_False;
 }
@@ -584,8 +584,8 @@ MPXP_Rc __FASTCALL__ af_query_fmt (const af_stream_t* s,mpaf_format_e fmt)
 MPXP_Rc __FASTCALL__ af_query_rate (const af_stream_t* s,unsigned rate)
 {
     af_instance_t* filt = s?s->first:NULL;
-    const char *filt_name=filt?filt->info->name:"ao2";
-    if(strcmp(filt_name,"ao2")==0) return mpxp_context().audio().output->test_rate(rate);
+    const char *filt_name=filt?filt->info->name:"ao3";
+    if(strcmp(filt_name,"ao3")==0) return mpxp_context().audio().output->test_rate(rate);
     else if(rate==filt->conf.rate) return MPXP_True;
     return MPXP_False;
 }
@@ -593,8 +593,8 @@ MPXP_Rc __FASTCALL__ af_query_rate (const af_stream_t* s,unsigned rate)
 MPXP_Rc __FASTCALL__ af_query_channels (const af_stream_t* s,unsigned nch)
 {
     af_instance_t* filt = s?s->first:NULL;
-    const char *filt_name=filt?filt->info->name:"ao2";
-    if(strcmp(filt_name,"ao2")==0) return mpxp_context().audio().output->test_channels(nch);
+    const char *filt_name=filt?filt->info->name:"ao3";
+    if(strcmp(filt_name,"ao3")==0) return mpxp_context().audio().output->test_channels(nch);
     else if(nch==filt->conf.nch) return MPXP_True;
     return MPXP_False;
 }

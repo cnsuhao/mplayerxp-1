@@ -32,7 +32,7 @@ using namespace mpxp;
 #include "libmpcodecs/codecs_ld.h"
 #include "libmpconf/cfgparser.h"
 #include "aviprint.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "demux_msg.h"
 
 #define PROBE_BUF_SIZE 2048

@@ -8,7 +8,7 @@ using namespace mpxp;
 #include "mp_msg.h"
 #include "sig_hand.h"
 
-#include "libao2/audio_out.h"
+#include "libao3/audio_out.h"
 #include "libvo2/video_out.h"
 
 #include "libmpdemux/demuxer_r.h"

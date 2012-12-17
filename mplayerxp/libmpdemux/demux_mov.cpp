@@ -41,7 +41,7 @@ using namespace mpxp;
 
 #include "loader/qtx/qtxsdk/components.h"
 #include "demux_msg.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 
 #ifdef HAVE_ZLIB
 #include <zlib.h>

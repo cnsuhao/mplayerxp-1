@@ -35,7 +35,7 @@ Video codecs: (supported by RealPlayer8 for Linux)
 #include "osdep/bswap.h"
 #include "aviprint.h"
 #include "libmpcodecs/dec_audio.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "demux_msg.h"
 
 #define MKTAG(a, b, c, d) (a | (b << 8) | (c << 16) | (d << 24))

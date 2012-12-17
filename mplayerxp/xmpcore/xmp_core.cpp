@@ -19,7 +19,7 @@ using namespace mpxp;
 #include <sys/time.h>
 #include "xmp_core.h"
 
-#include "libao2/audio_out.h"
+#include "libao3/audio_out.h"
 #include "libvo2/video_out.h"
 
 #include "libmpcodecs/dec_video.h"

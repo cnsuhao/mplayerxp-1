@@ -13,7 +13,7 @@ using namespace mpxp;
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 #include "libmpcodecs/dec_audio.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "demux_msg.h"
 
 #define	KEYWORD_BYTES	4

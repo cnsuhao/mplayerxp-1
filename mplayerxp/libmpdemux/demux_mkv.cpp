@@ -38,7 +38,7 @@ using namespace mpxp;
 #include "libvo2/sub.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "libmpcodecs/libnuppelvideo/minilzo.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "demux_msg.h"
 
 #include "loader/qtx/qtxsdk/components.h"

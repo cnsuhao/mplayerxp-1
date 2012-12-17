@@ -993,7 +993,7 @@ extern const m_option_type_t m_option_type_imgfmt = {
   NULL
 };
 
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 
 /* FIXME: sync with af_format.h */
 static struct {

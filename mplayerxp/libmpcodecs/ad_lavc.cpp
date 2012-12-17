@@ -8,7 +8,7 @@ using namespace mpxp;
 #include <unistd.h>
 #include <assert.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "ad_internal.h"
 
 #include "help_mp.h"

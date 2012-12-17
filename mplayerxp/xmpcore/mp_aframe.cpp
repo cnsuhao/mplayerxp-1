@@ -5,7 +5,7 @@ using namespace mpxp;
 #include <stdio.h>
 
 #include "mp_aframe.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "loader/wine/mmreg.h"
 #include "mp_msg.h"
 

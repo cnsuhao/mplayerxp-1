@@ -14,7 +14,7 @@ using namespace mpxp;
 #include "codecs_ld.h"
 #include "osdep/cpudetect.h"
 #include "osdep/bswap.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 
 #define IEC61937_DATA_TYPE_AC3 1
 

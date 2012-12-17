@@ -1,7 +1,7 @@
 
 include ../mp_config.mak
 
-LIBNAME = libao2.a
+LIBNAME = libao3.a
 
 # TODO: moveout ao_sdl.c so it's only used when SDL is detected
 CXXSRCS=audio_out.cpp afmt.cpp

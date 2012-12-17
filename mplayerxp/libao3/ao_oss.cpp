@@ -209,7 +209,7 @@ MPXP_Rc Oss_AO_Interface::open(unsigned flags){
 
 MPXP_Rc Oss_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
 {
-    MSG_V("ao2: %d Hz  %d chans  %s\n",r,c,ao_format_name(f));
+    MSG_V("ao3: %d Hz  %d chans  %s\n",r,c,ao_format_name(f));
 
     if(f == AFMT_AC3) {
 	_samplerate=r;

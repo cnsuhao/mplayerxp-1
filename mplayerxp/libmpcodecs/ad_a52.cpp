@@ -18,8 +18,8 @@ using namespace mpxp;
 #include "osdep/mm_accel.h"
 #include "mplayerxp.h"
 #include "liba52/a52.h"
-#include "libao2/afmt.h"
-#include "libao2/audio_out.h"
+#include "libao3/afmt.h"
+#include "libao3/audio_out.h"
 #include "postproc/af.h"
 
 struct ad_private_t {

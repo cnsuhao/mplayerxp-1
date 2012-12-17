@@ -20,7 +20,7 @@ using namespace mpxp;
 #include "stream.h"
 #include "stream_internal.h"
 #include "input2/input.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "mrl.h"
 
 #include "tvi/tv.h"
@@ -32,10 +32,9 @@ using namespace mpxp;
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 
-#include "libao2/afmt.h"
 #include "libvo2/img_format.h"
 #include "osdep/fastmemcpy.h"
-#include "libao2/audio_out.h"
+#include "libao3/audio_out.h"
 
 #include "stream_msg.h"
 

@@ -18,8 +18,8 @@ using namespace mpxp;
 #include "libmpconf/codec-cfg.h"
 
 #include "dec_audio.h"
-#include "libao2/afmt.h"
-#include "libao2/audio_out.h"
+#include "libao3/afmt.h"
+#include "libao3/audio_out.h"
 #include "mplayerxp.h"
 #include "libmpdemux/demuxer_r.h"
 #include "postproc/af.h"

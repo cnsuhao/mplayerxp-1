@@ -46,9 +46,6 @@ using namespace mpxp;
 #include "libmpsub/spudec.h"
 #include "libmpsub/vobsub.h"
 
-#include "libvo2/video_out.h"
-#include "libao2/audio_out.h"
-
 #include "osdep/get_path.h"
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"

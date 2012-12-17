@@ -12,8 +12,8 @@ using namespace mpxp;
 #include "osdep/fastmemcpy.h"
 #include "osdep/bswap.h"
 #include "codecs_ld.h"
-#include "libao2/afmt.h"
-#include "libao2/audio_out.h"
+#include "libao3/afmt.h"
+#include "libao3/audio_out.h"
 #include "postproc/af.h"
 
 static const ad_info_t info = {

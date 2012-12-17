@@ -9,7 +9,7 @@ using namespace mpxp;
 #include "codecs_ld.h"
 #include "loader/ldt_keeper.h"
 #include "loader/wine/windef.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "libmpdemux/aviprint.h"
 #include "help_mp.h"
 

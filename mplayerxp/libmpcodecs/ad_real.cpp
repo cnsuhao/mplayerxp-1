@@ -13,7 +13,7 @@ using namespace mpxp;
 #include "codecs_ld.h"
 #include "ad_msg.h"
 #include "osdep/bswap.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 
 static const ad_info_t info = {
     "RealAudio decoder",

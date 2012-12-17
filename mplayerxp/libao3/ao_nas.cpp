@@ -457,7 +457,7 @@ MPXP_Rc Nas_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
     _outburst = NAS_FRAG_SIZE;
     buffer_size = bps(); /* buffer 1 second */
 
-    MSG_V("ao2: %d Hz  %d chans  %s\n",r,c,afmt2str(f));
+    MSG_V("ao3: %d Hz  %d chans  %s\n",r,c,afmt2str(f));
 
     /*
      * round up to multiple of NAS_FRAG_SIZE

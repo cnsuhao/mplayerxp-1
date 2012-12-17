@@ -16,7 +16,7 @@ using namespace mpxp;
 #include "demuxer_internal.h"
 #include "stheader.h"
 #include "libmpcodecs/dec_audio.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "aviprint.h"
 #include "osdep/bswap.h"
 #include "mp3_hdr.h"

@@ -6,8 +6,8 @@ using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "libao2/audio_out.h"
-#include "libao2/afmt.h"
+#include "libao3/audio_out.h"
+#include "libao3/afmt.h"
 
 #include "af.h"
 #include "af_internal.h"
@@ -103,7 +103,7 @@ static unsigned __FASTCALL__ find_best_fmt(unsigned ifmt)
     return AFMT_S16_LE;
 }
 
-struct af_ao2_t{
+struct af_ao3_t{
     unsigned		rate;
     unsigned		nch;
     mpaf_format_e	format;
@@ -112,7 +112,7 @@ struct af_ao2_t{
 // Initialization and runtime control_af
 static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af, const af_conf_t* arg)
 {
-    af_ao2_t* s = reinterpret_cast<af_ao2_t*>(af->setup);
+    af_ao3_t* s = reinterpret_cast<af_ao3_t*>(af->setup);
     /* Sanity check */
     if(!arg) return MPXP_Error;
     s->rate = af->conf.rate = find_best_rate(arg->rate);
@@ -123,7 +123,7 @@ static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af, const af_conf_t* arg)
 
 static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
-    af_ao2_t* s = reinterpret_cast<af_ao2_t*>(af->setup);
+    af_ao3_t* s = reinterpret_cast<af_ao3_t*>(af->setup);
     UNUSED(arg);
     switch(cmd){
 	case AF_CONTROL_SHOWCONF: {
@@ -161,7 +161,7 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
     af->play=play;
     af->mul.d=1;
     af->mul.n=1;
-    af->setup=mp_calloc(1,sizeof(af_ao2_t));
+    af->setup=mp_calloc(1,sizeof(af_ao3_t));
     if(af->setup == NULL) return MPXP_Error;
     check_pin("afilter",af->pin,AF_PIN);
     return MPXP_Ok;
@@ -170,7 +170,7 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
 // Description of this filter
 extern const af_info_t af_info_ao = {
     "libao wrapper",
-    "ao2",
+    "ao3",
     "Nickols_K",
     "",
     AF_FLAGS_REENTRANT,

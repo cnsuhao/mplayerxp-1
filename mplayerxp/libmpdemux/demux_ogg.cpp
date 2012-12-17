@@ -26,7 +26,7 @@ using namespace mpxp;
 #include "libmpcodecs/codecs_ld.h"
 #include "libmpcodecs/dec_audio.h"
 #include "libvo2/video_out.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "demux_msg.h"
 
 #define BLOCK_SIZE 4096

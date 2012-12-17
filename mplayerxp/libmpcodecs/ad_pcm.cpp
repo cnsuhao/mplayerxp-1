@@ -5,7 +5,7 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <unistd.h>
 #include "ad_internal.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "osdep/bswap.h"
 
 struct ad_private_t {

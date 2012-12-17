@@ -16,7 +16,7 @@ using namespace mpxp;
 #include "libmpstream2/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 #include "osdep/bswap.h"
 #include "ad_internal.h"
 

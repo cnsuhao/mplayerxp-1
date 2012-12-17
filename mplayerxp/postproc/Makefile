@@ -8,7 +8,7 @@ DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
 CXXSRCS=af.cpp aflib.cpp vf.cpp  postprocess.cpp swscale.cpp
 
-CXXSRCS+=af_ao2.cpp \
+CXXSRCS+=af_ao3.cpp \
       af_channels.cpp \
       af_crystality.cpp \
       af_delay.cpp \

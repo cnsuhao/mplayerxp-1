@@ -6,7 +6,7 @@ using namespace mpxp;
 #include <unistd.h>
 #include "ad_internal.h"
 #include "osdep/bswap.h"
-#include "libao2/afmt.h"
+#include "libao3/afmt.h"
 
 struct ad_private_t {
     sh_audio_t* sh;

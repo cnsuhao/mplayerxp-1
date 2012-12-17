@@ -14,7 +14,7 @@ using namespace mpxp;
 
 #include "libmpdemux/demuxer.h"
 #include "libmpcodecs/dec_audio.h"
-#include "libao2/audio_out.h"
+#include "libao3/audio_out.h"
 
 #include "osdep/timer.h"
 #include "xmp_core.h"

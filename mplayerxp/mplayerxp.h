@@ -12,7 +12,7 @@
 #include "xmpcore/xmp_enums.h"
 #include "libmpconf/cfgparser.h"
 #include "libmpsub/subreader.h"
-#include "libao2/audio_out.h"
+#include "libao3/audio_out.h"
 #include "libvo2/video_out.h"
 
 struct audio_decoder_t;
