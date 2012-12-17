@@ -20,23 +20,23 @@ static unsigned __FASTCALL__ find_best_rate(unsigned irate)
 {
     unsigned i,ii;
     MPXP_Rc rval;
-    rval=ao_test_rate(mpxp_context().audio().output,irate);
+    rval=mpxp_context().audio().output->test_rate(irate);
     if(rval == MPXP_True) return irate;
     for(i=0;i<sizeof(rates)/sizeof(unsigned)-1;i++) {
 	if(irate >= rates[i] && irate < rates[i+1]) break;
     }
     ii=i;
     for(;i<sizeof(rates)/sizeof(unsigned);i++) {
-	rval=ao_test_rate(mpxp_context().audio().output,rates[i]);
+	rval=mpxp_context().audio().output->test_rate(rates[i]);
 	if(rval == MPXP_True) return rates[i];
     }
     i=ii;
     for(;i<sizeof(rates)/sizeof(unsigned);i--) {
-	rval=ao_test_rate(mpxp_context().audio().output,rates[i]);
+	rval=mpxp_context().audio().output->test_rate(rates[i]);
 	if(rval == MPXP_True) return rates[i];
     }
     for(i=0;i<sizeof(rates)/sizeof(unsigned);i++) {
-	rval=ao_test_rate(mpxp_context().audio().output,rates[i]);
+	rval=mpxp_context().audio().output->test_rate(rates[i]);
 	if(rval == MPXP_True) return rates[i];
     }
     return 44100;
@@ -46,14 +46,14 @@ static unsigned __FASTCALL__ find_best_ch(unsigned ich)
 {
     unsigned i;
     MPXP_Rc rval;
-    rval=ao_test_channels(mpxp_context().audio().output,ich);
+    rval=mpxp_context().audio().output->test_channels(ich);
     if(rval == MPXP_True) return ich;
     for(i=ich>1?ich:1;i<AF_NCH;i++) {
-	rval=ao_test_channels(mpxp_context().audio().output,i);
+	rval=mpxp_context().audio().output->test_channels(i);
 	if(rval == MPXP_True) return i;
     }
     for(i=1;i<AF_NCH;i++) {
-	rval=ao_test_channels(mpxp_context().audio().output,i);
+	rval=mpxp_context().audio().output->test_channels(i);
 	if(rval == MPXP_True) return i;
     }
     return 2;
@@ -87,7 +87,7 @@ static unsigned __FASTCALL__ find_best_fmt(unsigned ifmt)
 {
     unsigned i,j,idx;
     MPXP_Rc rval;
-    rval=ao_test_format(mpxp_context().audio().output,ifmt);
+    rval=mpxp_context().audio().output->test_format(ifmt);
     if(rval == MPXP_True) return ifmt;
     idx=-1;
     for(i=0;i<sizeof(cvt_list)/sizeof(fmt_cvt_t);i++) {
@@ -97,7 +97,7 @@ static unsigned __FASTCALL__ find_best_fmt(unsigned ifmt)
     i=idx;
     for(j=0;j<20;j++) {
 	if(cvt_list[i].cvt_fourcc[j]==0) break;
-	rval=ao_test_format(mpxp_context().audio().output,cvt_list[i].cvt_fourcc[j]);
+	rval=mpxp_context().audio().output->test_format(cvt_list[i].cvt_fourcc[j]);
 	if(rval == MPXP_True) return cvt_list[i].cvt_fourcc[j];
     }
     return AFMT_S16_LE;
@@ -128,7 +128,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
     switch(cmd){
 	case AF_CONTROL_SHOWCONF: {
 	    char sbuf[256];
-	    const ao_info_t*info=ao_get_info(mpxp_context().audio().output);
+	    const ao_info_t*info=mpxp_context().audio().output->get_info();
 	    MSG_INFO("AO-CONF: [%s] %uHz nch=%u %s (%3.1f-kbit)\n"
 		,info->short_name,s->rate,s->nch,mpaf_fmt2str(s->format,sbuf,sizeof(sbuf))
 		,(s->rate*s->nch*(s->format&MPAF_BPS_MASK)*8)*0.001f);

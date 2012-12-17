@@ -356,7 +356,7 @@ void MPXPSystem::uninit_player(unsigned int mask){
     if(mask&INITED_AO){
 	inited_flags&=~INITED_AO;
 	MP_UNIT("uninit_ao");
-	ao_uninit(mpxp_context().audio().output);
+	delete mpxp_context().audio().output;
 	mpxp_context().audio().output=NULL;
     }
 
@@ -543,7 +543,7 @@ static void init_player( void )
 	exit(0);
     }
     if(mp_conf.audio_driver && strcmp(mp_conf.audio_driver,"help")==0) {
-	ao_print_help();
+	mpxp_context().audio().output->print_help();
 	mpxp_uninit_structs();
 	exit(0);
     }
@@ -608,7 +608,7 @@ void show_long_help(void) {
     mp_input_print_binds(MPXPSys.libinput());
     Stream::print_drivers();
     mpxp_context().video().output->print_help();
-    ao_print_help();
+    mpxp_context().audio().output->print_help();
     vf_help();
     af_help();
     vfm_help();
@@ -705,7 +705,7 @@ void MPXPSystem::seek( osd_args_t *osd,const seek_args_t* _seek) const
 	if(sh_audio){
 	    MP_UNIT("seek_audio_reset");
 	    mpca_resync_stream(mpxp_context().audio().decoder);
-	    ao_reset(mpxp_context().audio().output); // stop audio, throwing away buffered data
+	    mpxp_context().audio().output->reset(); // stop audio, throwing away buffered data
 	}
 
 	if (mpxp_context().video().output->vobsub) {
@@ -801,12 +801,12 @@ static void show_benchmark_status(void)
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys.demuxer()->audio->sh);
     if(xmp_test_model(XMP_Run_AudioPlayback))
 		MSG_STATUS("A:%6.1f %4.1f%%\r"
-			,sh_audio->timer-ao_get_delay(mpxp_context().audio().output)
+			,sh_audio->timer-mpxp_context().audio().output->get_delay()
 			,(sh_audio->timer>0.5)?100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/(double)sh_audio->timer:0
 			);
     else
 	MSG_STATUS("A:%6.1f %4.1f%%  B:%4.1f\r"
-		,sh_audio->timer-ao_get_delay(mpxp_context().audio().output)
+		,sh_audio->timer-mpxp_context().audio().output->get_delay()
 		,(sh_audio->timer>0.5)?100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/(double)sh_audio->timer:0
 		,get_delay_audio_buffer()
 		);
@@ -1128,13 +1128,13 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
 	d_audio->sh=NULL;
 	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
     } else {
-	if(!(mpxp_context().audio().output=ao_init(ao_subdevice))) {
+	if(!(mpxp_context().audio().output=new(zeromem) Audio_Output(ao_subdevice?ao_subdevice:""))) {
 	    MSG_ERR(MSGTR_CannotInitAO);
 	    d_audio->sh=NULL;
 	    sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 	}
 	if(ao_subdevice) delete ao_subdevice;
-	ao_inited=ao_register(mpxp_context().audio().output,mp_conf.audio_driver,0);
+	ao_inited=mpxp_context().audio().output->_register(mp_conf.audio_driver?mp_conf.audio_driver:"",0);
 	if (ao_inited!=MPXP_Ok){
 	    MSG_FATAL(MSGTR_InvalidAOdriver,mp_conf.audio_driver);
 	    exit_player(MSGTR_Exit_error);
@@ -1203,7 +1203,7 @@ int MPXPSystem::configure_audio() {
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     Demuxer_Stream *d_audio=_demuxer->audio;
     int rc=0;
-    const ao_info_t *info=ao_get_info(mpxp_context().audio().output);
+    const ao_info_t *info=mpxp_context().audio().output->get_info();
     MP_UNIT("setup_audio");
     MSG_V("AO: [%s] %iHz %s %s\n",
 	info->short_name,
@@ -1242,7 +1242,7 @@ int MPXPSystem::configure_audio() {
 		,sh_audio->audio_out_minsize);
     }
 
-    if(MPXP_Ok!=ao_configure(mpxp_context().audio().output,
+    if(MPXP_Ok!=mpxp_context().audio().output->configure(
 		    samplerate,
 		    channels,
 		    format)) {
@@ -1256,8 +1256,11 @@ int MPXPSystem::configure_audio() {
 	if(mpca_init_filters(mpxp_context().audio().decoder,
 	    sh_audio->rate,
 	    sh_audio->nch, mpaf_format_e(sh_audio->afmt),
-	    ao_samplerate(mpxp_context().audio().output), ao_channels(mpxp_context().audio().output), mpaf_format_e(ao_format(mpxp_context().audio().output)),
-	    ao_outburst(mpxp_context().audio().output)*4, ao_buffersize(mpxp_context().audio().output))!=MPXP_Ok) {
+	    mpxp_context().audio().output->samplerate(),
+	    mpxp_context().audio().output->channels(),
+	    mpaf_format_e(mpxp_context().audio().output->format()),
+	    mpxp_context().audio().output->outburst()*4,
+	    mpxp_context().audio().output->buffersize())!=MPXP_Ok) {
 		MSG_ERR("No matching audio filter found!\n");
 	    }
     }
@@ -1289,7 +1292,7 @@ void MPXPSystem::print_audio_status() const {
     unsigned ipts,rpts;
     unsigned char h,m,s,rh,rm,rs;
     static char ph=0,pm=0,ps=0;
-    ipts=(unsigned)(sh_audio->timer-ao_get_delay(mpxp_context().audio().output));
+    ipts=(unsigned)(sh_audio->timer-mpxp_context().audio().output->get_delay());
     rpts=_demuxer->movi_length-ipts;
     h = ipts/3600;
     m = (ipts/60)%60;
@@ -1348,7 +1351,7 @@ int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
 		mpxp_context().engine().xp_core->in_pause=1;
 		while( !dec_ahead_can_aseek ) yield_timeslice();
 	    }
-	    ao_pause(mpxp_context().audio().output);	// pause audio, keep data if possible
+	    mpxp_context().audio().output->pause();	// pause audio, keep data if possible
 	}
 
 	while( (cmd = mp_input_get_cmd(_libinput,20,1,1)) == NULL) {
@@ -1363,7 +1366,7 @@ int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
 
 	if(osd_function==OSD_PAUSE) osd_function=OSD_PLAY;
 	if (ao_inited==MPXP_Ok && sh_audio) {
-	    ao_resume(mpxp_context().audio().output);	// resume audio
+	    mpxp_context().audio().output->resume();	// resume audio
 	    if(xmp_test_model(XMP_Run_AudioPlayer)) {
 		mpxp_context().engine().xp_core->in_pause=0;
 		__MP_SYNCHRONIZE(audio_play_mutex,pthread_cond_signal(&audio_play_cond));
@@ -1463,17 +1466,17 @@ For future:
 		}
 		break;
 	    case MP_CMD_MUTE:
-		mixer_mute(mpxp_context().audio().output);
+		mpxp_context().audio().output->mixer_mute();
 		break;
 	    case MP_CMD_VOLUME :  {
 		int v = cmd->args[0].v.i;
-		if(v > 0)	mixer_incvolume(mpxp_context().audio().output);
-		else		mixer_decvolume(mpxp_context().audio().output);
+		if(v > 0)	mpxp_context().audio().output->mixer_incvolume();
+		else		mpxp_context().audio().output->mixer_decvolume();
 #ifdef USE_OSD
 		if(mp_conf.osd_level){
 		    osd->visible=sh_video->fps; // 1 sec
 		    mpxp_context().video().output->osd_progbar_type=OSD_VOLUME;
-		    mpxp_context().video().output->osd_progbar_value=(mixer_getbothvolume(mpxp_context().audio().output)*256.0)/100.0;
+		    mpxp_context().video().output->osd_progbar_value=(mpxp_context().audio().output->mixer_getbothvolume()*256.0)/100.0;
 		    vo_osd_changed(OSDTYPE_PROGBAR);
 		}
 #endif

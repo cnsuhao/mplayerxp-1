@@ -157,7 +157,7 @@ namespace mpxp {
 
     struct audio_processing_t {
 	audio_decoder_t*	decoder;
-	ao_data_t*		output;
+	Audio_Output*		output;
     };
 
     struct video_processing_t {

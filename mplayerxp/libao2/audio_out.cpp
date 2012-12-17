@@ -37,7 +37,7 @@ extern const ao_info_t audio_out_nas;
 #ifdef HAVE_JACK
 extern const ao_info_t audio_out_jack;
 #endif
-} // namespace mpxp
+
 static const ao_info_t* audio_out_drivers[] =
 {
 #ifdef USE_OSS_AUDIO
@@ -69,11 +69,17 @@ static const ao_info_t* audio_out_drivers[] =
 	NULL
 };
 
-typedef struct priv_s {
-    char		antiviral_hole[RND_CHAR5];
-    const ao_info_t*	info;
-    AO_Interface*	driver;
-}priv_t;
+struct priv_t : public Opaque {
+    public:
+	priv_t() {}
+	virtual ~priv_t() {}
+
+	char		antiviral_hole[RND_CHAR5];
+	const ao_info_t*info;
+	AO_Interface*	driver;
+	int		muted;
+	float		mute_l,mute_r;
+};
 
 const char * __FASTCALL__ ao_format_name(int format)
 {
@@ -176,9 +182,24 @@ int __FASTCALL__ ao_format_bits(int format){
     return 8;
 }
 
-
-void ao_print_help( void )
+Audio_Output::Audio_Output(const char* _subdevice)
+	    :subdevice(mp_strdup(_subdevice))
 {
+    priv_t* priv=new(zeromem) priv_t;
+    opaque=priv;
+    fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&opaque)-reinterpret_cast<long>(&antiviral_hole));
+    priv->driver=NULL;
+}
+
+Audio_Output::~Audio_Output()
+{
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    delete priv->driver;
+    if(subdevice) delete subdevice;
+    delete priv;
+}
+
+void Audio_Output::print_help() const {
     unsigned i;
     MSG_INFO("Available audio output drivers:\n");
     i=0;
@@ -189,20 +210,19 @@ void ao_print_help( void )
     MSG_INFO("\n");
 }
 
-MPXP_Rc __FASTCALL__ ao_register(ao_data_t* ao,const char *driver_name,unsigned flags)
-{
-    priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
+MPXP_Rc Audio_Output::_register(const char *driver_name,unsigned flags) const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
     unsigned i;
     if(!driver_name) {
 	priv->info=audio_out_drivers[0];
-	priv->driver=audio_out_drivers[0]->query_interface(ao->subdevice);
+	priv->driver=audio_out_drivers[0]->query_interface(subdevice?subdevice:"");
     }
     else
     for (i=0; audio_out_drivers[i] != &audio_out_null; i++) {
 	const ao_info_t *info = audio_out_drivers[i];
 	if(strcmp(info->short_name,driver_name) == 0){
 	    priv->info = audio_out_drivers[i];
-	    priv->driver = audio_out_drivers[i]->query_interface(ao->subdevice?ao->subdevice:"");
+	    priv->driver = audio_out_drivers[i]->query_interface(subdevice?subdevice:"");
 	    break;
 	}
     }
@@ -210,225 +230,143 @@ MPXP_Rc __FASTCALL__ ao_register(ao_data_t* ao,const char *driver_name,unsigned 
     return MPXP_False;
 }
 
-const ao_info_t* ao_get_info( const ao_data_t* ao )
-{
-    priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
+const ao_info_t* Audio_Output::get_info() const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
     return priv->info;
 }
 
-ao_data_t* __FASTCALL__ ao_init(const char *subdevice)
-{
-    ao_data_t* ao;
-    ao=new(zeromem) ao_data_t;
-    if(subdevice) ao->subdevice=mp_strdup(subdevice);
-    priv_t* priv=new(zeromem) priv_t;
-    ao->opaque=priv;
-    fill_false_pointers(ao->antiviral_hole,offsetof(ao_data_t,opaque)-offsetof(ao_data_t,antiviral_hole));
-    priv->driver=NULL;
-    return ao;
+MPXP_Rc Audio_Output::configure(unsigned r,unsigned c,unsigned f) const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return priv->driver->configure(r,c,f);
 }
 
-MPXP_Rc __FASTCALL__ ao_configure(ao_data_t*ao,unsigned rate,unsigned channels,unsigned format)
-{
-    priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-    return priv->driver->configure(rate,channels,format);
+unsigned Audio_Output::channels() const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return priv->driver->channels();
+}
+unsigned Audio_Output::samplerate() const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return priv->driver->samplerate();
+}
+unsigned Audio_Output::format() const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return priv->driver->format();
 }
 
-void ao_uninit(ao_data_t*ao)
-{
-    priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-    delete priv->driver;
-    if(ao->subdevice) delete ao->subdevice;
-    delete priv;
-    delete ao;
-    ao=NULL;
+MPXP_Rc Audio_Output::test_channels(unsigned c) const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return priv->driver->test_channels(c);
+}
+MPXP_Rc Audio_Output::test_rate(unsigned s) const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return priv->driver->test_rate(s);
+}
+MPXP_Rc Audio_Output::test_format(unsigned f) const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return priv->driver->test_format(f);
 }
 
-unsigned ao_channels(ao_data_t* ao) {
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->driver->channels();
-    }
-    return 0;
-}
-unsigned ao_samplerate(ao_data_t* ao) {
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->driver->samplerate();
-    }
-    return 0;
-}
-unsigned ao_format(ao_data_t* ao) {
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->driver->format();
-    }
-    return 0;
-}
-
-MPXP_Rc ao_test_channels(ao_data_t* ao,unsigned c) {
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->driver->test_channels(c);
-    }
-    return MPXP_False;
-}
-MPXP_Rc ao_test_rate(ao_data_t* ao,unsigned s) {
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->driver->test_rate(s);
-    }
-    return MPXP_False;
-}
-MPXP_Rc ao_test_format(ao_data_t* ao,unsigned f) {
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->driver->test_format(f);
-    }
-    return MPXP_False;
-}
-
-unsigned ao_bps(ao_data_t* ao) {
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return	priv->driver->channels()*
+unsigned Audio_Output::bps() const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return	priv->driver->channels()*
 		priv->driver->samplerate()*
 		afmt2bps(priv->driver->format());
-    }
-    return 0;
 }
 
-unsigned ao_buffersize(ao_data_t* ao) {
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->driver->buffersize();
-    }
-    return 0;
+unsigned Audio_Output::buffersize() const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return priv->driver->buffersize();
 }
 
-unsigned ao_outburst(ao_data_t* ao) {
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->driver->outburst();
-    }
-    return 0;
+unsigned Audio_Output::outburst() const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return priv->driver->outburst();
 }
 
-void ao_reset(ao_data_t*ao)
-{
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	priv->driver->reset();
-    }
+void Audio_Output::reset() const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    priv->driver->reset();
 }
 
-unsigned ao_get_space(const ao_data_t*ao)
-{
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->driver->get_space();
-    }
-    return 0;
+unsigned Audio_Output::get_space() const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return priv->driver->get_space();
 }
 
-float ao_get_delay(const ao_data_t*ao)
-{
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->driver->get_delay();
-    }
-    return 0;
+float Audio_Output::get_delay() const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return priv->driver->get_delay();
 }
 
-unsigned __FASTCALL__ ao_play(ao_data_t*ao,const any_t* data,unsigned len,unsigned flags)
-{
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->driver->play(data,len,flags);
-    } return 0;
+unsigned Audio_Output::play(const any_t* data,unsigned len,unsigned flags) const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return priv->driver->play(data,len,flags);
 }
 
-void ao_pause(ao_data_t*ao)
-{
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	priv->driver->pause();
-    }
+void Audio_Output::pause() const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    priv->driver->pause();
 }
 
-void ao_resume(ao_data_t*ao)
-{
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	priv->driver->resume();
-    }
+void Audio_Output::resume() const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    priv->driver->resume();
 }
 
-MPXP_Rc __FASTCALL__ ao_control(const ao_data_t*ao,int cmd,long arg)
-{
-    if(ao) {
-	priv_t* priv=reinterpret_cast<priv_t*>(ao->opaque);
-	return priv->driver->ctrl(cmd,arg);
-    }
-    return MPXP_Error;
+MPXP_Rc Audio_Output::ctrl(int cmd,long arg) const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    return priv->driver->ctrl(cmd,arg);
 }
 
-void mixer_getvolume(const ao_data_t* ao, float *l,float *r )
-{
-  ao_control_vol_t vol;
-  *l=0; *r=0;
-  if(MPXP_Ok != ao_control(ao,AOCONTROL_GET_VOLUME,(long)&vol)) return;
-  *r=vol.right;
-  *l=vol.left;
+void Audio_Output::mixer_getvolume(float *l,float *r) const {
+    ao_control_vol_t vol;
+    *l=0; *r=0;
+    if(MPXP_Ok != ctrl(AOCONTROL_GET_VOLUME,(long)&vol)) return;
+    *r=vol.right;
+    *l=vol.left;
 }
 
-void mixer_setvolume(const ao_data_t* ao,float l,float r )
-{
-  ao_control_vol_t vol;
-  vol.right=r; vol.left=l;
-  ao_control(ao,AOCONTROL_SET_VOLUME,(long)&vol);
+void Audio_Output::mixer_setvolume(float l,float r) const {
+    ao_control_vol_t vol;
+    vol.right=r; vol.left=l;
+    ctrl(AOCONTROL_SET_VOLUME,(long)&vol);
 }
 
 #define MIXER_CHANGE 3
 
-void mixer_incvolume(const ao_data_t* ao)
-{
- float mixer_l, mixer_r;
- mixer_getvolume(ao, &mixer_l,&mixer_r );
- mixer_l += MIXER_CHANGE;
- if ( mixer_l > 100 ) mixer_l = 100;
- mixer_r += MIXER_CHANGE;
- if ( mixer_r > 100 ) mixer_r = 100;
- mixer_setvolume(ao, mixer_l,mixer_r );
+void Audio_Output::mixer_incvolume() const {
+    float mixer_l, mixer_r;
+    mixer_getvolume(&mixer_l,&mixer_r );
+    mixer_l += MIXER_CHANGE;
+    if ( mixer_l > 100 ) mixer_l = 100;
+    mixer_r += MIXER_CHANGE;
+    if ( mixer_r > 100 ) mixer_r = 100;
+    mixer_setvolume(mixer_l,mixer_r );
 }
 
-void mixer_decvolume(const ao_data_t* ao)
-{
- float mixer_l, mixer_r;
- mixer_getvolume(ao, &mixer_l,&mixer_r );
- mixer_l -= MIXER_CHANGE;
- if ( mixer_l < 0 ) mixer_l = 0;
- mixer_r -= MIXER_CHANGE;
- if ( mixer_r < 0 ) mixer_r = 0;
- mixer_setvolume(ao, mixer_l,mixer_r );
+void Audio_Output::mixer_decvolume() const {
+    float mixer_l, mixer_r;
+    mixer_getvolume(&mixer_l,&mixer_r );
+    mixer_l -= MIXER_CHANGE;
+    if ( mixer_l < 0 ) mixer_l = 0;
+    mixer_r -= MIXER_CHANGE;
+    if ( mixer_r < 0 ) mixer_r = 0;
+    mixer_setvolume(mixer_l,mixer_r);
 }
 
-float mixer_getbothvolume(const ao_data_t* ao)
-{
- float mixer_l, mixer_r;
- mixer_getvolume(ao, &mixer_l,&mixer_r );
- return ( mixer_l + mixer_r ) / 2;
+float Audio_Output::mixer_getbothvolume() const {
+    float mixer_l, mixer_r;
+    mixer_getvolume(&mixer_l,&mixer_r);
+    return ( mixer_l + mixer_r ) / 2;
 }
 
-static int muted=0;
-static float mute_l,mute_r;
-void mixer_mute(const ao_data_t* ao)
-{
- if ( muted ) { mixer_setvolume(ao, mute_l,mute_r ); muted=0; }
-  else
-   {
-    mixer_getvolume(ao, &mute_l,&mute_r );
-    mixer_setvolume(ao, 0,0 );
-    muted=1;
-   }
+void Audio_Output::mixer_mute() const {
+    priv_t* priv=static_cast<priv_t*>(opaque);
+    if ( priv->muted ) { mixer_setvolume(priv->mute_l,priv->mute_r ); priv->muted=0; }
+    else {
+	mixer_getvolume(&priv->mute_l,&priv->mute_r );
+	mixer_setvolume(0,0);
+	priv->muted=1;
+    }
 }
+} // namespace mpxp
