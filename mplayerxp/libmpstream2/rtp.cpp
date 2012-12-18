@@ -41,6 +41,7 @@ using namespace mpxp;
 // write rtp packets in cache
 // get rtp packets reordered
 
+namespace mpxp {
 #define MAXRTPPACKETSIN 32   // The number of max packets being reordered
 
 struct rtpbits {
@@ -59,17 +60,6 @@ struct rtpheader {	/* in network byte order */
   int ssrc;		/* random */
 };
 
-struct rtpbuffer
-{
-	unsigned char  data[MAXRTPPACKETSIN][STREAM_BUFFER_SIZE];
-	unsigned short  seq[MAXRTPPACKETSIN];
-	unsigned short  len[MAXRTPPACKETSIN];
-	unsigned short first;
-};
-static struct rtpbuffer rtpbuf;
-
-static int getrtp2(Tcp& fd, struct rtpheader *rh, char** data, int* lengthData);
-
 // RTP Reordering functions
 // Algorithm works as follows:
 // If next packet is in sequence just copy it to buffer
@@ -78,178 +68,167 @@ static int getrtp2(Tcp& fd, struct rtpheader *rh, char** data, int* lengthData);
 // and keeps track of expected sequence
 
 // Initialize rtp cache
-static void rtp_cache_reset(unsigned short seq)
-{
-	int i;
+void Rtp::cache_reset(unsigned short seq) {
+    int i;
 
-	rtpbuf.first = 0;
-	rtpbuf.seq[0] = ++seq;
+    rtp_first = 0;
+    rtp_seq[0] = ++seq;
 
-	for (i=0; i<MAXRTPPACKETSIN; i++) {
-		rtpbuf.len[i] = 0;
-	}
+    for (i=0; i<MAXRTPPACKETSIN; i++) rtp_len[i] = 0;
 }
 
 // Write in a cache the rtp packet in right rtp sequence order
-static int rtp_cache(Tcp& tcp, char *buffer, int length)
-{
-	struct rtpheader rh;
-	int newseq;
-	char *data;
-	unsigned short seq;
-	static int is_first = 1;
+int Rtp::cache(char *buffer, int length) {
+    struct rtpheader rh;
+    int newseq;
+    char *data;
+    unsigned short seq;
+    static int is_first = 1;
 
-	getrtp2(tcp, &rh, &data, &length);
-	if(!length)
-		return 0;
-	seq = rh.b.sequence;
+    getrtp2(&rh, &data, &length);
+    if(!length) return 0;
+    seq = rh.b.sequence;
 
-	newseq = seq - rtpbuf.seq[rtpbuf.first];
+    newseq = seq - rtp_seq[rtp_first];
 
-	if ((newseq == 0) || is_first)
-	{
-		is_first = 0;
+    if ((newseq == 0) || is_first) {
+	is_first = 0;
 
-		rtpbuf.first = ( 1 + rtpbuf.first ) % MAXRTPPACKETSIN;
-		rtpbuf.seq[rtpbuf.first] = ++seq;
-		goto feed;
+	rtp_first = ( 1 + rtp_first ) % MAXRTPPACKETSIN;
+	rtp_seq[rtp_first] = ++seq;
+	goto feed;
+    }
+
+    if (newseq > MAXRTPPACKETSIN) {
+	MSG_DBG2("Overrun(seq[%d]=%d seq=%d, newseq=%d)\n", rtp_first, rtp_seq[rtp_first], seq, newseq);
+	cache_reset(seq);
+	goto feed;
+    }
+
+    if (newseq < 0) {
+	int i;
+
+	// Is it a stray packet re-sent to network?
+	for (i=0; i<MAXRTPPACKETSIN; i++) {
+	    if (rtp_seq[i] == seq) {
+		MSG_ERR("Stray packet (seq[%d]=%d seq=%d, newseq=%d found at %d)\n", rtp_first, rtp_seq[rtp_first], seq, newseq, i);
+		return  0; // Yes, it is!
+	    }
+	}
+	// Some heuristic to decide when to drop packet or to restart everything
+	if (newseq > -(3 * MAXRTPPACKETSIN)) {
+	    MSG_ERR("Too Old packet (seq[%d]=%d seq=%d, newseq=%d)\n", rtp_first, rtp_seq[rtp_first], seq, newseq);
+	    return  0; // Yes, it is!
 	}
 
-	if (newseq > MAXRTPPACKETSIN)
-	{
-		MSG_DBG2("Overrun(seq[%d]=%d seq=%d, newseq=%d)\n", rtpbuf.first, rtpbuf.seq[rtpbuf.first], seq, newseq);
-		rtp_cache_reset(seq);
-		goto feed;
-	}
+	MSG_ERR("Underrun(seq[%d]=%d seq=%d, newseq=%d)\n", rtp_first, rtp_seq[rtp_first], seq, newseq);
 
-	if (newseq < 0)
-	{
-		int i;
+	cache_reset(seq);
+	goto feed;
+    }
 
-		// Is it a stray packet re-sent to network?
-		for (i=0; i<MAXRTPPACKETSIN; i++) {
-			if (rtpbuf.seq[i] == seq) {
-				MSG_ERR("Stray packet (seq[%d]=%d seq=%d, newseq=%d found at %d)\n", rtpbuf.first, rtpbuf.seq[rtpbuf.first], seq, newseq, i);
-				return  0; // Yes, it is!
-			}
-		}
-		// Some heuristic to decide when to drop packet or to restart everything
-		if (newseq > -(3 * MAXRTPPACKETSIN)) {
-			MSG_ERR("Too Old packet (seq[%d]=%d seq=%d, newseq=%d)\n", rtpbuf.first, rtpbuf.seq[rtpbuf.first], seq, newseq);
-			return  0; // Yes, it is!
-		}
+    MSG_DBG3("Out of Seq (seq[%d]=%d seq=%d, newseq=%d)\n", rtp_first, rtp_seq[rtp_first], seq, newseq);
+    newseq = ( newseq + rtp_first ) % MAXRTPPACKETSIN;
+    memcpy (rtp_data[newseq], data, length);
+    rtp_len[newseq] = length;
+    rtp_seq[newseq] = seq;
 
-		MSG_ERR("Underrun(seq[%d]=%d seq=%d, newseq=%d)\n", rtpbuf.first, rtpbuf.seq[rtpbuf.first], seq, newseq);
-
-		rtp_cache_reset(seq);
-		goto feed;
-	}
-
-	MSG_DBG3("Out of Seq (seq[%d]=%d seq=%d, newseq=%d)\n", rtpbuf.first, rtpbuf.seq[rtpbuf.first], seq, newseq);
-	newseq = ( newseq + rtpbuf.first ) % MAXRTPPACKETSIN;
-	memcpy (rtpbuf.data[newseq], data, length);
-	rtpbuf.len[newseq] = length;
-	rtpbuf.seq[newseq] = seq;
-
-	return 0;
+    return 0;
 
 feed:
-	memcpy (buffer, data, length);
-	return length;
+    memcpy (buffer, data, length);
+    return length;
 }
 
 // Get next packet in cache
 // Look in cache to get first packet in sequence
-static int rtp_get_next(Tcp& tcp, char *buffer, int length)
-{
-	int i;
-	unsigned short nextseq;
+int Rtp::get_next(char *buffer, int length) {
+    int i;
+    unsigned short nextseq;
 
-	// If we have empty buffer we loop to fill it
-	for (i=0; i < MAXRTPPACKETSIN -3; i++) {
-		if (rtpbuf.len[rtpbuf.first] != 0) break;
+    // If we have empty buffer we loop to fill it
+    for (i=0; i < MAXRTPPACKETSIN -3; i++) {
+	if (rtp_len[rtp_first] != 0) break;
 
-		length = rtp_cache(tcp, buffer, length) ;
+	length = cache(buffer, length);
 
-		// returns on first packet in sequence
-		if (length > 0) {
-			return length;
-		} else if (length < 0) break;
+	// returns on first packet in sequence
+	if (length > 0) return length;
+	else if (length < 0) break;
+	// Only if length == 0 loop continues!
+    }
 
-		// Only if length == 0 loop continues!
-	}
+    i = rtp_first;
+    while (rtp_len[i] == 0) {
+	MSG_ERR("Lost packet %hu\n", rtp_seq[i]);
+	i = ( 1 + i ) % MAXRTPPACKETSIN;
+	if (rtp_first == i) break;
+    }
+    rtp_first = i;
 
-	i = rtpbuf.first;
-	while (rtpbuf.len[i] == 0) {
-		MSG_ERR("Lost packet %hu\n", rtpbuf.seq[i]);
-		i = ( 1 + i ) % MAXRTPPACKETSIN;
-		if (rtpbuf.first == i) break;
-	}
-	rtpbuf.first = i;
+    // Copy next non empty packet from cache
+    MSG_DBG3( "Getting rtp from cache [%d] %hu\n", rtp_first, rtp_seq[rtp_first]);
+    memcpy (buffer, rtp_data[rtp_first], rtp_len[rtp_first]);
+    length = rtp_len[rtp_first]; // can be zero?
 
-	// Copy next non empty packet from cache
-	MSG_DBG3( "Getting rtp from cache [%d] %hu\n", rtpbuf.first, rtpbuf.seq[rtpbuf.first]);
-	memcpy (buffer, rtpbuf.data[rtpbuf.first], rtpbuf.len[rtpbuf.first]);
-	length = rtpbuf.len[rtpbuf.first]; // can be zero?
+    // Reset fisrt slot and go next in cache
+    rtp_len[rtp_first] = 0;
+    nextseq = rtp_seq[rtp_first];
+    rtp_first = ( 1 + rtp_first ) % MAXRTPPACKETSIN;
+    rtp_seq[rtp_first] = nextseq + 1;
 
-	// Reset fisrt slot and go next in cache
-	rtpbuf.len[rtpbuf.first] = 0;
-	nextseq = rtpbuf.seq[rtpbuf.first];
-	rtpbuf.first = ( 1 + rtpbuf.first ) % MAXRTPPACKETSIN;
-	rtpbuf.seq[rtpbuf.first] = nextseq + 1;
-
-	return length;
+    return length;
 }
 
 
 // Read next rtp packet using cache
-int read_rtp_from_server(Tcp& tcp, char *buffer, int length) {
-	// Following test is ASSERT (i.e. uneuseful if code is correct)
-	if(buffer==NULL || length<STREAM_BUFFER_SIZE) {
-		MSG_ERR("RTP buffer invalid; no data return from network\n");
-		return 0;
-	}
+int Rtp::read_from_server(char *buffer, int length) {
+    // Following test is ASSERT (i.e. uneuseful if code is correct)
+    if(buffer==NULL || length<STREAM_BUFFER_SIZE) {
+	MSG_ERR("RTP buffer invalid; no data return from network\n");
+	return 0;
+    }
 
-	// loop just to skip empty packets
-	while ((length = rtp_get_next(tcp, buffer, length)) == 0) {
-		MSG_ERR("Got empty packet from RTP cache!?\n");
-	}
-
-	return(length);
+    // loop just to skip empty packets
+    while ((length = get_next(buffer, length)) == 0) {
+	MSG_ERR("Got empty packet from RTP cache!?\n");
+    }
+    return(length);
 }
 
-static int getrtp2(Tcp& tcp, struct rtpheader *rh, char** data, int* lengthData) {
-  static char buf[1600];
-  unsigned int intP;
-  char* charP = (char*) &intP;
-  int headerSize;
-  int lengthPacket;
-  lengthPacket=tcp.read((uint8_t*)(buf),1590);
-  if (lengthPacket<0)
-    MSG_ERR("rtp: socket read error\n");
-  else if (lengthPacket<12)
-    MSG_ERR("rtp: packet too small (%d) to be an rtp frame (>12bytes)\n", lengthPacket);
-  if(lengthPacket<12) {
-    *lengthData = 0;
+int Rtp::getrtp2(struct rtpheader *rh, char** data, int* lengthData) const {
+    static char buf[1600];
+    unsigned int intP;
+    char* charP = (char*) &intP;
+    int headerSize;
+    int lengthPacket;
+    lengthPacket=tcp.read((uint8_t*)(buf),1590);
+    if (lengthPacket<0) MSG_ERR("rtp: socket read error\n");
+    else if (lengthPacket<12) MSG_ERR("rtp: packet too small (%d) to be an rtp frame (>12bytes)\n", lengthPacket);
+    if(lengthPacket<12) {
+	*lengthData = 0;
+	return 0;
+    }
+    rh->b.v  = (unsigned int) ((buf[0]>>6)&0x03);
+    rh->b.p  = (unsigned int) ((buf[0]>>5)&0x01);
+    rh->b.x  = (unsigned int) ((buf[0]>>4)&0x01);
+    rh->b.cc = (unsigned int) ((buf[0]>>0)&0x0f);
+    rh->b.m  = (unsigned int) ((buf[1]>>7)&0x01);
+    rh->b.pt = (unsigned int) ((buf[1]>>0)&0x7f);
+    intP = 0;
+    memcpy(charP+2,&buf[2],2);
+    rh->b.sequence = ntohl(intP);
+    intP = 0;
+    memcpy(charP,&buf[4],4);
+    rh->timestamp = ntohl(intP);
+
+    headerSize = 12 + 4*rh->b.cc; /* in bytes */
+
+    *lengthData = lengthPacket - headerSize;
+    *data = (char*) buf + headerSize;
+
     return 0;
-  }
-  rh->b.v  = (unsigned int) ((buf[0]>>6)&0x03);
-  rh->b.p  = (unsigned int) ((buf[0]>>5)&0x01);
-  rh->b.x  = (unsigned int) ((buf[0]>>4)&0x01);
-  rh->b.cc = (unsigned int) ((buf[0]>>0)&0x0f);
-  rh->b.m  = (unsigned int) ((buf[1]>>7)&0x01);
-  rh->b.pt = (unsigned int) ((buf[1]>>0)&0x7f);
-  intP = 0;
-  memcpy(charP+2,&buf[2],2);
-  rh->b.sequence = ntohl(intP);
-  intP = 0;
-  memcpy(charP,&buf[4],4);
-  rh->timestamp = ntohl(intP);
-
-  headerSize = 12 + 4*rh->b.cc; /* in bytes */
-
-  *lengthData = lengthPacket - headerSize;
-  *data = (char*) buf + headerSize;
-
-  return 0;
 }
+Rtp::Rtp(Tcp& _tcp):tcp(_tcp) {}
+Rtp::~Rtp() {}
+} // namespace mpxp

@@ -15,7 +15,7 @@ int RealRtsp_Networking::seek(Tcp& tcp, off_t pos) {
 
 int RealRtsp_Networking::read( Tcp& tcp, char *_buffer, int size) {
     Rtsp_Session& rtsp=*static_cast<Rtsp_Session*>(data);
-    return rtsp.read(tcp, _buffer, size);
+    return rtsp.read(_buffer, size);
 }
 
 Networking* RealRtsp_Networking::start( Tcp& tcp, network_protocol_t& protocol ) {

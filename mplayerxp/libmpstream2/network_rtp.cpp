@@ -15,7 +15,7 @@ int Rtp_Networking::seek(Tcp& tcp, off_t pos) {
 }
 
 int Rtp_Networking::read(Tcp& tcp, char *_buffer, int size) {
-    return read_rtp_from_server(tcp, _buffer, size );
+    return rtp->read_from_server(_buffer, size );
 }
 
 Networking* Rtp_Networking::start(Tcp& tcp,network_protocol_t& protocol, int raw_udp ) {
@@ -31,6 +31,7 @@ Networking* Rtp_Networking::start(Tcp& tcp,network_protocol_t& protocol, int raw
     rv->prebuffer_size = 64*1024;	// KBytes
     rv->buffering = 0;
     rv->status = networking_playing_e;
+    rv->rtp = new(zeromem) Rtp(tcp);
     return rv;
 }
 

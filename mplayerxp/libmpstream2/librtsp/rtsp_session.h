@@ -33,7 +33,7 @@ using namespace mpxp;
 
 #ifndef HAVE_RTSP_SESSION_H
 #define HAVE_RTSP_SESSION_H
-
+#include "../rtp.h"
 struct real_rtsp_session_t;
 namespace mpxp {
     class Rtp_Rtsp_Session;
@@ -45,12 +45,13 @@ namespace mpxp {
 
 	    static Rtsp_Session* start(Tcp& tcp, char **mrl, const std::string& path, const std::string& host,
 					int port, int *redir, uint32_t bandwidth, const std::string& user, const std::string& pass);
-	    virtual int		read(Tcp& tcp,char *data, int len);
+	    virtual int		read(char *data, int len);
 	    virtual void	end();
 	private:
 	    Rtsp*		s;
 	    real_rtsp_session_t*real_session;
 	    Rtp_Rtsp_Session*	rtp_session;
+	    Rtp*		rtp;
     };
 } // namespace mpxp
 #endif

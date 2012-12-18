@@ -83,10 +83,7 @@ Rtsp_Session *Rtsp_Session::start(Tcp& tcp, char **mrl, const std::string& path,
   char *mrl_line = NULL;
   rmff_header_t *h;
 
-  rtsp_session = new Rtsp_Session;
-  rtsp_session->s = NULL;
-  rtsp_session->real_session = NULL;
-  rtsp_session->rtp_session = NULL;
+  rtsp_session = new(zeromem) Rtsp_Session;
 
 //connect:
   *redir = 0;
@@ -199,6 +196,8 @@ Rtsp_Session *Rtsp_Session::start(Tcp& tcp, char **mrl, const std::string& path,
     }
 
     rtsp_session->rtp_session = Rtp_Rtsp_Session::setup_and_play (*rtsp_session->s);
+    tcp=rtsp_session->rtp_session->get_rtp_socket();
+    rtsp_session->rtp = new(zeromem) Rtp(tcp);
 
     /* neither a Real or an RTP server */
     if (!rtsp_session->rtp_session)
@@ -216,7 +215,7 @@ Rtsp_Session *Rtsp_Session::start(Tcp& tcp, char **mrl, const std::string& path,
   return rtsp_session;
 }
 
-int Rtsp_Session::read(Tcp& tcp,char *data, int len) {
+int Rtsp_Session::read(char *data, int len) {
 
     if (real_session) {
 	int to_copy=len;
@@ -256,9 +255,7 @@ int Rtsp_Session::read(Tcp& tcp,char *data, int len) {
 	return len;
     } else if (rtp_session) {
 	int l = 0;
-	Tcp _tcp(tcp.get_libinput(),rtp_session->get_rtp_socket());
-
-	l = read_rtp_from_server (_tcp, data, len);
+	l = rtp->read_from_server (data, len);
 	/* send RTSP and RTCP keepalive  */
 	rtp_session->rtcp_send_rr (*s);
 	if (l == 0)	end ();
@@ -270,9 +267,11 @@ int Rtsp_Session::read(Tcp& tcp,char *data, int len) {
 void Rtsp_Session::end() {
     s->close();
     if (real_session) free_real_rtsp_session (real_session);
+    real_session = NULL;
     if (rtp_session)  delete rtp_session;
+    rtp_session = NULL;
 }
 
 Rtsp_Session::Rtsp_Session() {}
-Rtsp_Session::~Rtsp_Session() {}
+Rtsp_Session::~Rtsp_Session() { end(); if(rtp) delete rtp; }
 } // namespace mpxp

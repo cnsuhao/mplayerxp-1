@@ -69,7 +69,7 @@ int Rtsp_Networking::seek(Tcp& tcp, off_t pos) {
 
 int Rtsp_Networking::read(Tcp& tcp, char *_buffer, int size) {
     Rtsp_Session& rtsp = *static_cast<Rtsp_Session*>(data);
-    return rtsp.read (tcp, buffer, size);
+    return rtsp.read (buffer, size);
 }
 
 Rtsp_Networking::Rtsp_Networking() {}

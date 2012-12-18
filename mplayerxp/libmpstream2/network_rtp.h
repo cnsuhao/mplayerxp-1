@@ -2,6 +2,7 @@
 #define __NETWORK_RP_H_INCLUDED
 
 #include "network_nop.h"
+#include "rtp.h"
 
 namespace mpxp {
     struct Rtp_Networking : public Nop_Networking {
@@ -13,6 +14,7 @@ namespace mpxp {
 	    virtual int seek( Tcp& fd, off_t pos);
 	private:
 	    Rtp_Networking();
+	    Rtp* rtp;
     };
 } // namespace mpxp
 #endif
