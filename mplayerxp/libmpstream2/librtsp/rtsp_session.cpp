@@ -49,7 +49,6 @@ using namespace mpxp;
 
 #include "tcp.h"
 #include "url.h"
-#include "rtp.h"
 #include "rtsp.h"
 #include "rtsp_rtp.h"
 #include "rtsp_session.h"
@@ -197,7 +196,7 @@ Rtsp_Session *Rtsp_Session::start(Tcp& tcp, char **mrl, const std::string& path,
 
     rtsp_session->rtp_session = Rtp_Rtsp_Session::setup_and_play (*rtsp_session->s);
     tcp=rtsp_session->rtp_session->get_rtp_socket();
-    rtsp_session->rtp = new(zeromem) Rtp(tcp);
+    rtsp_session->rtp = new(zeromem) Rtp_Cache(tcp);
 
     /* neither a Real or an RTP server */
     if (!rtsp_session->rtp_session)

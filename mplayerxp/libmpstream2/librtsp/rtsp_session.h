@@ -33,7 +33,7 @@ using namespace mpxp;
 
 #ifndef HAVE_RTSP_SESSION_H
 #define HAVE_RTSP_SESSION_H
-#include "../rtp.h"
+#include "../rtp_cache.h"
 struct real_rtsp_session_t;
 namespace mpxp {
     class Rtp_Rtsp_Session;
@@ -51,7 +51,7 @@ namespace mpxp {
 	    Rtsp*		s;
 	    real_rtsp_session_t*real_session;
 	    Rtp_Rtsp_Session*	rtp_session;
-	    Rtp*		rtp;
+	    Rtp_Cache*		rtp;
     };
 } // namespace mpxp
 #endif

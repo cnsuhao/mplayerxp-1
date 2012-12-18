@@ -4,8 +4,8 @@
  * http://svn.mplayerhq.hu/mplayer/trunk/
  * $Id: rtp.h,v 1.2 2007/11/17 12:43:37 nickols_k Exp $
  */
-#ifndef __RTP_H_INCLUDED
-#define __RTP_H_INCLUDED 1
+#ifndef __RTP_CACHE_H_INCLUDED
+#define __RTP_CACHE_H_INCLUDED 1
 #include "network.h"
 #include "tcp.h"
 #include <stdint.h>
@@ -19,10 +19,10 @@ namespace mpxp {
 
 #define MAXRTPPACKETSIN 32   // The number of max packets being reordered
 
-    class Rtp : public Opaque {
+    class Rtp_Cache : public Opaque {
 	public:
-	    Rtp(Tcp& tcp);
-	    virtual ~Rtp();
+	    Rtp_Cache(Tcp& tcp);
+	    virtual ~Rtp_Cache();
 
 	    virtual int		read_from_server(char *buffer, int length);
 	private:

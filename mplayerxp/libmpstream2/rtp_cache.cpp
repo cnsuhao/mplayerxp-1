@@ -32,7 +32,7 @@ using namespace mpxp;
 
 #define DEBUG        1
 #include "tcp.h"
-#include "rtp.h"
+#include "rtp_cache.h"
 #include "stream_msg.h"
 
 // RTP reorder routines
@@ -68,7 +68,7 @@ struct rtpheader {	/* in network byte order */
 // and keeps track of expected sequence
 
 // Initialize rtp cache
-void Rtp::cache_reset(unsigned short seq) {
+void Rtp_Cache::cache_reset(unsigned short seq) {
     int i;
 
     rtp_first = 0;
@@ -78,7 +78,7 @@ void Rtp::cache_reset(unsigned short seq) {
 }
 
 // Write in a cache the rtp packet in right rtp sequence order
-int Rtp::cache(char *buffer, int length) {
+int Rtp_Cache::cache(char *buffer, int length) {
     struct rtpheader rh;
     int newseq;
     char *data;
@@ -142,7 +142,7 @@ feed:
 
 // Get next packet in cache
 // Look in cache to get first packet in sequence
-int Rtp::get_next(char *buffer, int length) {
+int Rtp_Cache::get_next(char *buffer, int length) {
     int i;
     unsigned short nextseq;
 
@@ -182,7 +182,7 @@ int Rtp::get_next(char *buffer, int length) {
 
 
 // Read next rtp packet using cache
-int Rtp::read_from_server(char *buffer, int length) {
+int Rtp_Cache::read_from_server(char *buffer, int length) {
     // Following test is ASSERT (i.e. uneuseful if code is correct)
     if(buffer==NULL || length<STREAM_BUFFER_SIZE) {
 	MSG_ERR("RTP buffer invalid; no data return from network\n");
@@ -196,7 +196,7 @@ int Rtp::read_from_server(char *buffer, int length) {
     return(length);
 }
 
-int Rtp::getrtp2(struct rtpheader *rh, char** data, int* lengthData) const {
+int Rtp_Cache::getrtp2(struct rtpheader *rh, char** data, int* lengthData) const {
     static char buf[1600];
     unsigned int intP;
     char* charP = (char*) &intP;
@@ -229,6 +229,6 @@ int Rtp::getrtp2(struct rtpheader *rh, char** data, int* lengthData) const {
 
     return 0;
 }
-Rtp::Rtp(Tcp& _tcp):tcp(_tcp) {}
-Rtp::~Rtp() {}
+Rtp_Cache::Rtp_Cache(Tcp& _tcp):tcp(_tcp) {}
+Rtp_Cache::~Rtp_Cache() {}
 } // namespace mpxp

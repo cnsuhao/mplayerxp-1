@@ -42,7 +42,7 @@ CXXSRCS += cookies.cpp \
            network_rtp.cpp \
            network_rtsp.cpp \
            pnm.cpp \
-           rtp.cpp \
+           rtp_cache.cpp \
            tcp.cpp \
            udp.cpp
 CXXSRCS += s_ftp.cpp \
