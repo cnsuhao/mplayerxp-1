@@ -34,7 +34,7 @@ Networking* Rtsp_Networking::start(Tcp& tcp, URL& url,unsigned bandwidth)
 
 	sprintf (mrl, "rtsp://%s:%i/%s",url.host().c_str(), url.port(), file);
 
-	rtsp = rtsp_session_start (tcp, &mrl, file,
+	rtsp = Rtsp_Session::start (tcp, &mrl, file,
 			url.host(),
 			url.port(), &redirected,
 			bandwidth,

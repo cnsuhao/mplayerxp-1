@@ -23,19 +23,31 @@
 
 #include "rtsp.h"
 
+namespace mpxp {
 #define MAX_PREVIEW_SIZE 4096
+    class Rtp_Rtsp_Session : public Opaque {
+	public:
+	    Rtp_Rtsp_Session();
+	    virtual ~Rtp_Rtsp_Session();
 
-struct rtp_rtsp_session_t {
-  int rtp_socket;
-  int rtcp_socket;
-  char *control_url;
-  int count;
-};
+	    static Rtp_Rtsp_Session*	setup_and_play(Rtsp& rtsp_session);
+	    virtual void		rtcp_send_rr (Rtsp& s);
+	    virtual int			get_rtp_socket() const;
+	private:
+	    void	set_fd (int rtp_sock, int rtcp_sock);
+	    int		parse_port (const char *line, const char *param, int *rtp_port, int *rtcp_port) const;
+	    char*	parse_destination (const char *line) const;
+	    int		rtcp_connect (int client_port, int server_port, const char* server_hostname) const;
+	    int		rtp_connect (const char *hostname, int port) const;
+	    int		is_multicast_address (const char *addr) const;
 
-struct rtp_rtsp_session_t *rtp_setup_and_play (rtsp_t* rtsp_session);
-off_t rtp_read (struct rtp_rtsp_session_t* st, char *buf, off_t length);
-void rtp_session_free (struct rtp_rtsp_session_t *st);
-void rtcp_send_rr (rtsp_t *s, struct rtp_rtsp_session_t *st);
-
+	    int		rtp_socket;
+	    int		rtcp_socket;
+	    char*	control_url;
+	    int		count;
+	    int		rtsp_port;
+	    char*	rtsp_destination;
+    };
+} // namespace mpxp
 #endif /* HAVE_RTSP_RTP_H */
 

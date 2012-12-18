@@ -309,7 +309,7 @@ static rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t b
   return header;
 }
 
-int real_get_rdt_chunk(rtsp_t *rtsp_session, char **buffer, int rdt_rawdata) {
+int real_get_rdt_chunk(Rtsp& rtsp, char **buffer, int rdt_rawdata) {
 
   int n=1;
   uint8_t header[8];
@@ -321,7 +321,7 @@ int real_get_rdt_chunk(rtsp_t *rtsp_session, char **buffer, int rdt_rawdata) {
   static uint32_t prev_ts = -1;
   static int prev_stream_number = -1;
 
-  n=rtsp_read_data(rtsp_session, (char *)header, 8);
+  n=rtsp.read_data((char *)header, 8);
   if (n<8) return 0;
   if (header[0] != 0x24)
   {
@@ -338,7 +338,7 @@ int real_get_rdt_chunk(rtsp_t *rtsp_session, char **buffer, int rdt_rawdata) {
     printf("got flags1: 0x%02x\n",flags1);
 #endif
     if(header[6] == 0x06) { // eof packet
-      rtsp_read_data(rtsp_session, (char *)header, 7); // Skip the rest of the eof packet
+      rtsp.read_data((char *)header, 7); // Skip the rest of the eof packet
       /* Some files have short auxiliary streams, we must ignore eof packets
        * for these streams to avoid premature eof.
        * Now the code declares eof only if the stream with id == 0 gets eof
@@ -352,13 +352,13 @@ int real_get_rdt_chunk(rtsp_t *rtsp_session, char **buffer, int rdt_rawdata) {
     header[0]=header[5];
     header[1]=header[6];
     header[2]=header[7];
-    n=rtsp_read_data(rtsp_session, (char *)(header+3), 5);
+    n=rtsp.read_data((char *)(header+3), 5);
     if (n<5) return 0;
 #ifdef LOG
     printf("ignoring bytes:\n");
     hexdump(header, 8);
 #endif
-    n=rtsp_read_data(rtsp_session, (char *)(header+4), 4);
+    n=rtsp.read_data((char *)(header+4), 4);
     if (n<4) return 0;
     flags1=header[4];
     size-=9;
@@ -366,7 +366,7 @@ int real_get_rdt_chunk(rtsp_t *rtsp_session, char **buffer, int rdt_rawdata) {
   flags2=header[7];
   // header[5..6] == frame number in stream
   unknown1=(header[5]<<16)+(header[6]<<8)+(header[7]);
-  n=rtsp_read_data(rtsp_session, (char *)header, 6);
+  n=rtsp.read_data((char *)header, 6);
   if (n<6) return 0;
   ts=AV_RB32(header);
 
@@ -391,12 +391,12 @@ int real_get_rdt_chunk(rtsp_t *rtsp_session, char **buffer, int rdt_rawdata) {
     ph.flags=0;
   *buffer = (char *)xbuffer_ensure_size(*buffer, 12+size);
   if(rdt_rawdata) {
-    n=rtsp_read_data(rtsp_session, *buffer, size-12);
+    n=rtsp.read_data(*buffer, size-12);
     return (n <= 0) ? 0 : n;
   }
   rmff_dump_pheader(&ph, *buffer);
   size-=12;
-  n=rtsp_read_data(rtsp_session, (*buffer)+12, size);
+  n=rtsp.read_data((*buffer)+12, size);
 
   return (n <= 0) ? 0 : n+12;
 }
@@ -427,7 +427,7 @@ static int convert_timestamp(char *str, int *sec, int *msec) {
 
 //! maximum size of the rtsp description, must be < INT_MAX
 #define MAX_DESC_BUF (20 * 1024 * 1024)
-rmff_header_t *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwidth,
+rmff_header_t *real_setup_and_get_header(Rtsp& rtsp, uint32_t bandwidth,
   const char *username, const char *password) {
 
   char *description=NULL;
@@ -438,7 +438,7 @@ rmff_header_t *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwidt
   char checksum[34];
   char *subscribe;
   char *buf = (char *)xbuffer_init(256);
-  char *mrl=rtsp_get_mrl(rtsp_session);
+  char *mrl=rtsp.get_mrl();
   unsigned int size;
   int status;
   uint32_t maxbandwidth = bandwidth;
@@ -446,7 +446,7 @@ rmff_header_t *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwidt
   int i;
 
   /* get challenge */
-  challenge1=mp_strdup(rtsp_search_answers(rtsp_session,"RealChallenge1"));
+  challenge1=mp_strdup(rtsp.search_answers("RealChallenge1"));
 #ifdef LOG
   printf("real: Challenge1: %s\n", challenge1);
 #endif
@@ -457,18 +457,18 @@ rmff_header_t *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwidt
 
   /* request stream description */
 rtsp_send_describe:
-  rtsp_schedule_field(rtsp_session, "Accept: application/sdp");
+  rtsp.schedule_field("Accept: application/sdp");
   sprintf(buf, "Bandwidth: %u", bandwidth);
-  rtsp_schedule_field(rtsp_session, buf);
-  rtsp_schedule_field(rtsp_session, "GUID: 00000000-0000-0000-0000-000000000000");
-  rtsp_schedule_field(rtsp_session, "RegionData: 0");
-  rtsp_schedule_field(rtsp_session, "ClientID: Linux_2.4_6.0.9.1235_play32_RN01_EN_586");
-  rtsp_schedule_field(rtsp_session, "SupportsMaximumASMBandwidth: 1");
-  rtsp_schedule_field(rtsp_session, "Language: en-US");
-  rtsp_schedule_field(rtsp_session, "Require: com.real.retain-entity-for-setup");
+  rtsp.schedule_field(buf);
+  rtsp.schedule_field("GUID: 00000000-0000-0000-0000-000000000000");
+  rtsp.schedule_field("RegionData: 0");
+  rtsp.schedule_field("ClientID: Linux_2.4_6.0.9.1235_play32_RN01_EN_586");
+  rtsp.schedule_field("SupportsMaximumASMBandwidth: 1");
+  rtsp.schedule_field("Language: en-US");
+  rtsp.schedule_field("Require: com.real.retain-entity-for-setup");
   if(authfield)
-    rtsp_schedule_field(rtsp_session, authfield);
-  status=rtsp_request_describe(rtsp_session,NULL);
+    rtsp.schedule_field(authfield);
+  status=rtsp.request_describe(NULL);
 
   if (status == 401) {
     int authlen, b64_authlen;
@@ -479,7 +479,7 @@ rtsp_send_describe:
       MSG_ERR("realrtsp: authorization failed, check your credentials\n");
       goto autherr;
     }
-    if (!(authreq = rtsp_search_answers(rtsp_session,"WWW-Authenticate"))) {
+    if (!(authreq = rtsp.search_answers("WWW-Authenticate"))) {
       MSG_ERR("realrtsp: 401 but no auth request, aborting\n");
       goto autherr;
     }
@@ -511,22 +511,22 @@ autherr:
 
   if ( status<200 || status>299 )
   {
-    char *alert=rtsp_search_answers(rtsp_session,"Alert");
+    char *alert=rtsp.search_answers("Alert");
     if (alert) {
       MSG_WARN("realrtsp: got message from server:\n%s\n",
 	alert);
     }
-    rtsp_send_ok(rtsp_session);
+    rtsp.send_ok();
     buf = (char *)xbuffer_free(buf);
     return NULL;
   }
 
   /* receive description */
   size=0;
-  if (!rtsp_search_answers(rtsp_session,"Content-length"))
+  if (!rtsp.search_answers("Content-length"))
     MSG_WARN("real: got no Content-length!\n");
   else
-    size=atoi(rtsp_search_answers(rtsp_session,"Content-length"));
+    size=atoi(rtsp.search_answers("Content-length"));
 
   // as size is unsigned this also catches the case (size < 0)
   if (size > MAX_DESC_BUF) {
@@ -536,10 +536,10 @@ autherr:
     return NULL;
   }
 
-  if (!rtsp_search_answers(rtsp_session,"ETag"))
+  if (!rtsp.search_answers("ETag"))
     MSG_WARN("realrtsp: got no ETag!\n");
   else
-    session_id=mp_strdup(rtsp_search_answers(rtsp_session,"ETag"));
+    session_id=mp_strdup(rtsp.search_answers("ETag"));
 
 #ifdef LOG
   printf("real: Stream description size: %u\n", size);
@@ -547,7 +547,7 @@ autherr:
 
   description=new char [size+1];
 
-  if( rtsp_read_data(rtsp_session, description, size) <= 0) {
+  if( rtsp.read_data(description, size) <= 0) {
     buf = (char *)xbuffer_free(buf);
     return NULL;
   }
@@ -573,45 +573,45 @@ autherr:
   real_calc_response_and_checksum (challenge2, checksum, challenge1);
   buf = (char *)xbuffer_ensure_size(buf, strlen(challenge2) + strlen(checksum) + 32);
   sprintf(buf, "RealChallenge2: %s, sd=%s", challenge2, checksum);
-  rtsp_schedule_field(rtsp_session, buf);
+  rtsp.schedule_field(buf);
   buf = (char *)xbuffer_ensure_size(buf, strlen(session_id) + 32);
   sprintf(buf, "If-Match: %s", session_id);
-  rtsp_schedule_field(rtsp_session, buf);
-  rtsp_schedule_field(rtsp_session, "Transport: x-pn-tng/tcp;mode=play,rtp/avp/tcp;unicast;mode=play");
+  rtsp.schedule_field(buf);
+  rtsp.schedule_field("Transport: x-pn-tng/tcp;mode=play,rtp/avp/tcp;unicast;mode=play");
   buf = (char *)xbuffer_ensure_size(buf, strlen(mrl) + 32);
   sprintf(buf, "%s/streamid=0", mrl);
-  rtsp_request_setup(rtsp_session,buf,NULL);
+  rtsp.request_setup(buf,NULL);
 
   /* Do setup for all the other streams we subscribed to */
   for (i = 1; i < h->prop->num_streams; i++) {
-    rtsp_schedule_field(rtsp_session, "Transport: x-pn-tng/tcp;mode=play,rtp/avp/tcp;unicast;mode=play");
+    rtsp.schedule_field("Transport: x-pn-tng/tcp;mode=play,rtp/avp/tcp;unicast;mode=play");
     buf = (char *)xbuffer_ensure_size(buf, strlen(session_id) + 32);
     sprintf(buf, "If-Match: %s", session_id);
-    rtsp_schedule_field(rtsp_session, buf);
+    rtsp.schedule_field(buf);
 
     buf = (char *)xbuffer_ensure_size(buf, strlen(mrl) + 32);
     sprintf(buf, "%s/streamid=%d", mrl, i);
-    rtsp_request_setup(rtsp_session,buf,NULL);
+    rtsp.request_setup(buf,NULL);
   }
   /* set stream parameter (bandwidth) with our subscribe string */
-  rtsp_schedule_field(rtsp_session, subscribe);
-  rtsp_request_setparameter(rtsp_session,NULL);
+  rtsp.schedule_field(subscribe);
+  rtsp.request_setparameter(NULL);
 
   /* set delivery bandwidth */
   if (maxbandwidth) {
       sprintf(buf, "SetDeliveryBandwidth: Bandwidth=%u;BackOff=0", maxbandwidth);
-      rtsp_schedule_field(rtsp_session, buf);
-      rtsp_request_setparameter(rtsp_session,NULL);
+      rtsp.schedule_field(buf);
+      rtsp.request_setparameter(NULL);
   }
 
   {
     int s_ss = 0, s_ms = 0, e_ss = 0, e_ms = 0;
     char *str;
-    if ((str = rtsp_get_param(rtsp_session, "start"))) {
+    if ((str = rtsp.get_param("start"))) {
       convert_timestamp(str, &s_ss, &s_ms);
       delete str;
     }
-    if ((str = rtsp_get_param(rtsp_session, "end"))) {
+    if ((str = rtsp.get_param("end"))) {
       convert_timestamp(str, &e_ss, &e_ms);
       delete str;
     }
@@ -619,9 +619,9 @@ autherr:
     if (e_ss || e_ms)
       sprintf(str, e_ms ? "%d.%d" : "%d", e_ss, e_ms);
   }
-  rtsp_schedule_field(rtsp_session, buf);
+  rtsp.schedule_field(buf);
   /* and finally send a play request */
-  rtsp_request_play(rtsp_session,NULL);
+  rtsp.request_play(NULL);
 
   subscribe = (char *)xbuffer_free(subscribe);
   buf = (char *)xbuffer_free(buf);

@@ -41,7 +41,7 @@ Networking* RealRtsp_Networking::start( Tcp& tcp, network_protocol_t& protocol )
 	if (file[0] == '/') file++;
 	mrl = new char [protocol.url.host().length()+strlen(file)+16];
 	sprintf(mrl,"rtsp://%s:%i/%s",protocol.url.host().c_str(),protocol.url.port(),file);
-	rtsp = rtsp_session_start(tcp,&mrl, file,
+	rtsp = Rtsp_Session::start(tcp,&mrl, file,
 			protocol.url.host(), protocol.url.port(), &redirected,
 			net_conf.bandwidth,protocol.url.user(),
 			protocol.url.password());

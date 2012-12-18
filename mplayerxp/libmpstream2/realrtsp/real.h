@@ -51,8 +51,8 @@ struct real_rtsp_session_t {
   int rdt_rawdata;
 };
 
-int real_get_rdt_chunk(rtsp_t *rtsp_session, char **buffer, int rdt_rawdata);
-rmff_header_t *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwidth,
+int real_get_rdt_chunk(Rtsp& rtsp_session, char **buffer, int rdt_rawdata);
+rmff_header_t *real_setup_and_get_header(Rtsp& rtsp_session, uint32_t bandwidth,
   const char *username, const char *password);
 struct real_rtsp_session_t *init_real_rtsp_session (void);
 void free_real_rtsp_session (struct real_rtsp_session_t* real_session);

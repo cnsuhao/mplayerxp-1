@@ -35,23 +35,22 @@ using namespace mpxp;
 #define HAVE_RTSP_SESSION_H
 
 struct real_rtsp_session_t;
-struct rtp_rtsp_session_t;
-struct rtsp_t;
 namespace mpxp {
+    class Rtp_Rtsp_Session;
+    class Rtsp;
     struct Rtsp_Session : public Opaque {
 	public:
 	    Rtsp_Session();
 	    virtual ~Rtsp_Session();
 
-	    virtual int	read(Tcp& tcp,char *data, int len);
+	    static Rtsp_Session* start(Tcp& tcp, char **mrl, const std::string& path, const std::string& host,
+					int port, int *redir, uint32_t bandwidth, const std::string& user, const std::string& pass);
+	    virtual int		read(Tcp& tcp,char *data, int len);
 	    virtual void	end();
-
-	    rtsp_t*			s;
-	    real_rtsp_session_t*	real_session;
-	    rtp_rtsp_session_t*	rtp_session;
+	private:
+	    Rtsp*		s;
+	    real_rtsp_session_t*real_session;
+	    Rtp_Rtsp_Session*	rtp_session;
     };
-
-    Rtsp_Session* rtsp_session_start(Tcp& tcp, char **mrl, const std::string& path, const std::string& host,
-				    int port, int *redir, uint32_t bandwidth, const std::string& user, const std::string& pass);
 } // namespace mpxp
 #endif

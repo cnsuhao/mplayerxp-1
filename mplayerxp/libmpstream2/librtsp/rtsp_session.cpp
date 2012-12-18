@@ -73,7 +73,7 @@ namespace mpxp {
 #define RTSP_SERVER_TYPE_UNKNOWN "unknown"
 
 //Rtsp_Session *rtsp_session_start(char *mrl) {
-Rtsp_Session *rtsp_session_start(Tcp& tcp, char **mrl, const std::string& path,
+Rtsp_Session *Rtsp_Session::start(Tcp& tcp, char **mrl, const std::string& path,
 				const std::string& host,
 				int port, int *redir, uint32_t bandwidth,
 				const std::string& user, const std::string& pass) {
@@ -92,7 +92,7 @@ Rtsp_Session *rtsp_session_start(Tcp& tcp, char **mrl, const std::string& path,
   *redir = 0;
 
   /* connect to server */
-  rtsp_session->s=rtsp_connect(tcp,*mrl,path.c_str(),host.c_str(),port,NULL);
+  rtsp_session->s=Rtsp::connect(tcp,*mrl,path.c_str(),host.c_str(),port,NULL);
   if (!rtsp_session->s)
   {
     MSG_ERR("rtsp_session: failed to connect to server %s\n", path.c_str());
@@ -101,10 +101,10 @@ Rtsp_Session *rtsp_session_start(Tcp& tcp, char **mrl, const std::string& path,
   }
 
   /* looking for server type */
-  if (rtsp_search_answers(rtsp_session->s,RTSP_OPTIONS_SERVER))
-    server=mp_strdup(rtsp_search_answers(rtsp_session->s,RTSP_OPTIONS_SERVER));
+  if (rtsp_session->s->search_answers(RTSP_OPTIONS_SERVER))
+    server=mp_strdup(rtsp_session->s->search_answers(RTSP_OPTIONS_SERVER));
   else {
-    if (rtsp_search_answers(rtsp_session->s,RTSP_OPTIONS_REAL))
+    if (rtsp_session->s->search_answers(RTSP_OPTIONS_REAL))
       server=mp_strdup(RTSP_SERVER_TYPE_REAL);
     else
       server=mp_strdup(RTSP_SERVER_TYPE_UNKNOWN);
@@ -113,15 +113,15 @@ Rtsp_Session *rtsp_session_start(Tcp& tcp, char **mrl, const std::string& path,
   {
     /* we are talking to a real server ... */
 
-    h=real_setup_and_get_header(rtsp_session->s, bandwidth, user.c_str(), pass.c_str());
+    h=real_setup_and_get_header(*rtsp_session->s, bandwidth, user.c_str(), pass.c_str());
     if (!h) {
       /* got an redirect? */
-      if (rtsp_search_answers(rtsp_session->s, RTSP_OPTIONS_LOCATION))
+      if (rtsp_session->s->search_answers(RTSP_OPTIONS_LOCATION))
       {
 	delete mrl_line;
-	mrl_line=mp_strdup(rtsp_search_answers(rtsp_session->s, RTSP_OPTIONS_LOCATION));
+	mrl_line=mp_strdup(rtsp_session->s->search_answers(RTSP_OPTIONS_LOCATION));
 	MSG_INFO("rtsp_session: redirected to %s\n", mrl_line);
-	rtsp_close(rtsp_session->s);
+	rtsp_session->s->close();
 	delete server;
 	delete *mrl;
 	delete rtsp_session;
@@ -133,7 +133,7 @@ Rtsp_Session *rtsp_session_start(Tcp& tcp, char **mrl, const std::string& path,
       } else
       {
 	MSG_ERR("rtsp_session: session can not be established.\n");
-	rtsp_close(rtsp_session->s);
+	rtsp_session->s->close();
 	delete server;
 	delete rtsp_session;
 	return NULL;
@@ -154,7 +154,7 @@ Rtsp_Session *rtsp_session_start(Tcp& tcp, char **mrl, const std::string& path,
       if (rtsp_session->real_session->header_len < 0) {
 	MSG_ERR("rtsp_session: error while dumping RMFF headers, session can not be established.\n");
 	free_real_rtsp_session(rtsp_session->real_session);
-	rtsp_close(rtsp_session->s);
+	rtsp_session->s->close();
 	delete server;
 	delete mrl_line;
 	delete rtsp_session;
@@ -175,9 +175,9 @@ Rtsp_Session *rtsp_session_start(Tcp& tcp, char **mrl, const std::string& path,
     char *publics = NULL;
 
     /* look for the Public: field in response to RTSP OPTIONS */
-    if (!(publics = rtsp_search_answers (rtsp_session->s, RTSP_OPTIONS_PUBLIC)))
+    if (!(publics = rtsp_session->s->search_answers (RTSP_OPTIONS_PUBLIC)))
     {
-      rtsp_close (rtsp_session->s);
+      rtsp_session->s->close ();
       delete server;
       delete mrl_line;
       delete rtsp_session;
@@ -191,20 +191,20 @@ Rtsp_Session *rtsp_session_start(Tcp& tcp, char **mrl, const std::string& path,
 	|| !strstr (publics, RTSP_METHOD_TEARDOWN))
     {
       MSG_ERR("Remote server does not meet minimal RTSP 1.0 compliance.\n");
-      rtsp_close (rtsp_session->s);
+      rtsp_session->s->close ();
       delete server;
       delete mrl_line;
       delete rtsp_session;
       return NULL;
     }
 
-    rtsp_session->rtp_session = rtp_setup_and_play (rtsp_session->s);
+    rtsp_session->rtp_session = Rtp_Rtsp_Session::setup_and_play (*rtsp_session->s);
 
     /* neither a Real or an RTP server */
     if (!rtsp_session->rtp_session)
     {
       MSG_ERR("rtsp_session: unsupported RTSP server. Server type is '%s'.\n", server);
-      rtsp_close (rtsp_session->s);
+      rtsp_session->s->close ();
       delete server;
       delete mrl_line;
       delete rtsp_session;
@@ -234,7 +234,7 @@ int Rtsp_Session::read(Tcp& tcp,char *data, int len) {
 	    dest += fill;
 	    real_session->recv_read = 0;
 	    real_session->recv_size =
-	    real_get_rdt_chunk (s, (char **)&(real_session->recv), real_session->rdt_rawdata);
+	    real_get_rdt_chunk (*s, (char **)&(real_session->recv), real_session->rdt_rawdata);
 	    if (real_session->recv_size < 0) {
 		real_session->rdteof = 1;
 		real_session->recv_size = 0;
@@ -256,11 +256,11 @@ int Rtsp_Session::read(Tcp& tcp,char *data, int len) {
 	return len;
     } else if (rtp_session) {
 	int l = 0;
-	Tcp _tcp(tcp.get_libinput(),rtp_session->rtp_socket);
+	Tcp _tcp(tcp.get_libinput(),rtp_session->get_rtp_socket());
 
 	l = read_rtp_from_server (_tcp, data, len);
 	/* send RTSP and RTCP keepalive  */
-	rtcp_send_rr (s, rtp_session);
+	rtp_session->rtcp_send_rr (*s);
 	if (l == 0)	end ();
 	return l;
     }
@@ -268,9 +268,9 @@ int Rtsp_Session::read(Tcp& tcp,char *data, int len) {
 }
 
 void Rtsp_Session::end() {
-    rtsp_close(s);
+    s->close();
     if (real_session) free_real_rtsp_session (real_session);
-    if (rtp_session)  rtp_session_free (rtp_session);
+    if (rtp_session)  delete rtp_session;
 }
 
 Rtsp_Session::Rtsp_Session() {}

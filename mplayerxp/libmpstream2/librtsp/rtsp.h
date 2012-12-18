@@ -33,11 +33,13 @@
 #define HAVE_RTSP_H
 #include "libmpstream2/tcp.h"
 
+namespace mpxp {
 /* some codes returned by rtsp_request_* functions */
-enum {
-    RTSP_STATUS_SET_PARAMETER	=10,
-    RTSP_STATUS_OK		=200
-};
+    enum {
+	RTSP_STATUS_SET_PARAMETER	=10,
+	RTSP_STATUS_OK			=200,
+	RTSP_MAX_FIELDS			=256
+    };
 #define RTSP_METHOD_OPTIONS "OPTIONS"
 #define RTSP_METHOD_DESCRIBE "DESCRIBE"
 #define RTSP_METHOD_SETUP "SETUP"
@@ -45,40 +47,67 @@ enum {
 #define RTSP_METHOD_TEARDOWN "TEARDOWN"
 #define RTSP_METHOD_SET_PARAMETER "SET_PARAMETER"
 
-struct rtsp_t;
+    class Rtsp : public Opaque {
+	public:
+	    Rtsp(Tcp& tcp);
+	    virtual ~Rtsp();
 
-rtsp_t*  rtsp_connect (Tcp& tcp, char *mrl, const char *path, const char *host, int port, const char *user_agent);
+	    static Rtsp*	connect (Tcp& tcp, char *mrl, const char *path, const char *host, int port, const char *user_agent);
 
-int rtsp_request_options(rtsp_t *s, const char *what);
-int rtsp_request_describe(rtsp_t *s, const char *what);
-int rtsp_request_setup(rtsp_t *s, const char *what, char *control);
-int rtsp_request_setparameter(rtsp_t *s, const char *what);
-int rtsp_request_play(rtsp_t *s, const char *what);
-int rtsp_request_teardown(rtsp_t *s, const char *what);
+	    virtual int		request_options(const char *what);
+	    virtual int		request_describe(const char *what);
+	    virtual int		request_setup(const char *what, char *control);
+	    virtual int		request_setparameter(const char *what);
+	    virtual int		request_play(const char *what);
+	    virtual int		request_teardown(const char *what);
 
-int rtsp_send_ok(rtsp_t *s);
+	    virtual int		send_ok() const;
+	    virtual int		read_data(char *buffer, unsigned int size) const;
 
-int rtsp_read_data(rtsp_t *s, char *buffer, unsigned int size);
+	    virtual char*	search_answers(const char *tag) const;
 
-char* rtsp_search_answers(rtsp_t *s, const char *tag);
-void rtsp_add_to_payload(char **payload, const char *string);
+	    virtual void	free_answers();
 
-void rtsp_free_answers(rtsp_t *self);
+	    virtual void	close ();
 
-int      rtsp_read (rtsp_t *self, char *data, int len);
-void     rtsp_close (rtsp_t *self);
+	    virtual void	set_session(const char *id);
+	    virtual const char*	get_session() const;
 
-void  rtsp_set_session(rtsp_t *s, const char *id);
-const char *rtsp_get_session(rtsp_t *s);
+	    virtual char*	get_mrl() const;
+	    virtual char*	get_param(const char *param) const;
 
-char *rtsp_get_mrl(rtsp_t *s);
-char *rtsp_get_param(rtsp_t *s,const char *param);
+	    virtual void	schedule_field(const char *string);
+	    virtual void	unschedule_field(const char *string);
+	    virtual void	unschedule_all();
+	private:
+	    char*		get() const;
+	    void		put(const char *string) const;
+	    int			get_code(const char *string) const;
+	    void		send_request(const char *type, const char *what);
+	    void		schedule_standard();
+	    int			get_answers();
+	    int			write_stream(const char *buf, int len) const;
+	    ssize_t		read_stream(any_t*buf, size_t count) const;
 
-/*int      rtsp_peek_header (rtsp_t *self, char *data); */
+	    Tcp&	tcp;
 
-void rtsp_schedule_field(rtsp_t *s, const char *string);
-void rtsp_unschedule_field(rtsp_t *s, const char *string);
-void rtsp_unschedule_all(rtsp_t *s);
+	    const char*	host;
+	    int		port;
+	    const char*	path;
+	    const char*	param;
+	    char*	mrl;
+	    const char*	user_agent;
 
+	    const char*	server;
+	    unsigned	server_state;
+	    uint32_t	server_caps;
+
+	    unsigned	cseq;
+	    const char*	session;
+
+	    char*	answers[RTSP_MAX_FIELDS];   /* data of last message */
+	    char*	scheduled[RTSP_MAX_FIELDS]; /* will be sent with next message */
+    };
+} // namespace mpxp
 #endif
 
