@@ -302,54 +302,32 @@ void HTTP_Header::debug_hdr( ) {
     MSG_V("--- HTTP DEBUG HEADER --- END ---\n");
 }
 
-int HTTP_Header::authenticate(URL *url, int *auth_retry) {
+int HTTP_Header::authenticate(URL& url, int *auth_retry) {
     const char *aut;
 
-	if( *auth_retry==1 ) {
-		MSG_ERR(MSGTR_ConnAuthFailed);
-		return -1;
-	}
-	if( *auth_retry>0 ) {
-		if( url->username ) {
-			delete url->username ;
-			url->username = NULL;
-		}
-		if( url->password ) {
-			delete url->password ;
-			url->password = NULL;
-		}
-	}
+    if( *auth_retry==1 ) {
+	MSG_ERR(MSGTR_ConnAuthFailed);
+	return -1;
+    }
+    if( *auth_retry>0 ) url.clear_login();
 
-	aut = get_field("WWW-Authenticate");
-	if( aut!=NULL ) {
-		const char *aut_space;
-		aut_space = strstr(aut, "realm=");
-		if( aut_space!=NULL ) aut_space += 6;
-		MSG_INFO("Authentication required for %s\n", aut_space);
-	} else {
-		MSG_INFO("Authentication required\n");
-	}
-	if( net_conf.username ) {
-		url->username = mp_strdup(net_conf.username);
-		if( url->username==NULL ) {
-			MSG_FATAL(MSGTR_OutOfMemory);
-			return -1;
-		}
-	} else {
-		MSG_ERR(MSGTR_ConnAuthFailed);
-		return -1;
-	}
-	if( net_conf.password ) {
-		url->password = mp_strdup(net_conf.password);
-		if( url->password==NULL ) {
-			MSG_FATAL(MSGTR_OutOfMemory);
-			return -1;
-		}
-	} else {
-		MSG_INFO("No password provided, trying blank password\n");
-	}
-	(*auth_retry)++;
-	return 0;
+    aut = get_field("WWW-Authenticate");
+    if( aut!=NULL ) {
+	const char *aut_space;
+	aut_space = strstr(aut, "realm=");
+	if( aut_space!=NULL ) aut_space += 6;
+	MSG_INFO("Authentication required for %s\n", aut_space);
+    } else {
+	MSG_INFO("Authentication required\n");
+    }
+    if( !net_conf.username ) {
+	MSG_ERR(MSGTR_ConnAuthFailed);
+	return -1;
+    }
+    if( !net_conf.password ) MSG_INFO("No password provided, trying blank password\n");
+    url.set_login(net_conf.username,net_conf.password?net_conf.password:"");
+    (*auth_retry)++;
+    return 0;
 }
 
 

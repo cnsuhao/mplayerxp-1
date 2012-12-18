@@ -23,6 +23,7 @@
 #include <string>
 #include <stdint.h>
 #include "input2/input.h"
+#include "url.h"
 
 namespace mpxp {
 
@@ -40,7 +41,7 @@ namespace mpxp {
 		Err_None	=0   /* no error */
 	    };
 	    Tcp(libinput_t& libinput,net_fd_t fd);
-	    Tcp(libinput_t& libinput,const std::string& host,int port,tcp_af_e af=Tcp::IP4);
+	    Tcp(libinput_t& libinput,const URL& url,tcp_af_e af=Tcp::IP4);
 	    virtual ~Tcp();
 
 	    Tcp&	operator=(Tcp& other);
@@ -50,8 +51,9 @@ namespace mpxp {
 	    virtual int		has_data(int timeout) const;
 	    virtual tcp_error_e	error() const;
 	    virtual libinput_t&	get_libinput() const;
+	    virtual const URL&	url() const;
 
-	    virtual void	open(const std::string& host,int port,tcp_af_e af=Tcp::IP4);
+	    virtual void	open(const URL& url,tcp_af_e af=Tcp::IP4);
 	    virtual int		read(uint8_t* buf,unsigned len,int flags=0);
 	    virtual int		write(const uint8_t* buf,unsigned len,int flags=0) const;
 	    virtual void	close();
@@ -59,6 +61,7 @@ namespace mpxp {
 	    net_fd_t	_fd;
 	    tcp_error_e	_error;
 	    libinput_t&	libinput;
+	    URL		_url;
     };
 } // namespace mpxp
 #endif /* TCP_H */

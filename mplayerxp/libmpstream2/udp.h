@@ -26,10 +26,10 @@ namespace mpxp {
     class Udp {
 	public:
 	    Udp(net_fd_t fd);
-	    Udp(const URL* url,int reuse_socket=0);
+	    Udp(const URL& url,int reuse_socket=0);
 	    virtual ~Udp();
 	
-	    void	open(const URL* url,int reuse_socket=0);
+	    void	open(const URL& url,int reuse_socket=0);
 	    net_fd_t	socket() const { return _fd; }
 	    int		established() const;
 	    int		error() const { return _error; }

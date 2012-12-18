@@ -8,7 +8,7 @@ namespace mpxp {
 	public:
 	    virtual ~Rtsp_Networking();
 
-	    static Networking*	start(Tcp& tcp, URL* url,unsigned bandwidth);
+	    static Networking*	start(Tcp& tcp, URL& url,unsigned bandwidth);
 	    virtual int read( Tcp& fd, char *buffer, int buffer_size);
 	    virtual int seek( Tcp& fd, off_t pos);
 	private:

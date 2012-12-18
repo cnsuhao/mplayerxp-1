@@ -45,7 +45,7 @@ using namespace mpxp;
 
 namespace mpxp {
 /* Start listening on a UDP port. If multicast, join the group. */
-void Udp::open(const URL *url,int reuse_socket)
+void Udp::open(const URL& url,int reuse_socket)
 {
     int socket_server_fd, rxsockbufsz;
     int err;
@@ -57,7 +57,7 @@ void Udp::open(const URL *url,int reuse_socket)
     struct hostent *hp;
     int reuse=reuse_socket;
 
-    MSG_V("[udp] Listening for traffic on %s:%d ...\n", url->hostname, url->port);
+    MSG_V("[udp] Listening for traffic on %s:%d ...\n", url.host().c_str(), url.port());
 
     _fd = ::socket (AF_INET, SOCK_DGRAM, 0);
     if (socket_server_fd == -1) {
@@ -65,11 +65,11 @@ void Udp::open(const URL *url,int reuse_socket)
 	return;
     }
 
-    if (isalpha (url->hostname[0])) {
+    if (::isalpha (url.host()[0])) {
 #ifndef HAVE_WINSOCK2
-	hp = (struct hostent *) ::gethostbyname (url->hostname);
+	hp = (struct hostent *) ::gethostbyname (url.host().c_str());
 	if (!hp) {
-	    MSG_ERR("[udp] Counldn't resolve name: %s\n", url->hostname);
+	    MSG_ERR("[udp] Counldn't resolve name: %s\n", url.host().c_str());
 	    ::closesocket (_fd);
 	    _fd = -1;
 	    return;
@@ -82,16 +82,16 @@ void Udp::open(const URL *url,int reuse_socket)
     } else {
 #ifndef HAVE_WINSOCK2
 #ifdef USE_ATON
-	inet_aton (url->hostname, &server_address.sin_addr);
+	inet_aton (url.host().c_str(), &server_address.sin_addr);
 #else
-	inet_pton (AF_INET, url->hostname, &server_address.sin_addr);
+	inet_pton (AF_INET, url.host().c_str(), &server_address.sin_addr);
 #endif /* USE_ATON */
 #else
 	server_address.sin_addr.s_addr = htonl(INADDR_ANY);
 #endif /* HAVE_WINSOCK2 */
     }
     server_address.sin_family = AF_INET;
-    server_address.sin_port = htons (url->port);
+    server_address.sin_port = htons (url.port());
 
     if(reuse_socket && ::setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)))
 	MSG_ERR("[udp] SO_REUSEADDR failed! ignore.\n");
@@ -111,10 +111,10 @@ void Udp::open(const URL *url,int reuse_socket)
     }
 
 #ifdef HAVE_WINSOCK2
-    if (isalpha (url->hostname[0])) {
-	hp = (struct hostent *) ::gethostbyname (url->hostname);
+    if (::isalpha (url.host()[0])) {
+	hp = (struct hostent *) ::gethostbyname (url.host().c_str());
 	if (!hp) {
-	    MSG_ERR("[udp] Could not resolve name: %s\n", url->hostname);
+	    MSG_ERR("[udp] Could not resolve name: %s\n", url.host().c_str());
 	    ::closesocket (_fd);
 	    _fd = -1;
 	    return;
@@ -122,7 +122,7 @@ void Udp::open(const URL *url,int reuse_socket)
 	memcpy ((any_t*) &server_address.sin_addr.s_addr,
 		(any_t*) hp->h_addr, hp->h_length);
     } else {
-	unsigned int addr = inet_addr (url->hostname);
+	unsigned int addr = inet_addr (url.host().c_str());
 	memcpy ((any_t*) &server_address.sin_addr, (any_t*) &addr, sizeof (addr));
     }
 #endif /* HAVE_WINSOCK2 */
@@ -160,7 +160,7 @@ void Udp::open(const URL *url,int reuse_socket)
     }
 
     if (err == 0) {
-	MSG_ERR("[udp] Timeout! No data from host %s\n", url->hostname);
+	MSG_ERR("[udp] Timeout! No data from host %s\n", url.host().c_str());
 	::closesocket (_fd);
 	_fd = -1;
 	return;
@@ -175,7 +175,7 @@ void Udp::open(const URL *url,int reuse_socket)
 	return;
     }
 }
-Udp::Udp(const URL *url,int reuse_socket)
+Udp::Udp(const URL& url,int reuse_socket)
     :_fd(-1)
     ,_error(0)
 {

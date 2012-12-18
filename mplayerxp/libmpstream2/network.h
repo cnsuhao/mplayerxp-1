@@ -57,16 +57,16 @@ namespace mpxp {
     };
 
     struct network_protocol_t {
-	URL*	url;
-	Opaque*	data;
+	URL	url;
 	std::string mime;
+	Opaque*	data;
     };
 
     struct Networking : public Opaque {
 	public:
 	    virtual ~Networking();
 
-	    static Networking*	start(Tcp& tcp, URL *url);
+	    static Networking*	start(Tcp& tcp,const URL& url);
 	    virtual int		stop();
 	    virtual void	fixup_cache();
 	    virtual int		bufferize(unsigned char *buffer, int size);
@@ -75,7 +75,7 @@ namespace mpxp {
 	    virtual int seek( Tcp& fd, off_t pos) = 0;
 
 	    std::string		mime;
-	    URL*		url;
+	    URL			url;
 	    networking_status	status;
 	    unsigned int	bandwidth;	// The downstream available
 	protected:
@@ -90,9 +90,7 @@ namespace mpxp {
 	    static MPXP_Rc	autodetectProtocol(network_protocol_t& protocol,Tcp& tcp);
     };
 
-    extern URL* check4proxies( URL* url );
-
-    MPXP_Rc http_send_request(Tcp& tcp,URL* url, off_t pos);
+    MPXP_Rc http_send_request(Tcp& tcp,URL& url, off_t pos);
     HTTP_Header* http_read_response(Tcp& fd);
 
 /*

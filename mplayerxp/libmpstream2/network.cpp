@@ -62,131 +62,72 @@ net_config_t::net_config_t()
 net_config_t::~net_config_t() {}
 net_config_t net_conf;
 
-URL*
-check4proxies( URL *url ) {
-	URL *url_out = NULL;
-	if( url==NULL ) return NULL;
-	url_out = url_new( url->url );
-	if( !strcasecmp(url->protocol, "http_proxy") ) {
-		MSG_V("Using HTTP proxy: http://%s:%d\n", url->hostname, url->port );
-		return url_out;
-	}
-	// Check if the http_proxy environment variable is set.
-	if( !strcasecmp(url->protocol, "http") ) {
-		char *proxy;
-		proxy = getenv("http_proxy");
-		if( proxy!=NULL ) {
-			// We got a proxy, build the URL to use it
-			int len;
-			char *new_url;
-			URL *tmp_url;
-			URL *proxy_url = url_new( proxy );
+MPXP_Rc http_send_request(Tcp& tcp, URL& url, off_t pos ) {
+    HTTP_Header& http_hdr = *new(zeromem) HTTP_Header;
+    URL server_url("");
+    char str[256];
+    int ret;
+    int proxy = 0;		// Boolean
 
-			if( proxy_url==NULL ) {
-				MSG_WARN("Invalid proxy setting...Trying without proxy.\n");
-				return url_out;
-			}
-
-#ifdef HAVE_AF_INET6
-			if (net_conf.ipv4_only_proxy && (gethostbyname(url->hostname)==NULL)) {
-				MSG_WARN(
-					"Could not find resolve remote hostname for AF_INET. Trying without proxy.\n");
-				return url_out;
-			}
-#endif
-
-			MSG_V("Using HTTP proxy: %s\n", proxy_url->url );
-			len = strlen( proxy_url->hostname ) + strlen( url->url ) + 20;	// 20 = http_proxy:// + port
-			new_url = new char [len+1];
-			if( new_url==NULL ) {
-				MSG_FATAL(MSGTR_OutOfMemory);
-				return url_out;
-			}
-			sprintf(new_url, "http_proxy://%s:%d/%s", proxy_url->hostname, proxy_url->port, url->url );
-			tmp_url = url_new( new_url );
-			if( tmp_url==NULL ) {
-				return url_out;
-			}
-			delete url_out;
-			url_out = tmp_url;
-			delete new_url ;
-			delete proxy_url;
-		}
-	}
-	return url_out;
-}
-
-MPXP_Rc http_send_request(Tcp& tcp, URL *url, off_t pos ) {
-	HTTP_Header& http_hdr = *new(zeromem) HTTP_Header;
-	URL *server_url;
-	char str[256];
-	int ret;
-	int proxy = 0;		// Boolean
-
-	if( !strcasecmp(url->protocol, "http_proxy") ) {
-		proxy = 1;
-		server_url = url_new( (url->file)+1 );
-		http_hdr.set_uri(server_url->url );
-	} else {
-		server_url = url;
-		http_hdr.set_uri( server_url->file );
-	}
-	if (server_url->port && server_url->port != 80)
-	    snprintf(str, 256, "Host: %s:%d", server_url->hostname, server_url->port );
-	else
-	    snprintf(str, 256, "Host: %s", server_url->hostname );
+    if( url.protocol2lower()=="http_proxy") {
+	proxy = 1;
+	server_url.redirect(url.file());
+	http_hdr.set_uri(server_url.url());
+    } else {
+	    server_url = url;
+	    http_hdr.set_uri( server_url.file());
+    }
+    if (server_url.port() && server_url.port() != 80)
+	snprintf(str, 256, "Host: %s:%d", server_url.host().c_str(), server_url.port());
+    else
+	snprintf(str, 256, "Host: %s", server_url.host().c_str());
+    http_hdr.set_field(str);
+    if (net_conf.useragent) {
+	snprintf(str, 256, "User-Agent: %s", net_conf.useragent);
 	http_hdr.set_field(str);
-	if (net_conf.useragent)
-	{
-	    snprintf(str, 256, "User-Agent: %s", net_conf.useragent);
-	    http_hdr.set_field(str);
-	}
-	else
-	    http_hdr.set_field("User-Agent: MPlayerXP/"VERSION);
+    }
+    else
+	http_hdr.set_field("User-Agent: MPlayerXP/"VERSION);
 
-	http_hdr.set_field("Icy-MetaData: 1");
+    http_hdr.set_field("Icy-MetaData: 1");
 
-	if(pos>0) {
+    if(pos>0) {
 	// Extend http_send_request with possibility to do partial content retrieval
-	    snprintf(str, 256, "Range: bytes=%d-", (int)pos);
-	    http_hdr.set_field(str);
-	}
+	snprintf(str, 256, "Range: bytes=%d-", (int)pos);
+	http_hdr.set_field(str);
+    }
 
-	if (net_conf.cookies_enabled) http_hdr.cookies_set( server_url->hostname, server_url->url );
+    if (net_conf.cookies_enabled) http_hdr.cookies_set( server_url.host(), server_url.url());
 
-	http_hdr.set_field( "Connection: closed");
-	http_hdr.add_basic_authentication( url->username?url->username:"", url->password?url->password:"");
-	if( http_hdr.build_request( )==NULL ) {
-		goto err_out;
-	}
+    http_hdr.set_field( "Connection: closed");
+    http_hdr.add_basic_authentication( url.user(), url.password());
+    if( http_hdr.build_request( )==NULL ) {
+	goto err_out;
+    }
 
-	if( proxy ) {
-		if( url->port==0 ) url->port = 8080;			// Default port for the proxy server
-		tcp.close();
-		tcp.open(url->hostname, url->port, Tcp::IP4);
-		delete server_url;
-		server_url = NULL;
-	} else {
-		if( server_url->port==0 ) server_url->port = 80;	// Default port for the web server
-		tcp.close();
-		tcp.open(server_url->hostname, server_url->port, Tcp::IP4);
-	}
-	if(!tcp.established()) { MSG_ERR("Cannot establish connection\n"); goto err_out; }
-	MSG_DBG2("Request: [%s]\n", http_hdr.get_buffer() );
+    if( proxy ) {
+	tcp.close();
+	url.assign_port(8080);
+	tcp.open(url, Tcp::IP4);
+    } else {
+	tcp.close();
+	server_url.assign_port(80);
+	tcp.open(server_url, Tcp::IP4);
+    }
+    if(!tcp.established()) { MSG_ERR("Cannot establish connection\n"); goto err_out; }
+    MSG_DBG2("Request: [%s]\n", http_hdr.get_buffer() );
 
-	ret = tcp.write((uint8_t*)(http_hdr.get_buffer()), http_hdr.get_buffer_size());
-	if( ret!=(int)http_hdr.get_buffer_size() ) {
-		MSG_ERR("Error while sending HTTP request: didn't sent all the request\n");
-		goto err_out;
-	}
+    ret = tcp.write((uint8_t*)(http_hdr.get_buffer()), http_hdr.get_buffer_size());
+    if( ret!=(int)http_hdr.get_buffer_size() ) {
+	MSG_ERR("Error while sending HTTP request: didn't sent all the request\n");
+	goto err_out;
+    }
 
-	delete &http_hdr;
-
-	return MPXP_Ok;
+    delete &http_hdr;
+    return MPXP_Ok;
 err_out:
-	delete &http_hdr;
-	if (proxy && server_url) delete server_url;
-	return MPXP_False;
+    delete &http_hdr;
+    return MPXP_False;
 }
 
 HTTP_Header* http_read_response( Tcp& tcp ) {
@@ -247,10 +188,10 @@ off_t http_seek(Tcp& tcp, Networking& networking, off_t pos ) {
 }
 
 Networking::Networking()
-	    :mime("application/octet-stream") {}
+	    :mime("application/octet-stream"),
+	    url("") {}
 
 Networking::~Networking() {
-    if( url ) delete url;
     if( buffer ) delete buffer;
     if( data ) delete data;
 }
@@ -266,7 +207,7 @@ MPXP_Rc Networking::autodetectProtocol(network_protocol_t& networking, Tcp& tcp)
     const char *content_type;
     const char *next_url;
 
-    URL *url = networking.url;
+    URL& url = networking.url;
 
     do {
 	next_url = NULL;
@@ -274,16 +215,12 @@ MPXP_Rc Networking::autodetectProtocol(network_protocol_t& networking, Tcp& tcp)
 	content_type = NULL;
 	redirect = 0;
 
-	if( url==NULL ) {
-	    goto err_out;
-	}
-
 #ifndef STREAMING_LIVE_DOT_COM
 	// Old, hacked RTP support, which works for MPEG Program Streams
 	//   RTP streams only:
 	// Checking for RTP
-	if( !strcasecmp(url->protocol, "rtp") ) {
-	    if( url->port==0 ) {
+	if( url.protocol2lower()=="rtp") {
+	    if( url.port()==0 ) {
 		MSG_ERR("You must enter a port number for RTP streams!\n");
 		goto err_out;
 	    }
@@ -291,7 +228,7 @@ MPXP_Rc Networking::autodetectProtocol(network_protocol_t& networking, Tcp& tcp)
 	}
 #endif
 	// HTTP based protocol
-	if( !strcasecmp(url->protocol, "http") || !strcasecmp(url->protocol, "http_proxy") ) {
+	if( url.protocol2lower()=="http" || url.protocol2lower()=="http_proxy") {
 	    http_send_request(tcp, url, 0 );
 	    if(!tcp.established()) goto err_out;
 
@@ -366,10 +303,10 @@ MPXP_Rc Networking::autodetectProtocol(network_protocol_t& networking, Tcp& tcp)
 			// TODO: RFC 2616, recommand to detect infinite redirection loops
 			next_url = http_hdr->get_field("Location" );
 			if( next_url!=NULL ) {
-			    networking.url = url = url_redirect( &url, next_url );
-			    if (!strcasecmp(url->protocol, "mms")) goto err_out;
-			    if (strcasecmp(url->protocol, "http")) {
-				MSG_WARN("Unsupported http %d redirect to %s protocol\n", http_hdr->get_status(), url->protocol);
+			    url.redirect(next_url);
+			    if (url.protocol2lower()=="mms") goto err_out;
+			    if (url.protocol2lower()=="http") {
+				MSG_WARN("Unsupported http %d redirect to %s protocol\n", http_hdr->get_status(), url.protocol().c_str());
 				goto err_out;
 			    }
 			    redirect = 1;
@@ -384,7 +321,7 @@ MPXP_Rc Networking::autodetectProtocol(network_protocol_t& networking, Tcp& tcp)
 			goto err_out;
 	    }
 	} else {
-	    MSG_ERR("Unknown protocol '%s'\n", url->protocol );
+	    MSG_ERR("Unknown protocol '%s'\n", url.protocol().c_str());
 	    goto err_out;
 	}
     } while( redirect );
@@ -418,29 +355,28 @@ void Networking::fixup_cache() {
   }
 }
 
-Networking* Networking::start(Tcp& tcp, URL *_url) {
+Networking* Networking::start(Tcp& tcp, const URL& _url) {
     Networking* rc;
     network_protocol_t net_protocol;
-    URL* url = check4proxies( _url );
-
-    net_protocol.url=url;
+    net_protocol.url=_url;
+    net_protocol.url.check4proxies();
 
     if( autodetectProtocol(net_protocol,tcp)!=MPXP_Ok ) return NULL;
     rc = NULL;
-    url=net_protocol.url;
+    URL url=net_protocol.url;
 
     // For RTP streams, we usually don't know the stream type until we open it.
-    if( !strcasecmp( url->protocol, "rtp")) {
+    if( url.protocol2lower()=="rtp") {
 	if(tcp.established()) tcp.close();
 	rc = Rtp_Networking::start(tcp, net_protocol, 0);
-    } else if( !strcasecmp( url->protocol, "pnm")) {
+    } else if( url.protocol2lower()=="pnm") {
 	tcp.close();
 	rc = Pnm_Networking::start(tcp, net_protocol);
 	if (!rc) {
 	    MSG_INFO("Can't connect with pnm, retrying with http.\n");
 	    return NULL;
 	}
-    } else if( !strcasecmp( url->protocol, "rtsp")) {
+    } else if( url.protocol2lower()=="rtsp") {
 	if ((rc = RealRtsp_Networking::start( tcp, net_protocol )) == NULL) {
 	    MSG_INFO("Not a Realmedia rtsp url. Trying standard rtsp protocol.\n");
 #ifdef STREAMING_LIVE_DOT_COM
@@ -452,16 +388,16 @@ Networking* Networking::start(Tcp& tcp, URL *_url) {
 	    return NULL;
 #endif
 	}
-    } else if(!strcasecmp( url->protocol, "udp")) {
+    } else if(url.protocol2lower()=="udp") {
 	tcp.close();
 	rc = Rtp_Networking::start(tcp, net_protocol, 1);
 	if(!rc) {
 	    MSG_ERR("rtp_networking_start(udp) failed\n");
 	    return NULL;
 	}
-    } else if(!strncasecmp(url->protocol, "mms", 3) ||
-	      !strncasecmp(url->protocol, "mmst", 4) ||
-	      !strncasecmp(url->protocol, "mmsu", 4)) {
+    } else if(url.protocol2lower()=="mms" ||
+	      url.protocol2lower()=="mmst" ||
+	      url.protocol2lower()=="mmsu") {
 	rc=Asf_Mmst_Networking::start(tcp,net_protocol);
 	if(!rc) {
 	    MSG_ERR("asf_mmst_networking_start() failed\n");
@@ -477,7 +413,7 @@ Networking* Networking::start(Tcp& tcp, URL *_url) {
 	if( !rc ) {
 	    //sometimes a file is just on a webserver and it is not streamed.
 	    //try loading them default method as last resort for http protocol
-	    if ( !strcasecmp(url->protocol, "http") ) {
+	    if (url.protocol2lower()=="http") {
 		MSG_STATUS("Trying default networking for http protocol\n ");
 		//reset stream
 		tcp.close();

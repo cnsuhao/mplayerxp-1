@@ -21,33 +21,33 @@ int RealRtsp_Networking::read( Tcp& tcp, char *_buffer, int size) {
 Networking* RealRtsp_Networking::start( Tcp& tcp, network_protocol_t& protocol ) {
     Rtsp_Session* rtsp;
     char *mrl;
-    char *file;
-    int port;
+    const char *file;
     int redirected, temp;
 
     temp = 5; // counter so we don't get caught in infinite redirections (you never know)
 
     do {
 	redirected = 0;
-	port = protocol.url->port ? protocol.url->port : 554;
+	protocol.url.assign_port(554);
 	tcp.close();
-	tcp.open( protocol.url->hostname, port, Tcp::IP4);
-	if(!tcp.established() && !protocol.url->port)
-	    tcp.open( protocol.url->hostname,port = 7070, Tcp::IP4);
+	tcp.open( protocol.url, Tcp::IP4);
+	if(!tcp.established() && !protocol.url.port()) {
+	    protocol.url.assign_port(7070);
+	    tcp.open( protocol.url, Tcp::IP4);
+	}
 	if(!tcp.established()) return NULL;
 
-	file = protocol.url->file;
+	file = protocol.url.file().c_str();
 	if (file[0] == '/') file++;
-	mrl = new char [strlen(protocol.url->hostname)+strlen(file)+16];
-	sprintf(mrl,"rtsp://%s:%i/%s",protocol.url->hostname,port,file);
+	mrl = new char [protocol.url.host().length()+strlen(file)+16];
+	sprintf(mrl,"rtsp://%s:%i/%s",protocol.url.host().c_str(),protocol.url.port(),file);
 	rtsp = rtsp_session_start(tcp,&mrl, file,
-			protocol.url->hostname, port, &redirected,
-			net_conf.bandwidth,protocol.url->username,
-			protocol.url->password);
+			protocol.url.host(), protocol.url.port(), &redirected,
+			net_conf.bandwidth,protocol.url.user(),
+			protocol.url.password());
 
 	if ( redirected == 1 ) {
-	    delete protocol.url;
-	    protocol.url = url_new(mrl);
+	    protocol.url.redirect(mrl);
 	    tcp.close();
 	}
 	delete mrl;

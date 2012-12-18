@@ -50,7 +50,7 @@ int Nop_Networking::seek(Tcp& tcp, off_t pos) {
 Networking* Nop_Networking::start(Tcp& tcp,network_protocol_t& protocol) {
     HTTP_Header *http_hdr = NULL;
     const char *next_url=NULL;
-    URL *rd_url=NULL;
+    URL& rd_url=protocol.url;
 
     Nop_Networking* rv = new(zeromem) Nop_Networking;
     if( !tcp.established() ) {
@@ -82,12 +82,9 @@ Networking* Nop_Networking::start(Tcp& tcp,network_protocol_t& protocol) {
 	    case 302: // Temporarily
 		next_url = http_hdr->get_field("Location" );
 
-		if (next_url != NULL)
-		    rd_url=url_new(next_url);
-
-		if (next_url != NULL && rd_url != NULL) {
+		if (next_url != NULL && rd_url.redirect(next_url)==MPXP_Ok) {
 		    MSG_STATUS("Redirected: Using this url instead %s\n",next_url);
-		    protocol.url=check4proxies(rd_url);
+		    rd_url.check4proxies();
 		    delete rv;
 		    rv=static_cast<Nop_Networking*>(Nop_Networking::start(tcp,protocol)); //recursively get networking started
 		} else {

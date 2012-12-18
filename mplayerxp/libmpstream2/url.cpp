@@ -7,6 +7,7 @@ using namespace mpxp;
  * (C) 2001, MPlayer team.
  *
  */
+#include <algorithm>
 #include <limits>
 
 #include <string.h>
@@ -15,221 +16,183 @@ using namespace mpxp;
 #include <ctype.h>
 #include <inttypes.h>
 
+#include "network.h"
 #include "url.h"
 #include "help_mp.h"
 #include "stream_msg.h"
 #include "mplayerxp.h"
 
 namespace mpxp {
-URL *url_redirect(URL **url, const std::string& _redir) {
-  std::string redir=_redir;
-  URL *u = *url;
-  URL *res;
-  if (redir.find('/')==std::string::npos || redir[0] == '/') {
-    char *tmp;
-    std::string newurl;
-    newurl=u->url;
-    if (redir[0] == '/') {
-      redir=redir.substr(1);
-      tmp = strstr(const_cast<char*>(newurl.c_str()), "://");
-      if (tmp) tmp = strchr(tmp + 3, '/');
-    } else
-      tmp = strrchr(const_cast<char*>(newurl.c_str()), '/');
-    if (tmp) tmp[1] = 0;
-    newurl+=redir;
-    res = url_new(newurl);
-  } else
-    res = url_new(redir);
-  delete u;
-  *url = res;
-  return res;
-}
+URL::URL(const std::string& __url):_url(__url) { _build(); }
+URL::~URL() {}
+MPXP_Rc URL::redirect(const std::string& _redir) { _url=_redir; return _build(); }
+MPXP_Rc URL::_build() {
+    size_t pos1, pos2, pos3, pos4;
+    int v6addr = 0;
+    char *escfilename=NULL;
+    int jumpSize = 3;
 
-URL* url_new(const std::string& url) {
-	int pos1, pos2,v6addr = 0;
-	URL* Curl = NULL;
-	char *escfilename=NULL;
-	char *ptr1=NULL, *ptr2=NULL, *ptr3=NULL, *ptr4=NULL;
-	int jumpSize = 3;
-
-	if( url.empty()) return NULL;
-
-	if (url.length() > (std::numeric_limits<size_t>::max() / 3 - 1)) {
-		MSG_FATAL("MemAllocFailed\n");
-		goto err_out;
-	}
-	escfilename=new char [url.length()*3+1];
-	if (!escfilename ) {
-		MSG_FATAL("MemAllocFailed\n");
-		goto err_out;
-	}
-
-	// Create the URL container
-	Curl = new(zeromem) URL;
-	if( Curl==NULL ) {
-		MSG_FATAL("MemAllocFailed\n");
-		goto err_out;
-	}
-
-	string2url(escfilename,url);
-
-	// Copy the url in the URL container
-	Curl->url = mp_strdup(escfilename);
-	if( Curl->url==NULL ) {
-		MSG_FATAL("MemAllocFailed\n");
-		goto err_out;
-	}
-	MSG_V("Filename for url is now %s\n",escfilename);
-
-	// extract the protocol
-	ptr1 = strstr(escfilename, "://");
-	if( ptr1==NULL ) {
-		// Check for a special case: "sip:" (without "//"):
-		if (strstr(escfilename, "sip:") == escfilename) {
-			ptr1 = (char *)&url[3]; // points to ':'
-			jumpSize = 1;
-		} else {
-			MSG_V("Not an URL!\n");
-			goto err_out;
-		}
-	}
-	pos1 = ptr1-escfilename;
-	Curl->protocol = new char [pos1+1];
-	if( Curl->protocol==NULL ) {
-		MSG_FATAL("MemAllocFailed\n");
-		goto err_out;
-	}
-	strncpy(Curl->protocol, escfilename, pos1);
-	Curl->protocol[pos1] = '\0';
-
-	// jump the "://"
-	ptr1 += jumpSize;
-	pos1 += jumpSize;
-
-	// check if a username:password is given
-	ptr2 = strstr(ptr1, "@");
-	ptr3 = strstr(ptr1, "/");
-	if( ptr3!=NULL && ptr3<ptr2 ) {
-		// it isn't really a username but rather a part of the path
-		ptr2 = NULL;
-	}
-	if( ptr2!=NULL ) {
-		// We got something, at least a username...
-		int len = ptr2-ptr1;
-		Curl->username = new char [len+1];
-		if( Curl->username==NULL ) {
-			MSG_FATAL("MemAllocFailed\n");
-			goto err_out;
-		}
-		strncpy(Curl->username, ptr1, len);
-		Curl->username[len] = '\0';
-
-		ptr3 = strstr(ptr1, ":");
-		if( ptr3!=NULL && ptr3<ptr2 ) {
-			// We also have a password
-			int len2 = ptr2-ptr3-1;
-			Curl->username[ptr3-ptr1]='\0';
-			Curl->password = new char [len2+1];
-			if( Curl->password==NULL ) {
-				MSG_FATAL("MemAllocFailed\n");
-				goto err_out;
-			}
-			strncpy( Curl->password, ptr3+1, len2);
-			Curl->password[len2]='\0';
-		}
-		ptr1 = ptr2+1;
-		pos1 = ptr1-escfilename;
-	}
-
-	// before looking for a port number check if we have an IPv6 type numeric address
-	// in IPv6 URL the numeric address should be inside square braces.
-	ptr2 = strstr(ptr1, "[");
-	ptr3 = strstr(ptr1, "]");
-	ptr4 = strstr(ptr1, "/");
-	if( ptr2!=NULL && ptr3!=NULL && ptr2 < ptr3 && (!ptr4 || ptr4 > ptr3)) {
-		// we have an IPv6 numeric address
-		ptr1++;
-		pos1++;
-		ptr2 = ptr3;
-		v6addr = 1;
-	} else {
-		ptr2 = ptr1;
-
-	}
-
-	// look if the port is given
-	ptr2 = strstr(ptr2, ":");
-	// If the : is after the first / it isn't the port
-	ptr3 = strstr(ptr1, "/");
-	if(ptr3 && ptr3 - ptr2 < 0) ptr2 = NULL;
-	if( ptr2==NULL ) {
-		// No port is given
-		// Look if a path is given
-		if( ptr3==NULL ) {
-			// No path/filename
-			// So we have an URL like http://www.hostname.com
-			pos2 = strlen(escfilename);
-		} else {
-			// We have an URL like http://www.hostname.com/file.txt
-			pos2 = ptr3-escfilename;
-		}
-	} else {
-		// We have an URL beginning like http://www.hostname.com:1212
-		// Get the port number
-		Curl->port = atoi(ptr2+1);
-		pos2 = ptr2-escfilename;
-	}
-	if( v6addr ) pos2--;
-	// copy the hostname in the URL container
-	Curl->hostname = new char [pos2-pos1+1];
-	if( Curl->hostname==NULL ) {
-		MSG_FATAL("MemAllocFailed\n");
-		goto err_out;
-	}
-	strncpy(Curl->hostname, ptr1, pos2-pos1);
-	Curl->hostname[pos2-pos1] = '\0';
-
-	// Look if a path is given
-	ptr2 = strstr(ptr1, "/");
-	if( ptr2!=NULL ) {
-		// A path/filename is given
-		// check if it's not a trailing '/'
-		if( strlen(ptr2)>1 ) {
-			// copy the path/filename in the URL container
-			Curl->file = mp_strdup(ptr2);
-			if( Curl->file==NULL ) {
-				MSG_FATAL("MemAllocFailed\n");
-				goto err_out;
-			}
-		}
-	}
-	// Check if a filename was given or set, else set it with '/'
-	if( Curl->file==NULL ) {
-		Curl->file = new char [2];
-		if( Curl->file==NULL ) {
-			MSG_FATAL("MemAllocFailed\n");
-			goto err_out;
-		}
-		strcpy(Curl->file, "/");
-	}
-
-	delete escfilename;
-	return Curl;
-err_out:
+    if( _url.empty()) {
+    err_out:
 	if (escfilename) delete escfilename;
-	if (Curl) delete Curl;
-	return NULL;
+	_protocol.clear();
+	_host.clear();
+	_file.clear();
+	_port=0;
+	_user.clear();
+	_password.clear();
+	return MPXP_False;
+    }
+    escfilename=new char [_url.length()*3+1];
+    string2url(escfilename,_url);
+    // Copy the url in the URL container
+    _url = escfilename;
+    MSG_V("Filename for url is now %s\n",escfilename);
+
+    // extract the protocol
+    pos1 = _url.find("://");
+    if( pos1==std::string::npos ) {
+	// Check for a special case: "sip:" (without "//"):
+	if (_url.substr(0,4)=="sip:") {
+	    pos1 = 3; // points to ':'
+	    jumpSize = 1;
+	} else {
+	    MSG_V("Not an URL!\n");
+	    goto err_out;
+	}
+    }
+    _protocol=_url.substr(0,pos1);
+    // jump the "://"
+    pos1 += jumpSize;
+    // check if a username:password is given
+    pos2 = _url.find("@",pos1);
+    pos3 = _url.find("/",pos1);
+    if( pos3!=std::string::npos && pos3<pos2 ) {
+	// it isn't really a username but rather a part of the path
+	pos2 = std::string::npos;
+    }
+    if( pos2!=std::string::npos ) {
+	// We got something, at least a username...
+	size_t len = pos2-pos1;
+	_user=_url.substr(pos1, len);
+
+	pos3 = _url.find(":",pos1);
+	if( pos3!=std::string::npos && pos3<pos2 ) {
+	    // We also have a password
+	    size_t len2 = pos2-pos3-1;
+	    _password=_url.substr(pos3+1,len2);
+	}
+	pos1 = pos2+1;
+    }
+    // before looking for a port number check if we have an IPv6 type numeric address
+    // in IPv6 URL the numeric address should be inside square braces.
+    pos2 = _url.find("[",pos1);
+    pos3 = _url.find("]",pos1);
+    pos4 = _url.find("/",pos1);
+    if( pos2!=std::string::npos && pos3!=std::string::npos && pos2 < pos3 && pos4 > pos3) {
+	// we have an IPv6 numeric address
+	pos1++;
+	pos2 = pos3;
+	v6addr = 1;
+    } else pos2 = pos1;
+    // look if the port is given
+    pos2 = _url.find(":",pos2);
+    // If the : is after the first / it isn't the port
+    pos3 = _url.find("/",pos1);
+    if(pos3!=std::string::npos && int(pos3)-int(pos2) < 0) pos2 = std::string::npos;
+    if( pos2==std::string::npos ) {
+	// No port is given
+	// Look if a path is given
+	if( pos3==std::string::npos ) {
+	    // No path/filename
+	    // So we have an URL like http://www.hostname.com
+	    pos2 = _url.length();
+	} else {
+	    // We have an URL like http://www.hostname.com/file.txt
+	    pos2 = pos3;
+	}
+    } else {
+	    // We have an URL beginning like http://www.hostname.com:1212
+	    // Get the port number
+	    _port = ::atoi(_url.substr(pos2+1).c_str());
+    }
+    if( v6addr ) pos2--;
+    // copy the hostname in the URL container
+    _host = _url.substr(pos1, pos2-pos1);
+    // Look if a path is given
+    pos2 = _url.find("/",pos1);
+    if( pos2!=std::string::npos ) {
+	// A path/filename is given
+	// check if it's not a trailing '/'
+	if( _url.length()>pos2+1 ) {
+	    // copy the path/filename in the URL container
+	    _file = _url.substr(pos2);
+	}
+    }
+    // Check if a filename was given or set, else set it with '/'
+    if( _file.empty()) _file="/";
+    delete escfilename;
+    return MPXP_Ok;
 }
 
-URL::URL() {}
-URL::~URL() {
-    if(url) delete url;
-    if(protocol) delete protocol;
-    if(hostname) delete hostname;
-    if(file) delete file;
-    if(username) delete username;
-    if(password) delete password;
+MPXP_Rc URL::clear_login() { _user.clear(); _password.clear(); return MPXP_Ok; }
+MPXP_Rc URL::set_login(const std::string& usr,const std::string& passwd) {
+    _user=usr;
+    _password=passwd;
+    return MPXP_Ok;
 }
+MPXP_Rc URL::set_port(unsigned p) { _port=p; return MPXP_Ok; }
+MPXP_Rc URL::assign_port(unsigned p) { if(!_port) { _port=p; return MPXP_Ok; } return MPXP_False; }
+
+const std::string& URL::url() const { return _url; }
+const std::string& URL::protocol() const { return _protocol; }
+const std::string& URL::host() const { return _host; }
+const std::string& URL::file() const { return _file; }
+unsigned URL::port() const { return _port; }
+std::string URL::port2str() const {
+    char tmp[100];
+    sprintf(tmp,"%d",_port);
+    return std::string(tmp);
+}
+const std::string& URL::user() const { return _user; }
+const std::string& URL::password() const { return _password; }
+
+std::string URL::protocol2lower() const {
+    std::string p=_protocol;
+    std::transform(p.begin(),p.end(),p.begin(), ::tolower);
+    return p;
+}
+
+MPXP_Rc URL::check4proxies() {
+    if( protocol2lower()=="http_proxy") {
+	MSG_V("Using HTTP proxy: http://%s:%d\n", _host.c_str(), _port);
+	return MPXP_Ok;
+    }
+    // Check if the http_proxy environment variable is set.
+    if( protocol2lower()=="http") {
+	const char *proxy;
+	proxy = getenv("http_proxy");
+	if( proxy!=NULL ) {
+	    std::string new_url=proxy;
+	    URL proxy_url(new_url);
+#ifdef HAVE_AF_INET6
+	    if (net_conf.ipv4_only_proxy && (::gethostbyname(_host.c_str())==NULL)) {
+		MSG_WARN("Could not find resolve remote hostname for AF_INET. Trying without proxy.\n");
+		return MPXP_Ok;
+	    }
+#endif
+	    MSG_V("Using HTTP proxy: %s\n", new_url.c_str());
+	    new_url=std::string("http_proxy://")+proxy_url.host()+":"+proxy_url.port2str()+"/"+_url;
+	    if(proxy_url.redirect(new_url)!=MPXP_Ok) {
+		MSG_WARN("Invalid proxy setting...Trying without proxy.\n");
+		return MPXP_Ok;
+	    }
+	    *this=proxy_url;
+	}
+    }
+    return MPXP_Ok;
+}
+
 
 /* Replace escape sequences in an URL (or a part of an URL) */
 /* works like strcpy(), but without return argument */
@@ -365,32 +328,13 @@ string2url(char *outbuf, const std::string& _inbuf) {
     delete inbuf;
 }
 
-#ifdef __URL_DEBUG
-void
-url_debug(const URL *url) {
-	if( url==NULL ) {
-		printf("URL pointer NULL\n");
-		return;
-	}
-	if( url->url!=NULL ) {
-		printf("url=%s\n", url->url );
-	}
-	if( url->protocol!=NULL ) {
-		printf("protocol=%s\n", url->protocol );
-	}
-	if( url->hostname!=NULL ) {
-		printf("hostname=%s\n", url->hostname );
-	}
-	printf("port=%d\n", url->port );
-	if( url->file!=NULL ) {
-		printf("file=%s\n", url->file );
-	}
-	if( url->username!=NULL ) {
-		printf("username=%s\n", url->username );
-	}
-	if( url->password!=NULL ) {
-		printf("password=%s\n", url->password );
-	}
+void URL::debug() const {
+    MSG_V("url=%s\n", _url.c_str() );
+    MSG_V("protocol=%s\n", _protocol.c_str() );
+    MSG_V("hostname=%s\n", _host.c_str() );
+    MSG_V("port=%d\n", _port );
+    MSG_V("file=%s\n", _file.c_str() );
+    MSG_V("username=%s\n", _user.c_str() );
+    MSG_V("password=%s\n", _password.c_str() );
 }
-#endif //__URL_DEBUG
 } // namespace mpxp

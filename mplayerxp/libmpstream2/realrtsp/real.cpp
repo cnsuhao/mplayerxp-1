@@ -428,7 +428,7 @@ static int convert_timestamp(char *str, int *sec, int *msec) {
 //! maximum size of the rtsp description, must be < INT_MAX
 #define MAX_DESC_BUF (20 * 1024 * 1024)
 rmff_header_t *real_setup_and_get_header(rtsp_t *rtsp_session, uint32_t bandwidth,
-  char *username, char *password) {
+  const char *username, const char *password) {
 
   char *description=NULL;
   char *session_id=NULL;

@@ -51,7 +51,7 @@ namespace mpxp {
 	    rtp_rtsp_session_t*	rtp_session;
     };
 
-    Rtsp_Session* rtsp_session_start(Tcp& tcp, char **mrl, char *path, char *host,
-				    int port, int *redir, uint32_t bandwidth, char *user, char *pass);
+    Rtsp_Session* rtsp_session_start(Tcp& tcp, char **mrl, const std::string& path, const std::string& host,
+				    int port, int *redir, uint32_t bandwidth, const std::string& user, const std::string& pass);
 } // namespace mpxp
 #endif

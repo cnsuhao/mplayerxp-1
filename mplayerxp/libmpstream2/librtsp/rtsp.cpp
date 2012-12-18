@@ -70,24 +70,24 @@ using namespace mpxp;
 
 struct rtsp_t {
 
-  Tcp*         tcp;
+    Tcp*	tcp;
 
-  char         *host;
-  int           port;
-  char         *path;
-  char         *param;
-  char         *mrl;
-  char         *user_agent;
+    const char*	host;
+    int		port;
+    const char*	path;
+    const char*	param;
+    char*	mrl;
+    const char*	user_agent;
 
-  char         *server;
-  unsigned int  server_state;
-  uint32_t      server_caps;
+    const char*	server;
+    unsigned	server_state;
+    uint32_t	server_caps;
 
-  unsigned int  cseq;
-  char         *session;
+    unsigned	cseq;
+    const char*	session;
 
-  char        *answers[MAX_FIELDS];   /* data of last message */
-  char        *scheduled[MAX_FIELDS]; /* will be sent with next message */
+    char*	answers[MAX_FIELDS];   /* data of last message */
+    char*	scheduled[MAX_FIELDS]; /* will be sent with next message */
 };
 
 /*
@@ -558,7 +558,7 @@ int rtsp_read_data(rtsp_t *s, char *buffer, unsigned int size) {
  */
 
 //rtsp_t *rtsp_connect(const char *mrl, const char *user_agent) {
-rtsp_t *rtsp_connect(Tcp& tcp, char* mrl, char *path, char *host, int port, char *user_agent) {
+rtsp_t *rtsp_connect(Tcp& tcp, char* mrl,const char *path,const  char *host, int port,const char *user_agent) {
 
   rtsp_t *s=new rtsp_t;
   int i;
@@ -676,7 +676,7 @@ void rtsp_set_session(rtsp_t *s, const char *id) {
 
 }
 
-char *rtsp_get_session(rtsp_t *s) {
+const char *rtsp_get_session(rtsp_t *s) {
 
   return s->session;
 
@@ -688,9 +688,9 @@ char *rtsp_get_mrl(rtsp_t *s) {
 
 }
 
-char *rtsp_get_param(rtsp_t *s, const char *p) {
+char *rtsp_get_param(rtsp_t *s,const char *p) {
   int len;
-  char *param;
+  const char *param;
   if (!s->param)
     return NULL;
   if (!p)
@@ -698,14 +698,14 @@ char *rtsp_get_param(rtsp_t *s, const char *p) {
   len = strlen(p);
   param = s->param;
   while (param && *param) {
-    char *nparam = strchr(param, '&');
+    const char *nparam = strchr(param, '&');
     if (strncmp(param, p, len) == 0 && param[len] == '=') {
       param += len + 1;
       len = nparam ? nparam - param : strlen(param);
-      nparam = new char [len + 1];
-      memcpy(nparam, param, len);
-      nparam[len] = 0;
-      return nparam;
+      char* _nparam = new char [len + 1];
+      memcpy(_nparam, param, len);
+      _nparam[len] = 0;
+      return _nparam;
     }
     param = nparam ? nparam + 1 : NULL;
   }

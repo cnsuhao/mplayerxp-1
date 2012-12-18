@@ -1,6 +1,7 @@
 #include "mp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
+#include <algorithm>
 #include <limits>
 
 #include <stdio.h>
@@ -152,7 +153,7 @@ MPXP_Rc Asf_Networking::parse_header(Tcp& tcp) {
 	    return MPXP_False;
 	}
 	// audit: do not overflow buffer_size
-	if (size > std::numeric_limits<size_t>::max() - _buffer_size) return MPXP_False;
+	if (unsigned(size) > std::numeric_limits<size_t>::max() - _buffer_size) return MPXP_False;
 	_buffer = (char*) mp_malloc(size+_buffer_size);
 	if(_buffer == NULL) {
 	    MSG_FATAL("Error can't allocate %d bytes buffer\n",size+_buffer_size);
@@ -436,219 +437,201 @@ asf_header_check( HTTP_Header& http_hdr ) {
 
 static ASF_StreamType_e
 asf_http_networking_type(const char *content_type,const char *features, HTTP_Header& http_hdr ) {
-	if( content_type==NULL ) return ASF_Unknown_e;
-	if( 	!strcasecmp(content_type, "application/octet-stream") ||
-		!strcasecmp(content_type, "application/vnd.ms.wms-hdr.asfv1") ||        // New in Corona, first request
-		!strcasecmp(content_type, "application/x-mms-framed") ||                // New in Corana, second request
-		!strcasecmp(content_type, "video/x-ms-asf")) {
+    if(content_type==NULL ) return ASF_Unknown_e;
+    if(!strcasecmp(content_type, "application/octet-stream") ||
+	!strcasecmp(content_type, "application/vnd.ms.wms-hdr.asfv1") ||        // New in Corona, first request
+	!strcasecmp(content_type, "application/x-mms-framed") ||                // New in Corana, second request
+	!strcasecmp(content_type, "video/x-ms-asf")) {
 
-		if( strstr(features, "broadcast") ) {
-			MSG_V("=====> ASF Live stream\n");
-			return ASF_Live_e;
-		} else {
-			MSG_V("=====> ASF Prerecorded\n");
-			return ASF_Prerecorded_e;
-		}
+	if( strstr(features, "broadcast") ) {
+	    MSG_V("=====> ASF Live stream\n");
+	    return ASF_Live_e;
 	} else {
-		// Ok in a perfect world, web servers should be well configured
-		// so we could used mime type to know the stream type,
-		// but guess what? All of them are not well configured.
-		// So we have to check for an asf header :(, but it works :p
-		if( http_hdr.get_body_size()>sizeof(ASF_obj_header_t) ) {
-			if( asf_header_check( http_hdr )==0 ) {
-				MSG_V("=====> ASF Plain text\n");
-				return ASF_PlainText_e;
-			} else if( (!strcasecmp(content_type, "text/html")) ) {
-				MSG_V("=====> HTML, mplayer is not a browser...yet!\n");
-				return ASF_Unknown_e;
-			} else {
-				MSG_V("=====> ASF Redirector\n");
-				return ASF_Redirector_e;
-			}
-		} else {
-			if(	(!strcasecmp(content_type, "audio/x-ms-wax")) ||
-				(!strcasecmp(content_type, "audio/x-ms-wma")) ||
-				(!strcasecmp(content_type, "video/x-ms-asf")) ||
-				(!strcasecmp(content_type, "video/x-ms-afs")) ||
-				(!strcasecmp(content_type, "video/x-ms-wvx")) ||
-				(!strcasecmp(content_type, "video/x-ms-wmv")) ||
-				(!strcasecmp(content_type, "video/x-ms-wma")) ) {
-				MSG_ERR("=====> ASF Redirector\n");
-				return ASF_Redirector_e;
-			} else if( !strcasecmp(content_type, "text/plain") ) {
-				MSG_V("=====> ASF Plain text\n");
-				return ASF_PlainText_e;
-			} else {
-				MSG_V("=====> ASF unknown content-type: %s\n", content_type );
-				return ASF_Unknown_e;
-			}
-		}
+	    MSG_V("=====> ASF Prerecorded\n");
+	    return ASF_Prerecorded_e;
 	}
-	return ASF_Unknown_e;
+    } else {
+	// Ok in a perfect world, web servers should be well configured
+	// so we could used mime type to know the stream type,
+	// but guess what? All of them are not well configured.
+	// So we have to check for an asf header :(, but it works :p
+	if( http_hdr.get_body_size()>sizeof(ASF_obj_header_t) ) {
+	    if( asf_header_check( http_hdr )==0 ) {
+		MSG_V("=====> ASF Plain text\n");
+		return ASF_PlainText_e;
+	    } else if( (!strcasecmp(content_type, "text/html")) ) {
+		MSG_V("=====> HTML, mplayer is not a browser...yet!\n");
+		return ASF_Unknown_e;
+	    } else {
+		MSG_V("=====> ASF Redirector\n");
+		return ASF_Redirector_e;
+	    }
+	} else {
+	    if((!strcasecmp(content_type, "audio/x-ms-wax")) ||
+		(!strcasecmp(content_type, "audio/x-ms-wma")) ||
+		(!strcasecmp(content_type, "video/x-ms-asf")) ||
+		(!strcasecmp(content_type, "video/x-ms-afs")) ||
+		(!strcasecmp(content_type, "video/x-ms-wvx")) ||
+		(!strcasecmp(content_type, "video/x-ms-wmv")) ||
+		(!strcasecmp(content_type, "video/x-ms-wma")) ) {
+		    MSG_ERR("=====> ASF Redirector\n");
+		    return ASF_Redirector_e;
+	    } else if( !strcasecmp(content_type, "text/plain") ) {
+		MSG_V("=====> ASF Plain text\n");
+		return ASF_PlainText_e;
+	    } else {
+		MSG_V("=====> ASF unknown content-type: %s\n", content_type );
+		return ASF_Unknown_e;
+	    }
+	}
+    }
+    return ASF_Unknown_e;
 }
 
 HTTP_Header* Asf_Networking::http_request() const {
-	HTTP_Header* http_hdr = new(zeromem) HTTP_Header;
+    HTTP_Header* http_hdr = new(zeromem) HTTP_Header;
 //	URL *url = NULL;
-	URL *server_url = NULL;
-	char str[250];
-	char *ptr;
-	int i, enable;
+    URL server_url;
+    char str[250];
+    char *ptr;
+    int i, enable;
 
-	int offset_hi=0, offset_lo=0, length=0;
-	int asf_nb_stream=0, stream_id;
+    int offset_hi=0, offset_lo=0, length=0;
+    int asf_nb_stream=0, stream_id;
 
-	// Sanity check
-	if( url==NULL ) return NULL;
+    // Common header for all requests.
+    http_hdr->set_field("Accept: */*" );
+    http_hdr->set_field("User-Agent: NSPlayer/4.1.0.3856" );
+    http_hdr->add_basic_authentication(url.user(), url.password());
 
-	// Common header for all requests.
-	http_hdr->set_field("Accept: */*" );
-	http_hdr->set_field("User-Agent: NSPlayer/4.1.0.3856" );
-	http_hdr->add_basic_authentication(url->username?url->username:"", url->password?url->password:"" );
+    // Check if we are using a proxy
+    if( url.protocol2lower()=="http_proxy") {
+	server_url.redirect(url.file());
+	http_hdr->set_uri(server_url.url());
+	sprintf( str, "Host: %.220s:%d", server_url.host().c_str(), server_url.port());
+    } else {
+	http_hdr->set_uri(url.file());
+	sprintf( str, "Host: %.220s:%d", url.host().c_str(), url.port());
+    }
 
-	// Check if we are using a proxy
-	if( !strcasecmp( url->protocol, "http_proxy" ) ) {
-		server_url = url_new( (url->file)+1 );
-		if( server_url==NULL ) {
-			MSG_ERR("Invalid proxy URL\n");
-			delete http_hdr;
-			return NULL;
-		}
-		http_hdr->set_uri(server_url->url );
-		sprintf( str, "Host: %.220s:%d", server_url->hostname, server_url->port );
-		delete server_url;
-	} else {
-		http_hdr->set_uri(url->file );
-		sprintf( str, "Host: %.220s:%d", url->hostname, url->port );
-	}
-
-	http_hdr->set_field(str );
-	http_hdr->set_field("Pragma: xClientGUID={c77e7400-738a-11d2-9add-0020af0a3278}" );
-	sprintf(str,
-		"Pragma: no-cache,rate=1.000000,stream-time=0,stream-offset=%u:%u,request-context=%d,max-duration=%u",
+    http_hdr->set_field(str );
+    http_hdr->set_field("Pragma: xClientGUID={c77e7400-738a-11d2-9add-0020af0a3278}" );
+    sprintf(str,"Pragma: no-cache,rate=1.000000,stream-time=0,stream-offset=%u:%u,request-context=%d,max-duration=%u",
 		offset_hi, offset_lo, request, length );
-	http_hdr->set_field( str );
+    http_hdr->set_field( str );
 
-	switch( networking_type ) {
-		case ASF_Live_e:
-		case ASF_Prerecorded_e:
-			http_hdr->set_field("Pragma: xPlayStrm=1" );
-			ptr = str;
-			ptr += sprintf( ptr, "Pragma: stream-switch-entry=");
-			if(n_audio > 0) {
-				for( i=0; i<n_audio ; i++ ) {
-					stream_id = audio_streams[i];
-					if(stream_id == audio_id) {
-						enable = 0;
-					} else {
-						enable = 2;
-						continue;
-					}
-					asf_nb_stream++;
-					ptr += sprintf(ptr, "ffff:%d:%d ", stream_id, enable);
-				}
-			}
-			if(n_video > 0) {
-				for( i=0; i<n_video ; i++ ) {
-					stream_id = video_streams[i];
-					if(stream_id == video_id) {
-						enable = 0;
-					} else {
-						enable = 2;
-						continue;
-					}
-					asf_nb_stream++;
-					ptr += sprintf(ptr, "ffff:%d:%d ", stream_id, enable);
-				}
-			}
-			http_hdr->set_field(str );
-			sprintf( str, "Pragma: stream-switch-count=%d", asf_nb_stream );
-			http_hdr->set_field( str );
-			break;
-		case ASF_Redirector_e:
-			break;
-		case ASF_Unknown_e:
-			// First request goes here.
-			break;
-		default:
-			MSG_ERR("Unknown asf stream type\n");
-	}
+    switch( networking_type ) {
+	case ASF_Live_e:
+	case ASF_Prerecorded_e:
+	    http_hdr->set_field("Pragma: xPlayStrm=1" );
+	    ptr = str;
+	    ptr += sprintf( ptr, "Pragma: stream-switch-entry=");
+	    if(n_audio > 0) {
+		for( i=0; i<n_audio ; i++ ) {
+		    stream_id = audio_streams[i];
+		    if(stream_id == audio_id) enable = 0;
+		    else {
+			enable = 2;
+			continue;
+		    }
+		    asf_nb_stream++;
+		    ptr += sprintf(ptr, "ffff:%d:%d ", stream_id, enable);
+		}
+	    }
+	    if(n_video > 0) {
+		for( i=0; i<n_video ; i++ ) {
+		    stream_id = video_streams[i];
+		    if(stream_id == video_id) enable = 0;
+		    else {
+			enable = 2;
+			continue;
+		    }
+		    asf_nb_stream++;
+		    ptr += sprintf(ptr, "ffff:%d:%d ", stream_id, enable);
+		}
+	    }
+	    http_hdr->set_field(str );
+	    sprintf( str, "Pragma: stream-switch-count=%d", asf_nb_stream );
+	    http_hdr->set_field( str );
+	    break;
+	case ASF_Redirector_e: break;
+	case ASF_Unknown_e: // First request goes here.
+	    break;
+	default:
+	    MSG_ERR("Unknown asf stream type\n");
+    }
 
-	http_hdr->set_field("Connection: Close" );
-	http_hdr->build_request( );
+    http_hdr->set_field("Connection: Close" );
+    http_hdr->build_request( );
 
-	return http_hdr;
+    return http_hdr;
 }
 
 int Asf_Networking::parse_response(HTTP_Header& http_hdr ) {
-	const char *content_type, *pragma;
-	char features[64] = "\0";
-	size_t len;
-	if( http_hdr.response_parse()<0 ) {
-		MSG_ERR("Failed to parse HTTP response\n");
-		return -1;
-	}
-	switch( http_hdr.get_status()) {
-		case 200:
-			break;
-		case 401: // Authentication required
-			return ASF_Authenticate_e;
-		default:
-			MSG_ERR("Server return %d:%s\n", http_hdr.get_status(), http_hdr.get_reason_phrase());
-			return -1;
-	}
+    const char *content_type, *pragma;
+    char features[64] = "\0";
+    size_t len;
+    if( http_hdr.response_parse()<0 ) {
+	MSG_ERR("Failed to parse HTTP response\n");
+	return -1;
+    }
+    switch( http_hdr.get_status()) {
+	case 200:
+	    break;
+	case 401: // Authentication required
+	    return ASF_Authenticate_e;
+	default:
+	    MSG_ERR("Server return %d:%s\n", http_hdr.get_status(), http_hdr.get_reason_phrase());
+	    return -1;
+    }
 
-	content_type = http_hdr.get_field("Content-Type");
+    content_type = http_hdr.get_field("Content-Type");
 
-	pragma = http_hdr.get_field("Pragma");
-	while( pragma!=NULL ) {
-		const char *comma_ptr=NULL;
-		const char *end;
-		// The pragma line can get severals attributes
-		// separeted with a comma ','.
-		do {
-			if( !strncasecmp( pragma, "features=", 9) ) {
-				pragma += 9;
-				end = strstr( pragma, "," );
-				if( end==NULL ) {
-				  size_t s = strlen(pragma);
-				  if(s > sizeof(features)) {
-				    MSG_WARN("ASF HTTP PARSE WARNING : Pragma %s cuted from %d bytes to %d\n",pragma,s,sizeof(features));
-				    len = sizeof(features);
-				  } else {
-				    len = s;
-				  }
-				} else {
-				  len = MIN((unsigned int)(end-pragma),sizeof(features));
-				}
-				strncpy( features, pragma, len );
-				features[len]='\0';
-				break;
-			}
-			comma_ptr = strstr( pragma, "," );
-			if( comma_ptr!=NULL ) {
-				pragma = comma_ptr+1;
-				if( pragma[0]==' ' ) pragma++;
-			}
-		} while( comma_ptr!=NULL );
-		pragma = http_hdr.get_next_field();
-	}
-	networking_type = asf_http_networking_type( content_type, features, http_hdr );
-	return 0;
+    pragma = http_hdr.get_field("Pragma");
+    while( pragma!=NULL ) {
+	const char *comma_ptr=NULL;
+	const char *end;
+	// The pragma line can get severals attributes
+	// separeted with a comma ','.
+	do {
+	    if( !strncasecmp( pragma, "features=", 9) ) {
+		pragma += 9;
+		end = strstr( pragma, "," );
+		if( end==NULL ) {
+		    size_t s = strlen(pragma);
+		    if(s > sizeof(features)) {
+			MSG_WARN("ASF HTTP PARSE WARNING : Pragma %s cuted from %d bytes to %d\n",pragma,s,sizeof(features));
+			len = sizeof(features);
+		    } else len = s;
+		} else len = std::min((unsigned long)(end-pragma),sizeof(features));
+		strncpy( features, pragma, len );
+		features[len]='\0';
+		break;
+	    }
+	    comma_ptr = strstr( pragma, "," );
+	    if( comma_ptr!=NULL ) {
+		pragma = comma_ptr+1;
+		if( pragma[0]==' ' ) pragma++;
+	    }
+	} while( comma_ptr!=NULL );
+	pragma = http_hdr.get_next_field();
+    }
+    networking_type = asf_http_networking_type( content_type, features, http_hdr );
+    return 0;
 }
 
 Networking* Asf_Networking::start(Tcp& tcp, network_protocol_t& protocol) {
     HTTP_Header *http_hdr=NULL;
-    URL *url = protocol.url;
+    URL& url = protocol.url;
     uint8_t buffer[BUFFER_SIZE];
     int i, ret;
     int done;
     int auth_retry = 0;
-    const char *proto = protocol.url->protocol;
+    const char *proto = protocol.url.protocol().c_str();
 
     // sanity check
-    if (!(!strncasecmp(proto, "http_proxy", 10) ||
-	!strncasecmp(proto, "http", 4))) {
+    if (!(protocol.url.protocol2lower()=="http_proxy" ||
+	protocol.url.protocol2lower()=="http")) {
 	MSG_ERR("Unknown protocol: %s\n", proto );
 	return NULL;
     }
@@ -668,12 +651,9 @@ Networking* Asf_Networking::start(Tcp& tcp, network_protocol_t& protocol) {
 	done = 1;
 	tcp.close();
 
-	if( !strcasecmp( url->protocol, "http_proxy" ) ) {
-	    if( url->port==0 ) url->port = 8080;
-	} else {
-	    if( url->port==0 ) url->port = 80;
-	}
-	tcp.open(url->hostname, url->port, Tcp::IP4);
+	if( url.protocol2lower()=="http_proxy") url.assign_port(8080);
+	else url.assign_port(80);
+	tcp.open(url, Tcp::IP4);
 	if( !tcp.established()) {
 	    delete rv;
 	    return NULL;
@@ -778,7 +758,6 @@ Networking* Asf_Networking::start(Tcp& tcp, network_protocol_t& protocol) {
 	return Nop_Networking::start(tcp,protocol);
     } else rv->buffering = 1;
     rv->status = networking_playing_e;
-    rv->url->port=protocol.url->port;
 
     delete http_hdr;
     return rv;

@@ -145,16 +145,15 @@ static int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parse
     char request[4096];
     int ret = 0;
     Tcp tcp(cddb_data->libinput,-1);
-    URL *url;
+    URL& url=*new(zeromem) URL("");
 
     if( reply_parser==NULL || command==NULL || cddb_data==NULL ) return -1;
 
     sprintf( request, "http://%s/~cddb/cddb.cgi?cmd=%s%s&proto=%d", cddb_data->freedb_server, command, cddb_data->cddb_hello.c_str(), cddb_data->freedb_proto_level );
     MSG_V("Request[%s]\n", request );
 
-    url = url_new(request);
-    if( url==NULL ) {
-	MSG_ERR("Not a valid URL\n");
+    if(url.redirect(request)!=MPXP_Ok) {
+	MSG_ERR("Not valid URL: '%s'\n",request);
 	return -1;
     }
 
@@ -183,7 +182,7 @@ static int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parse
     }
 
     delete http_hdr;
-    delete url;
+    delete &url;
 
     return ret;
 }

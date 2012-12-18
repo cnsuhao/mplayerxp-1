@@ -7,13 +7,11 @@ using namespace mpxp;
 #include "librtsp/rtsp_session.h"
 
 namespace mpxp {
-#define RTSP_DEFAULT_PORT 554
-Networking* Rtsp_Networking::start(Tcp& tcp, URL* url,unsigned bandwidth)
+Networking* Rtsp_Networking::start(Tcp& tcp, URL& url,unsigned bandwidth)
 {
     Rtsp_Session *rtsp;
     char *mrl;
-    char *file;
-    int port;
+    const char *file;
     int redirected, temp;
 
     /* counter so we don't get caught in infinite redirections */
@@ -22,30 +20,28 @@ Networking* Rtsp_Networking::start(Tcp& tcp, URL* url,unsigned bandwidth)
     do {
 	redirected = 0;
 
-	tcp.open(url->hostname,
-		port = (url->port ?
-			url->port :
-			RTSP_DEFAULT_PORT));
-	if (!tcp.established() && !url->port)
-	    tcp.open(url->hostname,
-			port = 7070);
+	url.assign_port(554);
+	tcp.open(url);
+	if (!tcp.established())  {
+	    url.assign_port(7070);
+	    tcp.open(url);
+	}
 	if (!tcp.established()) return NULL;
-	file = url->file;
+	file = url.file().c_str();
 	if (file[0] == '/') file++;
 
-	mrl = new char [strlen (url->hostname) + strlen (file) + 16];
+	mrl = new char [url.host().length() + strlen (file) + 16];
 
-	sprintf (mrl, "rtsp://%s:%i/%s",url->hostname, port, file);
+	sprintf (mrl, "rtsp://%s:%i/%s",url.host().c_str(), url.port(), file);
 
 	rtsp = rtsp_session_start (tcp, &mrl, file,
-			url->hostname,
-			port, &redirected,
+			url.host(),
+			url.port(), &redirected,
 			bandwidth,
-			url->username,
-			url->password);
+			url.user(),
+			url.password());
 	if (redirected == 1) {
-	    delete url;
-	    url = url_new (mrl);
+	    url.redirect(mrl);
 	    tcp.close();
 	}
 	delete mrl;

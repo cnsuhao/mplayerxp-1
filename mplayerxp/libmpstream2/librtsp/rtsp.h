@@ -47,7 +47,7 @@ enum {
 
 struct rtsp_t;
 
-rtsp_t*  rtsp_connect (Tcp& tcp, char *mrl, char *path, char *host, int port, char *user_agent);
+rtsp_t*  rtsp_connect (Tcp& tcp, char *mrl, const char *path, const char *host, int port, const char *user_agent);
 
 int rtsp_request_options(rtsp_t *s, const char *what);
 int rtsp_request_describe(rtsp_t *s, const char *what);
@@ -69,10 +69,10 @@ int      rtsp_read (rtsp_t *self, char *data, int len);
 void     rtsp_close (rtsp_t *self);
 
 void  rtsp_set_session(rtsp_t *s, const char *id);
-char *rtsp_get_session(rtsp_t *s);
+const char *rtsp_get_session(rtsp_t *s);
 
 char *rtsp_get_mrl(rtsp_t *s);
-char *rtsp_get_param(rtsp_t *s, const char *param);
+char *rtsp_get_param(rtsp_t *s,const char *param);
 
 /*int      rtsp_peek_header (rtsp_t *self, char *data); */
 

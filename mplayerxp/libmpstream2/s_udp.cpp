@@ -43,9 +43,9 @@ namespace mpxp {
 	    virtual off_t	sector_size() const;
 	    virtual std::string mime_type() const;
 	private:
-	    MPXP_Rc		start (URL*,unsigned);
+	    MPXP_Rc		start (const URL&,unsigned);
 
-	    Networking*	networking;
+	    Networking*		networking;
 	    Udp			udp;
 	    Tcp			tcp;
     };
@@ -77,7 +77,7 @@ void Udp_Stream_Interface::close()
     networking=NULL;
 }
 
-MPXP_Rc Udp_Stream_Interface::start (URL* url,unsigned bandwidth)
+MPXP_Rc Udp_Stream_Interface::start (const URL& url,unsigned bandwidth)
 {
     if (!udp.established()) {
 	udp.open(networking->url);
@@ -95,13 +95,13 @@ MPXP_Rc Udp_Stream_Interface::start (URL* url,unsigned bandwidth)
 
 MPXP_Rc Udp_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
-    URL *url;
+    URL url;
     UNUSED(flags);
     MSG_V("STREAM_UDP, URL: %s\n", filename.c_str());
 
-    url = url_new (filename);
-    url = check4proxies (url);
-    if (url->port == 0) {
+    url.redirect(filename);
+    url.check4proxies ();
+    if (url.port() == 0) {
 	MSG_ERR("You must enter a port number for UDP streams!\n");
 	return MPXP_False;
     }

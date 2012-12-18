@@ -362,7 +362,7 @@ static int interp_header (uint8_t *header, int header_len)
 
 int Asf_Mmst_Networking::get_media_packet (Tcp& tcp, int padding) {
   unsigned char  pre_header[8];
-  unsigned char  data[BUF_SIZE];
+  unsigned char  _data[BUF_SIZE];
 
   if (!get_data (tcp, pre_header, 8)) {
     MSG_ERR ("pre-header read failed\n");
@@ -386,12 +386,12 @@ int Asf_Mmst_Networking::get_media_packet (Tcp& tcp, int padding) {
       return 0;
     }
 
-    if (!get_data (tcp, data, packet_len)) {
+    if (!get_data (tcp, _data, packet_len)) {
       MSG_ERR ("media data read failed\n");
       return 0;
     }
 
-    bufferize(data, padding);
+    bufferize(_data, padding);
 
   } else {
 
@@ -410,7 +410,7 @@ int Asf_Mmst_Networking::get_media_packet (Tcp& tcp, int padding) {
 	return 0;
     }
 
-    if (!get_data (tcp, data, packet_len)) {
+    if (!get_data (tcp, _data, packet_len)) {
       MSG_ERR ("command data read failed\n");
       return 0;
     }
@@ -422,12 +422,12 @@ int Asf_Mmst_Networking::get_media_packet (Tcp& tcp, int padding) {
       return -1;
     }
 
-    command = get_32 (data, 24) & 0xFFFF;
+    command = get_32 (_data, 24) & 0xFFFF;
 
 //    printf ("\ncommand packet detected, len=%d  cmd=0x%X\n", packet_len, command);
 
     if (command == 0x1b)
-      send_command (tcp, 0x1b, 0, 0, 0, data);
+      send_command (tcp, 0x1b, 0, 0, 0, _data);
     else if (command == 0x1e) {
       MSG_OK ("everything done. Thank you for downloading a media file containing proprietary and patentend technology.\n");
       return 0;
@@ -490,19 +490,20 @@ Networking* Asf_Mmst_Networking::start(Tcp& tcp, network_protocol_t& protocol)
     uint8_t	asf_header[HDR_BUF_SIZE];
     int		asf_header_len;
     int		len, i, packet_length;
-    char*	path, *unescpath;
-    URL* url1 = protocol.url;
-    const char *proto = protocol.url->protocol;
+    const char*	path;
+    char*	unescpath;
+    URL		url1 = protocol.url;
 
     // Is protocol even valid mms,mmsu,mmst,http,http_proxy?
-    if (!(!strncasecmp(proto, "mmst", 4) || !strncasecmp(proto, "mmsu", 4) ||
-	!strncasecmp(proto, "mms", 3))) {
-	MSG_ERR("Unknown protocol: %s\n", proto );
+    if (!(protocol.url.protocol2lower()=="mmst" ||
+	 protocol.url.protocol2lower()=="mmsu" ||
+	 protocol.url.protocol2lower()=="mms")) {
+	MSG_ERR("Unknown protocol: %s\n", protocol.url.protocol().c_str() );
 	return NULL;
     }
 
     // Is protocol mms or mmsu?
-    if (!strncasecmp(proto, "mmsu", 4) || !strncasecmp(proto, "mms", 3)) {
+    if (protocol.url.protocol2lower()=="mmsu" || protocol.url.protocol2lower()=="mms") {
 	MSG_V("Trying ASF/UDP...\n");
 	//fd = asf_mmsu_networking_start( stream );
 	//mmsu support is not implemented yet - using this code
@@ -513,7 +514,7 @@ Networking* Asf_Mmst_Networking::start(Tcp& tcp, network_protocol_t& protocol)
     tcp.close();
 
     /* parse url */
-    path = strchr(url1->file,'/') + 1;
+    path = strchr(url1.file().c_str(),'/') + 1;
 
     /* mmst filename are not url_escaped by MS MediaPlayer and are expected as
     * "plain text" by the server, so need to decode it here
@@ -526,8 +527,8 @@ Networking* Asf_Mmst_Networking::start(Tcp& tcp, network_protocol_t& protocol)
     url2string(unescpath,path);
     path=unescpath;
 
-    if( url1->port==0 ) url1->port=1755;
-    tcp.open(url1->hostname, url1->port, Tcp::IP4);
+    url1.assign_port(1755);
+    tcp.open(url1, Tcp::IP4);
     if( !tcp.established()) {
 	delete path;
 	return NULL;
@@ -551,7 +552,7 @@ Networking* Asf_Mmst_Networking::start(Tcp& tcp, network_protocol_t& protocol)
 #endif
 #endif
 
-    snprintf (str, 1023, "\034\003NSPlayer/7.0.0.1956; {33715801-BAB3-9D85-24E9-03B90328270A}; Host: %s", url1->hostname);
+    snprintf (str, 1023, "\034\003NSPlayer/7.0.0.1956; {33715801-BAB3-9D85-24E9-03B90328270A}; Host: %s", url1.host().c_str());
     string_utf16 (data, str, strlen(str));
 // send_command(s, commandno ....)
     send_command (tcp, 1, 0, 0x0004000b, strlen(str) * 2+2, data);
@@ -649,7 +650,6 @@ Networking* Asf_Mmst_Networking::start(Tcp& tcp, network_protocol_t& protocol)
 
     rv->buffering = 1;
     rv->status = networking_playing_e;
-    rv->url->port=protocol.url->port;
 
     packet_length1 = packet_length;
     MSG_V("mmst packet_length = %d\n",packet_length);

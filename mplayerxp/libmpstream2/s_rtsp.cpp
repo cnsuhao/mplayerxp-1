@@ -76,14 +76,14 @@ void Rtsp_Stream_Interface::close()
 
 MPXP_Rc Rtsp_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
-    URL *url;
+    URL url;
     UNUSED(flags);
     if(filename.substr(0,7)!="rtsp://") return MPXP_False;
 
     MSG_V("STREAM_RTSP, URL: %s\n", filename.c_str());
 
-    url = url_new (filename);
-    url = check4proxies (url);
+    url.redirect (filename);
+    url.check4proxies ();
 
     tcp.close();
     if ((networking=Rtsp_Networking::start(tcp,url,net_conf.bandwidth)) == NULL) {

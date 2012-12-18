@@ -73,8 +73,10 @@ namespace mpxp {
 #define RTSP_SERVER_TYPE_UNKNOWN "unknown"
 
 //Rtsp_Session *rtsp_session_start(char *mrl) {
-Rtsp_Session *rtsp_session_start(Tcp& tcp, char **mrl, char *path, char *host,
-  int port, int *redir, uint32_t bandwidth, char *user, char *pass) {
+Rtsp_Session *rtsp_session_start(Tcp& tcp, char **mrl, const std::string& path,
+				const std::string& host,
+				int port, int *redir, uint32_t bandwidth,
+				const std::string& user, const std::string& pass) {
 
   Rtsp_Session *rtsp_session = NULL;
   char *server;
@@ -90,10 +92,10 @@ Rtsp_Session *rtsp_session_start(Tcp& tcp, char **mrl, char *path, char *host,
   *redir = 0;
 
   /* connect to server */
-  rtsp_session->s=rtsp_connect(tcp,*mrl,path,host,port,NULL);
+  rtsp_session->s=rtsp_connect(tcp,*mrl,path.c_str(),host.c_str(),port,NULL);
   if (!rtsp_session->s)
   {
-    MSG_ERR("rtsp_session: failed to connect to server %s\n", path);
+    MSG_ERR("rtsp_session: failed to connect to server %s\n", path.c_str());
     delete rtsp_session;
     return NULL;
   }
@@ -111,7 +113,7 @@ Rtsp_Session *rtsp_session_start(Tcp& tcp, char **mrl, char *path, char *host,
   {
     /* we are talking to a real server ... */
 
-    h=real_setup_and_get_header(rtsp_session->s, bandwidth, user, pass);
+    h=real_setup_and_get_header(rtsp_session->s, bandwidth, user.c_str(), pass.c_str());
     if (!h) {
       /* got an redirect? */
       if (rtsp_search_answers(rtsp_session->s, RTSP_OPTIONS_LOCATION))

@@ -22,11 +22,11 @@ int Pnm_Networking::read(Tcp& tcp, char *_buffer, int size) {
 Networking* Pnm_Networking::start(Tcp& tcp,network_protocol_t& protocol ) {
     Pnm* pnm = new(zeromem) Pnm(tcp);
 
-    tcp.open(protocol.url->hostname,
-	    protocol.url->port ? protocol.url->port : 7070);
+    protocol.url.assign_port(7070);
+    tcp.open(protocol.url);
     if(!tcp.established()) return NULL;
 
-    if(pnm->connect(protocol.url->file)!=MPXP_Ok) {
+    if(pnm->connect(protocol.url.file())!=MPXP_Ok) {
 	delete pnm;
 	return NULL;
     }

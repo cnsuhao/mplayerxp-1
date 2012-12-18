@@ -47,12 +47,7 @@ namespace mpxp {
 	    int			OpenData(size_t newpos);
 	    int			SendCmd(const std::string& cmd,char* rsp);
 
-	    const char*	user;
-	    const char*	pass;
-	    const char*	host;
-	    int		port;
-	    const char*	filename;
-	    URL*	url;
+	    URL		url;
 
 	    char*	cput,*cget;
 	    Tcp		tcp;
@@ -196,7 +191,6 @@ int Ftp_Stream_Interface::SendCmd(const std::string& _cmd,char* rsp)
 
 int Ftp_Stream_Interface::OpenPort() {
     int resp;
-    net_fd_t fd;
     char rsp_txt[256];
     char* par,str[128];
     int num[6];
@@ -212,10 +206,11 @@ int Ftp_Stream_Interface::OpenPort() {
 	return 0;
     }
     sscanf(par+1,"%u,%u,%u,%u,%u,%u",&num[0],&num[1],&num[2],&num[3],&num[4],&num[5]);
-    snprintf(str,127,"%d.%d.%d.%d",num[0],num[1],num[2],num[3]);
-    tcp.open(str,(num[4]<<8)+num[5]);
+    snprintf(str,127,"ftp://%d.%d.%d.%d:%d",num[0],num[1],num[2],num[3],(num[4]<<8)+num[5]);
+    url.redirect(str);
+    tcp.open(url);
 
-    if(fd < 0) MSG_ERR("[ftp] failed to create data connection\n");
+    if(!tcp.established()) MSG_ERR("[ftp] failed to create data connection\n");
     return 1;
 }
 
@@ -237,7 +232,7 @@ int Ftp_Stream_Interface::OpenData(size_t newpos) {
 	}
     }
     // Get the file
-    snprintf(str,255,"RETR %s",filename);
+    snprintf(str,255,"RETR %s",url.file().c_str());
     resp = SendCmd(str,rsp_txt);
 
     if(resp != 1) {
@@ -323,51 +318,46 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
 
     UNUSED(flags);
     uname=std::string("ftp://")+_filename;
-    if(!(url=url_new(uname))) goto bad_url;
+    if(url.redirect(uname)!=MPXP_Ok) goto bad_url;
 //  url = check4proxies (rurl);
-    if(!(url->hostname && url->file)) {
+    if(url.host().empty() && !url.file().empty()) {
 	bad_url:
 	MSG_ERR("[ftp] Bad url\n");
 	return MPXP_False;
     }
-    user=url->username?url->username:"anonymous";
-    pass=url->password?url->password:"no@spam";
-    host=url->hostname;
-    port=url->port?url->port:21;
-    filename=url->file;
-    MSG_V("FTP: Opening ~%s :%s @%s :%i %s\n",user,pass,host,port,filename);
+    if(url.user().empty()) url.set_login("anonymous","no@spam");
+    url.assign_port(21);
+    MSG_V("FTP: Opening ~%s :%s @%s :%i %s\n"
+	,url.user().c_str(),url.password().c_str(),url.host().c_str(),
+	url.port(),url.file().c_str());
 
     // Open the control connection
-    tcp.open(host,port);
+    tcp.open(url);
 
     if(!tcp.established()) {
-	delete url;
 	return MPXP_False;
     }
     // We got a connection, let's start serious things
     buf = new char [BUFSIZE];
     if (readresp(NULL) == 0) {
 	close();
-	delete url;
 	return MPXP_False;
     }
     // Login
-    snprintf(str,255,"USER %s",user);
+    snprintf(str,255,"USER %s",url.user().c_str());
     resp = SendCmd(str,rsp_txt);
     // password needed
     if(resp == 3) {
-	snprintf(str,255,"PASS %s",pass);
+	snprintf(str,255,"PASS %s",url.password().c_str());
 	resp = SendCmd(str,rsp_txt);
 	if(resp != 2) {
 	    MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
 	    close();
-	    delete url;
 	    return MPXP_False;
 	}
     } else if(resp != 2) {
 	MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
 	close();
-	delete url;
 	return MPXP_False;
     }
 
@@ -376,7 +366,6 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
     if(resp != 2) {
 	MSG_ERR("[ftp] command 'TYPE I' failed: %s\n",rsp_txt);
 	close();
-	delete url;
 	return MPXP_False;
     }
 
@@ -385,7 +374,6 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
     if(resp != 2) {
 	MSG_ERR("[ftp] command 'SYST' failed: %s\n",rsp_txt);
 	close();
-	delete url;
 	return MPXP_False;
     }
     MSG_INFO("[ftp] System: %s\n",rsp_txt);
@@ -393,13 +381,12 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
     if(resp != 2) {
 	MSG_ERR("[ftp] command 'STAT' failed: %s\n",rsp_txt);
 	close();
-	delete url;
 	return MPXP_False;
     }
 
     file_len=0;
     // Get the filesize
-    snprintf(str,255,"SIZE %s",filename);
+    snprintf(str,255,"SIZE %s",url.file().c_str());
     resp = SendCmd(str,rsp_txt);
     if(resp != 2) {
 	MSG_WARN("[ftp] command '%s' failed: %s\n",str,rsp_txt);
@@ -414,7 +401,6 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
     // because the connection would stay open in the main process,
     // preventing correct abort with many servers.
 
-    delete url;
     return MPXP_Ok;
 }
 Stream::type_e Ftp_Stream_Interface::type() const { return file_len?Stream::Type_Seekable:Stream::Type_Stream; }

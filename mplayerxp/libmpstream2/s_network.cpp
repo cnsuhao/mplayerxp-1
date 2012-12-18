@@ -37,7 +37,7 @@ namespace mpxp {
 	    virtual off_t	sector_size() const;
 	    virtual std::string mime_type() const;
 	private:
-	    URL*		url;
+	    URL			url;
 	    off_t		spos;
 	    Tcp			tcp;
 	    Networking*	networking;
@@ -46,22 +46,17 @@ namespace mpxp {
 Network_Stream_Interface::Network_Stream_Interface(libinput_t& libinput)
 			:Stream_Interface(libinput),
 			tcp(libinput,-1) {}
-Network_Stream_Interface::~Network_Stream_Interface() {
-    if(url) delete url;
-}
+Network_Stream_Interface::~Network_Stream_Interface() {}
 
 MPXP_Rc Network_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
     UNUSED(flags);
-    url = url_new(filename);
-    if(url) {
+    if(url.redirect(filename)==MPXP_Ok) {
 	if((networking=Networking::start(tcp,url))==NULL){
 	    MSG_ERR(MSGTR_UnableOpenURL, filename.c_str());
-	    delete url;
-	    url=NULL;
 	    return MPXP_False;
 	}
-	MSG_INFO(MSGTR_ConnToServer, url->hostname);
+	MSG_INFO(MSGTR_ConnToServer, url.host().c_str());
 	spos = 0;
 	return MPXP_Ok;
     }
