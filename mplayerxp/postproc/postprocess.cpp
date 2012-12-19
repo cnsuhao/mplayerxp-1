@@ -12,8 +12,7 @@ using namespace mpxp;
 #include "postprocess.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "osdep/cpudetect.h"
-#define MSGT_CLASS MSGT_PP
-#include "mpxp_msg.h"
+#include "pp_msg.h"
 
 pp_context *pp2_get_context(int width, int height, int flags)
 {

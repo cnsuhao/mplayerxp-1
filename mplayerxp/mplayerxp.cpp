@@ -4,6 +4,8 @@ using namespace mpxp;
 /* MplayerXP (C) 2000-2002. by A'rpi/ESP-team (C) 2002. by Nickols_K */
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,8 +57,7 @@ using namespace mpxp;
 #include "postproc/libmenu/menu.h"
 
 #include "input2/input.h"
-#define MSGT_CLASS MSGT_CPLAYER
-#include "mpxp_msg.h"
+#include "player_msg.h"
 #include "xmpcore/xmp_core.h"
 #include "xmpcore/xmp_vplayer.h"
 #include "xmpcore/xmp_adecoder.h"
@@ -233,18 +234,18 @@ static int mpxp_init_antiviral_protection(int verbose)
     rc|=mp_mprotect((any_t*)antiviral_hole4,sizeof(antiviral_hole4),MP_DENY_ALL);
     if(verbose) {
 	if(rc)
-	    MSG_ERR("*** Error! Cannot initialize antiviral protection: '%s' ***!\n",strerror(errno));
+	    mpxp_err<<"*** Error! Cannot initialize antiviral protection: '"<<strerror(errno)<<"' ***!"<<std::endl;
 	else
-	    MSG_OK("*** Antiviral protection was inited ***!!!\n");
+	    mpxp_ok<<"*** Antiviral protection was inited ***!!!"<<std::endl;
     }
     return rc;
 }
 
 static MPXP_Rc mpxp_test_antiviral_protection(int* verbose)
 {
-    if(*verbose) MSG_INFO("Your've specified test-av option!\nRight now MPlayerXP should make coredump!\n");
+    if(*verbose) mpxp_info<<"Your've specified test-av option!\nRight now MPlayerXP should make coredump!"<<std::endl;
     *verbose=antiviral_hole1[0]|antiviral_hole2[0]|antiviral_hole3[0]|antiviral_hole4[0];
-    MSG_ERR("Antiviral protection of MPlayerXP doesn't work!");
+    mpxp_err<<"Antiviral protection of MPlayerXP doesn't work!"<<std::endl;
     return MPXP_Virus;
 }
 
@@ -388,7 +389,7 @@ void exit_player(const std::string& why){
 
     MP_UNIT("exit_player");
 
-    if(!why.empty()) MSG_HINT(MSGTR_Exiting,why.c_str());
+    if(!why.empty()) mpxp_hint<<std::endl<<MSGTR_Exiting<<"...("<<why<<")"<<std::endl;
     if(mpxp_context().mconfig) m_config_free(mpxp_context().mconfig);
     mpxp_print_uninit();
     mpxp_uninit_structs();
@@ -428,20 +429,20 @@ void parse_cfgfiles( m_config_t& conf )
     char *conffile;
     int conffile_fd;
     if ((conffile = get_path("")) == NULL) {
-	MSG_WARN(MSGTR_NoHomeDir);
+	mpxp_warn<<MSGTR_NoHomeDir<<std::endl;
     } else {
 	mkdir(conffile, 0777);
 	delete conffile;
 	if ((conffile = get_path("config")) == NULL) {
-	    MSG_ERR(MSGTR_GetpathProblem);
+	    mpxp_err<<MSGTR_GetpathProblem<<std::endl;
 	    conffile=(char*)mp_malloc(strlen("config")+1);
 	    if(conffile)
 		strcpy(conffile,"config");
 	}
 	if ((conffile_fd = open(conffile, O_CREAT | O_EXCL | O_WRONLY, 0666)) != -1) {
-	    MSG_INFO(MSGTR_CreatingCfgFile, conffile);
-	    write(conffile_fd, default_config, strlen(default_config));
-	    close(conffile_fd);
+	    mpxp_info<<MSGTR_CreatingCfgFile<<": "<<conffile<<std::endl;
+	    ::write(conffile_fd, default_config, strlen(default_config));
+	    ::close(conffile_fd);
 	}
 	if (m_config_parse_config_file(conf, conffile) != MPXP_Ok) exit(1);
 	delete conffile;
@@ -508,26 +509,26 @@ static void get_mmx_optimizations( void )
     gCpuCaps.hasAVX=
     gCpuCaps.hasFMA=0;
   }
-  MSG_V("User corrected CPU flags: MMX=%d MMX2=%d 3DNow=%d 3DNow2=%d SSE=%d SSE2=%d SSE3=%d SSSE3=%d SSE41=%d SSE42=%d AES=%d AVX=%d FMA=%d\n",
-	gCpuCaps.hasMMX,
-	gCpuCaps.hasMMX2,
-	gCpuCaps.has3DNow,
-	gCpuCaps.has3DNowExt,
-	gCpuCaps.hasSSE,
-	gCpuCaps.hasSSE2,
-	gCpuCaps.hasSSE3,
-	gCpuCaps.hasSSSE3,
-	gCpuCaps.hasSSE41,
-	gCpuCaps.hasSSE42,
-	gCpuCaps.hasAES,
-	gCpuCaps.hasAVX,
-	gCpuCaps.hasFMA);
+  mpxp_v<<"User corrected CPU flags: MMX="<<gCpuCaps.hasMMX
+	<<" MMX2="<<gCpuCaps.hasMMX2
+	<<" 3DNow="<<gCpuCaps.has3DNow
+	<<" 3DNow2="<<gCpuCaps.has3DNowExt
+	<<" SSE="<<gCpuCaps.hasSSE
+	<<" SSE2="<<gCpuCaps.hasSSE2
+	<<" SSE3="<<gCpuCaps.hasSSE3
+	<<" SSSE3="<<gCpuCaps.hasSSSE3
+	<<" SSE41="<<gCpuCaps.hasSSE41
+	<<" SSE42="<<gCpuCaps.hasSSE42
+	<<" AES="<<gCpuCaps.hasAES
+	<<" AVX="<<gCpuCaps.hasAVX
+	<<" FMA="<<gCpuCaps.hasFMA
+	<<std::endl;
   if(gCpuCaps.hasMMX) 		mpxp_context().mplayer_accel |= MM_ACCEL_X86_MMX;
   if(gCpuCaps.hasMMX2) 		mpxp_context().mplayer_accel |= MM_ACCEL_X86_MMXEXT;
   if(gCpuCaps.hasSSE) 		mpxp_context().mplayer_accel |= MM_ACCEL_X86_SSE;
   if(gCpuCaps.has3DNow) 	mpxp_context().mplayer_accel |= MM_ACCEL_X86_3DNOW;
   if(gCpuCaps.has3DNowExt) 	mpxp_context().mplayer_accel |= MM_ACCEL_X86_3DNOWEXT;
-  MSG_V("mpxp_context().mplayer_accel=%i\n",mpxp_context().mplayer_accel);
+  mpxp_v<<"mpxp_context().mplayer_accel="<<mpxp_context().mplayer_accel<<std::endl;
 }
 #endif
 
@@ -569,7 +570,7 @@ static void init_player( void )
     /* check codec.conf*/
     if(!parse_codec_cfg(get_path("win32codecs.conf"))) {
       if(!parse_codec_cfg(CONFDIR"/win32codecs.conf")) {
-	MSG_HINT(MSGTR_CopyCodecsConf);
+	mpxp_hint<<MSGTR_CopyCodecsConf<<std::endl;
 	mpxp_uninit_structs();
 	exit(0);
       }
@@ -593,10 +594,11 @@ static void init_player( void )
 
 void show_help(void) {
     // no file/vcd/dvd -> show HELP:
-    MSG_INFO("%s",help_text);
+    mpxp_info<<help_text<<std::endl;
     Stream::print_drivers();
-    MSG_INFO("\nExample: mplayerxp -ao alsa:hw:0 -vo x11 your.avi\n"
-	     "Use --long-help option for full help\n");
+    mpxp_info<<std::endl;
+    mpxp_info<<"Example: mplayerxp -ao alsa:hw:0 -vo x11 your.avi"<<std::endl;
+    mpxp_info<<"Use --long-help option for full help"<<std::endl;
 }
 
 void show_long_help(void) {
@@ -614,7 +616,7 @@ void show_long_help(void) {
     /* check codec.conf*/
     if(!parse_codec_cfg(get_path("win32codecs.conf"))){
       if(!parse_codec_cfg(CONFDIR"/win32codecs.conf")){
-	MSG_HINT(MSGTR_CopyCodecsConf);
+	mpxp_hint<<MSGTR_CopyCodecsConf<<std::endl;
 	mpxp_uninit_structs();
 	exit(0);
       }
@@ -776,37 +778,41 @@ static void show_benchmark(void)
     mpxp_context().bench->total_start=GetTimer()-mpxp_context().bench->total_start;
     total_time_usage = (float)mpxp_context().bench->total_start*0.000001;
 
-    MSG_INFO("\nAVE BENCHMARKs: VC:%8.3fs VO:%8.3fs A:%8.3fs D:%8.3fs = %8.4fs C:%8.3fs\n",
-	 mpxp_context().bench->video,mpxp_context().bench->vout,mpxp_context().bench->audio+mpxp_context().bench->audio_decode,
-	 mpxp_context().bench->demux,mpxp_context().bench->c2,tot);
+    mpxp_info<<std::endl<<std::setprecision(3)
+	    <<"AVE BENCHMARKs: VC:"<<mpxp_context().bench->video<<"s"
+	    <<" VO:"<<mpxp_context().bench->vout<<"s"
+	    <<" A:"<<mpxp_context().bench->audio+mpxp_context().bench->audio_decode<<"s"
+	    <<" D:"<<mpxp_context().bench->demux<<"s="<<mpxp_context().bench->c2<<"s"
+	    <<" C:"<<tot<<"s"<<std::endl;
     if(total_time_usage>0.0)
-	MSG_INFO("AVE BENCHMARK%%: VC:%8.4f%% VO:%8.4f%% A:%8.4f%% D:%8.4f%% C:%8.4f%% = %8.4f%%\n",
-	   100.0*mpxp_context().bench->video/total_time_usage,
-	   100.0*mpxp_context().bench->vout/total_time_usage,
-	   100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/total_time_usage,
-	   100.0*mpxp_context().bench->demux/total_time_usage,
-	   100.0*mpxp_context().bench->c2/total_time_usage,
-	   100.0*tot/total_time_usage);
+	mpxp_info<<std::setprecision(4)
+	    <<"AVE BENCHMARK%: VC:"<<100.0*mpxp_context().bench->video/total_time_usage<<"%"
+	    <<" VO:"<<100.0*mpxp_context().bench->vout/total_time_usage<<"%"
+	    <<" A:"<<100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/total_time_usage<<"%"
+	    <<" D:"<<100.0*mpxp_context().bench->demux/total_time_usage<<"%"
+	    <<" C:"<<100.0*mpxp_context().bench->c2/total_time_usage<<"%"
+	    <<" = "<<100.0*tot/total_time_usage<<"%"<<std::endl;
     unsigned nframes=mpxp_context().engine().xp_core->video->num_played_frames;
-    MSG_INFO("\nREAL RESULTS: from %u was dropped=%u\n"
-	,nframes,mpxp_context().engine().xp_core->video->num_dropped_frames);
+    mpxp_info<<std::endl<<"REAL RESULTS: from "<<nframes<<"was dropped="<<mpxp_context().engine().xp_core->video->num_dropped_frames<<std::endl;
 }
 
 static void show_benchmark_status(void)
 {
     MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys.demuxer()->audio->sh);
+    float rev_time=(sh_audio->timer>0.5)?100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/(double)sh_audio->timer:0;
     if(xmp_test_model(XMP_Run_AudioPlayback))
-		MSG_STATUS("A:%6.1f %4.1f%%\r"
-			,sh_audio->timer-mpxp_context().audio().output->get_delay()
-			,(sh_audio->timer>0.5)?100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/(double)sh_audio->timer:0
-			);
+	mpxp_status<<std::setprecision(1)
+		<<"A:"<<sh_audio->timer-mpxp_context().audio().output->get_delay()
+		<<" "<<rev_time
+		<<"\r";
     else
-	MSG_STATUS("A:%6.1f %4.1f%%  B:%4.1f\r"
-		,sh_audio->timer-mpxp_context().audio().output->get_delay()
-		,(sh_audio->timer>0.5)?100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/(double)sh_audio->timer:0
-		,get_delay_audio_buffer()
-		);
+	mpxp_status<<std::setprecision(1)
+		<<"A:"<<sh_audio->timer-mpxp_context().audio().output->get_delay()
+		<<" "<<rev_time
+		<<" B:"<<get_delay_audio_buffer()
+		<<"\r";
+    mpxp_status.flush();
 }
 
 // for multifile support:
@@ -832,7 +838,8 @@ static void mpxp_init_osd(void) {
 #ifdef USE_OSD
     if(mp_conf.font_name){
 	mpxp_context().video().output->font=read_font_desc(mp_conf.font_name,mp_conf.font_factor,mp_conf.verbose>1);
-	if(!mpxp_context().video().output->font) MSG_ERR(MSGTR_CantLoadFont,mp_conf.font_name);
+	if(!mpxp_context().video().output->font)
+	    mpxp_err<<MSGTR_CantLoadFont<<": "<<mp_conf.font_name<<std::endl;
     } else {
 	// try default:
 	mpxp_context().video().output->font=read_font_desc(get_path("font/font.desc"),mp_conf.font_factor,mp_conf.verbose>1);
@@ -845,13 +852,13 @@ static void mpxp_init_osd(void) {
 	const char *menu_cfg;
 	menu_cfg = get_path("menu.conf");
 	if(menu_init(NULL, menu_cfg))
-	    MSG_INFO("Menu initialized: %s\n", menu_cfg);
+	    mpxp_info<<"Menu initialized: "<<menu_cfg<<std::endl;
 	else {
 	    menu_cfg="/etc/menu.conf";
 	    if(menu_init(NULL, menu_cfg))
-		MSG_INFO("Menu initialized: %s\n", menu_cfg);
+		mpxp_info<<"Menu initialized: "<<menu_cfg<<std::endl;
 	    else
-		MSG_WARN("Menu init failed\n");
+		mpxp_warn<<"Menu init failed"<<std::endl;
 	}
     }
     MP_UNIT("init_osd");
@@ -866,7 +873,7 @@ char* MPXPSystem::init_output_subsystems() {
     vo_inited = (mpxp_context().video().output->init(mp_conf.video_driver?mp_conf.video_driver:"")==MPXP_Ok)?1:0;
 
     if(!vo_inited){
-	MSG_FATAL(MSGTR_InvalidVOdriver,mp_conf.video_driver?mp_conf.video_driver:"?");
+	mpxp_fatal<<MSGTR_InvalidVOdriver<<": "<<(mp_conf.video_driver?mp_conf.video_driver:"?")<<std::endl;
 	exit_player(MSGTR_Exit_error);
     }
 
@@ -893,7 +900,7 @@ int MPXPSystem::init_vobsub(const char *filename) {
     if (mp_conf.vobsub_name){
       mpxp_context().video().output->vobsub=vobsub_open(mp_conf.vobsub_name,mp_conf.spudec_ifo,1,&mpxp_context().video().output->spudec);
       if(mpxp_context().video().output->vobsub==NULL)
-	MSG_ERR(MSGTR_CantLoadSub,mp_conf.vobsub_name);
+	mpxp_err<<MSGTR_CantLoadSub<<": "<<mp_conf.vobsub_name<<std::endl;
       else {
 	inited_flags|=INITED_VOBSUB;
 	vobsub_set_from_lang(mpxp_context().video().output->vobsub, mp_conf.dvdsub_lang);
@@ -921,7 +928,7 @@ int MPXPSystem::handle_playlist(const char *filename) const {
     play_tree_t* entry;
     // Handle playlist
     MP_UNIT("handle_playlist");
-    MSG_V("Parsing playlist %s...\n",filename);
+    mpxp_v<<"Parsing playlist "<<filename<<"..."<<std::endl;
     entry = parse_playtree(_libinput,stream);
     if(!entry) {
       entry = playtree_iter->tree;
@@ -979,27 +986,27 @@ void MPXPSystem::print_stream_formats() const {
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     int fmt;
     char *c;
-    MSG_INFO("[Stream]:");
+    mpxp_info<<"[Stream]:";
     if(sh_video) {
-	MSG_INFO("Video=");
+	mpxp_info<<"Video=";
 	if(sh_video->bih)fmt=sh_video->bih->biCompression;
 	else		 fmt=sh_video->fourcc;
 	c=(char *)&fmt;
 	if(isprint(c[0]) && isprint(c[1]) && isprint(c[2]) && isprint(c[3]))
-	    MSG_INFO("%.4s",c);
+	    mpxp_info<<std::setw(4)<<c;
 	else
-	    MSG_INFO("%08X",fmt);
+	    mpxp_info<<std::hex<<std::setw(8)<<fmt;
     }
     if(sh_audio) {
-	MSG_INFO(" Audio=");
+	mpxp_info<<" Audio=";
 	fmt=sh_audio->wtag;
 	c=(char *)&fmt;
 	if(isprint(c[0]) && isprint(c[1]) && isprint(c[2]) && isprint(c[3]))
-	    MSG_INFO("%.4s",c);
+	    mpxp_info<<std::setw(4)<<c;
 	else
-	    MSG_INFO("%08X",fmt);
+	    mpxp_info<<std::hex<<std::setw(8)<<fmt;
     }
-    MSG_INFO("\n");
+    mpxp_info<<std::endl;
 }
 
 void MPXPSystem::read_video_properties() const {
@@ -1007,21 +1014,22 @@ void MPXPSystem::read_video_properties() const {
     Demuxer_Stream *d_video=_demuxer->video;
     MP_UNIT("video_read_properties");
     if(!sh_video->read_properties()) {
-	MSG_ERR("Video: can't read properties\n");
+	mpxp_err<<"Video: can't read properties"<<std::endl;
 	d_video->sh=NULL;
 	sh_video=reinterpret_cast<sh_video_t*>(d_video->sh);
     } else {
-	MSG_V("[V] filefmt:%d  fourcc:0x%X  size:%dx%d  fps:%5.2f  ftime:=%6.4f\n",
-	    _demuxer->file_format,sh_video->fourcc, sh_video->src_w,sh_video->src_h,
-	    sh_video->fps,1/sh_video->fps
-	    );
+	mpxp_v<<"[V] filefmt:"<<_demuxer->file_format
+	    <<"fourcc:0x"<<std::hex<<sh_video->fourcc
+	    <<" size:"<<sh_video->src_w<<"x"<<sh_video->src_h
+	    <<" fps:"<<std::setprecision(2)<<sh_video->fps
+	    <<" ftime:="<<1/sh_video->fps<<std::endl;
     /* need to set fps here for output encoders to pick it up in their init */
 	if(mp_conf.force_fps){
 	    sh_video->fps=mp_conf.force_fps;
 	}
 
 	if(!sh_video->fps && !mp_conf.force_fps){
-	    MSG_ERR(MSGTR_FPSnotspecified);
+	    mpxp_err<<MSGTR_FPSnotspecified<<std::endl;
 	    d_video->sh=NULL;
 	    sh_video=reinterpret_cast<sh_video_t*>(d_video->sh);
 	}
@@ -1064,7 +1072,7 @@ void MPXPSystem::read_subtitles(const char *filename,int forced_subs_only,int st
     MP_UNIT("read_subtitles_file");
     if(mp_conf.sub_name){
 	mpxp_context().subtitles=sub_read_file(mp_conf.sub_name, sh_video->fps);
-	if(!mpxp_context().subtitles) MSG_ERR(MSGTR_CantLoadSub,mp_conf.sub_name);
+	if(!mpxp_context().subtitles) mpxp_err<<MSGTR_CantLoadSub<<": "<<mp_conf.sub_name<<std::endl;
     } else if(mp_conf.sub_auto) { // auto load sub file ...
 	mpxp_context().subtitles=sub_read_file( filename ? sub_filename( get_path("sub/"), filename )
 				      : "default.sub", sh_video->fps );
@@ -1087,13 +1095,13 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
 #ifdef ENABLE_WIN32LOADER
     if(!found) {
 // Go through the codec.conf and find the best codec...
-	if(mp_conf.audio_family) MSG_INFO(MSGTR_TryForceAudioFmt,mp_conf.audio_family);
+	if(mp_conf.audio_family) mpxp_info<<MSGTR_TryForceAudioFmt<<": "<<mp_conf.audio_family<<std::endl;
 	while(1) {
 	    sh_audio->codec=find_codec(sh_audio->wtag,NULL,sh_audio->codec,1);
 	    if(!sh_audio->codec) {
 		if(mp_conf.audio_family) {
 		    sh_audio->codec=NULL; /* re-search */
-		    MSG_ERR(MSGTR_CantFindAfmtFallback);
+		    mpxp_err<<MSGTR_CantFindAfmtFallback<<std::endl;
 		    mp_conf.audio_family=NULL;
 		    continue;
 		}
@@ -1102,7 +1110,10 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
 	    if(mp_conf.audio_codec && strcmp(sh_audio->codec->codec_name,mp_conf.audio_codec)) continue;
 	    else if(mp_conf.audio_family && strcmp(sh_audio->codec->driver_name,mp_conf.audio_family)) continue;
 	    if(afm_find_driver(sh_audio->codec->driver_name)) {
-		MSG_V("%s audio codec: [%s] drv:%s (%s)\n",mp_conf.audio_codec?"Forcing":"Detected",sh_audio->codec->codec_name,sh_audio->codec->driver_name,sh_audio->codec->s_info);
+		mpxp_v<<mp_conf.audio_codec?"Forcing":"Detected"
+		    <<" audio codec: ["<<sh_audio->codec->codec_name
+		    <<"] drv:"<<sh_audio->codec->driver_name
+		    <<" ("<<sh_audio->codec->s_info<<")"<<std::endl;
 		found=1;
 		break;
 	    }
@@ -1115,25 +1126,25 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
 #endif
     if(!found) {
 	const char *fmt;
-	MSG_ERR(MSGTR_CantFindAudioCodec);
+	mpxp_err<<MSGTR_CantFindAudioCodec<<std::endl;
 	fmt = (const char *)&sh_audio->wtag;
 	if(isprint(fmt[0]) && isprint(fmt[1]) && isprint(fmt[2]) && isprint(fmt[3]))
-	    MSG_ERR(" '%c%c%c%c'!\n",fmt[0],fmt[1],fmt[2],fmt[3]);
+	    mpxp_err<<std::setw(4)<<" '"<<fmt<<"'!"<<std::endl;
 	else
-	    MSG_ERR(" 0x%08X!\n",sh_audio->wtag);
+	    mpxp_err<<" 0x"<<std::hex<<std::setprecision(8)<<sh_audio->wtag<<"!"<<std::endl;
 	MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("win32codecs.conf"));
 	d_audio->sh=NULL;
 	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
     } else {
 	if(!(mpxp_context().audio().output=new(zeromem) Audio_Output(ao_subdevice?ao_subdevice:""))) {
-	    MSG_ERR(MSGTR_CannotInitAO);
+	    mpxp_err<<MSGTR_CannotInitAO<<std::endl;
 	    d_audio->sh=NULL;
 	    sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 	}
 	if(ao_subdevice) delete ao_subdevice;
 	ao_inited=mpxp_context().audio().output->_register(mp_conf.audio_driver?mp_conf.audio_driver:"",0);
 	if (ao_inited!=MPXP_Ok){
-	    MSG_FATAL(MSGTR_InvalidAOdriver,mp_conf.audio_driver);
+	    mpxp_fatal<<MSGTR_InvalidAOdriver<<": "<<mp_conf.audio_driver<<std::endl;
 	    exit_player(MSGTR_Exit_error);
 	}
     }
@@ -1158,12 +1169,12 @@ MPXP_Rc MPXPSystem::find_vcodec(void) {
 	codecs_reset_selection(0);
 	if(mp_conf.video_codec) {
 	/* forced codec by name: */
-	    MSG_INFO("Forced video codec: %s\n",mp_conf.video_codec);
+	    mpxp_info<<"Forced video codec: "<<mp_conf.video_codec<<std::endl;
 	    sh_video->decoder=mpcv_init(sh_video,mp_conf.video_codec,NULL,-1,_libinput);
 	} else {
 	    int status;
     /* try in stability order: UNTESTED, WORKING, BUGGY, BROKEN */
-	    if(mp_conf.video_family) MSG_INFO(MSGTR_TryForceVideoFmt,mp_conf.video_family);
+	    if(mp_conf.video_family) mpxp_info<<MSGTR_TryForceVideoFmt<<": "<<mp_conf.video_family<<std::endl;
 	    for(status=CODECS_STATUS__MAX;status>=CODECS_STATUS__MIN;--status){
 		if(mp_conf.video_family) /* try first the preferred codec family:*/
 		    if((sh_video->decoder=mpcv_init(sh_video,NULL,mp_conf.video_family,status,_libinput))) break;
@@ -1177,12 +1188,12 @@ MPXP_Rc MPXPSystem::find_vcodec(void) {
 
     if(!sh_video->inited) {
 	const char *fmt;
-	MSG_ERR(MSGTR_CantFindVideoCodec);
+	mpxp_err<<MSGTR_CantFindVideoCodec<<std::endl;
 	fmt = (const char *)&sh_video->fourcc;
 	if(isprint(fmt[0]) && isprint(fmt[1]) && isprint(fmt[2]) && isprint(fmt[3]))
-	    MSG_ERR(" '%c%c%c%c'!\n",fmt[0],fmt[1],fmt[2],fmt[3]);
+	    mpxp_err<<std::setw(4)<<" '"<<fmt<<"'!"<<std::endl;
 	else
-	    MSG_ERR(" 0x%08X!\n",sh_video->fourcc);
+	    mpxp_err<<" 0x"<<std::hex<<std::setw(8)<<sh_video->fourcc<<std::endl;
 	MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("win32codecs.conf"));
 	d_video->sh = NULL;
 	sh_video = reinterpret_cast<sh_video_t*>(d_video->sh);
@@ -1190,8 +1201,10 @@ MPXP_Rc MPXPSystem::find_vcodec(void) {
     } else  inited_flags|=INITED_VCODEC;
 
     if(sh_video)
-    MSG_V("%s video codec: [%s] vfm:%s (%s)\n",
-	mp_conf.video_codec?"Forcing":"Detected",sh_video->codec->codec_name,sh_video->codec->driver_name,sh_video->codec->s_info);
+    mpxp_v<<(mp_conf.video_codec?"Forcing":"Detected")
+	<<" video codec: ["<<std::string(sh_video->codec->codec_name)
+	<<"] vfm:"<<std::string(sh_video->codec->driver_name)
+	<<" ("<<std::string(sh_video->codec->s_info)<<std::endl;
     return rc;
 }
 
@@ -1202,22 +1215,19 @@ int MPXPSystem::configure_audio() {
     int rc=0;
     const ao_info_t *info=mpxp_context().audio().output->get_info();
     MP_UNIT("setup_audio");
-    MSG_V("AO: [%s] %iHz %s %s\n",
-	info->short_name,
-	mp_conf.force_srate?mp_conf.force_srate:sh_audio->rate,
-	sh_audio->nch>7?"surround71":
+    mpxp_v<<"AO: ["<<info->short_name<<"] "
+	<<(mp_conf.force_srate?mp_conf.force_srate:sh_audio->rate)<<"Hz "
+	<<(sh_audio->nch>7?"surround71":
 	sh_audio->nch>6?"surround61":
 	sh_audio->nch>5?"surround51":
 	sh_audio->nch>4?"surround41":
 	sh_audio->nch>3?"surround40":
 	sh_audio->nch>2?"stereo2.1":
-	sh_audio->nch>1?"Stereo":"Mono",
-	ao_format_name(sh_audio->afmt)
-    );
-    MSG_V("AO: Description: %s\nAO: Author: %s\n",
-	info->name, info->author);
-    if(strlen(info->comment) > 0)
-	MSG_V("AO: Comment: %s\n", info->comment);
+	sh_audio->nch>1?"Stereo":"Mono")
+	<<ao_format_name(sh_audio->afmt)<<std::endl;
+    mpxp_v<<"AO: Description: "<<info->name<<std::endl;
+    mpxp_v<<"AO: Author: "<<info->author<<std::endl;
+    if(strlen(info->comment) > 0) mpxp_v<<"AO: Comment: "<<info->comment<<std::endl;
 
     MP_UNIT("af_preinit");
     unsigned samplerate,channels,format;
@@ -1231,19 +1241,19 @@ int MPXPSystem::configure_audio() {
 	    sh_audio->nch, sh_audio->afmt,
 	    // output:
 	    &samplerate, &channels, &format)!=MPXP_Ok){
-	    MSG_ERR("Audio filter chain preinit failed\n");
+	    mpxp_err<<"Audio filter chain preinit failed"<<std::endl;
     } else {
-	MSG_V("AF_pre: %dHz %dch (%s) afmt=%08X sh_audio_min=%i\n",
-		samplerate, channels,
-		ao_format_name(format),format
-		,sh_audio->audio_out_minsize);
+	mpxp_v<<"AF_pre: "<<samplerate<<"Hz "<<channels<<"ch ("
+		<<ao_format_name(format)<<
+		") afmt="<<std::hex<<std::setw(8)<<format
+		<<" sh_audio_min="<<sh_audio->audio_out_minsize<<std::endl;
     }
 
     if(MPXP_Ok!=mpxp_context().audio().output->configure(
 		    samplerate,
 		    channels,
 		    format)) {
-	MSG_ERR("Can't configure audio device\n");
+	mpxp_err<<"Can't configure audio device"<<std::endl;
 	d_audio->sh=NULL;
 	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 	if(sh_video == NULL) rc=-1;
@@ -1258,7 +1268,7 @@ int MPXPSystem::configure_audio() {
 	    mpaf_format_e(mpxp_context().audio().output->format()),
 	    mpxp_context().audio().output->outburst()*4,
 	    mpxp_context().audio().output->buffersize())!=MPXP_Ok) {
-		MSG_ERR("No matching audio filter found!\n");
+		mpxp_err<<"No matching audio filter found!"<<std::endl;
 	    }
     }
     return rc;
@@ -1269,15 +1279,19 @@ void MPXPSystem::run_ahead_engine() {
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     MP_UNIT("init_xp");
     if(sh_video && mpxp_context().engine().xp_core->num_v_buffs < 3) {/* we need at least 3 buffers to suppress screen judering */
-	MSG_FATAL("Not enough buffers for DECODING AHEAD!\nNeed %u buffers but exist only %u\n",3,mpxp_context().engine().xp_core->num_v_buffs);
+	mpxp_fatal<<"Not enough buffers for DECODING AHEAD!"<<std::endl;
+	mpxp_fatal<<"Need 3 buffers but exist only "
+		<<mpxp_context().engine().xp_core->num_v_buffs<<std::endl;
 	exit_player("Try other '-vo' driver.\n");
     }
     if(xmp_init_engine(sh_video,sh_audio)!=0)
 	exit_player("Can't initialize decoding ahead!\n");
     if(xmp_run_decoders()!=0)
 	exit_player("Can't run decoding ahead!\n");
-    if(sh_video)	MSG_OK("Using DECODING AHEAD mplayer's core with %u video buffers\n",mpxp_context().engine().xp_core->num_v_buffs);
-    else 		MSG_OK("Using DECODING AHEAD mplayer's core with %u audio buffers\n",mpxp_context().engine().xp_core->num_a_buffs);
+    if(sh_video)
+	mpxp_ok<<"Using DECODING AHEAD mplayer's core with "<<mpxp_context().engine().xp_core->num_v_buffs<<" video buffers"<<std::endl;
+    else
+	mpxp_ok<<"Using DECODING AHEAD mplayer's core with "<<mpxp_context().engine().xp_core->num_a_buffs<<" audio buffers"<<std::endl;
 /* reset counters */
     if(sh_video) mpxp_context().engine().xp_core->video->num_dropped_frames=0;
     inited_flags|=INITED_XMP;
@@ -1300,7 +1314,9 @@ void MPXPSystem::print_audio_status() const {
 	rs = rpts%60;
     } else rh=rm=rs=0;
     if(h != ph || m != pm || s != ps) {
-	MSG_STATUS(">%02u:%02u:%02u (%02u:%02u:%02u)\r",h,m,s,rh,rm,rs);
+	mpxp_status<<std::setw(2)<<">"<<h<<":"<<m<<":"<<s
+		<<"("<<rh<<":"<<rm<<":"<<rs<<")\r";
+	mpxp_status.flush();
 	ph = h;
 	pm = m;
 	ps = s;
@@ -1325,7 +1341,7 @@ int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
 	rect_highlight_t hl;
 	if(stream->ctrl(SCTRL_VID_GET_HILIGHT,&hl)==MPXP_Ok) {
 	    osd_set_nav_box (hl.sx, hl.sy, hl.ex, hl.ey);
-	    MSG_V("Set nav box: %i %i %i %i\n",hl.sx, hl.sy, hl.ex, hl.ey);
+	    mpxp_v<<"Set nav box: "<<hl.sx<<" "<<hl.sy<<" "<<hl.ex<<" "<<hl.ey<<std::endl;
 	    vo_osd_changed (OSDTYPE_DVDNAV);
 	}
     }
@@ -1339,8 +1355,8 @@ int MPXPSystem::paint_osd(int* osd_visible,int* in_pause) {
 	    mpxp_context().video().output->pause();
 	}
 	if(mp_conf.verbose) {
-	    MSG_STATUS("\n------ PAUSED -------\r");
-	    fflush(stdout);
+	    mpxp_status<<std::endl<<"------ PAUSED -------\r";
+	    mpxp_status.flush();
 	}
 
 	if (ao_inited==MPXP_Ok && sh_audio) {
@@ -1412,16 +1428,16 @@ For future:
 	    case MP_CMD_SPEED_INCR :
 	    case MP_CMD_SPEED_MULT :
 	    case MP_CMD_SPEED_SET :
-		MSG_WARN("Speed adjusting is not implemented yet!\n");
+		mpxp_warn<<"Speed adjusting is not implemented yet!"<<std::endl;
 		break;
 	    case MP_CMD_SWITCH_AUDIO :
-		MSG_INFO("ID_AUDIO_TRACK=%i\n",demuxer_switch_audio_r(_demuxer, _demuxer->audio->id+1));
+		mpxp_info<<"ID_AUDIO_TRACK="<<demuxer_switch_audio_r(_demuxer, _demuxer->audio->id+1)<<std::endl;
 		break;
 	    case MP_CMD_SWITCH_VIDEO :
-		MSG_INFO("ID_VIDEO_TRACK=%i\n",demuxer_switch_video_r(_demuxer, _demuxer->video->id+1));
+		mpxp_info<<"ID_VIDEO_TRACK="<<demuxer_switch_video_r(_demuxer, _demuxer->video->id+1)<<std::endl;
 		break;
 	    case MP_CMD_SWITCH_SUB :
-		MSG_INFO("ID_SUB_TRACK=%i\n",demuxer_switch_subtitle_r(_demuxer, _demuxer->sub->id+1));
+		mpxp_info<<"ID_SUB_TRACK="<<demuxer_switch_subtitle_r(_demuxer, _demuxer->sub->id+1)<<std::endl;
 		break;
 	    case MP_CMD_FRAME_STEP :
 	    case MP_CMD_PAUSE :
@@ -1595,7 +1611,7 @@ For future:
 		vo_osd_changed(OSDTYPE_SUBTITLE);
 	    } break;
 	    default :
-		MSG_ERR("Received unknow cmd %s\n",cmd->name);
+		mpxp_err<<"Received unknow cmd "<<cmd->name<<std::endl;
 	}
 	mp_cmd_free(cmd);
     }
@@ -1660,7 +1676,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     xmp_register_main(exit_sighandler);
 
     mpxp_print_init(mp_conf.verbose+MSGL_STATUS);
-    MSG_INFO("%s",banner_text);
+    mpxp_info<<banner_text<<std::endl;
 
     /* currently it's lowest point of MPXPSystem initialization */
     mpxp_context().engine().MPXPSys = new(zeromem) MPXPSystem;
@@ -1680,8 +1696,8 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 	exit_player("Error parse command line"); // error parsing cmdline
 
     if(!mp_conf.xp) {
-	MSG_ERR("Error: detected option: -core.xp=0\n"
-		"Note!  Single-thread mode is not longer supported by MPlayerXP\n");
+	mpxp_err<<"Error: detected option: -core.xp=0"<<std::endl;
+	mpxp_err<<"Note!  Single-thread mode is not longer supported by MPlayerXP"<<std::endl;
 	exit_player(MSGTR_Exit_quit);
     }
     if(mp_conf.test_av) {
@@ -1720,9 +1736,9 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 
     // Many users forget to include command line in bugreports...
     if(mp_conf.verbose){
-	MSG_INFO("CommandLine:");
-	for(i=1;i<argc;i++) MSG_INFO(" '%s'",argv[i]);
-	MSG_INFO("\n");
+	mpxp_info<<"CommandLine:";
+	for(i=1;i<argc;i++) mpxp_info<<" '"<<argv[i]<<"'";
+	mpxp_info<<std::endl;
     }
 
 //------ load global data first ------
@@ -1736,7 +1752,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 play_next_file:
 
     ao_subdevice=MPXPSys.init_output_subsystems();
-    if(filename) MSG_OK(MSGTR_Playing, filename);
+    if(filename) mpxp_ok<<MSGTR_Playing<<" "<<filename<<std::endl;
 
     forced_subs_only=MPXPSys.init_vobsub(filename);
 
@@ -1758,7 +1774,7 @@ play_next_file:
     stream_dump_type=0;
     if(mp_conf.stream_dump)
 	if((stream_dump_type=dump_parse(mp_conf.stream_dump))==0) {
-	    MSG_ERR("Wrong dump parameters! Unable to continue\n");
+	    mpxp_err<<"Wrong dump parameters! Unable to continue"<<std::endl;
 	    exit_player(MSGTR_Exit_error);
 	}
 
@@ -1770,7 +1786,7 @@ play_next_file:
 		new(zeromem) Cached_Stream(MPXPSys.libinput(),mp_conf.s_cache_size*1024,mp_conf.s_cache_size*1024/5,mp_conf.s_cache_size*1024/20):
 		new(zeromem) Stream;
     if(stream->open(MPXPSys.libinput(),filename,&file_format)!=MPXP_Ok) { // error...
-	MSG_ERR("Can't open: %s\n",filename);
+	mpxp_err<<"Can't open: "<<filename<<std::endl;
 	eof = MPXPSys.libmpdemux_was_interrupted(PT_NEXT_ENTRY);
 	goto goto_next_file;
     }
@@ -1824,7 +1840,7 @@ play_next_file:
     fflush(stdout);
 
     if(!sh_video && !sh_audio) {
-	MSG_FATAL("No stream found\n");
+	mpxp_fatal<<"No stream found"<<std::endl;
 	goto goto_next_file; // exit_player(MSGTR_Exit_error);
     }
 
@@ -1844,18 +1860,20 @@ play_next_file:
 
     /* is it non duplicate block fro find_acodec() ??? */
     if(sh_audio){
-	MSG_V("Initializing audio codec...\n");
+	mpxp_v<<"Initializing audio codec..."<<std::endl;
 	if(!mpxp_context().audio().decoder) {
 	    if((mpxp_context().audio().decoder=mpca_init(sh_audio))==NULL){
-		MSG_ERR(MSGTR_CouldntInitAudioCodec);
+		mpxp_err<<MSGTR_CouldntInitAudioCodec<<std::endl;
 		d_audio->sh=NULL;
 		sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
 	    }
 	}
 	if(sh_audio) {
-	    MSG_V("AUDIO: srate=%d  chans=%d  bps=%d  sfmt=0x%X  ratio: %d->%d\n"
-	    ,sh_audio->rate,sh_audio->nch,afmt2bps(sh_audio->afmt)
-	    ,sh_audio->afmt,sh_audio->i_bps,sh_audio->af_bps);
+	    mpxp_v<<"AUDIO: srate="<<sh_audio->rate
+	    <<" chans="<<sh_audio->nch
+	    <<" bps="<<afmt2bps(sh_audio->afmt)
+	    <<" sfmt=0x"<<std::hex<<sh_audio->afmt
+	    <<" ratio: "<<sh_audio->i_bps<<"->"<<sh_audio->af_bps<<std::endl;
 	}
     }
 
@@ -1885,14 +1903,14 @@ play_next_file:
 	if(rc==MPXP_Ok) mpxp_context().output_quality=quality;
 	if(mp_conf.autoq>mpxp_context().output_quality) mp_conf.autoq=mpxp_context().output_quality;
 	else mpxp_context().output_quality=mp_conf.autoq;
-	MSG_V("AutoQ: setting quality to %d\n",mpxp_context().output_quality);
+	mpxp_v<<"AutoQ: setting quality to "<<mpxp_context().output_quality<<std::endl;
 	mpcv_set_quality(mpxp_context().video().decoder,mpxp_context().output_quality);
     }
 
 // ========== Init display (sh_video->src_w*sh_video->src_h/out_fmt) ============
 
     MPXPSys.inited_flags|=INITED_VO;
-    MSG_V("INFO: Video OUT driver init OK!\n");
+    mpxp_v<<"INFO: Video OUT driver init OK!"<<std::endl;
     MP_UNIT("init_libvo");
     fflush(stdout);
 
@@ -1924,14 +1942,14 @@ main:
 	sh_audio->chapter_change=0;
 	sh_audio->a_pts=HUGE;
     } else {
-	MSG_INFO(MSGTR_NoSound);
+	mpxp_info<<MSGTR_NoSound<<std::endl;
 	d_audio->free_packs(); // mp_free buffered chunks
 	d_audio->id=-2;         // do not read audio chunks
 	if(MPXPSys.ao_inited==MPXP_Ok) MPXPSys.uninit_player(INITED_AO); // close device
     }
 
     if(!sh_video){
-	MSG_INFO("Video: no video!!!\n");
+	mpxp_info<<"Video: no video!!!"<<std::endl;
 	d_video->free_packs();
 	d_video->id=-2;
 	if(MPXPSys.vo_inited) MPXPSys.uninit_player(INITED_VO);
@@ -1947,7 +1965,7 @@ main:
     /* Init timers and benchmarking */
     mpxp_context().rtc_fd=InitTimer();
     if(!mp_conf.nortc && mpxp_context().rtc_fd>0) { close(mpxp_context().rtc_fd); mpxp_context().rtc_fd=-1; }
-    MSG_V("Using %s timing\n",mpxp_context().rtc_fd>0?"rtc":mp_conf.softsleep?"software":"usleep()");
+    mpxp_v<<"Using "<<(mpxp_context().rtc_fd>0?"rtc":mp_conf.softsleep?"software":"usleep()")<<" timing"<<std::endl;
 
     mpxp_context().bench->total_start=GetTimer();
     mpxp_context().bench->audio=0; mpxp_context().bench->audio_decode=0; mpxp_context().bench->video=0;
@@ -1975,18 +1993,17 @@ main:
 // TODO: rewrite test backtrace in .asm
 //    mpxp_test_backtrace();
     if(xmp_run_players()!=0) exit_player("Can't run xp players!\n");
-    MSG_OK("Using the next %i threads:\n",mpxp_context().engine().xp_core->num_threads);
+    mpxp_ok<<"Using the next "<<mpxp_context().engine().xp_core->num_threads<<" threads:"<<std::endl;
     unsigned idx;
     for(idx=0;idx<mpxp_context().engine().xp_core->num_threads;idx++)
-	MSG_OK("[%i] %s (id=%u, pth_id=%lu)\n"
-	,idx
-	,mpxp_context().engine().xp_core->mpxp_threads[idx]->name
-	,mpxp_context().engine().xp_core->mpxp_threads[idx]->pid
-	,mpxp_context().engine().xp_core->mpxp_threads[idx]->pth_id);
-
+	mpxp_ok<<"["<<idx<<"] "
+	<<mpxp_context().engine().xp_core->mpxp_threads[idx]->name
+	<<" (id="<<mpxp_context().engine().xp_core->mpxp_threads[idx]->pid
+	<<" pth_id="<<mpxp_context().engine().xp_core->mpxp_threads[idx]->pth_id
+	<<")"<<std::endl;
 //==================== START PLAYING =======================
 
-    MSG_OK(MSGTR_StartPlaying);fflush(stdout);
+    mpxp_ok<<MSGTR_StartPlaying<<std::endl;
 
     mpxp_print_flush();
     while(!eof){
@@ -2026,7 +2043,7 @@ main:
 	}
   /* Looping. */
 	if(eof && mp_conf.loop_times>=0) {
-	    MSG_V("loop_times = %d, eof = %d\n", mp_conf.loop_times,eof);
+	    mpxp_v<<"loop_times = "<<mp_conf.loop_times<<", eof = "<<eof<<std::endl;
 
 	    if(mp_conf.loop_times>1) mp_conf.loop_times--; else
 	    if(mp_conf.loop_times==1) mp_conf.loop_times=-1;
@@ -2063,7 +2080,7 @@ main:
 #endif
     } // while(!eof)
 
-    MSG_V("EOF code: %d\n",eof);
+    mpxp_v<<"EOF code: "<<eof<<std::endl;
 
 goto_next_file:  // don't jump here after ao/vo/getch initialization!
 

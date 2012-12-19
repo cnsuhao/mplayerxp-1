@@ -17,8 +17,7 @@ using namespace mpxp;
 #include "asxparser.h"
 #include "playtree.h"
 #include "playtreeparser.h"
-#define MSGT_CLASS MSGT_PLAYTREE
-#include "mpxp_msg.h"
+#include "playtree_msg.h"
 
 #define BUF_STEP 1024
 

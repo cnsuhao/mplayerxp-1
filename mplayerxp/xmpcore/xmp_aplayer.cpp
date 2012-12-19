@@ -9,7 +9,7 @@ using namespace mpxp;
 #include <sys/time.h>
 
 #include "mplayerxp.h"
-#include "mpxp_msg.h"
+#include "player_msg.h"
 #include "sig_hand.h"
 
 #include "libmpdemux/demuxer.h"

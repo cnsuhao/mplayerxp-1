@@ -9,8 +9,7 @@ using namespace mpxp;
 
 #include "m_option.h"
 #include "m_struct.h"
-#define MSGT_CLASS MSGT_CPLAYER
-#include "mpxp_msg.h"
+#include "parser_msg.h"
 
 const m_option_t*
 m_struct_get_field(const m_struct_t* st,const char* f) {

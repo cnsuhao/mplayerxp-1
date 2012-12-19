@@ -13,8 +13,7 @@ using namespace mpxp;
 #include "asxparser.h"
 #include "libmpconf/cfgparser.h"
 #include "mplayerxp.h"
-#define MSGT_CLASS MSGT_PLAYTREE
-#include "mpxp_msg.h"
+#include "playtree_msg.h"
 
 namespace mpxp {
 

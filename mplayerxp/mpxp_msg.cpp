@@ -1,6 +1,8 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
+#include <algorithm>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -13,6 +15,130 @@ using namespace mpxp;
 #include "mpxp_msg.h"
 
 namespace mpxp {
+mpxp_streambuf::mpxp_streambuf(mpxp_ostream& _parent,const std::string& _data)
+		:data(_data)
+		,parent(_parent)
+{
+    setp(buf, buf + BUF_SIZE);
+}
+
+mpxp_streambuf::~mpxp_streambuf() {}
+
+int mpxp_streambuf::overflow(int c) {
+    // Handle output
+    put_chars(pbase(), pptr());
+    if (c != Traits::eof()) {
+	char c2 = c;
+	// Handle the one character that didn't fit to buffer
+	put_chars(&c2, &c2 + 1);
+    }
+    // This tells that buffer is empty again
+    setp(buf, buf + BUF_SIZE);
+    // I'm not sure about this return value!
+    return 0;
+}
+
+int mpxp_streambuf::sync() {
+    // Handle output
+    put_chars(pbase(), pptr());
+    // This tells that buffer is empty again
+    setp(buf, buf + BUF_SIZE);
+    return 0;
+}
+
+void mpxp_streambuf::put_chars(char const* begin, char const* end) const {
+    if(!(parent._type&mp_conf.msg_filter)) { parent.setstate(std::ios_base::badbit); return; }
+    if(::isatty(::fileno(::stderr))) std::cerr<<data;
+    ::fwrite(begin,end-begin,1,::stderr);
+}
+
+static const char* msg_prefix[] = {
+    "GLOBAL",
+    "PLAYER",
+    "LIBVO",
+    "LIBAO",
+    "DEMUX",
+    "PARSER",
+    "DECAUD",
+    "DECVID",
+    "MPSUB",
+    "OSDEP",
+    "PLAYTR",
+    "INPUT",
+    "OSD",
+    "CPUDTC",
+    "CODCFG",
+    "SWS",
+    "POSTPR",
+    "NLS",
+    "STREAM",
+    "UNKNOWN"
+};
+
+mpxp_ostream::mpxp_ostream(const std::string& data,mpxp_msgt_e type)
+	    :std::basic_ostream< char, std::char_traits< char > >(&buf)
+	    ,_type(type)
+	    ,idx(compute_idx(type))
+	    ,buf(*this,mp_conf.verbose>1?data+msg_prefix[idx]+": ":data) {}
+mpxp_ostream::~mpxp_ostream() {}
+
+unsigned mpxp_ostream::compute_idx(mpxp_msgt_e type) const {
+    unsigned mod_idx=0,_idx=type;
+    while((_idx&0x1)==0) { mod_idx++; _idx>>=1; }
+    return std::min(_idx,unsigned(sizeof(msg_prefix)/sizeof(msg_prefix[0])));
+}
+
+/* TODO: replace this block with std::string */
+static const char blue[]="\033[0;34;40m";
+static const char green[]="\033[0;32;40m";
+static const char cyan[]="\033[0;36;40m";
+static const char red[]="\033[0;31;40m";
+static const char magenta[]="\033[0;35;40m";
+static const char brown[]="\033[0;33;40m";
+static const char gray[]="\033[0;37;40m";
+static const char light_blue[]="\033[1;34;40m";
+static const char light_green[]="\033[1;32;40m";
+static const char light_cyan[]="\033[1;36;40m";
+static const char light_red[]="\033[1;31;40m";
+static const char light_magenta[]="\033[1;35;40m";
+static const char yellow[]="\033[1;33;40m";
+static const char white[]="\033[1;37;40m";
+
+mpxp_ostream_info::mpxp_ostream_info(mpxp_msgt_e type):mpxp_ostream(gray,type){}
+mpxp_ostream_info::~mpxp_ostream_info() {}
+
+mpxp_ostream_fatal::mpxp_ostream_fatal(mpxp_msgt_e type):mpxp_ostream(light_red,type){}
+mpxp_ostream_fatal::~mpxp_ostream_fatal() {}
+
+mpxp_ostream_err::mpxp_ostream_err(mpxp_msgt_e type):mpxp_ostream(red,type){}
+mpxp_ostream_err::~mpxp_ostream_err() {}
+
+mpxp_ostream_warn::mpxp_ostream_warn(mpxp_msgt_e type):mpxp_ostream(yellow,type){}
+mpxp_ostream_warn::~mpxp_ostream_warn() {}
+
+mpxp_ostream_ok::mpxp_ostream_ok(mpxp_msgt_e type):mpxp_ostream(light_green,type){}
+mpxp_ostream_ok::~mpxp_ostream_ok() {}
+
+mpxp_ostream_hint::mpxp_ostream_hint(mpxp_msgt_e type):mpxp_ostream(light_cyan,type){}
+mpxp_ostream_hint::~mpxp_ostream_hint() {}
+
+mpxp_ostream_status::mpxp_ostream_status(mpxp_msgt_e type):mpxp_ostream(light_blue,type){}
+mpxp_ostream_status::~mpxp_ostream_status() {}
+
+mpxp_ostream_v::mpxp_ostream_v(mpxp_msgt_e type):mpxp_ostream(cyan,type){ if(mp_conf.verbose<1) setstate(ios_base::badbit); /* do not display */ }
+mpxp_ostream_v::~mpxp_ostream_v() {}
+
+mpxp_ostream_dbg2::mpxp_ostream_dbg2(mpxp_msgt_e type):mpxp_ostream(gray,type){ if(mp_conf.verbose<2) setstate(ios_base::badbit); /* do not display */ }
+mpxp_ostream_dbg2::~mpxp_ostream_dbg2() {}
+
+mpxp_ostream_dbg3::mpxp_ostream_dbg3(mpxp_msgt_e type):mpxp_ostream(gray,type){ if(mp_conf.verbose<3) setstate(ios_base::badbit); /* do not display */ }
+mpxp_ostream_dbg3::~mpxp_ostream_dbg3() {}
+
+mpxp_ostream_dbg4::mpxp_ostream_dbg4(mpxp_msgt_e type):mpxp_ostream(gray,type){ if(mp_conf.verbose<4) setstate(ios_base::badbit); /* do not display */ }
+mpxp_ostream_dbg4::~mpxp_ostream_dbg4() {}
+
+/* old stuff: */
+
 inline int _bg(int x) { return x >> 4; }
 inline int _fg(int x) { return x & 0x0f; }
 struct priv_t {
@@ -58,30 +184,6 @@ void mpxp_print_uninit(void)
     pthread_mutex_destroy(&priv->mp_msg_mutex);
     delete priv;
 }
-
-static const char * msg_prefix[] =
-{
-    "GLOBAL",
-    "PLAYER",
-    "LIBVO",
-    "LIBAO",
-    "DEMUX",
-    "CFGPRS",
-    "DECAUD",
-    "DECVID",
-    "VOBSUB",
-    "OSDEP",
-    "SPUDEC",
-    "PLAYTR",
-    "INPUT",
-    "OSD",
-    "CPUDTC",
-    "CODCFG",
-    "SWS",
-    "FINDSB",
-    "SUBRDR",
-    "POSTPR"
-};
 
 int mpxp_printf( unsigned x, const std::string& format, ... ){
 /* TODO: more useful usage of module_id */

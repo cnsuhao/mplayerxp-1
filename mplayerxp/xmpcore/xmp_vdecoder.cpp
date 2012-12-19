@@ -7,7 +7,7 @@ using namespace mpxp;
 #include "libmpcodecs/dec_video.h"
 
 #include "sig_hand.h"
-#include "mpxp_msg.h"
+#include "player_msg.h"
 #include "mplayerxp.h"
 #include "osdep/timer.h"
 #include "xmp_core.h"

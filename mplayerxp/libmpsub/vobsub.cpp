@@ -21,8 +21,7 @@ using namespace mpxp;
 #include "libmpstream2/stream.h"
 #include "vobsub.h"
 #include "spudec.h"
-#define MSGT_CLASS MSGT_VOBSUB
-#include "mpxp_msg.h"
+#include "mpsub_msg.h"
 
 #ifdef HAVE_GETLINE
 extern ssize_t getline(char **, size_t *, FILE *);

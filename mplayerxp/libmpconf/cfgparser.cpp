@@ -34,8 +34,7 @@ using namespace mpxp;
 #include "mplayerxp.h"
 #include "cfgparser.h"
 #include "libplaytree/playtree.h"
-#define MSGT_CLASS MSGT_CFGPARSER
-#include "mpxp_msg.h"
+#include "parser_msg.h"
 
 inline void SET_GLOBAL(m_config_t& c) { c.flags |= CONFIG_GLOBAL; }
 inline void UNSET_GLOBAL(m_config_t& c) { c.flags &= (!CONFIG_GLOBAL); }

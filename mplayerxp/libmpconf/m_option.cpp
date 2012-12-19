@@ -16,8 +16,7 @@ using namespace mpxp;
 #include "cfgparser.h"
 #include "m_option.h"
 #include "libmpstream2/url.h"
-#define MSGT_CLASS MSGT_CPLAYER
-#include "mpxp_msg.h"
+#include "parser_msg.h"
 
 // Don't mp_free for 'production' atm
 #ifndef MP_DEBUG

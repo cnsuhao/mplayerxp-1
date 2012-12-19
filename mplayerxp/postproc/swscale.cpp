@@ -11,8 +11,7 @@ using namespace mpxp;
 #include "swscale.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "osdep/cpudetect.h"
-#define MSGT_CLASS MSGT_PP
-#include "mpxp_msg.h"
+#include "pp_msg.h"
 
 /**
  * Convert the palette to the same packet 32-bit format as the palette

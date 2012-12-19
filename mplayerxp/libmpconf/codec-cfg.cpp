@@ -25,8 +25,7 @@ using namespace mpxp;
 #include "loader/wine/avifmt.h"
 #include "libvo2/img_format.h"
 #include "codec-cfg.h"
-#define MSGT_CLASS MSGT_CODECCFG
-#include "mpxp_msg.h"
+#include "parser_msg.h"
 
 #define MAX_NR_TOKEN	16
 

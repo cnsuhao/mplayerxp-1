@@ -24,8 +24,7 @@ using namespace mpxp;
 #include <iconv.h>
 #endif
 #endif
-#define MSGT_CLASS MSGT_SUBREADER
-#include "mpxp_msg.h"
+#include "mpsub_msg.h"
 
 /* Maximal length of line of a subtitle */
 #define LINE_LEN 1000

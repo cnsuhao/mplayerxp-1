@@ -11,8 +11,7 @@ using namespace mpxp;
 #include <stdarg.h>
 #include "codecs_ld.h"
 #include "mpxp_help.h"
-#define MSGT_CLASS MSGT_GLOBAL
-#include "mpxp_msg.h"
+#include "global_msg.h"
 
 any_t* ld_codec(const char *name,const char *url_hint)
 {

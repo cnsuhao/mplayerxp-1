@@ -11,8 +11,7 @@ using namespace mpxp;
 #include "libvo2/video_out.h"
 #include "libvo2/sub.h"
 #include "subreader.h"
-#define MSGT_CLASS MSGT_FINDSUB
-#include "mpxp_msg.h"
+#include "mpsub_msg.h"
 
 static int current_sub=0;
 

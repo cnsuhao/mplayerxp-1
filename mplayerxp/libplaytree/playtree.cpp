@@ -13,8 +13,7 @@ using namespace mpxp;
 #endif
 #include "libmpstream2/stream.h"
 #include "playtree.h"
-#define MSGT_CLASS MSGT_PLAYTREE
-#include "mpxp_msg.h"
+#include "playtree_msg.h"
 
 static int
 play_tree_is_valid(play_tree_t* pt);

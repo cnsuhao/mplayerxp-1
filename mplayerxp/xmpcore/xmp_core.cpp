@@ -27,8 +27,7 @@ using namespace mpxp;
 
 #include "sig_hand.h"
 #define DA_PREFIX "DEC_AHEAD:"
-#define MSGT_CLASS MSGT_CPLAYER
-#include "mpxp_msg.h"
+#include "player_msg.h"
 #include "osdep/timer.h"
 #include "mplayerxp.h"
 #include "xmp_aplayer.h"

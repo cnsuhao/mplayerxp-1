@@ -5,7 +5,7 @@ using namespace mpxp;
 #include <math.h>
 
 #include "mpxp_help.h"
-#include "mpxp_msg.h"
+#include "player_msg.h"
 #include "sig_hand.h"
 
 #include "libao3/audio_out.h"

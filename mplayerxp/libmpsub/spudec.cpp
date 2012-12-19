@@ -27,8 +27,7 @@ using namespace mpxp;
 #include "xmpcore/xmp_core.h"
 #include "spudec.h"
 #include "mpxp_conf_lavc.h"
-#define MSGT_CLASS MSGT_SPUDEC
-#include "mpxp_msg.h"
+#include "mpsub_msg.h"
 
 /* Valid values for spu_aamode:
    0: none (fastest, most ugly)

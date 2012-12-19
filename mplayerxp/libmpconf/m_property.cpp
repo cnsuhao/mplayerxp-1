@@ -14,8 +14,7 @@ using namespace mpxp;
 #include "m_option.h"
 #include "m_property.h"
 #include "mpxp_help.h"
-#define MSGT_CLASS MSGT_CPLAYER
-#include "mpxp_msg.h"
+#include "parser_msg.h"
 
 #define ROUND(x) ((int)((x)<0 ? (x)-0.5 : (x)+0.5))
 

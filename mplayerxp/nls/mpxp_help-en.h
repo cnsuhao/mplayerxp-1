@@ -67,7 +67,7 @@ static const char help_text[]=
 #endif
 
 #ifndef MSGTR_Exiting
-#define MSGTR_Exiting "\nExiting... (%s)\n"
+#define MSGTR_Exiting "Exiting"
 #endif
 #ifndef MSGTR_Exit_frames
 #define MSGTR_Exit_frames "Requested number of frames played"
@@ -91,22 +91,22 @@ static const char help_text[]=
 #define MSGTR_GetpathProblem "get_path(\"config\") problem\n"
 #endif
 #ifndef MSGTR_CreatingCfgFile
-#define MSGTR_CreatingCfgFile "Creating config file: %s\n"
+#define MSGTR_CreatingCfgFile "Creating config file"
 #endif
 #ifndef MSGTR_InvalidVOdriver
-#define MSGTR_InvalidVOdriver "Invalid video output driver name: %s\nUse '-vo help' to get a list of available video drivers.\n"
+#define MSGTR_InvalidVOdriver "Invalid video output driver name"
 #endif
 #ifndef MSGTR_InvalidAOdriver
-#define MSGTR_InvalidAOdriver "Invalid audio output driver name: %s\nUse '-ao help' to get a list of available audio drivers.\n"
+#define MSGTR_InvalidAOdriver "Invalid audio output driver name"
 #endif
 #ifndef MSGTR_CopyCodecsConf
 #define MSGTR_CopyCodecsConf "(copy/ln etc/codecs.conf (from MPlayerXP source tree) to ~/.mplayerxp/codecs.conf)\n"
 #endif
 #ifndef MSGTR_CantLoadFont
-#define MSGTR_CantLoadFont "Can't load font: %s\n"
+#define MSGTR_CantLoadFont "Can't load font"
 #endif
 #ifndef MSGTR_CantLoadSub
-#define MSGTR_CantLoadSub "Can't load subtitles: %s\n"
+#define MSGTR_CantLoadSub "Can't load subtitles"
 #endif
 #ifndef MSGTR_ErrorDVDkey
 #define MSGTR_ErrorDVDkey "Error processing DVD KEY.\n"
@@ -133,7 +133,7 @@ static const char help_text[]=
 #define MSGTR_NoVideoStream "Sorry, no video stream... it's unplayable yet\n"
 #endif
 #ifndef MSGTR_TryForceAudioFmt
-#define MSGTR_TryForceAudioFmt "Trying to force audio codec driver family '%s' ...\n"
+#define MSGTR_TryForceAudioFmt "Trying to force audio codec driver family"
 #endif
 #ifndef MSGTR_CantFindAfmtFallback
 #define MSGTR_CantFindAfmtFallback "Can't find audio codec for forced driver family, fallback to other drivers.\n"
@@ -148,7 +148,7 @@ static const char help_text[]=
 #define MSGTR_CouldntInitAudioCodec "Couldn't initialize audio codec! -> nosound\n"
 #endif
 #ifndef MSGTR_TryForceVideoFmt
-#define MSGTR_TryForceVideoFmt "Trying to force video codec driver family '%s' ...\n"
+#define MSGTR_TryForceVideoFmt "Trying to force video codec driver family"
 #endif
 #ifndef MSGTR_CantFindVfmtFallback
 #define MSGTR_CantFindVfmtFallback "Can't find video codec for forced driver family, fallback to other drivers.\n"
@@ -214,7 +214,7 @@ static const char help_text[]=
 //#define MSGTR_NoGui "MPlayer was compiled WITHOUT GUI support!\n"
 //#define MSGTR_GuiNeedsX "MPlayer GUI requires X11!\n"
 #ifndef MSGTR_Playing
-#define MSGTR_Playing "Playing %s\n"
+#define MSGTR_Playing "Playing"
 #endif
 #ifndef MSGTR_NoSound
 #define MSGTR_NoSound "Audio: no sound!!!\n"

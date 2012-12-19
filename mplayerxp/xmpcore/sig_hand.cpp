@@ -18,10 +18,8 @@ using namespace mpxp;
 
 #include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
-#include "mpxp_msg.h"
 #include "sig_hand.h"
-#define MSGT_CLASS MSGT_CPLAYER
-#include "mpxp_msg.h"
+#include "player_msg.h"
 
 #include <execinfo.h>
 

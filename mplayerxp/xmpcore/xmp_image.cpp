@@ -9,8 +9,7 @@ using namespace mpxp;
 #include "libvo2/img_format.h"
 #include "xmp_image.h"
 #include "osdep/fastmemcpy.h"
-#define MSGT_CLASS MSGT_CPLAYER
-#include "mpxp_msg.h"
+#include "player_msg.h"
 
 namespace mpxp {
 void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){

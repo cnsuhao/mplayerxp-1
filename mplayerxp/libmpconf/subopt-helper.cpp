@@ -25,8 +25,7 @@ using namespace mpxp;
 #include <assert.h>
 
 #include "subopt-helper.h"
-#define MSGT_CLASS MSGT_GLOBAL
-#include "mpxp_msg.h"
+#include "global_msg.h"
 
 #ifndef MP_DEBUG
   #define NDEBUG
