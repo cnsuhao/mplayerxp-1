@@ -5,7 +5,7 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <string.h>
 
-#include "xmpcore/mp_image.h"
+#include "xmpcore/xmp_image.h"
 #include "vf.h"
 #include "vf_internal.h"
 #include "vfcap.h"

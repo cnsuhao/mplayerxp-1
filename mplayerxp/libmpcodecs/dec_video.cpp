@@ -620,8 +620,8 @@ csp_again:
     return MPXP_True;
 }
 
-// mp_imgtype: buffering type, see mp_image.h
-// mp_imgflag: buffer requirements (read/write, preserve, stride limits), see mp_image.h
+// mp_imgtype: buffering type, see xmp_image.h
+// mp_imgflag: buffer requirements (read/write, preserve, stride limits), see xmp_image.h
 // returns NULL or allocated mp_image_t*
 // Note: buffer allocation may be moved to mpcodecs_config_vf() later...
 mp_image_t* mpcodecs_get_image(video_decoder_t *opaque, int mp_imgtype, int mp_imgflag,int w, int h){

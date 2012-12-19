@@ -26,7 +26,7 @@ using namespace mpxp;
 #include <assert.h>
 
 #include "libvo2/img_format.h"
-#include "xmpcore/mp_image.h"
+#include "xmpcore/xmp_image.h"
 #include "vf.h"
 #include "vf_internal.h"
 #include "osdep/fastmemcpy.h"

@@ -129,7 +129,7 @@ using namespace mpxp;
 #include "input2/input.h"
 #include "input2/mouse.h"
 #include "osdep/keycodes.h"
-#include "xmpcore/mp_image.h"
+#include "xmpcore/xmp_image.h"
 #ifdef CONFIG_VIDIX
 #include "vidix_system.h"
 #endif

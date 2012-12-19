@@ -17,7 +17,7 @@ using namespace mpxp;
 #include <string.h>
 
 #include "mplayerxp.h"
-#include "xmpcore/mp_aframe.h"
+#include "xmpcore/xmp_aframe.h"
 #include "postproc/af.h"
 #include "libao3/afmt.h"
 #include "libao3/audio_out.h"

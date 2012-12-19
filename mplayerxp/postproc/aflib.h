@@ -12,7 +12,7 @@
 #define	_AFLIB_H	1
 
 #include "mpxp_config.h"
-#include "xmpcore/mp_aframe.h"
+#include "xmpcore/xmp_aframe.h"
 /* Implementation of routines used for DSP */
 
 /* Size of floating point type used in routines */

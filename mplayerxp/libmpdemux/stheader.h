@@ -11,7 +11,7 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-#include "xmpcore/mp_image.h"
+#include "xmpcore/xmp_image.h"
 #include "demuxer_stream.h"
 
 struct ImageDescription;

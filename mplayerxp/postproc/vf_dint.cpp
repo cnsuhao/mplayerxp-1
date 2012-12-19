@@ -8,7 +8,7 @@ using namespace mpxp;
 
 #include "osdep/fastmemcpy.h"
 
-#include "xmpcore/mp_image.h"
+#include "xmpcore/xmp_image.h"
 #include "libvo2/img_format.h"
 #include "vf.h"
 #include "vf_internal.h"

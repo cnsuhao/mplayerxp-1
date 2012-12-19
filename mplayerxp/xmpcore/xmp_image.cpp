@@ -7,7 +7,7 @@ using namespace mpxp;
 
 #include "mplayerxp.h"
 #include "libvo2/img_format.h"
-#include "mp_image.h"
+#include "xmp_image.h"
 #include "osdep/fastmemcpy.h"
 #define MSGT_CLASS MSGT_CPLAYER
 #include "mpxp_msg.h"

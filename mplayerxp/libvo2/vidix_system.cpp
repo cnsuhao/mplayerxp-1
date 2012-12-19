@@ -27,7 +27,7 @@ using namespace mpxp;
 
 #include "vidix_system.h"
 #include "osdep/fastmemcpy.h"
-#include "xmpcore/mp_image.h"
+#include "xmpcore/xmp_image.h"
 #include "vo_msg.h"
 
 using namespace vidix;

@@ -2,7 +2,7 @@
 #define __VF_H_INCLUDED 1
 #include <stdint.h>
 #include "xmpcore/xmp_enums.h"
-#include "xmpcore/mp_image.h"
+#include "xmpcore/xmp_image.h"
 #include "libvo2/video_out.h" // for vo_flags_e
 #include "vfcap.h"
 

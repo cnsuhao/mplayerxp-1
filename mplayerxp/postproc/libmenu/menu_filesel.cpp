@@ -20,7 +20,7 @@ using namespace mpxp;
 #include "libmpconf/cfgparser.h"
 
 #include "libvo2/img_format.h"
-#include "xmpcore/mp_image.h"
+#include "xmpcore/xmp_image.h"
 
 #include "menu.h"
 #include "menu_list.h"

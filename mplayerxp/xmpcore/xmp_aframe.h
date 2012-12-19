@@ -1,5 +1,5 @@
-#ifndef __MP_AUDIO_FRAME_INCLUDED_H
-#define __MP_AUDIO_FRAME_INCLUDED_H 1
+#ifndef __XMP_AUDIO_FRAME_INCLUDED_H
+#define __XMP_AUDIO_FRAME_INCLUDED_H 1
 
 #include "mpxp_config.h"
 #include <stdlib.h>

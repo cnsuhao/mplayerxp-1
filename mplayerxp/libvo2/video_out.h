@@ -25,7 +25,7 @@ using namespace mpxp;
 #include "sub.h"
 #include "libmpsub/subreader.h"
 #include "img_format.h"
-#include "xmpcore/mp_image.h"
+#include "xmpcore/xmp_image.h"
 #include "xmpcore/xmp_enums.h"
 
 namespace mpxp {

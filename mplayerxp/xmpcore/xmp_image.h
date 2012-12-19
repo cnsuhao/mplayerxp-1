@@ -1,5 +1,5 @@
-#ifndef __MP_IMAGE_H
-#define __MP_IMAGE_H 1
+#ifndef __XMP_IMAGE_H_INCLUDED
+#define __XMP_IMAGE_H_INCLUDED 1
 
 #include <stdlib.h>
 #include <limits.h>

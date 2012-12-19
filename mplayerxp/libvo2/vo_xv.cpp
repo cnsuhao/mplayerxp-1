@@ -35,7 +35,7 @@ using namespace mpxp;
 #include "sub.h"
 #include "aspect.h"
 #include "dri_vo.h"
-#include "xmpcore/mp_image.h"
+#include "xmpcore/xmp_image.h"
 
 #include "vo_msg.h"
 

@@ -1,7 +1,7 @@
 #ifndef DEC_AUDIO_H_INCLUDED
 #define DEC_AUDIO_H_INCLUDED 1
 #include "ad.h"
-#include "xmpcore/mp_aframe.h"
+#include "xmpcore/xmp_aframe.h"
 #include "xmpcore/xmp_enums.h"
 
 struct audio_decoder_t {

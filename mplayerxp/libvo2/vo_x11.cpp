@@ -48,7 +48,7 @@ using namespace mpxp;
 #include "vidix_system.h"
 #endif
 #include "dri_vo.h"
-#include "xmpcore/mp_image.h"
+#include "xmpcore/xmp_image.h"
 #include "vo_msg.h"
 
 namespace mpxp {

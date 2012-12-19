@@ -9,7 +9,7 @@ SRCS=xmp_context.cpp \
      xmp_vdecoder.cpp \
      xmp_adecoder.cpp
 
-SRCS+=sig_hand.cpp mp_image.cpp mp_aframe.cpp
+SRCS+=sig_hand.cpp xmp_image.cpp xmp_aframe.cpp
 OBJS=$(SRCS:.cpp=.o)
 
 CXXFLAGS  = $(OPTXXFLAGS) -I. -I.. -Wall
