@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*     Real parser & demuxer
@@ -26,7 +26,7 @@ Video codecs: (supported by RealPlayer8 for Linux)
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "help_mp.h"
+#include "mpxp_help.h"
 
 #include "libmpstream2/stream.h"
 #include "demuxer.h"

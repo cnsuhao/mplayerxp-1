@@ -1,6 +1,6 @@
 #ifndef __POINTER_PROTECTOR_HPP_INCLUDED
 #define __POINTER_PROTECTOR_HPP_INCLUDED
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include <limits.h>
 #include <stdlib.h>
 #include <time.h>

@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #define __STDC_FORMAT_MACROS

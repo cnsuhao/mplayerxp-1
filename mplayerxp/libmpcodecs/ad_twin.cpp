@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
@@ -11,7 +11,7 @@ using namespace mpxp;
 #include "loader/wine/windef.h"
 #include "libao3/afmt.h"
 #include "libmpdemux/aviprint.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 
 static const ad_info_t info = {
     "TWinVQ decoder",

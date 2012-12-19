@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <algorithm>
@@ -17,7 +17,7 @@ using namespace mpxp;
 #include <sys/wait.h>
 
 #include "mplayerxp.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 
 #include "osdep/fastmemcpy.h"
 #include "osdep/bswap.h"

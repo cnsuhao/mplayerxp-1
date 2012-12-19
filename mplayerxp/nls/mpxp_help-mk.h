@@ -1,7 +1,7 @@
 // translated to Macedonian by: MIsTeRIoZ "Zoran Dimovski"<zoki@email.com>
 // Last sync with help_mp-en.h 1.113
 // UTF-8
-#ifdef HELP_MP_DEFINE_STATIC
+#ifdef HELP_MPXP_DEFINE_STATIC
 #ifndef MSGTR_BANNER_TEXT
 static char* banner_text=
 "\n\n"

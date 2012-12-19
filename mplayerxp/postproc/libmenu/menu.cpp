@@ -1,9 +1,9 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <algorithm>
 
-#include "help_mp.h"
+#include "mpxp_help.h"
 
 #include <stdlib.h>
 #include <stdio.h>

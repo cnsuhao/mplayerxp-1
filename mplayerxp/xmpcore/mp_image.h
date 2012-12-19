@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 namespace mpxp {
     //--- buffer content restrictions:

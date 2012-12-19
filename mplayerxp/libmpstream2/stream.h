@@ -1,6 +1,6 @@
 #ifndef __STREAM_H_INCLUDED
 #define __STREAM_H_INCLUDED
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 

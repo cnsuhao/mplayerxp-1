@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -31,7 +31,7 @@ using namespace mpxp;
 #include "audio_out.h"
 #include "audio_out_internal.h"
 #include "libvo2/video_out.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "ao_msg.h"
 
 #ifdef __MINGW32__

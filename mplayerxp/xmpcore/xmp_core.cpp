@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -28,7 +28,7 @@ using namespace mpxp;
 #include "sig_hand.h"
 #define DA_PREFIX "DEC_AHEAD:"
 #define MSGT_CLASS MSGT_CPLAYER
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 #include "osdep/timer.h"
 #include "mplayerxp.h"
 #include "xmp_aplayer.h"

@@ -1,5 +1,5 @@
-#ifndef __MP_MSG_H
-#define __MP_MSG_H 1
+#ifndef __MPXP_MSG_H_INCLUDED
+#define __MPXP_MSG_H_INCLUDED 1
 #include "mplayerxp.h"
 
 #include <string>

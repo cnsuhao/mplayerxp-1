@@ -1,7 +1,7 @@
 // Translated by: Ioannis Panteleakis <pioann@csd.auth.gr>
 // Various corrections and additions by: Haris Kouzinopoulos <ironhell3@hotmail.com>
 // UTF-8
-#ifdef HELP_MP_DEFINE_STATIC
+#ifdef HELP_MPXP_DEFINE_STATIC
 #ifndef MSGTR_BANNER_TEXT
 static char* banner_text=
 "\n\n"

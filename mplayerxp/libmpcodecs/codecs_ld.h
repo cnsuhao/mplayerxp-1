@@ -5,7 +5,7 @@
 #ifndef __CODECS_LD
 #define __CODECS_LD
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 extern any_t* ld_codec(const char *name,const char *url_hint);
 /*extern char * codec_name( const char *name );*/

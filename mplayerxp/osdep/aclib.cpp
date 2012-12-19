@@ -1,12 +1,11 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
 #include <pthread.h>
 
 #include "mplayerxp.h"
-#define MSGT_CLASS MSGT_GLOBAL
-#include "mp_msg.h"
+#include "osdep_msg.h"
 
 #if defined(USE_FASTMEMCPY)
 #include "fastmemcpy.h"

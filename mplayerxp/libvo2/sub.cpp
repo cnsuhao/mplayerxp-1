@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 
@@ -15,7 +15,7 @@ using namespace mpxp;
 #include "libmpsub/spudec.h"
 #include "libmpsub/vobsub.h"
 #define MSGT_CLASS MSGT_OSD
-#include "mp_msg.h"
+#include "vo_msg.h"
 
 namespace mpxp {
 

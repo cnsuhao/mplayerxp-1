@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
@@ -11,7 +11,7 @@ using namespace mpxp;
 #include "loader/wineacm.h"
 #include "libmpdemux/aviprint.h"
 #include "libao3/afmt.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 
 static const ad_info_t info = {
     "Win32/ACM decoders",

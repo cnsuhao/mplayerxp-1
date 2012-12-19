@@ -15,7 +15,7 @@
 // define for quicktime debugging (verbose logging):
 //#define DEBUG_QTX_API
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 
 #include <assert.h>

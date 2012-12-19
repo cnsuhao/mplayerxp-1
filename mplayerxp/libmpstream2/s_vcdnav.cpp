@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -15,7 +15,7 @@ using namespace mpxp;
 #include <libvcd/inf.h>
 #include <libvcd/logging.h>
 #include "mrl.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 
 namespace mpxp {
     struct vcdsector_t {

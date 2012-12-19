@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 #include "xmpcore/xmp_enums.h"
 #include "libmpconf/cfgparser.h"

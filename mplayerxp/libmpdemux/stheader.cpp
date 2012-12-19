@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 // read vmpideo frame
@@ -8,7 +8,7 @@ using namespace mpxp;
 #include <string.h>
 #include <unistd.h>
 
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "sub_cc.h"
 
 #include "libmpstream2/stream.h"

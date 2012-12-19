@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /* GyS-TermIO v2.0 (for GySmail v3)          (C) 1999 A'rpi/ESP-team */

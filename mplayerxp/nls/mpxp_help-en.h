@@ -7,7 +7,7 @@
 
  ========================= MPlayerXP help =========================== */
 
-#ifdef HELP_MP_DEFINE_STATIC
+#ifdef HELP_MPXP_DEFINE_STATIC
 #ifndef MSGTR_BANNER_TEXT
 static const char* banner_text=
 "\n\n"

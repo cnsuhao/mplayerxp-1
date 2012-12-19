@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 
@@ -10,7 +10,7 @@ using namespace mpxp;
 #include "m_option.h"
 #include "m_struct.h"
 #define MSGT_CLASS MSGT_CPLAYER
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 const m_option_t*
 m_struct_get_field(const m_struct_t* st,const char* f) {

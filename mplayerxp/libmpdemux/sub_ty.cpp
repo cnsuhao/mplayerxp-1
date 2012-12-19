@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 // Most of this was written by mbm@linux.com and released on the GPL2 License.
@@ -17,7 +17,7 @@ using namespace mpxp;
 #include <string.h>
 
 #include "mplayerxp.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 
 #include "sub_cc.h"
 #include "libvo2/video_out.h"

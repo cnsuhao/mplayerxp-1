@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /* This audio filter delays the output signal for the different
@@ -12,7 +12,7 @@ using namespace mpxp;
 
 #include "af.h"
 #include "af_internal.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "pp_msg.h"
 
 #define L 65536

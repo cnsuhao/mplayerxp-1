@@ -5,7 +5,7 @@
  */
 #ifndef __NETWORK_H
 #define __NETWORK_H
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 
@@ -14,7 +14,7 @@ using namespace mpxp;
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 #ifndef HAVE_WINSOCK2
 #include <netdb.h>

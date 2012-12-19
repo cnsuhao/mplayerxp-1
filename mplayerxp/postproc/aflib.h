@@ -11,7 +11,7 @@
 #ifndef	_AFLIB_H
 #define	_AFLIB_H	1
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "xmpcore/mp_aframe.h"
 /* Implementation of routines used for DSP */
 

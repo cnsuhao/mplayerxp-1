@@ -4,7 +4,7 @@
  * $Id: driver.c,v 1.3 2006/09/13 08:13:07 nickols_k Exp $
  */
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 
 #include <stdio.h>

@@ -1,6 +1,6 @@
 // Translated by:  Panagiotis Issaris <takis@lumumba.luc.ac.be>
 // UTF-8
-#ifdef HELP_MP_DEFINE_STATIC
+#ifdef HELP_MPXP_DEFINE_STATIC
 #define MSGTR_BANNER_TEXT 1
 static char* banner_text=
 "\n\n"

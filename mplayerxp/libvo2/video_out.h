@@ -9,7 +9,7 @@
 #ifndef __VIDEO_OUT_H
 #define __VIDEO_OUT_H 1
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 

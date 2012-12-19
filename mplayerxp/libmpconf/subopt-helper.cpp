@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /**
@@ -26,7 +26,7 @@ using namespace mpxp;
 
 #include "subopt-helper.h"
 #define MSGT_CLASS MSGT_GLOBAL
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 #ifndef MP_DEBUG
   #define NDEBUG

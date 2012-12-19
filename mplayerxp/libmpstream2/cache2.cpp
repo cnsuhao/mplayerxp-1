@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <algorithm>
@@ -24,7 +24,7 @@ using namespace mpxp;
 #include "osdep/cpudetect.h"
 #include "osdep/bswap.h"
 #include "osdep/fastmemcpy.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "libmpdemux/mpdemux.h"
 #include "mplayerxp.h"
 #include "stream_msg.h"

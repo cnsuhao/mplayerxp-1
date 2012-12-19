@@ -1,5 +1,5 @@
 
-include ../mp_config.mak
+include ../mpxp_config.mak
 
 LIBNAME = libpostproc.a
 SUBDIRS = libmenu

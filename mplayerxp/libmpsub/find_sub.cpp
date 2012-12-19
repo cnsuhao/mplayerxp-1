@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 //**************************************************************************//
@@ -12,7 +12,7 @@ using namespace mpxp;
 #include "libvo2/sub.h"
 #include "subreader.h"
 #define MSGT_CLASS MSGT_FINDSUB
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 static int current_sub=0;
 

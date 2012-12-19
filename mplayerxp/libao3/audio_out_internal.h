@@ -1,6 +1,6 @@
 #ifndef __AO_INTERNAL_H_INCLUDED
 #define __AO_INTERNAL_H_INCLUDED 1
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 #include <string>
 

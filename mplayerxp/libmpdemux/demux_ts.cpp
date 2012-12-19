@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -31,7 +31,7 @@ using namespace mpxp;
 #include <string.h>
 
 #include "mplayerxp.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "libmpstream2/stream.h"
 #include "demuxer.h"
 #include "demuxer_internal.h"

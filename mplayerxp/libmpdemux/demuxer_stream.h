@@ -1,6 +1,6 @@
 #ifndef __DEMUX_STREAM_H_INCLUDED
 #define __DEMUX_STREAM_H_INCLUDED 1
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 

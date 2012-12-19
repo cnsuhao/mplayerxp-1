@@ -1,4 +1,4 @@
-include ../../mp_config.mak
+include ../../mpxp_config.mak
 
 CXXSRCS = frequencies.cpp tvi_bsdbt848.cpp tvi_dummy.cpp tvi_v4l.cpp
 

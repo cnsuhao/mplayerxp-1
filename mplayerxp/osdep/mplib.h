@@ -14,7 +14,7 @@
 #include <execinfo.h>
 #include <stddef.h>
 #include <sys/mman.h>
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 namespace mpxp {
 

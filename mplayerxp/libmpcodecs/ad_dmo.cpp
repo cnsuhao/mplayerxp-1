@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
@@ -9,7 +9,7 @@ using namespace mpxp;
 #include "codecs_ld.h"
 
 #include "mplayerxp.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "ad_internal.h"
 #include "ad_msg.h"
 

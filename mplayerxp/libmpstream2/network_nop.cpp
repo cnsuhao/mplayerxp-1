@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 
@@ -6,7 +6,7 @@ using namespace mpxp;
 #include "tcp.h"
 #include "network_nop.h"
 #include "stream.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "stream_msg.h"
 
 namespace mpxp {

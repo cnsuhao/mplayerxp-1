@@ -1,4 +1,4 @@
-include ../../mp_config.mak
+include ../../mpxp_config.mak
 
 # DS_AudioDec.c
 SRCS	= DMO_AudioDecoder.c \

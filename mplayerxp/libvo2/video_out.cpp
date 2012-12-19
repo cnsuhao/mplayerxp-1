@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -35,7 +35,7 @@ using namespace mpxp;
 #include "video_out_internal.h"
 
 #include "osdep/shmem.h"
-#include "mp_conf_lavc.h"
+#include "mpxp_conf_lavc.h"
 #include "xmpcore/xmp_core.h"
 #include "mplayerxp.h"
 #include "osdep/fastmemcpy.h"

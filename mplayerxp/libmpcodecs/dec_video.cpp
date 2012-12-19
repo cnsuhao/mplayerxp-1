@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 
@@ -11,7 +11,7 @@ using namespace mpxp;
 #include <unistd.h>
 
 #include "mplayerxp.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 
 #include "osdep/timer.h"
 #include "osdep/shmem.h"
@@ -33,7 +33,7 @@ using namespace mpxp;
 #include "libmpsub/spudec.h"
 #include "libmpsub/vobsub.h"
 
-#include "mp_conf_lavc.h"
+#include "mpxp_conf_lavc.h"
 #include "osdep/cpudetect.h"
 #include "vd_msg.h"
 

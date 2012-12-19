@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -26,9 +26,9 @@ using namespace mpxp;
 #include "demuxer.h"
 #include "demuxer_internal.h"
 #include "stheader.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 
-#include "mp_conf_lavc.h"
+#include "mpxp_conf_lavc.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "libmpconf/cfgparser.h"
 #include "aviprint.h"

@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
@@ -261,7 +261,7 @@ ac3_retry:
 	int _r=0;
 	MSG_WARN("OSS-CONF: driver doesn't support SNDCTL_DSP_GETOSPACE :-(\n");
 	if(::ioctl(fd, SNDCTL_DSP_GETBLKSIZE, &_r)==-1){
-	    MSG_V("OSS-CONF: %d bytes/frag (mp_config.h)\n",_outburst);
+	    MSG_V("OSS-CONF: %d bytes/frag (mpxp_config.h)\n",_outburst);
 	} else {
 	    _outburst=r;
 	    MSG_V("OSS-CONF: %d bytes/frag (GETBLKSIZE)\n",_outburst);
@@ -291,7 +291,7 @@ ac3_retry:
 	delete data;
 	if(_buffersize==0){
 	    MSG_ERR("\n   *** OSS-CONF: Your audio driver DOES NOT support select()  ***\n"
-		    "Recompile mplayerxp with #undef HAVE_AUDIO_SELECT in mp_config.h !\n\n");
+		    "Recompile mplayerxp with #undef HAVE_AUDIO_SELECT in mpxp_config.h !\n\n");
 	    return MPXP_False;
 	}
 #endif

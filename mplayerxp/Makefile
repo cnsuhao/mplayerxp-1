@@ -7,7 +7,7 @@
 # a BSD compatible 'install' program
 INSTALL = install
 
-include mp_config.mak
+include mpxp_config.mak
 
 TARGET_EXE = $(PROGNAME)
 # these subdirectories required installation due binaries within them
@@ -21,7 +21,7 @@ DO_MAKE_ALL = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 MANDIR = ${prefix}/man
 LDFLAGS += -Wl,-rpath,${CODECDIR}/codecs
 
-SRCS = mplayerxp.cpp dump.cpp mp_msg.cpp
+SRCS = mplayerxp.cpp dump.cpp mpxp_msg.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
@@ -100,8 +100,8 @@ distclean:
 	$(DO_MAKE)
 	-rm -f *~ $(TARGET_EXE) $(OBJS)
 	-rm -f *.o *.a .depend configure.log
-	-rm -f mp_config.h mp_config.mak mp_conf_lavc.h version.h
-	-rm -f cpuinfo help_mp.h
+	-rm -f mpxp_config.h mpxp_config.mak mpxp_conf_lavc.h version.h
+	-rm -f cpuinfo mpxp_help.h
 
 dep: .depend
 

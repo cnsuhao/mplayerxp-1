@@ -23,7 +23,7 @@
 #ifndef DCA_H
 #define DCA_H
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mm_accel.h"
 
 #if defined(LIBDTS_FIXED)

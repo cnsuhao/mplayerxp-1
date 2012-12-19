@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -11,7 +11,7 @@ using namespace mpxp;
 #include <math.h>
 #include "stream.h"
 #include "stream_internal.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "libmpsub/spudec.h"
 #include "libvo2/sub.h"
 #include "input2/input.h"

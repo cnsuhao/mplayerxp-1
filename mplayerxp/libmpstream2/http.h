@@ -6,7 +6,7 @@
 
 #ifndef __HTTP_H_INCLUDED
 #define __HTTP_H_INCLUDED 1
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 #include <string>
 #include <vector>

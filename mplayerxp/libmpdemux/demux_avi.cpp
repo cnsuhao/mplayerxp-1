@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*  AVI file parser for DEMUXER v2.9  by A'rpi/ESP-team */
@@ -9,7 +9,7 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "help_mp.h"
+#include "mpxp_help.h"
 
 #include "libmpstream2/stream.h"
 #include "demuxer.h"

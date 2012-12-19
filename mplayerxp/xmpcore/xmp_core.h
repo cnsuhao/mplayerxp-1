@@ -10,7 +10,7 @@
 #include <inttypes.h>
 #include <pthread.h>
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 
@@ -175,7 +175,7 @@ extern pthread_mutex_t audio_decode_mutex;
 extern pthread_cond_t audio_decode_cond;
 
 #ifdef ENABLE_DEC_AHEAD_DEBUG
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 #ifndef DA_PREFIX
 #define DA_PREFIX "dec_ahead:"
 #endif

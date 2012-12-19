@@ -2,6 +2,6 @@
 #define AD_MSG_H 1
 
 #define MSGT_CLASS MSGT_DECAUDIO
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 #endif

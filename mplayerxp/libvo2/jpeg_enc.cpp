@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /* Straightforward (to be) optimized JPEG encoder for the YUV422 format
@@ -33,7 +33,7 @@ using namespace mpxp;
 #endif
 /* We need this #define because we need ../libavcodec/common.h to #define
  * be2me_32, otherwise the linker will complain that it doesn't exist */
-#include "mp_conf_lavc.h"
+#include "mpxp_conf_lavc.h"
 
 #include "jpeg_enc.h"
 #include "vo_msg.h"

@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "af_control.h"
 #include "xmpcore/xmp_enums.h"
 #include "xmpcore/mp_aframe.h"

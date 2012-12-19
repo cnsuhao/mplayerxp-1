@@ -9,7 +9,7 @@
 #include <soundcard.h> /* OpenBSD have this instead of <sys/soundcard> */
 #endif
 #endif
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 /* standard, old OSS audio formats */
 #ifndef AFMT_MU_LAW

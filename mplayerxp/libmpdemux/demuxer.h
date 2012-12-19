@@ -1,6 +1,6 @@
 #ifndef __DEMUXER_H
 #define __DEMUXER_H 1
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 

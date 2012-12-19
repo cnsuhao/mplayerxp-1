@@ -1,6 +1,6 @@
 #ifndef INPUT_H_INCLUDED
 #define INPUT_H_INCLUDED 1
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 

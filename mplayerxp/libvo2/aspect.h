@@ -2,7 +2,7 @@
 #define __ASPECT_H
 /* Stuff for correct aspect scaling. */
 #include <stdint.h>
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 namespace mpxp {
     class Aspect : public Opaque {

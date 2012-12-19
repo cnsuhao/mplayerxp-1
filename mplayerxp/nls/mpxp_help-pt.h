@@ -1,7 +1,7 @@
 // Translated by Fabio Pugliese Ornellas <fabio.ornellas@poli.usp.br>
 // Portuguese from Brazil Translation
 // UTF-8
-#ifdef HELP_MP_DEFINE_STATIC
+#ifdef HELP_MPXP_DEFINE_STATIC
 #ifndef MSGTR_BANNER_TEXT
 static char* banner_text=
 "\n\n"

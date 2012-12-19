@@ -4,7 +4,7 @@
 	Copyright 2000 Eugene Kuznetsov  (divx@euro.ru)
 
 *********************************************************/
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 #include "guids.h"
 #include "interfaces.h"

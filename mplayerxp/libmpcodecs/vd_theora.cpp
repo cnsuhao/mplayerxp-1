@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
@@ -9,7 +9,7 @@ using namespace mpxp;
 
 #include <theora/theora.h>
 
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "codecs_ld.h"
 
 #include "vd_internal.h"

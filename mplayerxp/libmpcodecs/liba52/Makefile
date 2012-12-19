@@ -1,4 +1,4 @@
-include ../../mp_config.mak
+include ../../mpxp_config.mak
 
 CXXSRCS = parse.cpp bitstream.cpp imdct.cpp downmix.cpp bit_allocate.cpp crc.cpp resample.cpp
 SRCS    =

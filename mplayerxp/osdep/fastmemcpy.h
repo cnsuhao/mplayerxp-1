@@ -1,6 +1,6 @@
 #ifndef __MPLAYER_MEMCPY
 #define __MPLAYER_MEMCPY 1
-#include "mp_config.h"
+#include "mpxp_config.h"
 using namespace mpxp;
 
 #ifdef USE_FASTMEMCPY

@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 //=================== DEMUXER v2.5 =========================
@@ -11,7 +11,7 @@ using namespace mpxp;
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "libmpsub/subreader.h"
 #include "libmpconf/cfgparser.h"
 

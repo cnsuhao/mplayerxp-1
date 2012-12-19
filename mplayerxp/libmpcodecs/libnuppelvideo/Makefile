@@ -1,4 +1,4 @@
-include ../../mp_config.mak
+include ../../mpxp_config.mak
 
 CXXSRCS = RTjpegN.cpp minilzo.cpp nuppelvideo.cpp
 

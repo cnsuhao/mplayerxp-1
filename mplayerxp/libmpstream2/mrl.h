@@ -2,7 +2,7 @@
 #ifndef __MPXP_MRL_H
 #define __MPXP_MRL_H 1
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include <string>
 namespace mpxp {
 /** Parses line which contains MRL and splits it on components.

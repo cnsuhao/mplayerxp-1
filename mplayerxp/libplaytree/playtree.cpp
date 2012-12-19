@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 
@@ -14,7 +14,7 @@ using namespace mpxp;
 #include "libmpstream2/stream.h"
 #include "playtree.h"
 #define MSGT_CLASS MSGT_PLAYTREE
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 static int
 play_tree_is_valid(play_tree_t* pt);

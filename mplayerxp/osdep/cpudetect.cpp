@@ -1,11 +1,11 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 
 #include "cpudetect.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #define MSGT_CLASS MSGT_CPUDETECT
-#include "mp_msg.h"
+#include "osdep_msg.h"
 
 #include <stdlib.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <string.h>
@@ -7,7 +7,7 @@ using namespace mpxp;
 #include "mp_aframe.h"
 #include "libao3/afmt.h"
 #include "loader/wine/mmreg.h"
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 namespace mpxp {
 

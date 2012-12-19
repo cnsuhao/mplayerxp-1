@@ -1,11 +1,11 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
 #include <math.h>
 
-#include "help_mp.h"
-#include "mp_msg.h"
+#include "mpxp_help.h"
+#include "mpxp_msg.h"
 #include "sig_hand.h"
 
 #include "libao3/audio_out.h"

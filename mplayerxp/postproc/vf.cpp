@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
@@ -7,7 +7,7 @@ using namespace mpxp;
 
 #include "xmpcore/xmp_core.h"
 #include "mplayerxp.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 
 #include "libvo2/img_format.h"
 #include "libvo2/video_out.h"

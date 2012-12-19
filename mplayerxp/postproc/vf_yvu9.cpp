@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
@@ -12,7 +12,7 @@ using namespace mpxp;
 #include "vf_internal.h"
 
 #include "osdep/fastmemcpy.h"
-#include "mp_conf_lavc.h"
+#include "mpxp_conf_lavc.h"
 #include "pp_msg.h"
 //===========================================================================//
 

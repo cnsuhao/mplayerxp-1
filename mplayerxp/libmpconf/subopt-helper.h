@@ -1,7 +1,7 @@
 #ifndef MPLAYER_SUBOPT_HELPER_H
 #define MPLAYER_SUBOPT_HELPER_H
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 /**
  * \file subopt-helper.h
  *

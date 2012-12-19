@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
@@ -10,7 +10,7 @@ using namespace mpxp;
 #include "mp_image.h"
 #include "osdep/fastmemcpy.h"
 #define MSGT_CLASS MSGT_CPLAYER
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 namespace mpxp {
 void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){

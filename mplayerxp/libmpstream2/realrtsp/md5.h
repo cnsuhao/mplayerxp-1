@@ -59,7 +59,7 @@
 #  define AV_WL16(p, d) AV_WN16(p, d)
 # endif
 
-#include "mp_conf_lavc.h"
+#include "mpxp_conf_lavc.h"
 
 #endif /* FFMPEG_MD5_H */
 

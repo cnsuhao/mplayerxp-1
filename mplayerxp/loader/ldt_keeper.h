@@ -1,7 +1,7 @@
 #ifndef LDT_KEEPER_H
 #define LDT_KEEPER_H
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 #ifdef __cplusplus
 extern "C"

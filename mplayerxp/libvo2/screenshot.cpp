@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -27,7 +27,7 @@ using namespace mpxp;
 
 #include "screenshot.h"
 #include "img_format.h"
-#include "mp_conf_lavc.h"
+#include "mpxp_conf_lavc.h"
 #include "postproc/vf_scale.h"
 #include "vo_msg.h"
 

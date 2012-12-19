@@ -14,7 +14,7 @@ Original location: http://cvs.debian.org/lrmi/
 #ifndef LRMI_H
 #define LRMI_H
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 namespace mpxp {
     struct LRMI_regs {
 	unsigned int edi;

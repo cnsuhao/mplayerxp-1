@@ -1,4 +1,4 @@
-include ../mp_config.mak
+include ../mpxp_config.mak
 
 LIBNAME = libxmpcore.a
 

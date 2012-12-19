@@ -2,6 +2,6 @@
 #define DEMUX_MSG_H
 
 #define MSGT_CLASS MSGT_STREAM
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 #endif

@@ -1,4 +1,4 @@
-include ../../mp_config.mak
+include ../../mpxp_config.mak
 
 CXXSRCS=rtsp.cpp rtsp_rtp.cpp rtsp_session.cpp
 SRCS = 

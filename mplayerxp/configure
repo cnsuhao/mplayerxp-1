@@ -20,14 +20,14 @@
 #
 # GOTCHAS:
 #  - config files are currently:
-#    mp_config.h mp_config.mak libvo/mp_config.mak libao2/mp_config.mak
+#    mpxp_config.h mpxp_config.mak
 #
 #############################################################################
 . ../functions
 init_functions
 
 cd nls
-LANGUAGES=`echo help_mp-??.h | sed "s/help_mp-\(..\).h/\1/g"`
+LANGUAGES=`echo mpxp_help-??.h | sed "s/mpxp_help-\(..\).h/\1/g"`
 cd ..
 linguas=`echo $LANG | sed 's/^\([^_]*\).*$/\1/'`
 test -z $linguas && linguas=en
@@ -226,7 +226,7 @@ gas=`$cc -print-prog-name=as`
 test -n $gas && as=$gas
 
 mktmps
-guess_target mp_config.mak mp_config.h
+guess_target mpxp_config.mak mpxp_config.h
 
 # config files
 
@@ -323,15 +323,15 @@ cd $srcdir
 test $($pkg_config --version 2>/dev/null) || die "no pkg-config found"
 #############################################################################
 enabled profile && disable fastcall
-print_config __USE mp_config.h mp_config.mak fastcall
+print_config __USE mpxp_config.h mpxp_config.mak fastcall
 
-test_optimizations mp_config.mak mp_config.h
+test_optimizations mpxp_config.mak mpxp_config.h
 
 # Checking for GOMP
 enabled gomp && check_ldflags -fopenmp || disable gomp
 enabled gomp && require2 gomp omp.h omp_get_thread_num -lgomp || disable gomp
 enabled gomp && check_cflags -fopenmp || disable gomp
-print_config HAVE_ mp_config.h mp_config.mak gomp
+print_config HAVE_ mpxp_config.h mpxp_config.mak gomp
 #enabled gomp && check_cflags -ftree-parallelize-loops=4
 #####################################################
 add_cflags "-Warray-bounds -Wreturn-type -Wuninitialized -Wlogical-op -Waddress"
@@ -363,7 +363,7 @@ disable lavc
 test -f "../lavc/libavcodec/avcodec.h" && enable lavc
 disabled lavc && die "**FATAL**: local copy of lavc doesn't exist!"
 add_cflags "-I$srcdir/../lavc"
-print_config HAVE_ mp_config.h mp_config.mak lavc
+print_config HAVE_ mpxp_config.h mpxp_config.mak lavc
 # Configuring external lavc stuff
 lavc_args="--enable-static --disable-shared --enable-gpl --enable-pthreads --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --disable-ffprobe --disable-avdevice --disable-avfilter --disable-avresample"
 if test -n $host ; then
@@ -387,24 +387,24 @@ fi
 echores "done"
 ###################################
 
-print_config ENABLE_ mp_config.h mp_config.mak gpl_only
+print_config ENABLE_ mpxp_config.h mpxp_config.mak gpl_only
 
 check_header inttypes.h	|| die "cannot find header inttypes.h (see in DOC/faq.html)"
 
 require2 libdl dlfcn.h dlsym -ldl ||  die "dynamic loader was not found"
-print_config HAVE_ mp_config.h mp_config.mak libdl
+print_config HAVE_ mpxp_config.h mpxp_config.mak libdl
 
 require2 libkstat kstat.h kstat_open -lkstat
-print_config HAVE_ mp_config.h mp_config.mak libkstat
+print_config HAVE_ mpxp_config.h mpxp_config.mak libkstat
 
 require2 posix4 time.h nanosleep -lposix4
-print_config HAVE_ mp_config.h mp_config.mak posix4
+print_config HAVE_ mpxp_config.h mpxp_config.mak posix4
 
 check_func2 time.h nanosleep
-print_config HAVE_ mp_config.h mp_config.mak nanosleep
+print_config HAVE_ mpxp_config.h mpxp_config.mak nanosleep
 
 check_func2 execinfo.h backtrace
-print_config HAVE_ mp_config.h mp_config.mak backtrace
+print_config HAVE_ mpxp_config.h mpxp_config.mak backtrace
 
 disable inet_pton
 if enabled streaming ; then
@@ -418,18 +418,18 @@ disabled inet_pton	&& require2 inet_pton "sys/types.h sys/socket.h arpa/inet.h" 
 # well, try alternative
 if disabled inet_pton ; then
 require2 aton "sys/types.h sys/socket.h arpa/inet.h" inet_aton
-print_config USE_ mp_config.h mp_config.mak aton
+print_config USE_ mpxp_config.h mpxp_config.mak aton
 fi
-print_config HAVE_ mp_config.h mp_config.mak socklib
+print_config HAVE_ mpxp_config.h mpxp_config.mak socklib
 
 if enabled winsock2 && ! cygwin ; then
 require2 winsock2 winsock2.h gethostbyname -lws2_32
-print_config HAVE_ mp_config.h mp_config.mak winsock2
+print_config HAVE_ mpxp_config.h mpxp_config.mak winsock2
 fi
 fi #enabled streaming
 
 disabled inet_pton	&& disable streaming
-print_config HAVE_ mp_config.h mp_config.mak streaming
+print_config HAVE_ mpxp_config.h mpxp_config.mak streaming
 enabled streaming	&& inputmodules="streaming $inputmodules" || noinputmodules="streaming $noinputmodules"
 
 disabled streaming	&& disable af_inet6
@@ -437,7 +437,7 @@ disabled streaming	&& disable af_inet6
 if enabled af_inet6 ; then
 enabled winsock2	&& require3 af_inet6 ws2tcpip.h AF_INET6 socket
 disabled winsock2	&& require3 af_inet6 "sys/socket.h netinet/in.h" AF_INET6 socket
-print_config HAVE_ mp_config.h mp_config.mak af_inet6
+print_config HAVE_ mpxp_config.h mpxp_config.mak af_inet6
 fi
 
 # find if .align arg is power-of-two or not
@@ -471,22 +471,22 @@ fi
 echores "$vm_pagesize"
 
 check_func3 _ISOC9X_SOURCE math.h lrint -lm
-print_config HAVE_ mp_config.h mp_config.mak lrint
+print_config HAVE_ mpxp_config.h mpxp_config.mak lrint
 
 check_func3 _ISOC9X_SOURCE math.h llrint -lm
-print_config HAVE_ mp_config.h mp_config.mak llrint
+print_config HAVE_ mpxp_config.h mpxp_config.mak llrint
 
 check_func3 _ISOC9X_SOURCE math.h HUGE -lm
-print_config HAVE_ mp_config.h mp_config.mak HUGE
+print_config HAVE_ mpxp_config.h mpxp_config.mak HUGE
 
 check_func2 "sys/types.h sys/mman.h" mmap
 sys_mman_h=$mmap
-print_config HAVE_ mp_config.h mp_config.mak sys_mman_h
+print_config HAVE_ mpxp_config.h mpxp_config.mak sys_mman_h
 enabled mmap	&& check_func2 "sys/mman.h" mlock
-print_config HAVE_ mp_config.h mp_config.mak mlock
+print_config HAVE_ mpxp_config.h mpxp_config.mak mlock
 
 check_func2 "stdio.h stdarg.h" vsscanf
-print_config HAVE_ mp_config.h mp_config.mak vsscanf
+print_config HAVE_ mpxp_config.h mpxp_config.mak vsscanf
 
 if enabled termcap; then
 disable termcap
@@ -494,43 +494,43 @@ for ld_i in "-ltermcap" "-lncurses" "-ltinfo" ; do
 disabled termcap	&& require2 termcap stdio.h tgetent $ld_i
 enabled termcap	&& break
 done
-print_config HAVE_ mp_config.h mp_config.mak termcap
+print_config HAVE_ mpxp_config.h mpxp_config.mak termcap
 fi
 
 if enabled termios; then
 check_header sys/termios.h
-print_config HAVE_ mp_config.h mp_config.mak sys_termios_h
+print_config HAVE_ mpxp_config.h mpxp_config.mak sys_termios_h
 disabled sys_termios_h	&& check_header termios.h 
-disabled sys_termios_h	&& print_config HAVE_ mp_config.h mp_config.mak termios_h
+disabled sys_termios_h	&& print_config HAVE_ mpxp_config.h mpxp_config.mak termios_h
 fi
 
 enabled shm	&& require2 shm "sys/types.h sys/shm.h" shmget
-print_config HAVE_ mp_config.h mp_config.mak shm
+print_config HAVE_ mpxp_config.h mpxp_config.mak shm
 
 require2 zlib zlib.h inflate -lz
-print_config HAVE_ mp_config.h mp_config.mak zlib
+print_config HAVE_ mpxp_config.h mpxp_config.mak zlib
 
 if linux; then
 enabled rtc	&& require2 rtc "sys/ioctl.h linux/rtc.h" RTC_IRQP_READ
-print_config HAVE_ mp_config.h mp_config.mak rtc
+print_config HAVE_ mpxp_config.h mpxp_config.mak rtc
 fi
 
 if enabled iconv; then
 require2 giconv giconv.h iconv_open -lgiconv
-print_config HAVE_ mp_config.h mp_config.mak giconv
+print_config HAVE_ mpxp_config.h mpxp_config.mak giconv
 disable iconv
 for ld_i in "" -liconv ; do
 disabled iconv	&& require2 iconv iconv.h iconv_open $ld_i
 enabled iconv	&& break
 done
-print_config HAVE_ mp_config.h mp_config.mak iconv
+print_config HAVE_ mpxp_config.h mpxp_config.mak iconv
 fi
 
 enabled lirc	&& require2 lirc lirc/lirc_client.h lirc_init -llirc_client
-print_config HAVE_ mp_config.h mp_config.mak lirc
+print_config HAVE_ mpxp_config.h mpxp_config.mak lirc
 
 enabled lircc	&& require2 lircc lirc/lircc.h lircc_init -llircc
-print_config HAVE_ mp_config.h mp_config.mak lircc
+print_config HAVE_ mpxp_config.h mpxp_config.mak lircc
 
 disable pthread
 for ld_i in "-lpthreadGC2" "-lpthread" "-pthread" "" ; do
@@ -538,23 +538,23 @@ disabled pthread	&& require3 pthread "signal.h pthread.h" PTHREAD_COND_INITIALIZ
 enabled pthread	&& break
 done
 disabled pthread	&& die "Lib pthread not found. (needed by xp mode)"
-print_config HAVE_ mp_config.h mp_config.mak pthread
+print_config HAVE_ mpxp_config.h mpxp_config.mak pthread
 
 check_func2 malloc.h malloc
 disabled malloc		&& die "malloc is not supported by your system"
-print_config HAVE_ mp_config.h mp_config.mak malloc
+print_config HAVE_ mpxp_config.h mpxp_config.mak malloc
 
 check_func2 malloc.h memalign
 disabled memalign	&& die "memalign is not supported by your system"
-print_config HAVE_ mp_config.h mp_config.mak memalign
+print_config HAVE_ mpxp_config.h mpxp_config.mak memalign
 
 check_func2 alloca.h alloca
-print_config HAVE_ mp_config.h mp_config.mak alloca
+print_config HAVE_ mpxp_config.h mpxp_config.mak alloca
 
 require2 sys_soundcard_h sys/soundcard.h SNDCARD_SB
-print_config HAVE_ mp_config.h mp_config.mak sys_soundcard_h
+print_config HAVE_ mpxp_config.h mpxp_config.mak sys_soundcard_h
 require2 soundcard_h soundcard.h SNDCARD_SB
-print_config HAVE_ mp_config.h mp_config.mak soundcard_h
+print_config HAVE_ mpxp_config.h mpxp_config.mak soundcard_h
 
 # XXX: FIXME, add runtime checking
 echocheck "linux devfs"
@@ -564,15 +564,15 @@ echores "$linux_devfs"
 echocheck "language"
 linguas=$language
 test -z $linguas && linguas=`echo $LANG | sed 's/^\([^_]*\).*$/\1/'`
-if test -f "nls/help_mp-$linguas.h" ; then
+if test -f "nls/mpxp_help-$linguas.h" ; then
   echores "$linguas"
 else
   echores "$linguas not found, using en"
   linguas="en"
 fi
-mp_help="nls/help_mp-$linguas.h"
-test -f nls/help_mp-$linguas.h || die "nls/help_mp-$linguas.h not found"
-echo "#define I18N_LANGUAGE \"$linguas\"" >>mp_config.h
+mpxp_help="nls/mpxp_help-$linguas.h"
+test -f nls/mpxp_help-$linguas.h || die "nls/mpxp_help-$linguas.h not found"
+echo "#define I18N_LANGUAGE \"$linguas\"" >>mpxp_config.h
 
 enabled gpl_only && disable win32loader
 
@@ -580,7 +580,7 @@ if win32 || ! x86_32 ; then
 disable win32loader
 fi
 win32 && add_ldflags -lkernel32
-print_config ENABLE_ mp_config.h mp_config.mak win32loader
+print_config ENABLE_ mpxp_config.h mpxp_config.mak win32loader
 
 echo -n "win32 dll's ... "
 if test -z "$win32libdir" ; then
@@ -592,29 +592,29 @@ if test -z "$win32libdir" ; then
   done
 fi
 echo "$win32libdir"
-echo "#define WIN32_PATH \"$win32libdir\"" >>mp_config.h
+echo "#define WIN32_PATH \"$win32libdir\"" >>mpxp_config.h
 
 #########
 # VIDEO #
 #########
 check_pkg x11 x11
 enabled x11 && require2 x11 "X11/Xlib.h X11/Xutil.h" XCreateWindow -lXext
-print_config HAVE_ mp_config.h mp_config.mak x11
+print_config HAVE_ mpxp_config.h mpxp_config.mak x11
 enabled x11 && vomodules="x11 $vomodules" || novomodules="x11 $novomodules"
 
 disabled x11	&& disable xdpms
 enabled xdpms	&& require2 xdpms "X11/Xlib.h X11/extensions/dpms.h" DPMSQueryExtension
 disabled xdpms	&& require2 xdpms "X11/Xlib.h X11/extensions/dpms.h" DPMSQueryExtension -lXdpms
-print_config HAVE_ mp_config.h mp_config.mak xdpms
+print_config HAVE_ mpxp_config.h mpxp_config.mak xdpms
 
 disabled x11	&& disable xv
 enabled xv	&& require2 xv "X11/Xlib.h X11/extensions/Xvlib.h" XvGetPortAttribute -lXv
-print_config HAVE_ mp_config.h mp_config.mak xv
+print_config HAVE_ mpxp_config.h mpxp_config.mak xv
 enabled xv	&& vomodules="xv $vomodules" || novomodules="xv $novomodules"
 
 disabled x11	&& disable xinerama
 enabled xinerama	&& require2 xinerama "X11/Xlib.h X11/extensions/Xinerama.h" XineramaIsActive -lXinerama
-print_config HAVE_ mp_config.h mp_config.mak xinerama
+print_config HAVE_ mpxp_config.h mpxp_config.mak xinerama
 
 if win32 ; then
 enabled opengl	&& require2 opengl "windows.h GL/gl.h" wglCreateContext -lopengl32 -lgdi32
@@ -622,7 +622,7 @@ else
 disabled x11	&& disable opengl
 enabled opengl  && require2 opengl "GL/gl.h GL/glx.h GL/glut.h" glutInitWindowSize -lglut -lGL -lGLU
 fi
-print_config HAVE_ mp_config.h mp_config.mak opengl
+print_config HAVE_ mpxp_config.h mpxp_config.mak opengl
 enabled opengl	&& vomodules="opengl $vomodules" || novomodules="opengl $novomodules"
 
 # Note: the -lXxf86vm library is the VideoMode extension and though it's not
@@ -632,12 +632,12 @@ enabled opengl	&& vomodules="opengl $vomodules" || novomodules="opengl $novomodu
 # If you run into problems, remove '-lXxf86vm'.
 disabled x11	&& disable xf86vm
 enabled xf86vm	&& require2 xf86vm "X11/Xlib.h X11/extensions/xf86vmode.h" XF86VidModeQueryExtension -lXxf86vm
-print_config HAVE_ mp_config.h mp_config.mak xf86vm
+print_config HAVE_ mpxp_config.h mpxp_config.mak xf86vm
 
 disabled x11	&& disable dga
 
 enabled fbdev	&& require2 fbdev "sys/ioctl.h linux/fb.h" ioctl
-print_config HAVE_ mp_config.h mp_config.mak fbdev
+print_config HAVE_ mpxp_config.h mpxp_config.mak fbdev
 enabled fbdev	&& vomodules="fbdev $vomodules" || novomodules="fbdev $novomodules"
 if test "$fbdev_nocopy" = yes ; then
     def_fbdev_nocopy='#define USE_CONVERT2FB 1'
@@ -645,15 +645,15 @@ fi
 
 if enabled png; then
 require2 png png.h PNG_LIBPNG_VER_STRING -lpng
-print_config HAVE_ mp_config.h mp_config.mak png
+print_config HAVE_ mpxp_config.h mpxp_config.mak png
 disabled png	&& require2 libpng_png libpng/png.h PNG_LIBPNG_VER_STRING -lpng -lm
-print_config HAVE_ mp_config.h mp_config.mak libpng_png
+print_config HAVE_ mpxp_config.h mpxp_config.mak libpng_png
 enabled libpng_png	&& enable png
 fi
 enabled png	&& vomodules="png $vomodules" || novomodules="png $novomodules"
 
 enabled jpg	&& require2 jpeg "stdio.h stdlib.h setjmp.h string.h jpeglib.h" jpeg_write_scanlines -ljpeg
-print_config HAVE_ mp_config.h mp_config.mak jpeg
+print_config HAVE_ mpxp_config.h mpxp_config.mak jpeg
 enabled jpeg	&& vomodules="jpeg $vomodules" || novomodules="jpeg $novomodules"
 
 x86_32 || disable vesa
@@ -663,7 +663,7 @@ if disabled vesa ; then
 vesa=$_vesa
 enabled vesa	&& require3 vesa "asm/vm86.h string.h" X86_EFLAGS_VIF memset
 fi
-print_config HAVE_ mp_config.h mp_config.mak vesa
+print_config HAVE_ mpxp_config.h mpxp_config.mak vesa
 enabled vesa	&& vomodules="vesa $vomodules" || novomodules="vesa $novomodules"
 
 #################
@@ -672,21 +672,21 @@ enabled vesa	&& vomodules="vesa $vomodules" || novomodules="vesa $novomodules"
 
 enabled sdl && check_pkg sdl sdl
 enabled sdl && require2 sdl SDL/SDL.h SDL_CreateYUVOverlay
-print_config HAVE_ mp_config.h mp_config.mak sdl
+print_config HAVE_ mpxp_config.h mpxp_config.mak sdl
 disabled sdl && disable sdl_image
 if enabled sdl; then
 enabled sdl_image	&& require2 sdl_image SDL/SDL_image.h IMG_Load_RW -lSDL_image
-print_config HAVE_ mp_config.h mp_config.mak sdl_image
+print_config HAVE_ mpxp_config.h mpxp_config.mak sdl_image
 fi
 enabled sdl	&& aomodules="sdl $aomodules" || noaomodules="sdl $noaomodules"
 enabled sdl	&& vomodules="sdl $vomodules" || novomodules="sdl $novomodules"
 enabled sdl_image && vomodules="sdl_image $vomodules" || novomodules="sdl_image $novomodules"
 
 enabled libcdio	&& require2 libcdio "cdio/cdio.h" cdio_read_mode2_sectors -lcdio
-print_config HAVE_ mp_config.h mp_config.mak libcdio
+print_config HAVE_ mpxp_config.h mpxp_config.mak libcdio
 
 enabled libcdio && require2 libcdio_cdda "cdio/cdda.h" cdio_cddap_read -lcdio_cdda
-print_config HAVE_ mp_config.h mp_config.mak libcdio_cdda
+print_config HAVE_ mpxp_config.h mpxp_config.mak libcdio_cdda
 enabled libcdio_cdda	&& inputmodules="cdda $inputmodules" || noinputmodules="cdda $noinputmodules"
 
 #########
@@ -695,7 +695,7 @@ enabled libcdio_cdda	&& inputmodules="cdda $inputmodules" || noinputmodules="cdd
 
 enabled ossaudio	&& require2 ossaudio sys/soundcard.h SNDCTL_DSP_SETFRAGMENT
 oss_audio=$ossaudio
-print_config USE_ mp_config.h mp_config.mak oss_audio
+print_config USE_ mpxp_config.h mpxp_config.mak oss_audio
 enabled ossaudio	&& aomodules="oss $aomodules" || noaomodules="oss $noaomodules"
 if test "$linux_devfs" = yes; then
     def_ossaudio_devdsp='#define PATH_DEV_DSP "/dev/sound/dsp"'
@@ -706,71 +706,71 @@ else
 fi
 
 enabled alsa && require2 alsa alsa/asoundlib.h SND_LIB_MAJOR -lasound
-print_config HAVE_ mp_config.h mp_config.mak alsa
+print_config HAVE_ mpxp_config.h mpxp_config.mak alsa
 enabled alsa	&& aomodules="alsa $aomodules" || noaomodules="alsa $noaomodules"
 
 # It seems that aRts doesn't support pkg-config
 enabled arts && check_cflags $(artsc-config --cflags) && add_cflags $(artsc-config --cflags) || disable arts
 enabled arts && check_ldflags $(artsc-config --libs) && add_extralibs $(artsc-config --libs) || disable arts
 enabled arts && require2 arts artsc.h arts_write -lartsc
-print_config HAVE_ mp_config.h mp_config.mak arts
+print_config HAVE_ mpxp_config.h mpxp_config.mak arts
 enabled arts	&& aomodules="arts $aomodules" || noaomodules="arts $noaomodules"
 
 check_pkg esd esound
 enabled esd && require2 esd esd.h esd_open_sound
-print_config HAVE_ mp_config.h mp_config.mak esd
+print_config HAVE_ mpxp_config.h mpxp_config.mak esd
 enabled esd	&& aomodules="esd $aomodules" || noaomodules="esd $noaomodules"
 
 enabled openal && require2 openal AL/al.h alSourceQueueBuffers -lopenal
-print_config HAVE_ mp_config.h mp_config.mak openal
+print_config HAVE_ mpxp_config.h mpxp_config.mak openal
 enabled openal && aomodules="openal $aomodules" || noaomodules="openal $noaomodules"
 
 enabled nas && require2 nas audio/audiolib.h AuOpenServer -laudio
-print_config HAVE_ mp_config.h mp_config.mak nas
+print_config HAVE_ mpxp_config.h mpxp_config.mak nas
 enabled nas && aomodules="nas $aomodules" || noaomodules="nas $noaomodules"
 
 check_pkg jack jack
 enabled jack && require2 jack jack/jack.h jack_client_open
-print_config HAVE_ mp_config.h mp_config.mak jack
+print_config HAVE_ mpxp_config.h mpxp_config.mak jack
 enabled jack && aomodules="jack $aomodules" || noaomodules="jack $noaomodules"
 
 enabled libdvdread	&& require2 libdvdread "stdint.h dvdread/dvd_reader.h dvdread/ifo_types.h dvdread/ifo_read.h dvdread/nav_read.h" DVDOpenFile -ldvdread
 dvdread=$libdvdread
-print_config USE_ mp_config.h mp_config.mak dvdread
+print_config USE_ mpxp_config.h mpxp_config.mak dvdread
 enabled libdvdread	&& inputmodules="libdvdread $inputmodules" || noinputmodules="libdvdread $noinputmodules"
 
 enabled libdvdnav	&& require2 libdvdnav dvdnav/dvdnav.h dvdnav_set_PGC_positioning_flag -ldvdnav
 dvdnav=$libdvdnav
-print_config USE_ mp_config.h mp_config.mak dvdnav
+print_config USE_ mpxp_config.h mpxp_config.mak dvdnav
 enabled libdvdnav	&& inputmodules="libdvdnav $inputmodules" || noinputmodules="libdvdnav $noinputmodules"
 
 enabled libvcd && require2 libvcd libvcd/info.h vcdinfo_open -lvcdinfo
-print_config USE_ mp_config.h mp_config.mak libvcd
+print_config USE_ mpxp_config.h mpxp_config.mak libvcd
 enabled libvcd	&& inputmodules="libvcd $inputmodules" || noinputmodules="libvcd $noinputmodules"
 
 enabled libdv && check_pkg libdv libdv
 enabled libdv && require2 libdv "libdv/dv.h" dv_encoder_new -ldv
-print_config HAVE_ mp_config.h mp_config.mak libdv
+print_config HAVE_ mpxp_config.h mpxp_config.mak libdv
 enabled libdv	&& inputmodules="libdv $inputmodules" || noinputmodules="libdv $noinputmodules"
 
 enabled fastmemcpy	&& x86	|| disable fastmemcpy
-print_config USE_ mp_config.h mp_config.mak fastmemcpy
+print_config USE_ mpxp_config.h mpxp_config.mak fastmemcpy
 
-enabled tv && print_config USE_ mp_config.h mp_config.mak tv
+enabled tv && print_config USE_ mpxp_config.h mpxp_config.mak tv
 enabled tv	&& inputmodules="tv $inputmodules" || noinputmodules="tv $noinputmodules"
 
-print_config HAVE_ mp_config.h mp_config.mak audio_select
+print_config HAVE_ mpxp_config.h mpxp_config.mak audio_select
 
 enabled libvorbis && check_pkg libvorbis vorbis
-print_config HAVE_ mp_config.h mp_config.mak libvorbis
+print_config HAVE_ mpxp_config.h mpxp_config.mak libvorbis
 enabled libvorbis && inputmodules="libvorbis $inputmodules" || noinputmodules="libvorbis $noinputmodules"
 
 enabled libtheora && check_pkg libtheora theora
-print_config HAVE_ mp_config.h mp_config.mak libtheora
+print_config HAVE_ mpxp_config.h mpxp_config.mak libtheora
 enabled libtheora && inputmodules="libtheora $inputmodules" || noinputmodules="libtheora $noinputmodules"
 
 enabled libbz2 && require2 libbz2 bzlib.h BZ2_bzlibVersion -lbz2 || disable libbz2
-print_config HAVE_ mp_config.h mp_config.mak libbz2
+print_config HAVE_ mpxp_config.h mpxp_config.mak libbz2
 
 CFLAGS="$CFLAGS -W -Wall -Wextra -Wshadow"
 # Thread support
@@ -792,12 +792,12 @@ enabled dbg23 && check_cflags "-fbounds-check"
 
 # Checking for VIDIX
 enabled vidix	&& xxrequire2 vidix "vidix/vidix.h vidix/vidixlibxx.h" Vidix -lvidixxx
-print_config CONFIG_ mp_config.h mp_config.mak vidix
+print_config CONFIG_ mpxp_config.h mpxp_config.mak vidix
 enabled x11	&& enabled vidix	&& vomodules=":vidix $vomodules" || novomodules=":vidix $novomodules"
 
 
 enabled joystick	&& test linux	|| disable joystick
-print_config HAVE_ mp_config.h mp_config.mak joystick
+print_config HAVE_ mpxp_config.h mpxp_config.mak joystick
 
 # pseudo-ramdom names
 cat > $TMPC << EOF
@@ -885,8 +885,8 @@ CXXFLAGS=$CFLAGS
 
 ./version.sh
 #############################################################################
-echo "Creating mp_config.mak"
-cat >> mp_config.mak << EOF
+echo "Creating mpxp_config.mak"
+cat >> mpxp_config.mak << EOF
 # -------- Generated by configure -----------
 
 LANG = C
@@ -922,13 +922,13 @@ RND_NUMBER9 = $rnd9
 # --- HAZARDOUS STUFF
 
 EOF
-echo "EXTRALIBS=$extralibs" >> mp_config.mak
-echo "LDFLAGS=$LDFLAGS" >> mp_config.mak
-echo "LDXXFLAGS=$LDXXFLAGS" >> mp_config.mak
+echo "EXTRALIBS=$extralibs" >> mpxp_config.mak
+echo "LDFLAGS=$LDFLAGS" >> mpxp_config.mak
+echo "LDXXFLAGS=$LDXXFLAGS" >> mpxp_config.mak
 
 #############################################################################
-echo "Creating mp_config.h"
-cat >> mp_config.h << EOF
+echo "Creating mpxp_config.h"
+cat >> mpxp_config.h << EOF
 #ifndef MPXP_CONFIG_H
 #define MPXP_CONFIG_H 1
 /* -------- This file has been automatically generated by configure ---------
@@ -1133,16 +1133,21 @@ EOF
 
 #############################################################################
 
-echo "Creating help_mp.h"
-cat > help_mp.h << EOF
-#include "$mp_help"
-#include "nls/help_mp-en.h"
+echo "Creating mpxp_help.h"
+cat > mpxp_help.h << EOF
+#ifndef __MPXP_HELP_H_INCLUDED
+#define __MPXP_HELP_H_INCLUDED 1
+
+#include "$mpxp_help"
+#include "nls/mpxp_help-en.h"
+
+#endif
 EOF
 
-echo "Creating mp_conf_lavc.h"
-cat > mp_conf_lavc.h << EOF
-#ifndef __MP_CONF_LAVC_H_INCLUDED__
-#define __MP_CONF_LAVC_H_INCLUDED__ 1
+echo "Creating mpxp_conf_lavc.h"
+cat > mpxp_conf_lavc.h << EOF
+#ifndef __MPXP_CONF_LAVC_H_INCLUDED__
+#define __MPXP_CONF_LAVC_H_INCLUDED__ 1
 #include <stdint.h>
 
 #ifdef __cplusplus

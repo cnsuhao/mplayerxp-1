@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -54,7 +54,7 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <string.h>
 
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "osdep/cpudetect.h"
 
 #include "libvo2/img_format.h"

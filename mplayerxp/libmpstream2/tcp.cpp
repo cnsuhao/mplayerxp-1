@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -18,7 +18,7 @@ using namespace mpxp;
 #include <sys/time.h>
 #include <sys/types.h>
 
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "input2/input.h"
 
 #ifndef HAVE_WINSOCK2

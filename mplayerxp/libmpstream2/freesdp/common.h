@@ -26,7 +26,7 @@
 #ifndef FSDP_COMMON_H
 #define FSDP_COMMON_H
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 #include <sys/time.h>
 #include <time.h>

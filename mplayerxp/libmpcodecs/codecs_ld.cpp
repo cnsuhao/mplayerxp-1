@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -10,9 +10,9 @@ using namespace mpxp;
 #include <string.h>
 #include <stdarg.h>
 #include "codecs_ld.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #define MSGT_CLASS MSGT_GLOBAL
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 any_t* ld_codec(const char *name,const char *url_hint)
 {

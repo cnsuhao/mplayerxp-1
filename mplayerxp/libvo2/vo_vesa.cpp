@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -43,7 +43,7 @@ using namespace mpxp;
 #include "vidix_system.h"
 #endif
 #include "dri_vo.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "vo_msg.h"
 
 namespace mpxp {

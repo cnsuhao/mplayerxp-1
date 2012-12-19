@@ -24,7 +24,7 @@
 #ifndef A52_H
 #define A52_H
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 #ifndef LIBA52_DOUBLE
 typedef float sample_t;

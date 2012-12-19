@@ -1,7 +1,7 @@
 // Преведено от А. Димитров, plazmus@gmail.com
 // Всички предложения са добре дошли.
 // UTF-8
-#ifdef HELP_MP_DEFINE_STATIC
+#ifdef HELP_MPXP_DEFINE_STATIC
 #ifndef MSGTR_BANNER_TEXT
 static char* banner_text=
 "\n\n"

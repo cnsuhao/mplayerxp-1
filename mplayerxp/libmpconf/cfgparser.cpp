@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -35,7 +35,7 @@ using namespace mpxp;
 #include "cfgparser.h"
 #include "libplaytree/playtree.h"
 #define MSGT_CLASS MSGT_CFGPARSER
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 inline void SET_GLOBAL(m_config_t& c) { c.flags |= CONFIG_GLOBAL; }
 inline void UNSET_GLOBAL(m_config_t& c) { c.flags &= (!CONFIG_GLOBAL); }

@@ -1,4 +1,4 @@
-include ../mp_config.mak
+include ../mpxp_config.mak
 
 ifeq ($(ENABLE_WIN32LOADER),yes)
 LIBNAME=libloader.a

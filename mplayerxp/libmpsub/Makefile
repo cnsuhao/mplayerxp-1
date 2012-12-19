@@ -1,7 +1,7 @@
 
 LIBNAME = libmpsub.a
 
-include ../mp_config.mak
+include ../mpxp_config.mak
 
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done

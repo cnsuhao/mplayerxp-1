@@ -1,4 +1,4 @@
-include ../../mp_config.mak
+include ../../mpxp_config.mak
 
 SRCS=
 CXXSRCS=parser.cpp common.cpp errorlist.cpp

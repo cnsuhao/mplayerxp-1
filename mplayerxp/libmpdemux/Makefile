@@ -1,6 +1,6 @@
 LIBNAME = libmpdemux.a
 
-include ../mp_config.mak
+include ../mpxp_config.mak
 
 SUBDIRS =
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done

@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -11,14 +11,14 @@ using namespace mpxp;
 #include <math.h>
 
 #include "xmpcore/sig_hand.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "input2/input.h"
 #include "mplayerxp.h"
 #include "libmpdemux/muxer.h"
 #include "libmpstream2/stream.h"
 #include "libmpstream2/mrl.h"
 #define MSGT_CLASS MSGT_GLOBAL
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 #include "dump.h"
 
 namespace mpxp {

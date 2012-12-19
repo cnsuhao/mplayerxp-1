@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -25,7 +25,7 @@ using namespace mpxp;
 #endif
 #endif
 #define MSGT_CLASS MSGT_SUBREADER
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 /* Maximal length of line of a subtitle */
 #define LINE_LEN 1000

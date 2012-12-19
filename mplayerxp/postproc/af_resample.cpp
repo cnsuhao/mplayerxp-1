@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*=============================================================================
@@ -18,7 +18,7 @@ using namespace mpxp;
 #include <unistd.h>
 #include <inttypes.h>
 
-#include "mp_conf_lavc.h"
+#include "mpxp_conf_lavc.h"
 
 #include "af.h"
 #include "af_internal.h"

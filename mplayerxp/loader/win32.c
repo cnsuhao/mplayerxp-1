@@ -17,7 +17,7 @@ for DLL to know too much about its environment.
  * $Id: win32.c,v 1.15 2007/11/22 18:51:39 nickols_k Exp $
  */
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 
 #define QTX 1

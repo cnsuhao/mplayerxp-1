@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
@@ -6,7 +6,7 @@ using namespace mpxp;
 #include <unistd.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include "ad_internal.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "loader/dshow/DS_AudioDecoder.h"
 #include "codecs_ld.h"
 

@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -24,7 +24,7 @@ using namespace mpxp;
 #include <stdlib.h>
 
 #include "vd_internal.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "osdep/bswap.h"
 
 static const vd_info_t info = {

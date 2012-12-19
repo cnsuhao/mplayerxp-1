@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /* MplayerXP (C) 2000-2002. by A'rpi/ESP-team (C) 2002. by Nickols_K */
@@ -31,8 +31,8 @@ using namespace mpxp;
 
 #include "postproc/af.h"
 #include "postproc/vf.h"
-#define HELP_MP_DEFINE_STATIC
-#include "help_mp.h"
+#define HELP_MPXP_DEFINE_STATIC
+#include "mpxp_help.h"
 
 #include "libmpstream2/stream.h"
 #include "libmpdemux/demuxer.h"
@@ -56,7 +56,7 @@ using namespace mpxp;
 
 #include "input2/input.h"
 #define MSGT_CLASS MSGT_CPLAYER
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 #include "xmpcore/xmp_core.h"
 #include "xmpcore/xmp_vplayer.h"
 #include "xmpcore/xmp_adecoder.h"

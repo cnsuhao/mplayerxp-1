@@ -16,7 +16,7 @@
 
 #ifndef XCL_H
 #define XCL_H
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 any_t*xbuffer_init(int chunk_size);
 any_t*xbuffer_free(any_t*buf);

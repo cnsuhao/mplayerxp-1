@@ -12,7 +12,7 @@
 #ifndef __WINE_WINDEF_H
 #define __WINE_WINDEF_H
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 /* for x86_64 compatibility */
 #include <stdint.h>

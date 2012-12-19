@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /* This audio filter exports the incomming signal to other processes
@@ -25,7 +25,7 @@ using namespace mpxp;
 
 #include "af.h"
 #include "af_internal.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "osdep/get_path.h"
 #include "osdep/fastmemcpy.h"
 #include "pp_msg.h"

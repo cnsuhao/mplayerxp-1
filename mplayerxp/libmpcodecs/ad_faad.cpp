@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /* ad_faad.c - MPlayer AAC decoder using libfaad2
@@ -11,7 +11,7 @@ using namespace mpxp;
 #include <unistd.h>
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "osdep/bswap.h"
 #include "codecs_ld.h"
 #include "ad_internal.h"

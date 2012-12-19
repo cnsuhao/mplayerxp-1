@@ -3,8 +3,8 @@
 #define __IMG_FORMAT_H
 #include <inttypes.h>
 #include <stdint.h>
-#include "mp_config.h"
-#include "mp_conf_lavc.h"
+#include "mpxp_config.h"
+#include "mpxp_conf_lavc.h"
 
 /* RGB/BGR Formats */
 enum {

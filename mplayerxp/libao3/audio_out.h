@@ -1,6 +1,6 @@
 #ifndef __AUDIO_OUT_H
 #define __AUDIO_OUT_H 1
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "xmpcore/xmp_enums.h"
 
 #include <string>

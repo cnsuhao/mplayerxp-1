@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
@@ -11,11 +11,11 @@ using namespace mpxp;
 #include "libao3/afmt.h"
 #include "ad_internal.h"
 
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "osdep/bswap.h"
 #include "libmpconf/codec-cfg.h"
 
-#include "mp_conf_lavc.h"
+#include "mpxp_conf_lavc.h"
 #include "codecs_ld.h"
 
 struct ad_private_t {

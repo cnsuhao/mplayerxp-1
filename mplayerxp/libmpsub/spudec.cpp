@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /* SPUdec.c
@@ -26,9 +26,9 @@ using namespace mpxp;
 
 #include "xmpcore/xmp_core.h"
 #include "spudec.h"
-#include "mp_conf_lavc.h"
+#include "mpxp_conf_lavc.h"
 #define MSGT_CLASS MSGT_SPUDEC
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 /* Valid values for spu_aamode:
    0: none (fastest, most ugly)

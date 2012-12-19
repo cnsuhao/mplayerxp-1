@@ -1,11 +1,11 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "help_mp.h"
+#include "mpxp_help.h"
 
 #include "xmpcore/xmp_core.h"
 #include "libmpconf/codec-cfg.h"

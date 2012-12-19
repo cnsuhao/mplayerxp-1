@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
@@ -9,7 +9,7 @@ using namespace mpxp;
 #include <inttypes.h>
 #include <limits.h>
 
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "osdep/bswap.h"
 #include "aviheader.h"
 

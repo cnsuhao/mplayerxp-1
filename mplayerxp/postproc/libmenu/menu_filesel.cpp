@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdlib.h>
@@ -13,7 +13,7 @@ using namespace mpxp;
 #include <unistd.h>
 #include <limits.h>
 
-#include "help_mp.h"
+#include "mpxp_help.h"
 
 #include "libmpconf/m_struct.h"
 #include "libmpconf/m_option.h"

@@ -7,7 +7,7 @@
 #ifndef AVIFILE_COM_H
 #define AVIFILE_COM_H
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>

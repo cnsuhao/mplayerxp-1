@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
@@ -10,7 +10,7 @@ using namespace mpxp;
 #include <pthread.h>
 
 #include "nls/nls.h"
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 namespace mpxp {
 inline int _bg(int x) { return x >> 4; }

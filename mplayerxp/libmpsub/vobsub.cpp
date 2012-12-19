@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -22,7 +22,7 @@ using namespace mpxp;
 #include "vobsub.h"
 #include "spudec.h"
 #define MSGT_CLASS MSGT_VOBSUB
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 #ifdef HAVE_GETLINE
 extern ssize_t getline(char **, size_t *, FILE *);

@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -18,10 +18,10 @@ using namespace mpxp;
 
 #include "mplayerxp.h"
 #include "xmpcore/xmp_core.h"
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 #include "sig_hand.h"
 #define MSGT_CLASS MSGT_CPLAYER
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 #include <execinfo.h>
 

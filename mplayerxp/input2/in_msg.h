@@ -2,6 +2,6 @@
 #define IN_MSG_H
 
 #define MSGT_CLASS MSGT_INPUT
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 #endif

@@ -1,10 +1,10 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include "mplayerxp.h"
 
 #include <dlfcn.h>
-#include "mp_conf_lavc.h"
+#include "mpxp_conf_lavc.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "stream.h"
 #include "stream_internal.h"

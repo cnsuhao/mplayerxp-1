@@ -1,4 +1,4 @@
-include ../mp_config.mak
+include ../mpxp_config.mak
 
 LIBNAME = libmpcodecs.a
 SUBDIRS = libnuppelvideo liba52 libdca

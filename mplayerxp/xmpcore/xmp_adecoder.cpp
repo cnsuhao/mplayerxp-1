@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <algorithm>
@@ -9,7 +9,7 @@ using namespace mpxp;
 #include <sys/time.h>
 
 #include "mplayerxp.h"
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 #include "sig_hand.h"
 
 #include "libmpcodecs/dec_audio.h"

@@ -1,7 +1,7 @@
 // Transated by:  Andreas Berntsen  <andreasb@kvarteret.org>
 // Updated for 0.60 by: B. Johannessen <bob@well.com>
 // UTF-8
-#ifdef HELP_MP_DEFINE_STATIC
+#ifdef HELP_MPXP_DEFINE_STATIC
 #ifndef MSGTR_BANNER_TEXT
 static char* banner_text=
 "\n\n"

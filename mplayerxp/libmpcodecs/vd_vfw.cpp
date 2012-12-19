@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include "mplayerxp.h"
@@ -7,7 +7,7 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
-#include "help_mp.h"
+#include "mpxp_help.h"
 
 #include "vd_internal.h"
 #include "codecs_ld.h"

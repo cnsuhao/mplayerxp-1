@@ -7,7 +7,7 @@
 #ifndef __VESA_VBELIB_INCLUDED__
 #define __VESA_VBELIB_INCLUDED__ 1
 
-#include "mp_config.h"
+#include "mpxp_config.h"
 
 namespace mpxp {
 /* Note: every pointer within structures is 32-bit protected mode pointer.

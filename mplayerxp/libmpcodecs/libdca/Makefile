@@ -1,4 +1,4 @@
-include ../../mp_config.mak
+include ../../mpxp_config.mak
 
 CXXSRCS = bitstream.cpp downmix.cpp parse.cpp resample.cpp
 CXXOBJS	= $(CXXSRCS:.cpp=.o)

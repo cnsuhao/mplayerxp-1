@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 
@@ -17,7 +17,7 @@ using namespace mpxp;
 #include "m_option.h"
 #include "libmpstream2/url.h"
 #define MSGT_CLASS MSGT_CPLAYER
-#include "mp_msg.h"
+#include "mpxp_msg.h"
 
 // Don't mp_free for 'production' atm
 #ifndef MP_DEBUG

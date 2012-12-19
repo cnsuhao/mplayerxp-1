@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <stdio.h>
@@ -7,7 +7,7 @@ using namespace mpxp;
 
 #include "af.h"
 #include "af_internal.h"
-#include "help_mp.h"
+#include "mpxp_help.h"
 #include "libao3/audio_out.h"
 #include "pp_msg.h"
 

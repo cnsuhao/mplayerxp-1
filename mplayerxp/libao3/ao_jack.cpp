@@ -1,4 +1,4 @@
-#include "mp_config.h"
+#include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
 /*
@@ -36,7 +36,7 @@ using namespace mpxp;
 #include "osdep/timer.h"
 #include "ao_msg.h"
 
-#include "mp_conf_lavc.h"
+#include "mpxp_conf_lavc.h"
 #include <jack/jack.h>
 
 namespace mpxp {

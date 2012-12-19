@@ -22,7 +22,7 @@
 #ifndef SWSCALE_H
 #define SWSCALE_H
 
-#include "mp_conf_lavc.h"
+#include "mpxp_conf_lavc.h"
 
 extern int sws_init(void);
 extern void sws_uninit(void);
