@@ -123,7 +123,7 @@ namespace mpxp {
 	    virtual int			switch_subtitle(int id) const;
 	    virtual MPXP_Rc		ctrl(int cmd, any_t*arg) const;
 
-	    char		antiviral_hole[RND_CHAR3];
+	    Opaque		unusable;
 	    unsigned		pin;		/**< personal identification number */
 	    Stream*		stream;		/**< stream for movie reading */
 	    Demuxer_Stream*	audio;		/**< audio buffer/demuxer */

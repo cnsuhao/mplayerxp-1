@@ -31,22 +31,17 @@ struct vf_instance_t {
     ~vf_instance_t() {}
 
     const vf_info_t*	info;
-    char		antiviral_hole[RND_CHAR5];
+    Opaque		unusable;
     unsigned		pin; // personal identification number
     // funcs:
     int (* __FASTCALL__ config_vf)(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt);
-    MPXP_Rc (* __FASTCALL__ control_vf)(vf_instance_t* vf,
-	int request, any_t* data);
-    int (* __FASTCALL__ query_format)(vf_instance_t* vf,
-	unsigned int fmt,unsigned w,unsigned h);
-    void (* __FASTCALL__ get_image)(vf_instance_t* vf,
-	mp_image_t *mpi);
-    int (* __FASTCALL__ put_slice)(vf_instance_t* vf,
-	mp_image_t *mpi);
-    void (* __FASTCALL__ start_slice)(vf_instance_t* vf,
-	mp_image_t *mpi);
+    MPXP_Rc (* __FASTCALL__ control_vf)(vf_instance_t* vf, int request, any_t* data);
+    int (* __FASTCALL__ query_format)(vf_instance_t* vf,unsigned int fmt,unsigned w,unsigned h);
+    void (* __FASTCALL__ get_image)(vf_instance_t* vf, mp_image_t *mpi);
+    int (* __FASTCALL__ put_slice)(vf_instance_t* vf, mp_image_t *mpi);
+    void (* __FASTCALL__ start_slice)(vf_instance_t* vf, mp_image_t *mpi);
     void (* __FASTCALL__ uninit)(vf_instance_t* vf);
     // optional: maybe NULL
     void (* __FASTCALL__ print_conf)(vf_instance_t* vf);

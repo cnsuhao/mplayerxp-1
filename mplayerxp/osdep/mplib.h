@@ -62,7 +62,7 @@ namespace mpxp {
 	MP_PROT_READ	=0x1,	/* Page can be read.  */
 	MP_PROT_WRITE	=0x2,	/* Page can be written.  */
 	MP_PROT_EXEC	=0x4,	/* Page can be executed.  */
-	MP_DENY_ALL		=0x0,	/* Page can not be accessed.  */
+	MP_DENY_ALL	=0x0,	/* Page can not be accessed.  */
     };
     int	__FASTCALL__ mp_mprotect(any_t* addr,size_t len,enum mp_prot_e flags);
     void print_backtrace(const std::string& why,any_t** stack,unsigned num);
@@ -93,8 +93,11 @@ namespace mpxp {
 
     class Opaque {
 	public:
-	    Opaque() {}
-	    virtual ~Opaque() {}
+	    Opaque();
+	    virtual ~Opaque();
+	
+	any_t*		false_pointers[RND_CHAR0];
+	any_t*		unusable;
     };
 } // namespace mpxp
 

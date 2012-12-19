@@ -64,6 +64,7 @@ namespace mpxp {
 	    //virtual void mixer_setbothvolume( int v );
 	    inline void			mixer_setbothvolume(float v) const { mixer_setvolume(v,v); }
 
+	    Opaque	unusable;
 	    char*	subdevice;
 	    float	pts;		/**< PTS of audio buffer  */
 	private:

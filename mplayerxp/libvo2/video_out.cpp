@@ -111,7 +111,7 @@ struct vo_priv_t : public video_private {
     vo_priv_t();
     virtual ~vo_priv_t();
 
-    char			antiviral_hole[RND_CHAR8];
+    Opaque			unusable;
     uint32_t			srcFourcc,image_format,image_width,image_height;
     uint32_t			org_width,org_height;
     unsigned			ps_off[4]; /* offsets for y,u,v in panscan mode */
@@ -125,7 +125,6 @@ struct vo_priv_t : public video_private {
 };
 
 vo_priv_t::vo_priv_t() {
-    fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&srcFourcc)-reinterpret_cast<long>(antiviral_hole));
     dri.num_xp_frames=1;
 }
 
@@ -139,8 +138,6 @@ Video_Output::Video_Output()
     inited=0;
     osd_progbar_type=-1;
     osd_progbar_value=100;   // 0..256
-
-    fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&flags)-reinterpret_cast<long>(&antiviral_hole[0]));
 }
 
 Video_Output::~Video_Output() {

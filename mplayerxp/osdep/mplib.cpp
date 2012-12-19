@@ -36,7 +36,7 @@ any_t* fill_false_pointers(any_t* buffer,size_t size)
     for(i=0;i<psize/sizeof(long);i++) {
 	filler=rand()&lo_mask;
 	filler=(reinterpret_cast<long>(buffer)&hi_mask)|lo_mask;
-	((long *)buffer)[i]=filler;
+	((long *)buffer)[i]=rand()%2?filler:0;
     }
     memset(&((char *)buffer)[psize],0,size-psize);
     return buffer;
@@ -48,4 +48,10 @@ any_t* get_caller_address(unsigned num_caller) {
     return stack[2+num_caller];
 }
 
+Opaque::Opaque() {
+    fill_false_pointers(&false_pointers,reinterpret_cast<long>(&unusable)-reinterpret_cast<long>(&false_pointers));
+    fill_false_pointers(&unusable,sizeof(any_t*));
+}
+
+Opaque::~Opaque() {}
 } // namespace mpxp

@@ -302,7 +302,6 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,const char
 	if(!strcmp(filter_list[i]->name,name)) break;
     }
     vf=new(zeromem) vf_instance_t(libinput);
-    fill_false_pointers(vf->antiviral_hole,reinterpret_cast<long>(&vf->pin)-reinterpret_cast<long>(&vf->antiviral_hole));
     vf->pin=VF_PIN;
     vf->info=filter_list[i];
     vf->next=next;

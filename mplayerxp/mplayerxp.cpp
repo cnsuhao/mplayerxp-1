@@ -109,9 +109,9 @@ struct input_state_t {
     int		next_file;
 };
 
-struct MPXPSystem {
+struct MPXPSystem : public Opaque {
     public:
-	MPXPSystem():inited_flags(0),osd_function(OSD_PLAY),_libinput(mp_input_open()) { fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&_demuxer)-reinterpret_cast<long>(&antiviral_hole)); }
+	MPXPSystem():inited_flags(0),osd_function(OSD_PLAY),_libinput(mp_input_open()) { }
 	virtual ~MPXPSystem() {}
 
 	void		uninit_player(unsigned int mask);
@@ -154,7 +154,7 @@ struct MPXPSystem {
 	int		osd_function;
 	play_tree_t*	playtree;
     private:
-	char		antiviral_hole[RND_CHAR0];
+	Opaque		unusable;
 	Demuxer*	_demuxer;
 	libinput_t&	_libinput;
 };

@@ -149,7 +149,6 @@ Demuxer::Demuxer()
 	:demuxer_priv(new(zeromem) demuxer_priv_t),
 	_info(new(zeromem) Demuxer_Info)
 {
-  fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&pin)-reinterpret_cast<long>(&antiviral_hole));
   pin=DEMUX_PIN;
 }
 
@@ -157,7 +156,6 @@ Demuxer::Demuxer(Stream *_stream,int a_id,int v_id,int s_id)
 	:demuxer_priv(new(zeromem) demuxer_priv_t),
 	_info(new(zeromem) Demuxer_Info)
 {
-  fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&pin)-reinterpret_cast<long>(&antiviral_hole));
   pin=DEMUX_PIN;
   _init(_stream,a_id,v_id,s_id);
 }

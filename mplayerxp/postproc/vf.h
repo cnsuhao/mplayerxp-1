@@ -51,6 +51,7 @@ namespace mpxp {
 	vf_stream_t(libinput_t& _libinput):libinput(_libinput) {}
 	~vf_stream_t() {}
 
+	Opaque		unusable;
 	vf_instance_t*	first;
 	libinput_t&	libinput;
     };

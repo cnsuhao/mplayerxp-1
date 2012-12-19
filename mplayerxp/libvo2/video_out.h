@@ -200,7 +200,7 @@ namespace mpxp {
 	    virtual void	dri_remove_osd(unsigned idx,int x0,int _y0, int w,int h) const;
 	    virtual void	dri_draw_osd(unsigned idx,int x0,int _y0, int w,int h,const unsigned char* src,const unsigned char *srca, int stride) const;
 
-	    char		antiviral_hole[RND_CHAR4];
+	    Opaque		unusable;
 	    vo_flags_e		flags;
 	    /* subtitle support */
 	    char*		osd_text;

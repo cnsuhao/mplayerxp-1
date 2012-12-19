@@ -33,7 +33,7 @@ namespace mpxp {
 	    void	buffer_roll_back(int size); // deprecated (added for ad_lavc)
 
 	    int			id;		/**< stream ID  (for multiple audio/video streams) */
-	    char		antiviral_hole[RND_CHAR2];
+	    Opaque		unusable;
 	    unsigned		pin;		/**< personal identification number */
 	    float		pts;		/**< current buffer's PTS */
 	    int			eof;		/**< end of demuxed stream? (true if all buffer empty) */

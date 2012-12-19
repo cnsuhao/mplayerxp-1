@@ -84,7 +84,7 @@ namespace mpxp {
 	    virtual unsigned	read_int24();
 	    uint32_t		read_fourcc() { return read_dword_le(); }
 
-	    char		antiviral_hole[RND_CHAR3];
+	    Opaque		unusable;
 	    unsigned		pin;		/**< personal identification number */
 	    int			file_format;	/**< detected file format (by http:// protocol for example) */
 	    const stream_interface_info_t* driver_info;

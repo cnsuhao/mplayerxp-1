@@ -96,7 +96,6 @@ static const stream_interface_info_t* sdrivers[] =
 Stream::Stream(Stream::type_e t)
 	:_type(t)
 {
-    fill_false_pointers(antiviral_hole,reinterpret_cast<long>(&pin)-reinterpret_cast<long>(&antiviral_hole[0]));
     pin=STREAM_PIN;
     reset();
 }

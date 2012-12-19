@@ -3,8 +3,8 @@
 
 // Linked list of audio filters
 struct af_instance_t {
+    Opaque		unusable;
     const af_info_t*	info;
-    char		antiviral_hole[RND_CHAR6];
     unsigned		pin; // personal identification number
     MPXP_Rc		(* __FASTCALL__ config_af)(af_instance_t* af, const af_conf_t* arg);
     MPXP_Rc		(* __FASTCALL__ control_af)(af_instance_t* af, int cmd, any_t* arg);

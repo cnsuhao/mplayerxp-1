@@ -79,7 +79,7 @@ struct af_instance_t;
 // Current audio stream
 struct af_stream_t
 {
-    char		antiviral_hole[RND_CHAR7];
+    Opaque		unusable;
     // The first and last filter in the list
     af_instance_t*	first;
     af_instance_t*	last;

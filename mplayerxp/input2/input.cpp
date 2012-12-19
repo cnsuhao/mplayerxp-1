@@ -87,8 +87,11 @@ struct mp_cmd_filter_t {
     mp_cmd_filter_t*	next;
 };
 
-struct libinput_t {
-    char		antiviral_hole[RND_CHAR1];
+struct libinput_t : public Opaque {
+    libinput_t() {}
+    virtual ~libinput_t() {}
+
+    Opaque		unusable;
     // These are the user defined binds
     mp_cmd_bind_t*	cmd_binds;
     mp_cmd_filter_t*	cmd_filters;
@@ -743,7 +746,6 @@ void mp_input_add_cmd_filter(libinput_t& priv,mp_input_cmd_filter func,any_t* ct
     filter->ctx = ctx;
     filter->next = priv.cmd_filters;
     priv.cmd_filters = filter;
-    fill_false_pointers(priv.antiviral_hole,offsetof(libinput_t,cmd_binds)-offsetof(libinput_t,antiviral_hole));
 }
 
 static const char* mp_input_find_bind_for_key(const mp_cmd_bind_t* binds, int n,int* keys) {
