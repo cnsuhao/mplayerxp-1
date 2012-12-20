@@ -22,6 +22,7 @@ using namespace mpxp;
  *
  */
 #include <algorithm>
+#include <iomanip>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -142,30 +143,28 @@ Video_Output::Video_Output()
 
 Video_Output::~Video_Output() {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
-    MSG_DBG3("dri_vo_dbg: vo_uninit\n");
+    mpxp_dbg3<<"dri_vo_dbg: vo_uninit"<<std::endl;
     inited--;
     delete &priv;
 }
 
 void Video_Output::print_help() {
     unsigned i;
-    MSG_INFO("Available video output drivers:\n");
+    mpxp_info<<"Available video output drivers:"<<std::endl;
     i=0;
     while (vo_infos[i]) {
 	const vo_info_t *info = vo_infos[i++];
-	MSG_INFO("\t%s\t%s\n", info->short_name, info->name);
+	mpxp_info<<"\t"<<info->short_name<<"\t"<<info->name<<std::endl;
     }
-    MSG_INFO("\n");
+    mpxp_info<<std::endl;
 }
 
-const vo_info_t* Video_Output::get_info() const
-{
+const vo_info_t* Video_Output::get_info() const {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     return priv.video_out;
 }
 
-MPXP_Rc Video_Output::init(const std::string& driver_name) const
-{
+MPXP_Rc Video_Output::init(const std::string& driver_name) const {
     size_t offset;
     std::string drv_name;
     std::string subdev;
@@ -313,9 +312,9 @@ MPXP_Rc Video_Output::configure(vf_stream_t* s,uint32_t width, uint32_t height, 
     priv.parent=s;
     MPXP_Rc retval;
     unsigned dest_fourcc,w,d_w,h,d_h;
-    MSG_DBG3("dri_vo_dbg: vo_config\n");
+    mpxp_dbg3<<"dri_vo_dbg: vo_config"<<std::endl;
     if(inited) {
-	MSG_FATAL("!!!priv.video_out internal fatal error: priv.video_out is initialized more than once!!!\n");
+	mpxp_fatal<<"!!!priv.video_out internal fatal error: priv.video_out is initialized more than once!!!"<<std::endl;
 	return MPXP_False;
     }
     inited++;
@@ -331,8 +330,8 @@ MPXP_Rc Video_Output::configure(vf_stream_t* s,uint32_t width, uint32_t height, 
 
     priv.dri.d_width = d_w;
     priv.dri.d_height = d_h;
-    MSG_V("priv.video_out->config(%u,%u,%u,%u,0x%x,'%s',%s)\n"
-	,w,h,d_w,d_h,_fullscreen,title.c_str(),vo_format_name(dest_fourcc));
+    mpxp_v<<"priv.video_out->config("<<w<<","<<h<<","<<d_w<<","<<d_h
+	  <<", 0x"<<std::hex<<_fullscreen<<",'"<<title<<"',"<<vo_format_name(dest_fourcc)<<")"<<std::endl;
     retval = priv.vo_iface->configure(w,h,d_w,d_h,_fullscreen,title,dest_fourcc);
     priv.srcFourcc=format;
     if(retval == MPXP_Ok) {
@@ -342,24 +341,21 @@ MPXP_Rc Video_Output::configure(vf_stream_t* s,uint32_t width, uint32_t height, 
 	priv.image_height = h;
 	ps_tune(priv.image_width,priv.org_height);
 	dri_reconfig(0);
-	MSG_V("dri_vo_caps: driver does %s support DRI\n",priv.dri.has_dri?"":"not");
-	MSG_V("dri_vo_caps: caps=%08X fourcc=%08X(%s) x,y,w,h(%u %u %u %u)\n"
-	      "dri_vo_caps: width_height(%u %u) strides(%u %u %u %u) priv.dri.bpp=%u\n"
-		,priv.dri.cap.caps
-		,priv.dri.cap.fourcc
-		,vo_format_name(priv.dri.cap.fourcc)
-		,priv.dri.cap.x,priv.dri.cap.y,priv.dri.cap.w,priv.dri.cap.h
-		,priv.dri.cap.width,priv.dri.cap.height
-		,priv.dri.cap.strides[0],priv.dri.cap.strides[1]
-		,priv.dri.cap.strides[2],priv.dri.cap.strides[3]
-		,priv.dri.bpp);
-	MSG_V("dri_vo_src: w,h(%u %u) d_w,d_h(%u %u)\n"
-	      "dri_vo_src: flags=%08X fourcc=%08X(%s)\n"
-		,width,height
-		,d_width,d_height
-		,_fullscreen
-		,format
-		,vo_format_name(format));
+	mpxp_v<<"dri_vo_caps: driver does "<<(priv.dri.has_dri?"":"not")<<" support DRI"<<std::endl;
+	mpxp_v<<"dri_vo_caps: caps="<<std::hex<<std::setfill('0')<<std::setw(8)<<priv.dri.cap.caps
+	      <<" fourcc="<<std::hex<<std::setfill('0')<<std::setw(8)<<priv.dri.cap.fourcc
+	      <<"("<<vo_format_name(priv.dri.cap.fourcc)<<") x,y,w,h("
+	      <<priv.dri.cap.x<<" "<<priv.dri.cap.y<<" "<<priv.dri.cap.w<<" "<<priv.dri.cap.h<<")"<<std::endl;
+	mpxp_v<<"dri_vo_caps: width,height("<<priv.dri.cap.width<<","<<priv.dri.cap.height
+	      <<") strides("
+		<<priv.dri.cap.strides[0]<<priv.dri.cap.strides[1]
+		<<priv.dri.cap.strides[2]<<priv.dri.cap.strides[3]
+	        <<") priv.dri.bpp="<<priv.dri.bpp<<std::endl;
+	mpxp_v<<"dri_vo_src: w,h("<<width<<","<<height
+	      <<") d_w,d_h("<<d_width<<","<<d_height<<std::endl;
+	mpxp_v<<"dri_vo_src: flags="<<std::hex<<std::setfill('0')<<std::setw(8)<<_fullscreen
+	      <<" fourcc="<<std::hex<<std::setfill('0')<<std::setw(8)<<format
+	      <<"("<<vo_format_name(format)<<")"<<std::endl;
 	priv.dri.flags = _fullscreen;
     }
     return retval;
@@ -371,13 +367,13 @@ uint32_t Video_Output::query_format(uint32_t* fourcc, unsigned src_w, unsigned s
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     uint32_t dri_forced_fourcc;
     vo_query_fourcc_t qfourcc;
-    MSG_DBG3("dri_vo_dbg: vo_query_format(%08lX)\n",*fourcc);
+    mpxp_dbg3<<"dri_vo_dbg: vo_query_format("<<std::hex<<std::setfill('0')<<std::setw(8)<<*fourcc<<")"<<std::endl;
     qfourcc.fourcc = *fourcc;
     qfourcc.w = src_w;
     qfourcc.h = src_h;
     if(priv.vo_iface->query_format(&qfourcc)==MPXP_False)
 	qfourcc.flags=VOCAP_NA;
-    MSG_V("dri_vo: request for %s fourcc: %i\n",vo_format_name(*fourcc),qfourcc.flags);
+    mpxp_v<<"dri_vo: request for "<<vo_format_name(*fourcc)<<" fourcc: "<<qfourcc.flags<<std::endl;
     dri_forced_fourcc = *fourcc;
     return qfourcc.flags;
 }
@@ -385,7 +381,7 @@ uint32_t Video_Output::query_format(uint32_t* fourcc, unsigned src_w, unsigned s
 MPXP_Rc Video_Output::reset() const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
-    MSG_DBG3("dri_vo_dbg: vo_reset\n");
+    mpxp_dbg3<<"dri_vo_dbg: vo_reset"<<std::endl;
     return priv.vo_iface->reset();
 }
 
@@ -393,7 +389,7 @@ MPXP_Rc Video_Output::screenshot(unsigned idx) const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     char buf[256];
-    MSG_DBG3("dri_vo_dbg: vo_screenshot\n");
+    mpxp_dbg3<<"dri_vo_dbg: vo_screenshot"<<std::endl;
     sprintf(buf,"%llu",priv.frame_counter);
     dri_surface_t surf;
     surf.idx=idx;
@@ -404,14 +400,14 @@ MPXP_Rc Video_Output::screenshot(unsigned idx) const
 MPXP_Rc Video_Output::pause() const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
-    MSG_DBG3("dri_vo_dbg: vo_pause\n");
+    mpxp_dbg3<<"dri_vo_dbg: vo_pause"<<std::endl;
     return priv.vo_iface->pause();
 }
 
 MPXP_Rc Video_Output::resume() const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
-    MSG_DBG3("dri_vo_dbg: vo_resume\n");
+    mpxp_dbg3<<"dri_vo_dbg: vo_resume"<<std::endl;
     return priv.vo_iface->resume();
 }
 
@@ -425,7 +421,7 @@ MPXP_Rc Video_Output::get_surface(mp_image_t* mpi) const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     int width_less_stride;
-    MSG_DBG2("dri_vo_dbg: vo_get_surface type=%X flg=%X\n",mpi->type,mpi->flags);
+    mpxp_dbg2<<"dri_vo_dbg: vo_get_surface type="<<std::hex<<mpi->type<<" flg="<<std::hex<<mpi->flags<<std::endl;
     width_less_stride = 0;
     if(mpi->flags & MP_IMGFLAG_PLANAR) {
 	width_less_stride = mpi->w <= priv.dri.cap.strides[0] &&
@@ -436,22 +432,22 @@ MPXP_Rc Video_Output::get_surface(mp_image_t* mpi) const
     if(priv.dri.has_dri) {
 	/* static is singlebuffered decoding */
 	if(mpi->type==MP_IMGTYPE_STATIC && priv.dri.num_xp_frames>1) {
-	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL mpi->type==MP_IMGTYPE_STATIC && priv.dri.num_xp_frames>1\n");
+	    mpxp_dbg2<<"dri_vo_dbg: vo_get_surface FAIL mpi->type==MP_IMGTYPE_STATIC && priv.dri.num_xp_frames>1"<<std::endl;
 	    return MPXP_False;
 	}
 	/*I+P requires 2+ static buffers for R/W */
 	if(mpi->type==MP_IMGTYPE_IP && (priv.dri.num_xp_frames < 2 || (priv.dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED)) {
-	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IP && priv.dri.num_xp_frames < 2) || (priv.dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
+	    mpxp_dbg2<<"dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IP && priv.dri.num_xp_frames < 2) || (priv.dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED"<<std::endl;
 	    return MPXP_False;
 	}
 	/*I+P+B requires 3+ static buffers for R/W */
 	if(mpi->type==MP_IMGTYPE_IPB && (priv.dri.num_xp_frames != 3 || (priv.dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED)) {
-	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IPB && priv.dri.num_xp_frames != 3) || (priv.dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
+	    mpxp_dbg2<<"dri_vo_dbg: vo_get_surface FAIL (mpi->type==MP_IMGTYPE_IPB && priv.dri.num_xp_frames != 3) || (priv.dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED"<<std::endl;
 	    return MPXP_False;
 	}
 	/* video surface is bad thing for reading */
 	if(((mpi->flags&MP_IMGFLAG_READABLE)||(mpi->type==MP_IMGTYPE_TEMP)) && (priv.dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED) {
-	    MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL mpi->flags&MP_IMGFLAG_READABLE && (priv.dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED\n");
+	    mpxp_dbg2<<"dri_vo_dbg: vo_get_surface FAIL mpi->flags&MP_IMGFLAG_READABLE && (priv.dri.cap.caps&DRI_CAP_VIDEO_MMAPED)==DRI_CAP_VIDEO_MMAPED"<<std::endl;
 	    return MPXP_False;
 	}
 	/* it seems that surfaces are equal */
@@ -466,10 +462,10 @@ MPXP_Rc Video_Output::get_surface(mp_image_t* mpi) const
 	    mpi->stride[1]=priv.dri.cap.strides[1];
 	    mpi->stride[2]=priv.dri.cap.strides[2];
 	    mpi->flags|=MP_IMGFLAG_DIRECT;
-	    MSG_DBG2("dri_vo_dbg: vo_get_surface OK\n");
+	    mpxp_dbg2<<"dri_vo_dbg: vo_get_surface OK"<<std::endl;
 	    return MPXP_True;
 	}
-	MSG_DBG2("dri_vo_dbg: vo_get_surface FAIL (mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE && width_less_stride) || priv.dri.planes_eq) && priv.dri.dr\n");
+	mpxp_dbg2<<"dri_vo_dbg: vo_get_surface FAIL (mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE && width_less_stride) || priv.dri.planes_eq) && priv.dri.dr"<<std::endl;
 	return MPXP_False;
     }
     else return MPXP_False;
@@ -478,7 +474,7 @@ MPXP_Rc Video_Output::get_surface(mp_image_t* mpi) const
 int Video_Output::adjust_size(unsigned cw,unsigned ch,unsigned *nw,unsigned *nh) const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
-    MSG_DBG3("dri_vo_dbg: adjust_size was called %u %u %u %u\n",cw,ch,*nw,*nh);
+    mpxp_dbg3<<"dri_vo_dbg: adjust_size was called "<<cw<<" "<<ch<<" "<<*nw<<" "<<*nh<<std::endl;
     if((priv.dri.flags & VOFLAG_SWSCALE) && (cw != *nw || ch != *nh) && !(priv.dri.flags & VOFLAG_FULLSCREEN))
     {
 	float aspect,newv;
@@ -495,7 +491,7 @@ int Video_Output::adjust_size(unsigned cw,unsigned ch,unsigned *nw,unsigned *nh)
 	    *nw = newv;
 	    if(newv-(float)(unsigned)newv > 0.5) (*nw)++;
 	}
-	MSG_DBG3("dri_vo_dbg: adjust_size returns %u %u\n",*nw,*nh);
+	mpxp_dbg3<<"dri_vo_dbg: adjust_size returns "<<*nw<<" "<<*nh<<std::endl;
 	return 1;
     }
     return 0;
@@ -512,7 +508,7 @@ int Video_Output::check_events() const
     uint32_t retval;
     int need_repaint;
     vo_resize_t vrest;
-    MSG_DBG3("dri_vo_dbg: vo_check_events\n");
+    mpxp_dbg3<<"dri_vo_dbg: vo_check_events"<<std::endl;
     vrest.event_type = 0;
     vrest.vo = this;
     vrest.adjust_size = ::adjust_size;
@@ -532,7 +528,7 @@ MPXP_Rc Video_Output::fullscreen() const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     MPXP_Rc retval;
-    MSG_DBG3("dri_vo_dbg: vo_fullscreen\n");
+    mpxp_dbg3<<"dri_vo_dbg: vo_fullscreen"<<std::endl;
     retval = priv.vo_iface->toggle_fullscreen();
     if(priv.dri.has_dri && retval == MPXP_True)
 	dri_reconfig(1);
@@ -549,7 +545,7 @@ MPXP_Rc Video_Output::draw_slice(const mp_image_t *mpi) const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     unsigned i,_w[4],_h[4],x,y;
-    MSG_DBG3("dri_vo_dbg: vo_draw_slice xywh=%i %i %i %i\n",mpi->x,mpi->y,mpi->w,mpi->h);
+    mpxp_dbg3<<"dri_vo_dbg: vo_draw_slice mpi.xywh="<<mpi->x<<" "<<mpi->y<<" "<<mpi->w<<" "<<mpi->h<<std::endl;
     if(priv.dri.has_dri) {
 	uint8_t *dst[4];
 	const uint8_t *ps_src[4];
@@ -586,14 +582,14 @@ MPXP_Rc Video_Output::draw_slice(const mp_image_t *mpi) const
 void Video_Output::select_frame(unsigned play_idx) const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
-    MSG_DBG2("dri_vo_dbg: vo_select_frame(play_idx=%u)\n",play_idx);
+    mpxp_dbg2<<"dri_vo_dbg: vo_select_frame(play_idx="<<play_idx<<")"<<std::endl;
     priv.vo_iface->select_frame(play_idx);
 }
 
 void Video_Output::flush_page(unsigned decoder_idx) const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
-    MSG_DBG3("dri_vo_dbg: vo_flush_pages [idx=%u]\n",decoder_idx);
+    mpxp_dbg3<<"dri_vo_dbg: vo_flush_pages [idx="<<decoder_idx<<"]"<<std::endl;
     priv.frame_counter++;
     if((priv.dri.cap.caps & DRI_CAP_VIDEO_MMAPED)!=DRI_CAP_VIDEO_MMAPED)
 	priv.vo_iface->flush_page(decoder_idx);
@@ -752,7 +748,7 @@ static void dri_draw_osd(const Video_Output* vo,unsigned idx,int x0,int _y0, int
 void Video_Output::draw_osd(unsigned idx) const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
-    MSG_DBG3("dri_vo_dbg: vo_draw_osd\n");
+    mpxp_dbg3<<"dri_vo_dbg: vo_draw_osd"<<std::endl;
     if(priv.dri.has_dri && !(priv.dri.cap.caps & DRI_CAP_HWOSD))
     {
 	if( priv.dri.cap.x || priv.dri.cap.y ||
@@ -765,7 +761,7 @@ void Video_Output::draw_osd(unsigned idx) const
 void Video_Output::draw_spudec_direct(unsigned idx) const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
-    MSG_DBG3("dri_vo_dbg: vo_draw_osd\n");
+    mpxp_dbg3<<"dri_vo_dbg: vo_draw_osd"<<std::endl;
     if(priv.dri.has_dri && !(priv.dri.cap.caps & DRI_CAP_HWOSD))
     {
 //	if( priv.dri.cap.x || priv.dri.cap.y ||
@@ -781,7 +777,7 @@ MPXP_Rc Video_Output::ctrl(uint32_t request, any_t*data) const
     MPXP_Rc rval;
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     rval=priv.vo_iface->ctrl(request,data);
-    MSG_DBG3("dri_vo_dbg: %u=vo_control( %u, %p )\n",rval,request,data);
+    mpxp_dbg3<<"dri_vo_dbg: "<<rval<<"=vo_control("<<request<<","<<std::hex<<reinterpret_cast<long>(data)<<std::endl;
     return rval;
 }
 
