@@ -87,7 +87,7 @@ namespace mpxp {
 	protected:
 	    mpxp_msgt_e		_type;
 	    friend class	mpxp_streambuf;
-	    virtual void	test_conditions();
+	    virtual MPXP_Rc	test_conditions();
 	private:
 	    unsigned	compute_idx(mpxp_msgt_e type) const;
 	    unsigned		idx;
@@ -142,7 +142,7 @@ namespace mpxp {
 	    mpxp_ostream_v(mpxp_msgt_e type);
 	    virtual ~mpxp_ostream_v();
 	protected:
-	    virtual void	test_conditions();
+	    virtual MPXP_Rc	test_conditions();
     };
 
     class mpxp_ostream_dbg2 : public mpxp_ostream {
@@ -150,7 +150,7 @@ namespace mpxp {
 	    mpxp_ostream_dbg2(mpxp_msgt_e type);
 	    virtual ~mpxp_ostream_dbg2();
 	protected:
-	    virtual void	test_conditions();
+	    virtual MPXP_Rc	test_conditions();
     };
 
     class mpxp_ostream_dbg3 : public mpxp_ostream {
@@ -158,7 +158,7 @@ namespace mpxp {
 	    mpxp_ostream_dbg3(mpxp_msgt_e type);
 	    virtual ~mpxp_ostream_dbg3();
 	protected:
-	    virtual void	test_conditions();
+	    virtual MPXP_Rc	test_conditions();
     };
 
     class mpxp_ostream_dbg4 : public mpxp_ostream {
@@ -166,7 +166,7 @@ namespace mpxp {
 	    mpxp_ostream_dbg4(mpxp_msgt_e type);
 	    virtual ~mpxp_ostream_dbg4();
 	protected:
-	    virtual void	test_conditions();
+	    virtual MPXP_Rc	test_conditions();
     };
 
     void mpxp_print_init(int verbose);
