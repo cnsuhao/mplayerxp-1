@@ -4,34 +4,38 @@
 
 #ifdef HELP_MPXP_DEFINE_STATIC
 #define MSGTR_BANNER_TEXT 1
-static char* banner_text=
-"\n\n"
-"MPlayerXP " VERSION "2002 Nickols_K 2000-2002 Arpad Gereoffy (lásd DOCS!)\n"
-"\n";
+static const char* banner_text[]={
+"",
+"",
+"MPlayerXP " VERSION "2002 Nickols_K 2000-2002 Arpad Gereoffy (lásd DOCS!)",
+NULL
+};
 
-static char help_text[]=
-"Indítás:   mplayerxp [opciók] [útvonal/]filenév\n"
-"\n"
-"Opciók:\n"
-" -vo <drv[:dev]> videomeghajtó és -alegység kiválasztása (lista: '-vo help')\n"
-" -ao <drv[:dev]> audiomeghajtó és -alegység kiválasztása (lista: '-ao help')\n"
-" -play.ss <időpoz>a megadott (másodperc v. óra:perc:mperc) pozícióra tekerés\n"
-" -audio.off      hanglejátszás kikapcsolása\n"
-" -video.fs       teljesképernyős lejátszás opciói (teljkép,módvált,szoft.nagy)\n"
-" -sub.file <file>felhasználandó felirat-file megadása\n"
-" -sync.framedrop képkockák eldobásának engedélyezése (lassú gépekhez)\n"
-"\n"
-"Billentyűk:\n"
-" <-  vagy  ->    10 másodperces hátra/előre ugrás\n"
-" fel vagy le     1 percnyi hátra/előre ugrás\n"
-" pgup v. pgdown  10 percnyi hátra/előre ugrás\n"
-" p vagy SPACE    pillanatállj (bármely billentyűre továbbmegy)\n"
-" q vagy ESC      kilépés\n"
-" o               OSD-mód váltása:  nincs / keresősáv / keresősáv+idő\n"
-" * vagy /        hangerő fel/le ('m' billentyű master/pcm között vált)\n"
-"\n"
-" * * * A MANPAGE TOVÁBBI RÉSZLETEKET, OPCIÓKAT, BILLENTYŰKET TARTALMAZ ! * * *\n"
-"\n";
+static const char* help_text[]={
+"",
+"Indítás:   mplayerxp [opciók] [útvonal/]filenév",
+"",
+"Opciók:",
+" -vo <drv[:dev]> videomeghajtó és -alegység kiválasztása (lista: '-vo help')",
+" -ao <drv[:dev]> audiomeghajtó és -alegység kiválasztása (lista: '-ao help')",
+" -play.ss <időpoz>a megadott (másodperc v. óra:perc:mperc) pozícióra tekerés",
+" -audio.off      hanglejátszás kikapcsolása",
+" -video.fs       teljesképernyős lejátszás opciói (teljkép,módvált,szoft.nagy)",
+" -sub.file <file>felhasználandó felirat-file megadása",
+" -sync.framedrop képkockák eldobásának engedélyezése (lassú gépekhez)",
+"",
+"Billentyűk:",
+" <-  vagy  ->    10 másodperces hátra/előre ugrás",
+" fel vagy le     1 percnyi hátra/előre ugrás",
+" pgup v. pgdown  10 percnyi hátra/előre ugrás",
+" p vagy SPACE    pillanatállj (bármely billentyűre továbbmegy)",
+" q vagy ESC      kilépés",
+" o               OSD-mód váltása:  nincs / keresősáv / keresősáv+idő",
+" * vagy /        hangerő fel/le ('m' billentyű master/pcm között vált)",
+"",
+" * * * A MANPAGE TOVÁBBI RÉSZLETEKET, OPCIÓKAT, BILLENTYŰKET TARTALMAZ ! * * *",
+NULL
+};
 #endif
 
 // ========================= MPlayer messages ===========================

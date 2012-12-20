@@ -5,37 +5,40 @@
 
 #ifdef HELP_MPXP_DEFINE_STATIC
 #define MSGTR_BANNER_TEXT 1
-static char* banner_text=
-"\n\n"
-"MPlayerXP " VERSION "2002 Nickols_K 2000-2002 Arpad Gereoffy (viz DOCS!)\n"
-"\n";
+static const char* banner_text[]={
+"\n",
+"MPlayerXP " VERSION "2002 Nickols_K 2000-2002 Arpad Gereoffy (viz DOCS!)",
+NULL
+};
 
 // Překlad do češtiny Jiří Svoboda
 
-static char help_text[]=
-"Použití:   mplayerxp [přepínače] [cesta/]jmenosouboru\n"
-"\n"
-"Přepínače:\n"
-" -vo <drv[:dev]> výběr výstupního video ovladače&zařízení (-vo help pro seznam)\n"
-" -ao <drv[:dev]> výběr výstupního audio ovladače&zařízení (-ao help pro seznam)\n"
-" -play.ss <timepos> posun na pozici (sekundy nebo hh:mm:ss)\n"
-" -audio.off      přehrávat beze zvuku\n"
-" -video.fs       volby pro přehrávání přes celou obrazovku (celá obrazovka\n                 měnit videorežim, softwarový zoom)\n"
-" -sub.file <file> volba souboru s titulky\n"
-" -play.list <file>určení souboru se seznamem přehrávaných souborů\n"
-" -sync.framedrop  povolit zahazování snímků (pro pomale stroje)\n"
-"\n"
-"Klávesy:\n"
-" <-  nebo  ->    posun vzad/vpřed o 10 sekund\n"
-" nahoru či dolů  posun vzad/vpřed o  1 minutu\n"
-" < nebo >        posun vzad/vpřed v seznamu přehrávaných souborů\n"
-" p nebo mezerník pauza při přehrávání (pokračování stiskem kterékoliv klávesy)\n"
-" q nebo ESC      konec přehrávání a ukončení programu\n"
-" o               cyklická změna režimu OSD:  nic / pozice / pozice+čas\n"
-" * nebo /        přidat nebo ubrat hlasitost (stiskem 'm' výběr master/pcm)\n"
-"\n"
-" * * * * PŘEČTĚTE SI MAN STRÁNKU PRO DETAILY (DALŠÍ VOLBY A KLÁVESY)! * * * *\n"
-"\n";
+static const char* help_text[]={
+"",
+"Použití:   mplayerxp [přepínače] [cesta/]jmenosouboru",
+"",
+"Přepínače:",
+" -vo <drv[:dev]> výběr výstupního video ovladače&zařízení (-vo help pro seznam)",
+" -ao <drv[:dev]> výběr výstupního audio ovladače&zařízení (-ao help pro seznam)",
+" -play.ss <timepos> posun na pozici (sekundy nebo hh:mm:ss)",
+" -audio.off      přehrávat beze zvuku",
+" -video.fs       volby pro přehrávání přes celou obrazovku (celá obrazovka\n                 měnit videorežim, softwarový zoom)",
+" -sub.file <file> volba souboru s titulky",
+" -play.list <file>určení souboru se seznamem přehrávaných souborů",
+" -sync.framedrop  povolit zahazování snímků (pro pomale stroje)",
+"",
+"Klávesy:",
+" <-  nebo  ->    posun vzad/vpřed o 10 sekund",
+" nahoru či dolů  posun vzad/vpřed o  1 minutu",
+" < nebo >        posun vzad/vpřed v seznamu přehrávaných souborů",
+" p nebo mezerník pauza při přehrávání (pokračování stiskem kterékoliv klávesy)",
+" q nebo ESC      konec přehrávání a ukončení programu",
+" o               cyklická změna režimu OSD:  nic / pozice / pozice+čas",
+" * nebo /        přidat nebo ubrat hlasitost (stiskem 'm' výběr master/pcm)",
+"",
+" * * * * PŘEČTĚTE SI MAN STRÁNKU PRO DETAILY (DALŠÍ VOLBY A KLÁVESY)! * * * *",
+NULL
+};
 #endif
 
 // ========================= MPlayer messages ===========================

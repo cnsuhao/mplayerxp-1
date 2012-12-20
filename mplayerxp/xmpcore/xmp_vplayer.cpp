@@ -4,6 +4,8 @@ using namespace mpxp;
 #include <stdio.h>
 #include <math.h>
 
+#include "version.h"
+#define HELP_MPXP_DEFINE_STATIC
 #include "mpxp_help.h"
 #include "player_msg.h"
 #include "sig_hand.h"
@@ -193,7 +195,8 @@ MSG_INFO("mpxp_context().engine().xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_
 	if(!drop_message && mpxp_context().engine().xp_core->video->num_slow_frames > 50) {
 		drop_message=1;
 		if(mpxp_context().mpxp_after_seek) mpxp_context().mpxp_after_seek--;
-		else			  MSG_WARN(MSGTR_SystemTooSlow);
+		else
+		    for(unsigned j=0;MSGTR_SystemTooSlow[j];j++) mpxp_warn<<MSGTR_SystemTooSlow[j]<<std::endl;
 	}
 	MSG_D("\ndec_ahead_main: stalling: %i %i\n",dae_cuurr_vplayed(),dae_curr_decoded());
 	/* Don't burn CPU here! With using of v_pts for A-V sync we will enter

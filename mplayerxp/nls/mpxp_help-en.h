@@ -9,61 +9,68 @@
 
 #ifdef HELP_MPXP_DEFINE_STATIC
 #ifndef MSGTR_BANNER_TEXT
-static const char* banner_text=
-"\n\n"
-"MPlayerXP " VERSION "(C) 2002 Nickols_K 2000-2002 Arpad Gereoffy (see DOCS!)\n"
-"\n";
+static const char* banner_text[]={
+"",
+"",
+"MPlayerXP " VERSION "(C) 2002 Nickols_K 2000-2002 Arpad Gereoffy (see DOCS!)",
+NULL
+};
 
-static const char help_text[]=
-"Usage:   mplayerxp [options] [path/]filename\n"
-"\n"
-"Options:\n"
-" -vo <drv[:dev]> select video output driver & device (see '-vo help' for list)\n"
-" -ao <drv[:dev]> select audio output driver & device (see '-ao help' for list)\n"
-" -play.ss <timepos> seek to given (seconds or hh:mm:ss) position\n"
-" -audio.off      don't play sound\n"
-" -video.fs       fullscreen playing options (fullscr,vidmode chg,softw.scale)\n"
-" -sub.file <file> specify subtitle file to use\n"
-" -play.list<file> specify playlist file\n"
-" -sync.framedrop  enable frame-dropping (for slow machines)\n"
-"\n"
-"Keys:\n"
-" <-  or  ->      seek backward/forward 10 seconds\n"
-" up or down      seek backward/forward  1 minute\n"
-" < or >          seek backward/forward in playlist\n"
-" p or SPACE      pause movie (press any key to continue)\n"
-" q or ESC        stop playing and quit program\n"
-" o               cycle OSD mode:  none / seekbar / seekbar+timer\n"
-" * or /          increase or decrease volume (press 'm' to select master/pcm)\n"
-"\n"
-" * * * SEE MANPAGE FOR DETAILS, FURTHER (ADVANCED) OPTIONS AND KEYS ! * * *\n"
-"\n";
-#endif
+static const char* help_text[]={
+"",
+"Usage:   mplayerxp [options] [path/]filename",
+"",
+"Options:",
+" -vo <drv[:dev]> select video output driver & device (see '-vo help' for list)",
+" -ao <drv[:dev]> select audio output driver & device (see '-ao help' for list)",
+" -play.ss <timepos> seek to given (seconds or hh:mm:ss) position",
+" -audio.off      don't play sound",
+" -video.fs       fullscreen playing options (fullscr,vidmode chg,softw.scale),"
+" -sub.file <file> specify subtitle file to use",
+" -play.list<file> specify playlist file",
+" -sync.framedrop  enable frame-dropping (for slow machines)",
+"",
+"Keys:",
+" <-  or  ->      seek backward/forward 10 seconds",
+" up or down      seek backward/forward  1 minute",
+" < or >          seek backward/forward in playlist",
+" p or SPACE      pause movie (press any key to continue)",
+" q or ESC        stop playing and quit program",
+" o               cycle OSD mode:  none / seekbar / seekbar+timer",
+" * or /          increase or decrease volume (press 'm' to select master/pcm)",
+"",
+" * * * SEE MANPAGE FOR DETAILS, FURTHER (ADVANCED) OPTIONS AND KEYS ! * * *",
+NULL
+};
 #endif
 
 // ========================= MPlayer messages ===========================
 
 // mplayer.c:
 
-#ifndef MSGTR_SystemTooSlow
-#define MSGTR_SystemTooSlow "\n\n"\
-"         ************************************************\n"\
-"         **** Your system is too SLOW to play this!  ****\n"\
-"         ************************************************\n"\
-"!!! Possible reasons, problems, workaround:\n"\
-"- Most common: broken/buggy AUDIO driver. Workaround: -ao sdl or -ao alsa\n"\
-"- Slow VIDEO card. Try different -vo driver (for list: -vo help)\n"\
-"   -vo (*)vidix is recommended (if available) or try with -framedrop !\n"\
-"- Slow cpu. Don't try to playback big dvd/divx on slow cpu! try -hardframedrop\n"\
-"- Broken file. Try various combinations of these: -nobps  -ni  -mc 0  -forceidx\n"\
-"*******************************************************************************\n"\
-" Also try study these keys:\n"\
-" -video.bm (currently may work with some vidix drivers only) [speedup upto 30%]\n"\
-" '/bin/sh hdparm -u1 -d1 -a8 /dev/hdX' [25%]\n"\
-" Try disable OSD by pressing 'O' key twice [5-15%]\n"\
-"Also try to decrease the number of buffers for decoding ahead: '-core.da_buffs'\n"\
-"*******************************************************************************\n"\
-"On SMP -lavc.slices=0 may help too\n"
+#ifndef MSGTR_SystemTooSlow_Text
+static const char* MSGTR_SystemTooSlow[] = {
+"",
+"         ************************************************",
+"         **** Your system is too SLOW to play this!  ****",
+"         ************************************************",
+"!!! Possible reasons, problems, workaround:",
+"- Most common: broken/buggy AUDIO driver. Workaround: -ao sdl or -ao alsa",
+"- Slow VIDEO card. Try different -vo driver (for list: -vo help)",
+"   -vo (*)vidix is recommended (if available) or try with -framedrop !",
+"- Slow cpu. Don't try to playback big dvd/divx on slow cpu! try -hardframedrop",
+"- Broken file. Try various combinations of these: -nobps  -ni  -mc 0  -forceidx",
+"*******************************************************************************",
+" Also try study these keys:",
+" -video.bm (currently may work with some vidix drivers only) [speedup upto 30%]",
+" '/bin/sh hdparm -u1 -d1 -a8 /dev/hdX' [25%]",
+" Try disable OSD by pressing 'O' key twice [5-15%]",
+"Also try to decrease the number of buffers for decoding ahead: '-core.da_buffs'",
+"*******************************************************************************",
+"On SMP -lavc.slices=0 may help too",
+NULL
+};
+#endif
 #endif
 
 #ifndef MSGTR_Exiting
@@ -248,9 +255,7 @@ static const char help_text[]=
 #define MSGTR_ConnError "Connect error: %s\n"
 #endif
 #ifndef MSGTR_ConnAuthFailed
-#define MSGTR_ConnAuthFailed "Authentication failed\n"\
-			    "Please use the option -user and -passwd to provide your username/password for a list of URLs,\n"\
-			    "or form an URL like: http://username:password@hostname/file\n"
+#define MSGTR_ConnAuthFailed "Authentication failed. Please use the option -user and -passwd or form an URL like: http://username:password@hostname/file"
 #endif
 #ifndef MSGTR_FileNotFound
 #define MSGTR_FileNotFound "File not found: '%s'\n"

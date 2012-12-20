@@ -6,35 +6,39 @@
 // UTF-8
 #ifdef HELP_MPXP_DEFINE_STATIC
 #ifndef MSGTR_BANNER_TEXT
-static char* banner_text=
-"\n\n"
-"MPlayerXP " VERSION "(C) 2002 Nickols_K 2000-2002 Arpad Gereoffy (see DOCS!)\n"
-"\n";
+static const char* banner_text[]={
+"",
+"",
+"MPlayerXP " VERSION "(C) 2002 Nickols_K 2000-2002 Arpad Gereoffy (see DOCS!)",
+NULL
+};
 
-static char help_text[]=
-"Kullanım: mplayerxp [seçenekler] [adres|yol/]dosya adı\n"
-"\n"
-"Genel seçenekler: (Tüm seçenekler için man sayfalarına bakınız)\n"
-" -vo <sürücü>       video çıkış sürücüsünü seçer ('-vo help' ile listeyi görebilirsiniz)\n"
-" -ao <sürücü>       ses çıkış sürücüsü seçer ('-ao help' ile listeyi görebilirsiniz)\n"
-" -play.ss <zamankon> Verilen konumu arar (saniye veya hh:mm:ss ;saat:dakika:saniye olarak)\n"
-" -audio.off         Sesi çalmaz\n"
-" -video.fs          Tam ekran çalıştırma seçenekleri (veya -video.vm, -video.zoom, detaylar man sayfalarında)\n"
-" -sub.file <dosya>  Kullanılacak altyazı dosyasını seçer\n"
-" -play.list <dosya> Çalma listesi dosyasını seçer\n"
-" -sync.framedrop    kare(frame) atlamayı etkinleştirir (yavaş bilgisayarlar için)\n"
-"\n"
-"Başlıca Tuşlar: (tüm liste man sayfasındadır, ayrıca input.conf  dosyasını kontrol ediniz)\n"
-" <-  veya  ->       geri sar/ileri sar (10 saniye )\n"
-" yukarı veya aşağı  geri sar/ileri sar  (1 dakika)\n"
-" pgup veya pgdown   geri sar/ileri sar (10 dakika)\n"
-" < veya >           çalma listesinde önceki/sonraki \n"
-" p veya BOŞLUK      duraklat (devam etmek için herhangi bir tuşa basınız)\n"
-" q veya ESC         durdur ve uygulamadan çık\n"
-" o                  OSD modunu değiştir:  yok / oynatma imi / oynatma imi + zamanlayıcı\n"
-" * veya /           sesi yükselt veya alçalt\n"
-"\n"
-" * * AYRINTILAR, DAHA FAZLA (GELİŞMİŞ) SEÇENEKLER VE TUŞLAR İÇİN MAN SAYFALARINA BAKINIZ * *\n"
-"\n";
+static const char* help_text[]={
+"",
+"Kullanım: mplayerxp [seçenekler] [adres|yol/]dosya adı",
+"",
+"Genel seçenekler: (Tüm seçenekler için man sayfalarına bakınız)",
+" -vo <sürücü>       video çıkış sürücüsünü seçer ('-vo help' ile listeyi görebilirsiniz)",
+" -ao <sürücü>       ses çıkış sürücüsü seçer ('-ao help' ile listeyi görebilirsiniz)",
+" -play.ss <zamankon> Verilen konumu arar (saniye veya hh:mm:ss ;saat:dakika:saniye olarak)",
+" -audio.off         Sesi çalmaz",
+" -video.fs          Tam ekran çalıştırma seçenekleri (veya -video.vm, -video.zoom, detaylar man sayfalarında)",
+" -sub.file <dosya>  Kullanılacak altyazı dosyasını seçer",
+" -play.list <dosya> Çalma listesi dosyasını seçer",
+" -sync.framedrop    kare(frame) atlamayı etkinleştirir (yavaş bilgisayarlar için)",
+"",
+"Başlıca Tuşlar: (tüm liste man sayfasındadır, ayrıca input.conf  dosyasını kontrol ediniz)",
+" <-  veya  ->       geri sar/ileri sar (10 saniye )",
+" yukarı veya aşağı  geri sar/ileri sar  (1 dakika)",
+" pgup veya pgdown   geri sar/ileri sar (10 dakika)",
+" < veya >           çalma listesinde önceki/sonraki ",
+" p veya BOŞLUK      duraklat (devam etmek için herhangi bir tuşa basınız)",
+" q veya ESC         durdur ve uygulamadan çık",
+" o                  OSD modunu değiştir:  yok / oynatma imi / oynatma imi + zamanlayıcı",
+" * veya /           sesi yükselt veya alçalt",
+"",
+" * * AYRINTILAR, DAHA FAZLA (GELİŞMİŞ) SEÇENEKLER VE TUŞLAR İÇİN MAN SAYFALARINA BAKINIZ * *",
+NULL
+};
 #endif
 #endif

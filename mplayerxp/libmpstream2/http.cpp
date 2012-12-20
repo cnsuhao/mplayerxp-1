@@ -306,7 +306,7 @@ int HTTP_Header::authenticate(URL& url, int *auth_retry) {
     const char *aut;
 
     if( *auth_retry==1 ) {
-	MSG_ERR(MSGTR_ConnAuthFailed);
+	mpxp_err<<MSGTR_ConnAuthFailed<<std::endl;
 	return -1;
     }
     if( *auth_retry>0 ) url.clear_login();
@@ -321,7 +321,7 @@ int HTTP_Header::authenticate(URL& url, int *auth_retry) {
 	MSG_INFO("Authentication required\n");
     }
     if( !net_conf.username ) {
-	MSG_ERR(MSGTR_ConnAuthFailed);
+	mpxp_err<<MSGTR_ConnAuthFailed<<std::endl;
 	return -1;
     }
     if( !net_conf.password ) MSG_INFO("No password provided, trying blank password\n");

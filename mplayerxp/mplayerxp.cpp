@@ -594,7 +594,7 @@ static void init_player( void )
 
 void show_help(void) {
     // no file/vcd/dvd -> show HELP:
-    mpxp_info<<help_text<<std::endl;
+    for(unsigned j=0;help_text[j];j++) mpxp_info<<help_text[j]<<std::endl;
     Stream::print_drivers();
     mpxp_info<<std::endl;
     mpxp_info<<"Example: mplayerxp -ao alsa:hw:0 -vo x11 your.avi"<<std::endl;
@@ -1680,7 +1680,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     xmp_register_main(exit_sighandler);
 
     mpxp_print_init(mp_conf.verbose+MSGL_STATUS);
-    mpxp_info<<banner_text<<std::endl;
+    for(unsigned j=0;banner_text[j];j++)  mpxp_info<<banner_text[j]<<std::endl;
 
     /* currently it's lowest point of MPXPSystem initialization */
     mpxp_context().engine().MPXPSys = new(zeromem) MPXPSystem;
