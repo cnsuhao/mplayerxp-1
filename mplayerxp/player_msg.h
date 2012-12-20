@@ -17,5 +17,4 @@ namespace mpxp {
     static mpxp_ostream_dbg3	mpxp_dbg3(MSGT_CPLAYER);
     static mpxp_ostream_dbg4	mpxp_dbg4(MSGT_CPLAYER);
 } // namespace mpxp
-
 #endif
