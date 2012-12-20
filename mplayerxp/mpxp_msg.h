@@ -70,7 +70,7 @@ namespace mpxp {
 	    // For EOF detection
 	    typedef std::char_traits< char > Traits;
 	    // Work in buffer mode. It is also possible to work without buffer.
-	    static size_t const BUF_SIZE = 256;
+	    static size_t const BUF_SIZE = 2048;
 	    Opaque		unusable;
 	    char		buf[BUF_SIZE];
 	    // This is example about userdata

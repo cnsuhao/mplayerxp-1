@@ -48,7 +48,7 @@ int mpxp_streambuf::sync() {
 
 void mpxp_streambuf::put_chars(char const* begin, char const* end) const {
     if(!(parent._type&mp_conf.msg_filter)) { parent.setstate(std::ios_base::badbit); return; }
-    if(::isatty(::fileno(::stderr))) std::cerr<<data;
+    if(::isatty(::fileno(::stderr))) ::fwrite(data.c_str(),data.length(),1,::stderr);
     ::fwrite(begin,end-begin,1,::stderr);
 }
 
