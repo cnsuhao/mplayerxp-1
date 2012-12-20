@@ -135,8 +135,8 @@ NULL
 #ifndef MSGTR_CantOpenDumpfile
 #define MSGTR_CantOpenDumpfile "Can't open dump file!!!\n"
 #endif
-#ifndef MSGTR_CoreDumped
-#define MSGTR_CoreDumped "core dumped :)\n"
+#ifndef MSGTR_StreamDumped
+#define MSGTR_StreamDumped "stream dumped :)\n"
 #endif
 #ifndef MSGTR_FPSnotspecified
 #define MSGTR_FPSnotspecified "FPS not specified (or invalid) in the header! Use the -fps option!\n"
@@ -451,19 +451,19 @@ NULL
 
 // LIRC:
 #ifndef MSGTR_SettingUpLIRC
-#define MSGTR_SettingUpLIRC "Setting up lirc support...\n"
+#define MSGTR_SettingUpLIRC "Setting up lirc support..."
 #endif
 #ifndef MSGTR_LIRCdisabled
-#define MSGTR_LIRCdisabled "You won't be able to use your remote control\n"
+#define MSGTR_LIRCdisabled "You won't be able to use your remote control"
 #endif
 #ifndef MSGTR_LIRCopenfailed
-#define MSGTR_LIRCopenfailed "Failed opening lirc support!\n"
+#define MSGTR_LIRCopenfailed "Failed opening lirc support!"
 #endif
 #ifndef MSGTR_LIRCsocketerr
-#define MSGTR_LIRCsocketerr "Something's wrong with the lirc socket: %s\n"
+#define MSGTR_LIRCsocketerr "Something's wrong with the lirc socket"
 #endif
 #ifndef MSGTR_LIRCcfgerr
-#define MSGTR_LIRCcfgerr "Failed to read LIRC config file %s !\n"
+#define MSGTR_LIRCcfgerr "Failed to read LIRC config file"
 #endif
 
 #endif /*__MPXP_EN_HELP_INCLUDED*/

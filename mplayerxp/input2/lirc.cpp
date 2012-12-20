@@ -29,16 +29,16 @@ typedef struct priv_s {
 any_t* mp_input_lirc_open(void) {
     priv_t* priv=new(zeromem) priv_t;
 
-    MSG_INFO(MSGTR_SettingUpLIRC);
+    mpxp_info<<MSGTR_SettingUpLIRC<<std::endl;
     if((priv->lirc_sock=lirc_init(const_cast<char*>("mplayer"),1))==-1){
-	MSG_ERR(MSGTR_LIRCopenfailed MSGTR_LIRCdisabled);
+	mpxp_err<<MSGTR_LIRCopenfailed<<std::endl<<MSGTR_LIRCdisabled<<std::endl;
 	delete priv;
 	return NULL;
     }
 
     if(lirc_readconfig( lirc_configfile,&lirc_config,NULL )!=0 ){
-	MSG_ERR(MSGTR_LIRCcfgerr MSGTR_LIRCdisabled,
-		lirc_configfile == NULL ? "~/.lircrc" : lirc_configfile);
+	mpxp_err<<MSGTR_LIRCcfgerr<<": "<<(lirc_configfile==NULL?"~/.lircrc":lirc_configfile)<<std::endl;
+	mpxp_err<<MSGTR_LIRCdisabled<<std::endl;
 	lirc_deinit();
 	delete priv;
 	return NULL;
@@ -72,14 +72,14 @@ int mp_input_lirc_read_cmd(any_t* ctx,char* dest, int s) {
     while((r = select(1,&fds,NULL,NULL,&tv)) <= 0) {
 	if(r < 0) {
 	    if(errno == EINTR) continue;
-	    MSG_ERR("Select error : %s\n",strerror(errno));
+	    mpxp_err<<"Select error:"<<strerror(errno)<<std::endl;
 	    return MP_INPUT_ERROR;
 	} else
 	    return MP_INPUT_NOTHING;
     }
     // There's something to read
     if(lirc_nextcode(&code) != 0) {
-	MSG_ERR("Lirc error :(\n");
+	mpxp_err<<"Lirc error :("<<std::endl;
 	return MP_INPUT_DEAD;
     }
 

@@ -67,7 +67,7 @@ void dump_stream(Stream *stream)
       if(len>0) fwrite(buf,len,1,f);
   }
   fclose(f);
-  MSG_INFO(MSGTR_CoreDumped); /* nice joke ;) */
+  mpxp_info<<MSGTR_StreamDumped<<std::endl;
   exit_player(MSGTR_Exit_eof);
 }
 
@@ -274,7 +274,7 @@ void dump_mux_close(Demuxer *demuxer)
 	delete demuxer->priv;
 	demuxer->priv=NULL;
     }
-    MSG_INFO(MSGTR_CoreDumped);
+    mpxp_info<<MSGTR_StreamDumped<<std::endl;
 }
 
 

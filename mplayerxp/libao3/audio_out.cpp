@@ -194,15 +194,15 @@ Audio_Output::~Audio_Output()
     delete &priv;
 }
 
-void Audio_Output::print_help() const {
+void Audio_Output::print_help() {
     unsigned i;
-    MSG_INFO("Available audio output drivers:\n");
+    mpxp_info<<"Available audio output drivers:"<<std::endl;
     i=0;
     while (audio_out_drivers[i]) {
 	const ao_info_t *info = audio_out_drivers[i++];
-	MSG_INFO("\t%s\t%s\n", info->short_name, info->name);
+	mpxp_info<<"\t"<<info->short_name<<"\t"<<info->name<<std::endl;
     }
-    MSG_INFO("\n");
+    mpxp_info<<std::endl;
 }
 
 MPXP_Rc Audio_Output::_register(const char *driver_name,unsigned flags) const {

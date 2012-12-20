@@ -47,7 +47,7 @@ int mpxp_streambuf::sync() {
 }
 
 void mpxp_streambuf::put_chars(char const* begin, char const* end) const {
-    if(!(parent._type&mp_conf.msg_filter)) { parent.setstate(std::ios_base::badbit); return; }
+    parent.test_conditions();
     if(::isatty(::fileno(::stderr))) ::fwrite(data.c_str(),data.length(),1,::stderr);
     ::fwrite(begin,end-begin,1,::stderr);
 }
@@ -88,6 +88,10 @@ unsigned mpxp_ostream::compute_idx(mpxp_msgt_e type) const {
     return std::min(_idx,unsigned(sizeof(msg_prefix)/sizeof(msg_prefix[0])));
 }
 
+void mpxp_ostream::test_conditions() {
+    if(!(_type&mp_conf.msg_filter)) setstate(std::ios_base::badbit);
+}
+
 /* TODO: replace this block with std::string */
 static const char blue[]="\033[0;34;40m";
 static const char green[]="\033[0;32;40m";
@@ -125,17 +129,33 @@ mpxp_ostream_hint::~mpxp_ostream_hint() {}
 mpxp_ostream_status::mpxp_ostream_status(mpxp_msgt_e type):mpxp_ostream(light_blue,type){}
 mpxp_ostream_status::~mpxp_ostream_status() {}
 
-mpxp_ostream_v::mpxp_ostream_v(mpxp_msgt_e type):mpxp_ostream(cyan,type){ if(mp_conf.verbose<1) setstate(ios_base::badbit); /* do not display */ }
+mpxp_ostream_v::mpxp_ostream_v(mpxp_msgt_e type):mpxp_ostream(cyan,type){}
 mpxp_ostream_v::~mpxp_ostream_v() {}
+void mpxp_ostream_v::test_conditions() {
+    if(mp_conf.verbose<1) setstate(ios_base::badbit); /* do not display */
+    mpxp_ostream::test_conditions();
+}
 
-mpxp_ostream_dbg2::mpxp_ostream_dbg2(mpxp_msgt_e type):mpxp_ostream(gray,type){ if(mp_conf.verbose<2) setstate(ios_base::badbit); /* do not display */ }
+mpxp_ostream_dbg2::mpxp_ostream_dbg2(mpxp_msgt_e type):mpxp_ostream(gray,type){}
 mpxp_ostream_dbg2::~mpxp_ostream_dbg2() {}
+void mpxp_ostream_dbg2::test_conditions() {
+    if(mp_conf.verbose<2) setstate(ios_base::badbit); /* do not display */
+    mpxp_ostream::test_conditions();
+}
 
-mpxp_ostream_dbg3::mpxp_ostream_dbg3(mpxp_msgt_e type):mpxp_ostream(gray,type){ if(mp_conf.verbose<3) setstate(ios_base::badbit); /* do not display */ }
+mpxp_ostream_dbg3::mpxp_ostream_dbg3(mpxp_msgt_e type):mpxp_ostream(gray,type){}
 mpxp_ostream_dbg3::~mpxp_ostream_dbg3() {}
+void mpxp_ostream_dbg3::test_conditions() {
+    if(mp_conf.verbose<3) setstate(ios_base::badbit); /* do not display */
+    mpxp_ostream::test_conditions();
+}
 
-mpxp_ostream_dbg4::mpxp_ostream_dbg4(mpxp_msgt_e type):mpxp_ostream(gray,type){ if(mp_conf.verbose<4) setstate(ios_base::badbit); /* do not display */ }
+mpxp_ostream_dbg4::mpxp_ostream_dbg4(mpxp_msgt_e type):mpxp_ostream(gray,type){}
 mpxp_ostream_dbg4::~mpxp_ostream_dbg4() {}
+void mpxp_ostream_dbg4::test_conditions() {
+    if(mp_conf.verbose<4) setstate(ios_base::badbit); /* do not display */
+    mpxp_ostream::test_conditions();
+}
 
 /* old stuff: */
 

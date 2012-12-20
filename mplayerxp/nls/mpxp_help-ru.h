@@ -88,7 +88,7 @@ NULL
 #define MSGTR_DVDauthOk "Авторизация DVD выглядит OK.\n"
 #define MSGTR_DumpSelectedSteramMissing "dump: FATAL: выбранный поток потерян!\n"
 #define MSGTR_CantOpenDumpfile "Не могу открыть файл дампа!!!\n"
-#define MSGTR_CoreDumped "core dumped :)\n"
+#define MSGTR_StreamDumped "stream dumped :)"
 #define MSGTR_FPSnotspecified "Кадр/сек не указаны (или недопустимые) в заголовке! Используйте -fps опцию!\n"
 #define MSGTR_NoVideoStream "Видео поток не найден... это невоспроизводимо пока\n"
 #define MSGTR_TryForceAudioFmt "Попытка форсировать семейство аудио кодеков"
@@ -206,8 +206,8 @@ NULL
 #define MSGTR_UnknownAudio "Неизвестный/потерянный аудио формат, отказ от звука\n"
 
 // LIRC:
-#define MSGTR_SettingUpLIRC "Установка поддержки lirc...\n"
-#define MSGTR_LIRCdisabled "Вы не сможете использовать Ваше удалённое управление\n"
-#define MSGTR_LIRCopenfailed "Неудачное открытие поддержки lirc!\n"
-#define MSGTR_LIRCsocketerr "Что-то неправильно с сокетом lirc: %s\n"
-#define MSGTR_LIRCcfgerr "Неудачное чтение файла конфигурации LIRC %s !\n"
+#define MSGTR_SettingUpLIRC "Установка поддержки lirc..."
+#define MSGTR_LIRCdisabled "Вы не сможете использовать Ваше удалённое управление"
+#define MSGTR_LIRCopenfailed "Неудачное открытие поддержки lirc!"
+#define MSGTR_LIRCsocketerr "Что-то неправильно с сокетом lirc"
+#define MSGTR_LIRCcfgerr "Неудачное чтение файла конфигурации LIRC"

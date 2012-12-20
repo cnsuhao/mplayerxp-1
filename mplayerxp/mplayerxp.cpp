@@ -606,8 +606,8 @@ void show_long_help(void) {
     m_config_show_options(*mpxp_context().mconfig);
     mp_input_print_binds(MPXPSys.libinput());
     Stream::print_drivers();
-    mpxp_context().video().output->print_help();
-    mpxp_context().audio().output->print_help();
+    Video_Output::print_help();
+    Audio_Output::print_help();
     vf_help();
     af_help();
     vfm_help();

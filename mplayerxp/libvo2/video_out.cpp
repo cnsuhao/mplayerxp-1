@@ -147,8 +147,7 @@ Video_Output::~Video_Output() {
     delete &priv;
 }
 
-void Video_Output::print_help() const
-{
+void Video_Output::print_help() {
     unsigned i;
     MSG_INFO("Available video output drivers:\n");
     i=0;

@@ -41,10 +41,10 @@ any_t* mp_input_joystick_open(const char* dev) {
     struct js_event ev;
     priv_t* priv=new(zeromem) priv_t;
 
-    MSG_INFO("Opening joystick device %s\n",dev ? dev : JS_DEV);
+    mpxp_info<<"Opening joystick device:"<<(dev?dev:JS_DEV)<<std::endl;
 
     if((priv->fd=open(dev?dev:JS_DEV,O_RDONLY|O_NONBLOCK))<0) {
-	MSG_ERR("Can't open joystick device %s : %s\n",dev ? dev : JS_DEV,strerror(errno));
+	mpxp_err<<"Can't open joystick device: "<<(dev?dev:JS_DEV)<<" : "<<strerror(errno)<<std::endl;
 	delete priv;
 	return NULL;
     }
@@ -59,7 +59,7 @@ any_t* mp_input_joystick_open(const char* dev) {
 		    inited = 1;
 		    break;
 		}
-		MSG_ERR("Error while reading joystick device : %s\n",strerror(errno));
+		mpxp_err<<"Error while reading joystick device: "<<strerror(errno)<<std::endl;
 		close(priv->fd);
 		delete priv;
 		return NULL;
@@ -67,7 +67,7 @@ any_t* mp_input_joystick_open(const char* dev) {
 	    l += r;
 	}
 	if((unsigned int)l < sizeof(struct js_event)) {
-	    if(l > 0) MSG_ERR("Joystick : we loose %d bytes of data\n",l);
+	    if(l > 0) mpxp_err<<"Joystick: we loose "<<l<<"bytes of data"<<std::endl;
 	    break;
 	}
 	ev.type &= ~JS_EVENT_INIT;
@@ -93,20 +93,20 @@ int mp_input_joystick_read(any_t* ctx) {
 	if(r <= 0) {
 	    if(errno == EINTR) continue;
 	    else if(errno == EAGAIN) return MP_INPUT_NOTHING;
-	    if(r < 0)	MSG_ERR("Joystick error while reading joystick device : %s\n",strerror(errno));
-	    else	MSG_ERR("Joystick error while reading joystick device : EOF\n");
+	    if(r < 0)	mpxp_err<<"Joystick error while reading joystick device: "<<strerror(errno)<<std::endl;
+	    else	mpxp_err<<"Joystick error while reading joystick device: EOF"<<std::endl;
 	    return MP_INPUT_DEAD;
 	}
 	l += r;
     }
 
     if((unsigned int)l < sizeof(struct js_event)) {
-	if(l > 0) MSG_ERR("Joystick : we loose %d bytes of data\n",l);
+	if(l > 0) mpxp_err<<"Joystick: we loose "<<l<<"bytes of data"<<std::endl;
 	return MP_INPUT_NOTHING;
     }
 
     if(ev.type & JS_EVENT_INIT) {
-	MSG_WARN("Joystick : warning init event, we have lost sync with driver\n");
+	mpxp_warn<<"Joystick: warning init event, we have lost sync with driver"<<std::endl;
 	ev.type &= ~JS_EVENT_INIT;
 	if(ev.type == JS_EVENT_BUTTON) {
 	    int s = (priv.btns >> ev.number) & 1;
@@ -141,7 +141,7 @@ int mp_input_joystick_read(any_t* ctx) {
 	} else
 	    return MP_INPUT_NOTHING;
     } else {
-	MSG_ERR("Joystick warning unknow event type %d\n",ev.type);
+	mpxp_err<<"Joystick warning unknow event type "<<ev.type<<std::endl;
 	return MP_INPUT_ERROR;
     }
     return MP_INPUT_NOTHING;

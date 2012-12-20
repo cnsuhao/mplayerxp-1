@@ -27,18 +27,19 @@ static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigne
 static void __FASTCALL__ print_conf(vf_instance_t* vf)
 {
     const vo_info_t *info = mpxp_context().video().output->get_info();
-    MSG_INFO("VO-CONF: [%s] %dx%d => %dx%d %s %s%s%s%s\n",info->short_name,
-	 vf->priv->sw, vf->priv->sh,
-	 vf->priv->dw, vf->priv->dh,
-	 vo_format_name(vf->priv->ofmt),
-	 (vf->priv->sflg&1)?" [fs]":"",
-	 (vf->priv->sflg&2)?" [vm]":"",
-	 (vf->priv->sflg&4)?" [zoom]":"",
-	 (vf->priv->sflg&8)?" [flip]":"");
-    MSG_V("VO: Description: %s\n",info->name);
-    MSG_V("VO: Author: %s\n", info->author);
+    mpxp_info<<"VO-CONF: ["<<info->short_name<<"] "
+	    <<vf->priv->sw<<"x"<<vf->priv->sh
+	    <<" => "<<vf->priv->dw<<"x"<<vf->priv->dh
+	    <<" "<<vo_format_name(vf->priv->ofmt)
+	    <<" "
+	    <<((vf->priv->sflg&1)?" [fs]":"")
+	    <<((vf->priv->sflg&2)?" [vm]":"")
+	    <<((vf->priv->sflg&4)?" [zoom]":"")
+	    <<((vf->priv->sflg&8)?" [flip]":"")<<std::endl;
+    mpxp_v<<"VO: Description: "<<info->name<<std::endl;
+    mpxp_v<<"VO: Author: "<<info->author<<std::endl;
     if(info->comment && strlen(info->comment) > 0)
-	MSG_V("VO: Comment: %s\n", info->comment);
+	mpxp_v<<"VO: Comment: "<<info->comment<<std::endl;
 }
 
 static int __FASTCALL__ vf_config(vf_instance_t* vf,
@@ -47,7 +48,7 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
 
     if ((width <= 0) || (height <= 0) || (d_width <= 0) || (d_height <= 0))
     {
-	MSG_ERR("VO: invalid dimensions!\n");
+	mpxp_err<<"VO: invalid dimensions!"<<std::endl;
 	return 0;
     }
 
@@ -63,6 +64,8 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     // save vo's stride capability for the wanted colorspace:
     vf->default_caps=query_format(vf,outfmt,d_width,d_height);// & VFCAP_ACCEPT_STRIDE;
 
+    mpxp_dbg2<<"vf_vo2->config("<<width<<","<<height<<","<<d_width<<","<<d_height
+	  <<","<<flags<<","<<vo_format_name(outfmt)<<")"<<std::endl;
     if(MPXP_Ok!=mpxp_context().video().output->configure(vf->parent,width,height,d_width,d_height,flags,"MPlayerXP",outfmt))
 	return 0;
     vf->priv->is_planar=vo_describe_fourcc(outfmt,&vf->priv->vd);
@@ -76,7 +79,7 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
 static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request,any_t* data)
 {
     UNUSED(vf);
-    MSG_DBG2("vf_control: %u\n",request);
+    mpxp_dbg2<<"vf_control: "<<request<<std::endl;
     switch(request){
     case VFCTRL_SET_EQUALIZER: {
 	vf_equalizer_t *eq=reinterpret_cast<vf_equalizer_t*>(data);
@@ -97,7 +100,7 @@ static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigne
     dri_surface_cap_t dcaps;
     int rflags;
     uint32_t flags=mpxp_context().video().output->query_format(&fmt,w,h);
-    MSG_DBG2("[vf_vo2] %i=query_format(%s)\n",flags,vo_format_name(fmt));
+    mpxp_dbg2<<"[vf_vo2] "<<flags<<"=query_format("<<vo_format_name(fmt)<<")"<<std::endl;
     rflags=0;
     UNUSED(vf);
     if(flags) {
@@ -121,15 +124,15 @@ static void __FASTCALL__ get_image(vf_instance_t* vf,
     if(retval==MPXP_Ok) {
 	mpi->flags |= MP_IMGFLAG_FINAL|MP_IMGFLAG_DIRECT;
 	if(finalize) mpi->flags |= MP_IMGFLAG_FINALIZED;
-	MSG_DBG2("vf_vo_get_image was called successfully\n");
-    }
-    MSG_DBG2("vf_vo_get_image was called failed\n");
+	mpxp_dbg2<<"vf_vo_get_image was called successfully"<<std::endl;
+    } else mpxp_dbg2<<"vf_vo_get_image was called failed"<<std::endl;
 }
 
 static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
   if(!vo_config_count) return 0; // vo not configured?
   if(!(mpi->flags & MP_IMGFLAG_FINAL) || (vf_first(vf)==vf && !(mpi->flags & MP_IMGFLAG_RENDERED))) {
-	MSG_DBG2("vf_vo_put_slice was called(%u): %u %u %u %u\n",mpi->xp_idx,mpi->x,mpi->y,mpi->w,mpi->h);
+	mpxp_dbg2<<"vf_vo_put_slice was called("
+		<<mpi->xp_idx<<"): "<<mpi->x<<" "<<mpi->y<<" "<<mpi->w<<" "<<mpi->h<<std::endl;
 	mpxp_context().video().output->draw_slice(mpi);
   }
   return 1;

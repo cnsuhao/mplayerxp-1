@@ -168,7 +168,7 @@ namespace mpxp {
 	    void	FLIP_REVERT()	{ flags^=VOFLAG_FLIPPING; }
 
 	    virtual MPXP_Rc	init(const std::string& driver_name) const;
-	    virtual void	print_help() const;
+	    static void		print_help();
 	    virtual const vo_info_t* get_info() const;
 	    virtual MPXP_Rc	configure(vf_stream_t* parent,uint32_t width,
 				    uint32_t height, uint32_t d_width,

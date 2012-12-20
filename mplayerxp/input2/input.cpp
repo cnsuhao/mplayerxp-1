@@ -1,6 +1,8 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
+#include <iomanip>
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -466,7 +468,7 @@ static const char* mp_input_get_key_name(libinput_t&,int key);
 
 static MPXP_Rc mp_input_add_cmd_fd(libinput_t& priv,any_t* opaque, int sel, mp_cmd_func_t read_func, mp_close_func_t close_func) {
     if(priv.num_cmd_fd == MP_MAX_CMD_FD) {
-	MSG_ERR("Too much command fd, unable to register fd\n");
+	mpxp_err<<"Too much command fd, unable to register fd"<<std::endl;
 	return MPXP_False;
     }
 
@@ -507,7 +509,7 @@ static void mp_input_rm_key_fd(libinput_t& priv,any_t* fd) {
 
 static MPXP_Rc mp_input_add_key_fd(libinput_t& priv,any_t* opaque, int sel, mp_key_func_t read_func, mp_close_func_t close_func) {
     if(priv.num_key_fd == MP_MAX_KEY_FD) {
-	MSG_ERR("Too much key fd, unable to register fd\n");
+	mpxp_err<<"Too much key fd, unable to register fd"<<std::endl;
 	return MPXP_False;
     }
 
@@ -564,7 +566,7 @@ mp_cmd_t* mp_input_parse_cmd(const char* _str) {
 		errno = 0;
 		cmd->args[i].v.i = atoi(ptr);
 		if(errno != 0) {
-		    MSG_ERR("Command %s : argument %d isn't an integer\n",cmd_def->name,i+1);
+		    mpxp_err<<"Command: "<<cmd_def->name<<" argument "<<i+1<<" isn't an integer"<<std::endl;
 		    ptr = NULL;
 		}
 	    break;
@@ -579,7 +581,7 @@ mp_cmd_t* mp_input_parse_cmd(const char* _str) {
 		setlocale(LC_NUMERIC, "");
 #endif
 		if(errno != 0) {
-		    MSG_ERR("Command %s : argument %d isn't a float\n",cmd_def->name,i+1);
+		    mpxp_err<<"Command: "<<cmd_def->name<<" argument "<<i+1<<" isn't a float"<<std::endl;
 		    ptr = NULL;
 		}
 		break;
@@ -599,7 +601,7 @@ mp_cmd_t* mp_input_parse_cmd(const char* _str) {
 		    ptr2 = e + 1;
 		}
 		if(term != ' ' && (!e || e[0] == '\0')) {
-		    MSG_ERR("Command %s : argument %d is unterminated\n",cmd_def->name,i+1);
+		    mpxp_err<<"Command: "<<cmd_def->name<<" argument "<<i+1<<" is unterminated"<<std::endl;
 		    ptr = NULL;
 		    break;
 		} else if(!e) e = ptr+strlen(ptr);
@@ -614,13 +616,13 @@ mp_cmd_t* mp_input_parse_cmd(const char* _str) {
 		}
 	    } break;
 	    case -1: ptr = NULL;
-	    default: MSG_ERR("Unknown argument %d\n",i);
+	    default: mpxp_err<<"Unknown argument "<<i<<std::endl;
 	}
     }
     cmd->nargs = i;
     if(cmd_def->nargs > cmd->nargs) {
-	MSG_ERR("Got command '%s' but\n",str);
-	MSG_ERR("command %s require at least %d arguments, we found only %d so far\n",cmd_def->name,cmd_def->nargs,cmd->nargs);
+	mpxp_err<<"Got command '"<<str<<"' but"<<std::endl;
+	mpxp_err<<"command "<<cmd_def->name<<" require at least "<<cmd_def->nargs<<" arguments, we found only "<<cmd->nargs<<" so far"<<std::endl;
 	mp_cmd_free(cmd);
 	delete str;
 	return NULL;
@@ -674,7 +676,7 @@ static int mp_input_read_cmd(mp_input_fd_t* mp_fd, char** ret) {
 	    switch(r) {
 		case MP_INPUT_ERROR:
 		case MP_INPUT_DEAD:
-		    MSG_ERR("Error while reading cmd fd: %s\n",strerror(errno));
+		    mpxp_err<<"Error while reading cmd fd: "<<strerror(errno)<<std::endl;
 		case MP_INPUT_NOTHING: return r;
 	    }
 	    // EOF ?
@@ -696,7 +698,7 @@ static int mp_input_read_cmd(mp_input_fd_t* mp_fd, char** ret) {
 	if(!end) {
 	    // If buffer is full we must drop all until the next \n
 	    if(mp_fd->size - mp_fd->pos <= 1) {
-		MSG_ERR("Cmd buffer is full: dropping content\n");
+		mpxp_err<<"Cmd buffer is full: dropping content"<<std::endl;
 		mp_fd->pos = 0;
 		mp_fd->flags |= MP_FD_DROP;
 	    }
@@ -776,22 +778,22 @@ mp_cmd_t* mp_input_get_cmd_from_keys(libinput_t& priv,int n,int* keys) {
     if(priv.cmd_binds) cmd = mp_input_find_bind_for_key(priv.cmd_binds,n,keys);
     if(cmd == NULL)     cmd = mp_input_find_bind_for_key(def_cmd_binds,n,keys);
     if(cmd == NULL) {
-	MSG_WARN("No bind found for key %s",mp_input_get_key_name(priv,keys[0]));
+	mpxp_warn<<"No bind found for key: "<<mp_input_get_key_name(priv,keys[0]);
 	if(n > 1) {
 	    int s;
-	    for(s=1; s < n; s++) MSG_WARN("-%s",mp_input_get_key_name(priv,keys[s]));
+	    for(s=1; s < n; s++) mpxp_warn<<std::left<<mp_input_get_key_name(priv,keys[s]);
 	}
-	MSG_WARN("                         \n");
+	mpxp_warn<<std::endl;
 	return NULL;
     }
     ret =  mp_input_parse_cmd(cmd);
     if(!ret) {
-	MSG_ERR("Invalid command for binded key %s",mp_input_get_key_name(priv,priv.key_down[0]));
+	mpxp_err<<"Invalid command for binded key: "<<mp_input_get_key_name(priv,priv.key_down[0]);
 	if(priv.num_key_down > 1) {
 	    unsigned int s;
-	    for(s=1; s < priv.num_key_down; s++) MSG_ERR("-%s",mp_input_get_key_name(priv,priv.key_down[s]));
+	    for(s=1; s < priv.num_key_down; s++) mpxp_err<<std::left<<mp_input_get_key_name(priv,priv.key_down[s]);
 	}
-	MSG_ERR(" : %s             \n",cmd);
+	mpxp_err<<" : "<<cmd<<std::endl;
     }
     return ret;
 }
@@ -820,9 +822,9 @@ static int mp_input_read_key_code(libinput_t& priv,int tim) {
 	code = ((mp_key_func_t)priv.key_fds[i].read.key_func)(priv.key_fds[i].opaque);
 	if(code >= 0) return code;
 
-	if(code == MP_INPUT_ERROR) MSG_ERR("Error on key input fd\n");
+	if(code == MP_INPUT_ERROR) mpxp_err<<"Error on key input fd"<<std::endl;
 	else if(code == MP_INPUT_DEAD) {
-	    MSG_ERR("Dead key input on fd\n");
+	    mpxp_err<<"Dead key input on fd"<<std::endl;
 	    mp_input_rm_key_fd(priv,priv.key_fds[i].opaque);
 	}
     }
@@ -847,7 +849,7 @@ static mp_cmd_t* mp_input_read_keys(libinput_t& priv,int tim) {
 	// key pushed
 	if(code & MP_KEY_DOWN) {
 	    if(priv.num_key_down > MP_MAX_KEY_DOWN) {
-		MSG_ERR("Too much key down at the same time\n");
+		mpxp_err<<"Too much key down at the same time"<<std::endl;
 		continue;
 	    }
 	    code &= ~MP_KEY_DOWN;
@@ -871,7 +873,7 @@ static mp_cmd_t* mp_input_read_keys(libinput_t& priv,int tim) {
 	}
 	if(j == priv.num_key_down) { // key was not in the down keys : add it
 	    if(priv.num_key_down > MP_MAX_KEY_DOWN) {
-		MSG_ERR("Too much key down at the same time\n");
+		mpxp_err<<"Too much key down at the same time"<<std::endl;
 		continue;
 	    }
 	    priv.key_down[priv.num_key_down] = code;
@@ -937,7 +939,7 @@ static mp_cmd_t* mp_input_read_cmds(libinput_t& priv) {
 	char* cmd;
 	r = mp_input_read_cmd(&priv.cmd_fds[i],&cmd);
 	if(r < 0) {
-	    if(r == MP_INPUT_ERROR) MSG_ERR("Error on cmd fd\n");
+	    if(r == MP_INPUT_ERROR) mpxp_err<<"Error on cmd fd"<<std::endl;
 	    else if(r == MP_INPUT_DEAD) priv.cmd_fds[i].flags |= MP_FD_DEAD;
 	    continue;
 	}
@@ -1136,11 +1138,11 @@ static int mp_input_parse_config(libinput_t& priv,const char *file) {
     fd = open(file,O_RDONLY);
 
     if(fd < 0) {
-	MSG_ERR("Can't open input config file %s : %s\n",file,strerror(errno));
+	mpxp_err<<"Can't open input config file "<<file<<" : "<<strerror(errno)<<std::endl;
 	return 0;
     }
 
-    MSG_V("Parsing input config file %s\n",file);
+    mpxp_v<<"Parsing input config file "<<file<<std::endl;
 
     while(1) {
 	if(! eof && bs < BS_MAX-1) {
@@ -1148,7 +1150,7 @@ static int mp_input_parse_config(libinput_t& priv,const char *file) {
 	    r = read(fd,buffer+bs,BS_MAX-1-bs);
 	    if(r < 0) {
 		if(errno == EINTR) continue;
-		MSG_ERR("Error while reading input config file %s : %s\n",file,strerror(errno));
+		mpxp_err<<"Error while reading input config file "<<file<<" : "<<strerror(errno)<<std::endl;
 		mp_input_free_binds(binds);
 		close(fd);
 		return 0;
@@ -1161,7 +1163,7 @@ static int mp_input_parse_config(libinput_t& priv,const char *file) {
 	}
 	// Empty buffer : return
 	if(bs <= 1) {
-	    MSG_INFO("Input config file %s parsed : %d binds\n",file,n_binds);
+	    mpxp_info<<"Input config file "<<file<<" parsed : "<<n_binds<<" binds"<<std::endl;
 	    if(binds) priv.cmd_binds = binds;
 	    close(fd);
 	    return 1;
@@ -1196,8 +1198,8 @@ static int mp_input_parse_config(libinput_t& priv,const char *file) {
 	    for(end = iter; end[0] != '\0' && strchr(SPACE_CHAR,end[0]) == NULL ; end++)/*NOTHING */;
 	    if(end[0] == '\0') { // Key name don't fit in the buffer
 		if(buffer == iter) {
-		    if(eof && (buffer-iter) == bs) MSG_ERR("Unfinished binding %s\n",iter);
-		    else MSG_ERR("Buffer is too small for this key name : %s\n",iter);
+		    if(eof && (buffer-iter) == bs) mpxp_err<<"Unfinished binding "<<iter<<std::endl;
+		    else mpxp_err<<"Buffer is too small for this key name : "<<iter<<std::endl;
 		    mp_input_free_binds(binds);
 		    return 0;
 		}
@@ -1209,7 +1211,7 @@ static int mp_input_parse_config(libinput_t& priv,const char *file) {
 	    strncpy(name,iter,end-iter);
 	    name[end-iter] = '\0';
 	    if(! mp_input_get_input_from_name(name,keys)) {
-		MSG_ERR("Unknown key '%s'\n",name);
+		mpxp_err<<"Unknown key '"<<name<<"'"<<std::endl;
 		mp_input_free_binds(binds);
 		close(fd);
 		return 0;
@@ -1222,9 +1224,9 @@ static int mp_input_parse_config(libinput_t& priv,const char *file) {
 	    // Found new line
 	    if(iter[0] == '\n' || iter[0] == '\r') {
 		int i;
-		MSG_ERR("No command found for key %s" ,mp_input_get_key_name(priv,keys[0]));
-		for(i = 1; keys[i] != 0 ; i++) MSG_ERR("-%s",mp_input_get_key_name(priv,keys[i]));
-		MSG_ERR("\n");
+		mpxp_err<<"No command found for key "<<mp_input_get_key_name(priv,keys[0]);
+		for(i = 1; keys[i] != 0 ; i++) mpxp_err<<std::left<<mp_input_get_key_name(priv,keys[i]);
+		mpxp_err<<std::endl;
 		keys[0] = 0;
 		if(iter > buffer) {
 		    memmove(buffer,iter,bs- (iter-buffer));
@@ -1235,7 +1237,7 @@ static int mp_input_parse_config(libinput_t& priv,const char *file) {
 	    for(end = iter ; end[0] != '\n' && end[0] != '\r' && end[0] != '\0' ; end++)/* NOTHING */;
 	    if(end[0] == '\0' && ! (eof && ((end+1) - buffer) == bs)) {
 		if(iter == buffer) {
-		    MSG_ERR("Buffer is too small for command %s\n",buffer);
+		    mpxp_err<<"Buffer is too small for command "<<buffer<<std::endl;
 		    mp_input_free_binds(binds);
 		    close(fd);
 		    return 0;
@@ -1258,7 +1260,7 @@ static int mp_input_parse_config(libinput_t& priv,const char *file) {
 	    continue;
 	}
     }
-    MSG_ERR("What are we doing here ?\n");
+    mpxp_err<<"What are we doing here ?"<<std::endl;
     close(fd);
     return 0;
 }
@@ -1272,13 +1274,13 @@ static void mp_input_init(libinput_t& priv) {
     if(! mp_input_parse_config(priv,file)) {
 	// Try global conf dir
 	file = CONFDIR "/input.conf";
-	if(! mp_input_parse_config(priv,file)) MSG_WARN("Falling back on default (hardcoded) input config\n");
+	if(! mp_input_parse_config(priv,file)) mpxp_warn<<"Falling back on default (hardcoded) input config"<<std::endl;
     }
 #ifdef HAVE_JOYSTICK
     if(libinput_conf.use_joystick) {
 	any_t* joystick_fd;
 	joystick_fd = mp_input_joystick_open(libinput_conf.js_dev);
-	if(!joystick_fd) MSG_ERR("Can't init input joystick with using: %s\n",libinput_conf.js_dev);
+	if(!joystick_fd) mpxp_err<<"Can't init input joystick with using: "<<libinput_conf.js_dev<<std::endl;
 	else		 mp_input_add_key_fd(priv,joystick_fd,1,mp_input_joystick_read,(mp_close_func_t)mp_input_joystick_close);
     }
 #endif
@@ -1298,11 +1300,11 @@ static void mp_input_init(libinput_t& priv) {
 #endif
     if(libinput_conf.in_file) {
 	struct stat st;
-	if(stat(libinput_conf.in_file,&st)) MSG_ERR("Can't stat %s: %s\n",libinput_conf.in_file,strerror(errno));
+	if(stat(libinput_conf.in_file,&st)) mpxp_err<<"Can't stat: "<<libinput_conf.in_file<<" : "<<strerror(errno)<<std::endl;
 	else {
 	    priv.in_file_fd = open(libinput_conf.in_file,(S_ISFIFO(st.st_mode)?O_RDWR:O_RDONLY)|O_NONBLOCK);
 	    if(priv.in_file_fd >= 0) mp_input_add_cmd_fd(priv,&priv,1,NULL,(mp_close_func_t)close);
-	    else MSG_ERR("Can't open %s: %s\n",libinput_conf.in_file,strerror(errno));
+	    else mpxp_err<<"Can't open: "<<libinput_conf.in_file<<" : "<<strerror(errno)<<std::endl;
 	}
     }
     priv.in_file_fd = 0;
@@ -1354,8 +1356,8 @@ void mp_input_register_options(m_config_t& cfg) {
 void mp_input_print_keys(libinput_t& handle) {
     unsigned i;
     UNUSED(handle);
-    MSG_INFO("List of available KEYS:\n");
-    for(i= 0; key_names[i].name != NULL ; i++) MSG_INFO("%s\n",key_names[i].name);
+    mpxp_info<<"List of available KEYS:"<<std::endl;
+    for(i= 0; key_names[i].name != NULL ; i++) mpxp_info<<key_names[i].name<<std::endl;
 }
 
 static int mp_input_print_key_list(libinput_t& handle) {
@@ -1365,12 +1367,12 @@ static int mp_input_print_key_list(libinput_t& handle) {
 
 void mp_input_print_binds(libinput_t& handle) {
     unsigned i,j;
-    MSG_INFO("List of available key bindings:\n");
+    mpxp_info<<"List of available key bindings:"<<std::endl;
     for(i=0; def_cmd_binds[i].cmd != NULL ; i++) {
 	for(j=0;def_cmd_binds[i].input[j] != 0;j++) {
-	    MSG_INFO("  %-20s",mp_input_get_key_name(handle,def_cmd_binds[i].input[j]));
+	    mpxp_info<<std::left<<"  "<<mp_input_get_key_name(handle,def_cmd_binds[i].input[j]);
 	}
-	MSG_INFO(" %s\n",def_cmd_binds[i].cmd);
+	mpxp_info<<" "<<def_cmd_binds[i].cmd<<std::endl;
     }
 }
 
@@ -1380,9 +1382,9 @@ void mp_input_print_cmds(libinput_t& handle) {
     const char* type;
 
     UNUSED(handle);
-    MSG_INFO("List of available input commands:\n");
+    mpxp_info<<"List of available input commands:"<<std::endl;
     for(i = 0; (cmd = &mp_cmds[i])->name != NULL ; i++) {
-	MSG_INFO("  %-20.20s",cmd->name);
+	mpxp_info<<std::left<<"  "<<cmd->name;
 	for(j= 0 ; j < MP_CMD_MAX_ARGS && cmd->args[j].type != -1 ; j++) {
 	    switch(cmd->args[j].type) {
 		case MP_CMD_ARG_INT:
@@ -1397,10 +1399,10 @@ void mp_input_print_cmds(libinput_t& handle) {
 		default:
 		    type = "??";
 	    }
-	    if(j+1 > cmd->nargs) MSG_INFO(" [%s]",type);
-	    else MSG_INFO(" %s",type);
+	    if(j+1 > cmd->nargs) mpxp_info<<" ["<<type<<"]";
+	    else mpxp_info<<" "<<type;
 	}
-	MSG_INFO("\n");
+	mpxp_info<<std::endl;
     }
 }
 
