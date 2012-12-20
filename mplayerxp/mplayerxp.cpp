@@ -874,7 +874,7 @@ char* MPXPSystem::init_output_subsystems() {
 
     if(!vo_inited){
 	mpxp_fatal<<MSGTR_InvalidVOdriver<<": "<<(mp_conf.video_driver?mp_conf.video_driver:"?")<<std::endl;
-	exit_player(MSGTR_Exit_error);
+	exit_player(MSGTR_Fatal_error);
     }
 
 // check audio_out driver name:
@@ -995,7 +995,7 @@ void MPXPSystem::print_stream_formats() const {
 	if(isprint(c[0]) && isprint(c[1]) && isprint(c[2]) && isprint(c[3]))
 	    mpxp_info<<std::setw(4)<<c;
 	else
-	    mpxp_info<<std::hex<<std::setw(8)<<fmt;
+	    mpxp_info<<std::hex<<std::setfill('0')<<std::setw(8)<<fmt;
     }
     if(sh_audio) {
 	mpxp_info<<" Audio=";
@@ -1004,7 +1004,7 @@ void MPXPSystem::print_stream_formats() const {
 	if(isprint(c[0]) && isprint(c[1]) && isprint(c[2]) && isprint(c[3]))
 	    mpxp_info<<std::setw(4)<<c;
 	else
-	    mpxp_info<<std::hex<<std::setw(8)<<fmt;
+	    mpxp_info<<std::hex<<std::setfill('0')<<std::setw(8)<<fmt;
     }
     mpxp_info<<std::endl;
 }
@@ -1131,8 +1131,8 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
 	if(isprint(fmt[0]) && isprint(fmt[1]) && isprint(fmt[2]) && isprint(fmt[3]))
 	    mpxp_err<<std::setw(4)<<" '"<<fmt<<"'!"<<std::endl;
 	else
-	    mpxp_err<<" 0x"<<std::hex<<std::setprecision(8)<<sh_audio->wtag<<"!"<<std::endl;
-	MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("win32codecs.conf"));
+	    mpxp_err<<" 0x"<<std::hex<<std::setfill('0')<<std::setw(8)<<sh_audio->wtag<<"!"<<std::endl;
+	mpxp_hint<<get_path("win32codecs.conf")<<":"<<MSGTR_TryUpgradeCodecsConfOrRTFM<<std::endl;
 	d_audio->sh=NULL;
 	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
     } else {
@@ -1145,7 +1145,7 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
 	ao_inited=mpxp_context().audio().output->_register(mp_conf.audio_driver?mp_conf.audio_driver:"",0);
 	if (ao_inited!=MPXP_Ok){
 	    mpxp_fatal<<MSGTR_InvalidAOdriver<<": "<<mp_conf.audio_driver<<std::endl;
-	    exit_player(MSGTR_Exit_error);
+	    exit_player(MSGTR_Fatal_error);
 	}
     }
 }
@@ -1193,8 +1193,8 @@ MPXP_Rc MPXPSystem::find_vcodec(void) {
 	if(isprint(fmt[0]) && isprint(fmt[1]) && isprint(fmt[2]) && isprint(fmt[3]))
 	    mpxp_err<<std::setw(4)<<" '"<<fmt<<"'!"<<std::endl;
 	else
-	    mpxp_err<<" 0x"<<std::hex<<std::setw(8)<<sh_video->fourcc<<std::endl;
-	MSG_HINT( MSGTR_TryUpgradeCodecsConfOrRTFM,get_path("win32codecs.conf"));
+	    mpxp_err<<" 0x"<<std::hex<<std::setfill('0')<<std::setw(8)<<sh_video->fourcc<<std::endl;
+	mpxp_hint<<get_path("win32codecs.conf")<<":"<<MSGTR_TryUpgradeCodecsConfOrRTFM<<std::endl;
 	d_video->sh = NULL;
 	sh_video = reinterpret_cast<sh_video_t*>(d_video->sh);
 	rc=MPXP_False;
@@ -1245,7 +1245,7 @@ int MPXPSystem::configure_audio() {
     } else {
 	mpxp_v<<"AF_pre: "<<samplerate<<"Hz "<<channels<<"ch ("
 		<<ao_format_name(format)<<
-		") afmt="<<std::hex<<std::setw(8)<<format
+		") afmt="<<std::hex<<std::setfill('0')<<std::setw(8)<<format
 		<<" sh_audio_min="<<sh_audio->audio_out_minsize<<std::endl;
     }
 
@@ -1301,8 +1301,8 @@ void MPXPSystem::print_audio_status() const {
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
     /* PAINT audio OSD */
     unsigned ipts,rpts;
-    unsigned char h,m,s,rh,rm,rs;
-    static char ph=0,pm=0,ps=0;
+    unsigned h,m,s,rh,rm,rs;
+    static unsigned ph=0,pm=0,ps=0;
     ipts=(unsigned)(sh_audio->timer-mpxp_context().audio().output->get_delay());
     rpts=_demuxer->movi_length-ipts;
     h = ipts/3600;
@@ -1314,8 +1314,12 @@ void MPXPSystem::print_audio_status() const {
 	rs = rpts%60;
     } else rh=rm=rs=0;
     if(h != ph || m != pm || s != ps) {
-	mpxp_status<<std::setw(2)<<">"<<h<<":"<<m<<":"<<s
-		<<"("<<rh<<":"<<rm<<":"<<rs<<")\r";
+	mpxp_status<<">"<<std::setfill('0')<<std::setw(2)<<h<<":"
+			<<std::setfill('0')<<std::setw(2)<<m<<":"
+			<<std::setfill('0')<<std::setw(2)<<s<<"("
+			<<std::setfill('0')<<std::setw(2)<<rh<<":"
+			<<std::setfill('0')<<std::setw(2)<<rm<<":"
+			<<std::setfill('0')<<std::setw(2)<<rs<<")\r";
 	mpxp_status.flush();
 	ph = h;
 	pm = m;
@@ -1775,7 +1779,7 @@ play_next_file:
     if(mp_conf.stream_dump)
 	if((stream_dump_type=dump_parse(mp_conf.stream_dump))==0) {
 	    mpxp_err<<"Wrong dump parameters! Unable to continue"<<std::endl;
-	    exit_player(MSGTR_Exit_error);
+	    exit_player(MSGTR_Fatal_error);
 	}
 
     if(stream_dump_type) mp_conf.s_cache_size=0;
@@ -1812,7 +1816,7 @@ play_next_file:
     MP_UNIT("demux_open");
 
     if(!input_state.after_dvdmenu) MPXPSys.assign_demuxer(Demuxer::open(stream,MPXPSys.libinput(),mp_conf.audio_id,mp_conf.video_id,mp_conf.dvdsub_id));
-    if(!MPXPSys.demuxer()) goto goto_next_file; // exit_player(MSGTR_Exit_error); // ERROR
+    if(!MPXPSys.demuxer()) goto goto_next_file;
     input_state.after_dvdmenu=0;
 
     Demuxer_Stream *d_video;
@@ -1841,7 +1845,7 @@ play_next_file:
 
     if(!sh_video && !sh_audio) {
 	mpxp_fatal<<"No stream found"<<std::endl;
-	goto goto_next_file; // exit_player(MSGTR_Exit_error);
+	goto goto_next_file;
     }
 
 //================== Read SUBTITLES (DVD & TEXT) ==========================
@@ -1959,7 +1963,7 @@ main:
 
     if(mp_conf.force_fps && sh_video) {
 	sh_video->fps=mp_conf.force_fps;
-	MSG_INFO(MSGTR_FPSforced,sh_video->fps,1.0f/sh_video->fps);
+	mpxp_info<<MSGTR_FPSforced<<sh_video->fps<<"(fitme: "<<1.0f/sh_video->fps<<")"<<std::endl;
     }
 
     /* Init timers and benchmarking */
@@ -2003,7 +2007,7 @@ main:
 	<<")"<<std::endl;
 //==================== START PLAYING =======================
 
-    mpxp_ok<<MSGTR_StartPlaying<<std::endl;
+    mpxp_ok<<MSGTR_Playing<<"..."<<std::endl;
 
     mpxp_print_flush();
     while(!eof){

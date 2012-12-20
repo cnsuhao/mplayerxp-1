@@ -78,14 +78,19 @@ static const char help_text[]=
 #ifndef MSGTR_Exit_eof
 #define MSGTR_Exit_eof "End of file"
 #endif
-#ifndef MSGTR_Exit_error
-#define MSGTR_Exit_error "Fatal error"
-#endif
-#ifndef MSGTR_IntBySignal
-#define MSGTR_IntBySignal "\nMPlayerXP interrupted by signal %d in module: %s \n"
+#ifndef MSGTR_Fatal_error
+#define MSGTR_Fatal_error "Fatal error"
 #endif
 #ifndef MSGTR_NoHomeDir
-#define MSGTR_NoHomeDir "Can't find HOME dir\n"
+#define MSGTR_NoHomeDir "Can't find HOME dir"
+#endif
+#ifndef MSGTR_Playing
+#define MSGTR_Playing "Playing"
+#endif
+
+
+#ifndef MSGTR_IntBySignal
+#define MSGTR_IntBySignal "\nMPlayerXP interrupted by signal %d in module: %s \n"
 #endif
 #ifndef MSGTR_GetpathProblem
 #define MSGTR_GetpathProblem "get_path(\"config\") problem\n"
@@ -142,7 +147,7 @@ static const char help_text[]=
 #define MSGTR_CantFindAudioCodec "Can't find codec for audio format"
 #endif
 #ifndef MSGTR_TryUpgradeCodecsConfOrRTFM
-#define MSGTR_TryUpgradeCodecsConfOrRTFM "*** Try to upgrade %s from etc/codecs.conf\n*** If it's still not OK, then read DOCS/codecs.html!\n"
+#define MSGTR_TryUpgradeCodecsConfOrRTFM "*** Try to upgrade it from etc/codecs.conf*** If it's still not OK, then read DOCS/codecs.html!"
 #endif
 #ifndef MSGTR_CouldntInitAudioCodec
 #define MSGTR_CouldntInitAudioCodec "Couldn't initialize audio codec! -> nosound\n"
@@ -173,9 +178,6 @@ static const char help_text[]=
 #endif
 #ifndef MSGTR_CannotInitAO
 #define MSGTR_CannotInitAO "couldn't open/init audio device -> NOSOUND\n"
-#endif
-#ifndef MSGTR_StartPlaying
-#define MSGTR_StartPlaying "Start playing...\n"
 #endif
 
 #ifndef MSGTR_CODEC_INITAL_AV_RESYNC
@@ -213,14 +215,11 @@ static const char help_text[]=
 #endif
 //#define MSGTR_NoGui "MPlayer was compiled WITHOUT GUI support!\n"
 //#define MSGTR_GuiNeedsX "MPlayer GUI requires X11!\n"
-#ifndef MSGTR_Playing
-#define MSGTR_Playing "Playing"
-#endif
 #ifndef MSGTR_NoSound
 #define MSGTR_NoSound "Audio: no sound!!!\n"
 #endif
 #ifndef MSGTR_FPSforced
-#define MSGTR_FPSforced "FPS forced to be %5.3f  (ftime: %5.3f)\n"
+#define MSGTR_FPSforced "FPS forced to be"
 #endif
 
 // open.c, stream.c:
@@ -293,13 +292,13 @@ static const char help_text[]=
 
 // demuxer.c, demux_*.c:
 #ifndef MSGTR_AudioStreamRedefined
-#define MSGTR_AudioStreamRedefined "Warning! Audio stream header %d redefined!\n"
+#define MSGTR_AudioStreamRedefined "Warning! Audio stream header redefined"
 #endif
 #ifndef MSGTR_VideoStreamRedefined
-#define MSGTR_VideoStreamRedefined "Warning! video stream header %d redefined!\n"
+#define MSGTR_VideoStreamRedefined "Warning! video stream header redefined"
 #endif
 #ifndef MSGTR_SubStreamRedefined
-#define MSGTR_SubStreamRedefined "Warning! subtitle stream id: %d redefined!\n"
+#define MSGTR_SubStreamRedefined "Warning! subtitle stream header redefined"
 #endif
 #ifndef MSGTR_TooManyAudioInBuffer
 #define MSGTR_TooManyAudioInBuffer "\nDEMUXER: Too many (%d in %d bytes) audio packets in the buffer!\n"
@@ -310,45 +309,8 @@ static const char help_text[]=
 #ifndef MSGTR_MaybeNI
 #define MSGTR_MaybeNI "(maybe you play a non-interleaved stream/file or the codec failed)\n"
 #endif
-#ifndef MSGTR_DetectedFILMfile
-#define MSGTR_DetectedFILMfile "Detected FILM file format!\n"
-#endif
-#ifndef MSGTR_DetectedFLIfile
-#define MSGTR_DetectedFLIfile "Detected FLI file format!\n"
-#endif
-#ifndef MSGTR_DetectedROQfile
-#define MSGTR_DetectedROQfile "Detected RoQ file format!\n"
-#endif
-#ifndef MSGTR_DetectedREALfile
-#define MSGTR_DetectedREALfile "Detected REAL file format!\n"
-#endif
-#ifndef MSGTR_DetectedAVIfile
-#define MSGTR_DetectedAVIfile "Detected AVI file format!\n"
-#endif
-#ifndef MSGTR_DetectedASFfile
-#define MSGTR_DetectedASFfile "Detected ASF file format!\n"
-#endif
-#ifndef MSGTR_DetectedMPEGPESfile
-#define MSGTR_DetectedMPEGPESfile "Detected MPEG-PES file format!\n"
-#endif
-#ifndef MSGTR_DetectedMPEGPSfile
-#define MSGTR_DetectedMPEGPSfile "Detected MPEG-PS file format!\n"
-#endif
-#ifndef MSGTR_DetectedMPEGESfile
-#define MSGTR_DetectedMPEGESfile "Detected MPEG-ES file format!\n"
-#endif
-#ifndef MSGTR_DetectedQTMOVfile
-#define MSGTR_DetectedQTMOVfile "Detected QuickTime/MOV file format!\n"
-#endif
-#ifndef MSGTR_MissingMpegVideo
-#define MSGTR_MissingMpegVideo "Missing MPEG video stream!? contact the author, it may be a bug :(\n"
-#endif
-#ifndef MSGTR_InvalidMPEGES
-#define MSGTR_InvalidMPEGES "Invalid MPEG-ES stream??? contact the author, it may be a bug :(\n"
-#endif
 #ifndef MSGTR_FormatNotRecognized
-#define MSGTR_FormatNotRecognized "============= Sorry, this file format not recognized/supported ===============\n"\
-				  "=== If this file is an AVI, ASF or MPEG stream, please contact the author! ===\n"
+#define MSGTR_FormatNotRecognized "============= Sorry, this file format not recognized/supported ==============="
 #endif
 #ifndef MSGTR_MissingVideoStream
 #define MSGTR_MissingVideoStream "No video stream found!\n"

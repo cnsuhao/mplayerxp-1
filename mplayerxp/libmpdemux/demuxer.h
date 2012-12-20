@@ -13,7 +13,6 @@ using namespace mpxp;
 struct demuxer_driver_t;
 extern int index_mode;  /**< -1=untouched  0=don't use index  1=use (geneate) index */
 namespace mpxp {
-#define MAX_PACK_BYTES (0x1024*0x1024*4)
 /** Describes interface to stream associated with this demuxer */
     enum {
 	DS_PIN=RND_NUMBER1+RND_CHAR1
@@ -22,7 +21,8 @@ namespace mpxp {
     enum {
 	MAX_A_STREAMS	=256,
 	MAX_V_STREAMS	=256,
-	MAX_S_STREAMS	=256
+	MAX_S_STREAMS	=256,
+	MAX_PACK_BYTES	=(0x1024*0x1024*4)
     };
 
 /** Describes demuxer (demultiplexer) of movie */

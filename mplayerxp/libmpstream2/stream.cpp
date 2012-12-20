@@ -2,6 +2,7 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 #include <algorithm>
+#include <iomanip>
 
 #include <ctype.h>
 #include <errno.h>
@@ -101,7 +102,7 @@ Stream::Stream(Stream::type_e t)
 }
 
 Stream::~Stream(){
-    MSG_INFO("\n*** free_stream(drv:%s) called [errno: %s]***\n",driver_info->mrl,strerror(errno));
+    mpxp_info<<std::endl<<"*** free_stream(drv:"<<driver_info->mrl<<") called [errno: "<<strerror(errno)<<"]***"<<std::endl;
     if(driver) close();
     delete driver;
 }
@@ -131,18 +132,18 @@ MPXP_Rc		Stream::open(libinput_t&libinput,const std::string& filename,int* ff)
     for(i=0;sdrivers[i]!=&null_stream;i++) {
 	mrl_len=strlen(sdrivers[i]->mrl);
 	if(filename.substr(0,mrl_len)==sdrivers[i]->mrl||sdrivers[i]->mrl[0]=='*') {
-	    MSG_V("Opening %s ... ",sdrivers[i]->mrl);
+	    mpxp_v<<"[Stream]: "<<"Opening "<<sdrivers[i]->mrl<<" ... ";
 	    Stream_Interface* drv = sdrivers[i]->query_interface(libinput);
 	    if(sdrivers[i]->mrl[0]=='*') mrl_len=0;
 	    if(drv->open(&filename[mrl_len],0)==MPXP_Ok) {
-		MSG_V("OK\n");
+		mpxp_v<<"Ok"<<std::endl;
 		*ff = file_format;
 		driver_info=sdrivers[i];
 		driver=drv;
 		return MPXP_Ok;
 	    }
 	    delete drv;
-	    MSG_V("False\n");
+	    mpxp_v<<"False"<<std::endl;
 	}
     }
     Stream_Interface* file_drv = file_stream.query_interface(libinput);
@@ -171,10 +172,12 @@ int	Stream::read(any_t* mem,int total) {
     /* ------------ print packet ---------- */
     unsigned j,_lim=std::min(sp.len,20);
     int printable=1;
-    MSG_DBG4("%i=[stream.read(%p,%i)] [%016X]",rc,sp.buf,sp.len,_off);
+    mpxp_dbg4<<rc<<"=[stream.read("<<sp.buf<<","<<sp.len<<")] ["<<std::hex<<std::setfill('0')<<std::setw(16)<<_off<<"] ";
     for(j=0;j<_lim;j++) { if(!isprint(sp.buf[j])) { printable=0; break; } }
-	if(printable) MSG_DBG4("%20s",sp.buf);
-	else for(j=0;j<_lim;j++) MSG_DBG4("%02X ",(unsigned char)sp.buf[j]);
+	if(printable) mpxp_dbg4<<std::string(sp.buf).substr(0,20);
+	else for(j=0;j<_lim;j++)
+	    mpxp_dbg4<<std::hex<<std::setfill('0')<<std::setw(2)<<(unsigned)sp.buf[j];
+    mpxp_dbg4<<std::endl;
     /* ------------ print packet ---------- */
     return rc;
 }
@@ -243,9 +246,9 @@ unsigned int Stream::read_int24(){
 void Stream::print_drivers()
 {
     unsigned i;
-    MSG_INFO("Available stream drivers:\n");
+    mpxp_info<<"[Stream]: "<<"Available stream drivers:"<<std::endl;
     for(i=0;sdrivers[i];i++) {
-	MSG_INFO(" %-10s %s\n",sdrivers[i]->mrl,sdrivers[i]->descr);
+	mpxp_info<<std::left<<std::setw(10)<<sdrivers[i]->mrl<<" "<<sdrivers[i]->descr<<std::endl;
     }
 }
 
