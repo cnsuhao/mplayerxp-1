@@ -31,8 +31,8 @@ using namespace mpxp;
 #include "postproc/vf_scale.h"
 #include "vo_msg.h"
 
-#define RGB 0
-#define BGR 1
+static const int RGB=0;
+static const int BGR=1;
 typedef struct sshot_priv_s {
     int cspace;
     unsigned image_width,image_height;

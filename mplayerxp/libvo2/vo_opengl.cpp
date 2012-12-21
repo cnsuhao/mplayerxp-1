@@ -113,6 +113,12 @@ OpenGL_VO_Interface::~OpenGL_VO_Interface() {
 #endif
 }
 
+static const float FOVY=60.0f;
+static const float ASPECT=1.0f;
+static const float Z_NEAR=0.1f;
+static const float Z_FAR=100.0f;
+static const float Z_CAMERA=0.869f;
+
 void OpenGL_VO_Interface::gl_init_fb(unsigned x,unsigned y,unsigned d_width,unsigned d_height) const
 {
     float sx = (GLfloat) (d_width-x) / (GLfloat)image_width;
@@ -123,12 +129,6 @@ void OpenGL_VO_Interface::gl_init_fb(unsigned x,unsigned y,unsigned d_width,unsi
     glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-#define FOVY     60.0f
-#define ASPECT   1.0f
-#define Z_NEAR   0.1f
-#define Z_FAR    100.0f
-#define Z_CAMERA 0.869f
 
     glViewport(x, y, d_width, d_height);
     glMatrixMode(GL_PROJECTION);

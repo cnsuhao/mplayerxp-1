@@ -14,7 +14,6 @@ using namespace mpxp;
 #include "sub.h"
 #include "libmpsub/spudec.h"
 #include "libmpsub/vobsub.h"
-#define MSGT_CLASS MSGT_OSD
 #include "vo_msg.h"
 
 namespace mpxp {
@@ -79,7 +78,7 @@ static void vo_draw_text_from_buffer(const Video_Output*vo,unsigned idx,mp_osd_o
     }
 }
 
-#define OSD_NAV_BOX_ALPHA 0x7f
+static const int OSD_NAV_BOX_ALPHA=0x7f;
 static void vo_update_nav (mp_osd_obj_t *obj, int dxs, int dys) {
   int len;
 

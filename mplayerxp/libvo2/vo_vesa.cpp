@@ -188,8 +188,8 @@ VESA_VO_Interface::VESA_VO_Interface(const std::string& arg)
 	}
 }
 
-#define MOVIE_MODE (MODE_ATTR_COLOR | MODE_ATTR_GRAPHICS)
-#define FRAME_MODE (MODE_WIN_RELOCATABLE | MODE_WIN_WRITEABLE)
+static const int MOVIE_MODE=(MODE_ATTR_COLOR | MODE_ATTR_GRAPHICS);
+static const int FRAME_MODE=(MODE_WIN_RELOCATABLE | MODE_WIN_WRITEABLE);
 
 void VESA_VO_Interface::vesa_term()
 {
@@ -308,8 +308,8 @@ MPXP_Rc VESA_VO_Interface::select_frame(unsigned idx)
     return MPXP_Ok;
 }
 
-#define SUBDEV_NODGA     0x00000001UL
-#define SUBDEV_FORCEDGA  0x00000002UL
+static const int SUBDEV_NODGA=0x00000001UL;
+static const int SUBDEV_FORCEDGA=0x00000002UL;
 std::string VESA_VO_Interface::parse_sub_device(const std::string& sd)
 {
     subdev_flags = 0;

@@ -102,7 +102,7 @@ using namespace mpxp;
 //#define BUGGY_SDL //defined by configure
 
 /* MONITOR_ASPECT MUST BE FLOAT */
-#define MONITOR_ASPECT 4.0/3.0
+static const float MONITOR_ASPECT=4.0f/3.0f;
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -819,7 +819,7 @@ MPXP_Rc SDL_VO_Interface::setup_surface(unsigned idx)
  *  returns : doesn't return
  **/
 
-#define shift_key (event.key.keysym.mod==(KMOD_LSHIFT||KMOD_RSHIFT))
+static int shift_key(const SDL_Event& event) { return  event.key.keysym.mod==(KMOD_LSHIFT||KMOD_RSHIFT); }
 uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
     SDL_Event event;
     SDLKey keypressed = SDLKey(0);
@@ -863,7 +863,7 @@ uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
 		    case SDLK_DOWN: mplayer_put_key(KEY_DOWN); break;
 		    case SDLK_LEFT: mplayer_put_key(KEY_LEFT); break;
 		    case SDLK_RIGHT: mplayer_put_key(KEY_RIGHT); break;
-		    case SDLK_LESS: mplayer_put_key(shift_key?'>':'<'); break;
+		    case SDLK_LESS: mplayer_put_key(shift_key(event)?'>':'<'); break;
 		    case SDLK_GREATER: mplayer_put_key('>'); break;
 		    case SDLK_ASTERISK:
 		    case SDLK_KP_MULTIPLY:
@@ -915,8 +915,8 @@ uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
 			/*case SDLK_o: mplayer_put_key('o');break;
 			case SDLK_SPACE: mplayer_put_key(' ');break;
 			case SDLK_p: mplayer_put_key('p');break;*/
-			case SDLK_7: mplayer_put_key(shift_key?'/':'7');
-			case SDLK_PLUS: mplayer_put_key(shift_key?'*':'+');
+			case SDLK_7: mplayer_put_key(shift_key(event)?'/':'7');
+			case SDLK_PLUS: mplayer_put_key(shift_key(event)?'*':'+');
 			case SDLK_KP_PLUS: mplayer_put_key('+');break;
 			case SDLK_MINUS:
 			case SDLK_KP_MINUS: mplayer_put_key('-');break;
@@ -938,7 +938,7 @@ uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
 			case SDLK_DOWN: mplayer_put_key(KEY_DOWN);break;
 			case SDLK_LEFT: mplayer_put_key(KEY_LEFT);break;
 			case SDLK_RIGHT: mplayer_put_key(KEY_RIGHT);break;
-			case SDLK_LESS: mplayer_put_key(shift_key?'>':'<'); break;
+			case SDLK_LESS: mplayer_put_key(shift_key(event)?'>':'<'); break;
 			case SDLK_GREATER: mplayer_put_key('>'); break;
 			case SDLK_ASTERISK:
 			case SDLK_KP_MULTIPLY: mplayer_put_key('*'); break;
@@ -957,7 +957,6 @@ uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
     }
     return retval;
 }
-#undef shift_key
 
 /* Erase (paint it black) the rectangle specified by x, y, w and h in the surface
    or overlay which is used for OSD

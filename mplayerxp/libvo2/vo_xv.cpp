@@ -134,10 +134,10 @@ void Xv_VO_Interface::set_gamma_correction( ) const
 }
 
 /* unofficial gatos extensions */
-#define FOURCC_RGBA32	0x41424752
-#define FOURCC_RGB24	0x00000000
-#define FOURCC_RGBT16	0x54424752
-#define FOURCC_RGB16	0x32424752
+static const uint32_t FOURCC_RGBA32	=0x41424752;
+static const uint32_t FOURCC_RGB24	=0x00000000;
+static const uint32_t FOURCC_RGBT16	=0x54424752;
+static const uint32_t FOURCC_RGB16	=0x32424752;
 
 /*
  * connect to server, create and map window,
