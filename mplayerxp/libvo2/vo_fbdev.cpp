@@ -9,7 +9,7 @@ using namespace mpxp;
  * Some idea and code borrowed from Chris Lawrence's ppmtofb-0.27
  */
 
-#define FBDEV "fbdev: "
+static const char* FBDEV= "fbdev: ";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,15 +39,6 @@ using namespace mpxp;
 #include "vo_msg.h"
 
 namespace mpxp {
-#define PRINT_LINENUM //MSG_DBG2(" at line %d\n", line_num)
-
-#define MAX_NR_TOKEN	16
-
-#define MAX_LINE_LEN	1000
-
-#define RET_EOF		-1
-#define RET_EOL		-2
-
 struct priv_conf_t {
     priv_conf_t();
     ~priv_conf_t() {}
@@ -60,9 +51,14 @@ struct priv_conf_t {
     const char*		monitor_dotclock_str;
 };
 static priv_conf_t priv_conf;
+static const int MAX_NR_TOKEN=16;
+static const int MAX_LINE_LEN=1000;
+static const int RET_EOF=-1;
+static const int RET_EOL=-2;
 priv_conf_t::priv_conf_t() {
     mode_cfgfile = "/etc/priv.modes";
 }
+inline void PRINT_LINENUM(int line_num) { mpxp_dbg2<<" at line "<<line_num<<std::endl; }
 
 static const mrl_config_t fbconf[]=
 {
@@ -88,11 +84,11 @@ typedef struct {
 static int __FASTCALL__ validate_mode(fb_mode_t *m)
 {
     if (!m->xres) {
-	MSG_V("needs geometry ");
+	mpxp_v<<"needs geometry ";
 	return 0;
     }
     if (!m->pixclock) {
-	MSG_V("needs timings ");
+	mpxp_v<<"needs timings ";
 	return 0;
     }
     return 1;
@@ -213,26 +209,26 @@ MPXP_Rc FBDev_VO_Interface::fb_preinit()
 
     if (!priv_conf.dev_name && !(priv_conf.dev_name = getenv("FRAMEBUFFER")))
     priv_conf.dev_name = (char *)"/dev/fb0";
-    MSG_DBG2(FBDEV "using %s\n", priv_conf.dev_name);
+    mpxp_dbg2<<FBDEV<< "using "<<priv_conf.dev_name<<std::endl;
 
-    if ((dev_fd = open(priv_conf.dev_name, O_RDWR)) == -1) {
-	MSG_ERR(FBDEV "Can't open %s: %s\n", priv_conf.dev_name, strerror(errno));
+    if ((dev_fd = ::open(priv_conf.dev_name, O_RDWR)) == -1) {
+	mpxp_err<<FBDEV<< "Can't open "<<priv_conf.dev_name<<": "<<strerror(errno)<<std::endl;
 	goto err_out;
     }
-    if (ioctl(dev_fd, FBIOGET_VSCREENINFO, &vinfo)) {
-	MSG_ERR(FBDEV "Can't get VSCREENINFO: %s\n", strerror(errno));
+    if (::ioctl(dev_fd, FBIOGET_VSCREENINFO, &vinfo)) {
+	mpxp_err<<FBDEV<< "Can't get VSCREENINFO: "<<strerror(errno)<<std::endl;
 	goto err_out_fd;
     }
     orig_vinfo = vinfo;
 
-    if ((tty_fd = open("/dev/tty", O_RDWR)) < 0) {
-	MSG_DBG2(FBDEV "notice: Can't open /dev/tty: %s\n", strerror(errno));
+    if ((tty_fd = ::open("/dev/tty", O_RDWR)) < 0) {
+	mpxp_dbg2<<FBDEV<< "notice: Can't open /dev/tty: "<<strerror(errno)<<std::endl;
     }
 
     bpp = vinfo.bits_per_pixel;
 
     if (bpp == 8 && !vo_conf.dbpp) {
-	MSG_ERR(FBDEV "8 bpp output is not supported.\n");
+	mpxp_err<<FBDEV<< "8 bpp output is not supported."<<std::endl;
 	goto err_out_tty_fd;
     }
 
@@ -242,7 +238,7 @@ MPXP_Rc FBDev_VO_Interface::fb_preinit()
 
     if (vo_conf.dbpp) {
 	if (vo_conf.dbpp != 15 && vo_conf.dbpp != 16 && vo_conf.dbpp != 24 && vo_conf.dbpp != 32) {
-		MSG_ERR(FBDEV "can't switch to %d bpp\n", vo_conf.dbpp);
+		mpxp_err<<FBDEV<< "can't switch to "<<vo_conf.dbpp<<" bpp"<<std::endl;
 		goto err_out_fd;
 	}
 	bpp = vo_conf.dbpp;
@@ -252,10 +248,10 @@ MPXP_Rc FBDev_VO_Interface::fb_preinit()
     fb_works = MPXP_Ok;
     return MPXP_Ok;
 err_out_tty_fd:
-    close(tty_fd);
+    ::close(tty_fd);
     tty_fd = -1;
 err_out_fd:
-    close(dev_fd);
+    ::close(dev_fd);
     dev_fd = -1;
 err_out:
     fb_preinit_done = 1;
@@ -266,27 +262,27 @@ err_out:
 FBDev_VO_Interface::~FBDev_VO_Interface()
 {
     unsigned i;
-    MSG_V(FBDEV "uninit\n");
+    mpxp_v<<FBDEV<< "uninit"<<std::endl;
     if (cmap_changed) {
-	if (ioctl(dev_fd, FBIOPUTCMAP, &oldcmap))
-		MSG_ERR(FBDEV "Can't restore original cmap\n");
+	if (::ioctl(dev_fd, FBIOPUTCMAP, &oldcmap))
+	    mpxp_err<<FBDEV<< "Can't restore original cmap"<<std::endl;
 	cmap_changed = 0;
     }
     for(i=0;i<total_fr;i++) delete next_frame[i];
-    if (ioctl(dev_fd, FBIOGET_VSCREENINFO, &vinfo))
-	MSG_ERR(FBDEV "ioctl FBIOGET_VSCREENINFO: %s\n", strerror(errno));
+    if (::ioctl(dev_fd, FBIOGET_VSCREENINFO, &vinfo))
+	mpxp_err<<FBDEV<< "ioctl FBIOGET_VSCREENINFO: "<<strerror(errno)<<std::endl;
     orig_vinfo.xoffset = vinfo.xoffset;
     orig_vinfo.yoffset = vinfo.yoffset;
-    if (ioctl(dev_fd, FBIOPUT_VSCREENINFO, &orig_vinfo))
-	MSG_ERR(FBDEV "Can't reset original fb_var_screeninfo: %s\n", strerror(errno));
+    if (::ioctl(dev_fd, FBIOPUT_VSCREENINFO, &orig_vinfo))
+	mpxp_err<<FBDEV<< "Can't reset original fb_var_screeninfo: "<<strerror(errno)<<std::endl;
     if (tty_fd >= 0) {
-		if (ioctl(tty_fd, KDSETMODE, KD_TEXT) < 0)
-		    MSG_ERR(FBDEV "Can't restore text mode: %s\n", strerror(errno));
+		if (::ioctl(tty_fd, KDSETMODE, KD_TEXT) < 0)
+		    mpxp_err<<FBDEV<< "Can't restore text mode: "<<strerror(errno)<<std::endl;
     }
     if (vt_doit) vt_set_textarea(0, orig_vinfo.yres);
-    close(tty_fd);
-    close(dev_fd);
-    if(frame_buffer) munmap(frame_buffer,size);
+    ::close(tty_fd);
+    ::close(dev_fd);
+    if(frame_buffer) ::munmap(frame_buffer,size);
 #ifdef CONFIG_VIDIX
     if(vidix) delete vidix;
 #endif
@@ -301,7 +297,7 @@ FBDev_VO_Interface::FBDev_VO_Interface(const std::string& arg)
 #ifdef CONFIG_VIDIX
     if(!vidix_name.empty()) {
 	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
-	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name.c_str());
+	    mpxp_err<<"Cannot initialze vidix with '"<<vidix_name<<"' argument"<<std::endl;
 	    exit_player("Vidix error");
 	}
     }
@@ -317,7 +313,7 @@ int FBDev_VO_Interface::get_token(int num)
     char c;
 
     if (num >= MAX_NR_TOKEN) {
-	MSG_ERR("get_token(): max >= MAX_NR_TOKEN!");
+	mpxp_err<<"get_token(): max >= MAX_NR_TOKEN!"<<std::endl;
 	goto out_eof;
     }
 
@@ -361,30 +357,24 @@ out_eol:
 static fb_mode_t *fb_modes = NULL;
 static int nr_modes = 0;
 
+static void check_in_mode_def(int in_mode_def) { if (!in_mode_def) mpxp_dbg2<<"'needs 'mode' first"<<std::endl; }
+
 int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
 {
-#define CHECK_IN_MODE_DEF\
-	do {\
-	if (!in_mode_def) {\
-		MSG_DBG2("'needs 'mode' first");\
-		goto err_out_print_linenum;\
-	}\
-	} while (0)
-
     fb_mode_t *_mode = NULL;
     char *endptr;	// strtoul()...
     int in_mode_def = 0;
     int tmp, i;
 
-    MSG_DBG2("Reading %s: ", cfgfile.c_str());
+    mpxp_dbg2<<"Reading "<<cfgfile.c_str()<<":";
 
     if ((fp = fopen(cfgfile.c_str(), "r")) == NULL) {
-	MSG_ERR("can't open '%s': %s\n", cfgfile.c_str(), strerror(errno));
+	mpxp_err<<"can't open '"<<cfgfile<<"': "<<strerror(errno)<<std::endl;
 	return -1;
     }
 
     if ((line = new char[MAX_LINE_LEN + 1]) == NULL) {
-	MSG_ERR("can't get memory for 'line': %s\n", strerror(errno));
+	mpxp_err<<"can't get memory for 'line': "<<strerror(errno)<<std::endl;
 	return -2;
     }
 
@@ -400,15 +390,14 @@ int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
 	if (tmp == RET_EOL) continue;
 	if (!strcmp(token[0], "mode")) {
 	    if (in_mode_def) {
-		MSG_ERR("'endmode' required");
+		mpxp_err<<"'endmode' required"<<std::endl;
 		goto err_out_print_linenum;
 	    }
 	    if (!validate_mode(_mode)) goto err_out_not_valid;
 	    loop_enter:
 	    if (!(fb_modes = (fb_mode_t *) mp_realloc(fb_modes,
 				sizeof(fb_mode_t) * (nr_modes + 1)))) {
-		MSG_ERR("can't mp_realloc 'fb_modes' (nr_modes = %d):"
-			" %s\n", nr_modes, strerror(errno));
+		mpxp_err<<"can't mp_realloc 'fb_modes' (nr_modes = "<<nr_modes<<")"<<strerror(errno)<<std::endl;
 		goto err_out;
 	    }
 	    _mode=fb_modes + nr_modes;
@@ -418,17 +407,17 @@ int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
 	    if (get_token(1) < 0) goto err_out_parse_error;
 	    for (i = 0; i < nr_modes - 1; i++) {
 		if (!strcmp(token[0], fb_modes[i].name)) {
-		    MSG_ERR("mode name '%s' isn't unique", token[0]);
+		    mpxp_err<<"mode name '"<<token[0]<<"' isn't unique"<<std::endl;
 		    goto err_out_print_linenum;
 		}
 	    }
 	    if (!(_mode->name = mp_strdup(token[0]))) {
-		MSG_ERR("can't mp_strdup -> 'name': %s\n", strerror(errno));
+		mpxp_err<<"can't mp_strdup -> 'name': "<<strerror(errno)<<std::endl;
 		goto err_out;
 	    }
 	    in_mode_def = 1;
 	} else if (!strcmp(token[0], "geometry")) {
-	    CHECK_IN_MODE_DEF;
+	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
 	    if (get_token(5) < 0) goto err_out_parse_error;
 	    _mode->xres = strtoul(token[0], &endptr, 0);
 	    if (*endptr) goto err_out_parse_error;
@@ -441,7 +430,7 @@ int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
 	    _mode->depth = strtoul(token[4], &endptr, 0);
 	    if (*endptr) goto err_out_parse_error;
 	} else if (!strcmp(token[0], "timings")) {
-	    CHECK_IN_MODE_DEF;
+	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
 	    if (get_token(7) < 0) goto err_out_parse_error;
 	    _mode->pixclock = strtoul(token[0], &endptr, 0);
 	    if (*endptr) goto err_out_parse_error;
@@ -458,47 +447,47 @@ int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
 	    _mode->vslen = strtoul(token[6], &endptr, 0);
 	    if (*endptr) goto err_out_parse_error;
 	} else if (!strcmp(token[0], "endmode")) {
-	    CHECK_IN_MODE_DEF;
+	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
 	    in_mode_def = 0;
 	} else if (!strcmp(token[0], "accel")) {
-	    CHECK_IN_MODE_DEF;
+	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
 	    if (get_token(1) < 0) goto err_out_parse_error;
 	    /*
 	     * it's only used for text acceleration
 	     * so we just ignore it.
 	     */
 	} else if (!strcmp(token[0], "hsync")) {
-	    CHECK_IN_MODE_DEF;
+	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
 	    if (get_token(1) < 0) goto err_out_parse_error;
 	    if (!strcmp(token[0], "low")) _mode->sync &= ~FB_SYNC_HOR_HIGH_ACT;
 	    else if(!strcmp(token[0], "high")) _mode->sync |= FB_SYNC_HOR_HIGH_ACT;
 	    else goto err_out_parse_error;
 	} else if (!strcmp(token[0], "vsync")) {
-	    CHECK_IN_MODE_DEF;
+	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
 	    if (get_token(1) < 0) goto err_out_parse_error;
 	    if (!strcmp(token[0], "low")) _mode->sync &= ~FB_SYNC_VERT_HIGH_ACT;
 	    else if(!strcmp(token[0], "high")) _mode->sync |= FB_SYNC_VERT_HIGH_ACT;
 	    else goto err_out_parse_error;
 	} else if (!strcmp(token[0], "csync")) {
-	    CHECK_IN_MODE_DEF;
+	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
 	    if (get_token(1) < 0) goto err_out_parse_error;
 	    if (!strcmp(token[0], "low")) _mode->sync &= ~FB_SYNC_COMP_HIGH_ACT;
 	    else if(!strcmp(token[0], "high")) _mode->sync |= FB_SYNC_COMP_HIGH_ACT;
 	    else goto err_out_parse_error;
 	} else if (!strcmp(token[0], "extsync")) {
-	    CHECK_IN_MODE_DEF;
+	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
 	    if (get_token(1) < 0) goto err_out_parse_error;
 	    if (!strcmp(token[0], "false")) _mode->sync &= ~FB_SYNC_EXT;
 	    else if(!strcmp(token[0], "true")) _mode->sync |= FB_SYNC_EXT;
 	    else goto err_out_parse_error;
 	} else if (!strcmp(token[0], "laced")) {
-	    CHECK_IN_MODE_DEF;
+	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
 	    if (get_token(1) < 0) goto err_out_parse_error;
 	    if (!strcmp(token[0], "false")) _mode->vmode = FB_VMODE_NONINTERLACED;
 	    else if (!strcmp(token[0], "true")) _mode->vmode = FB_VMODE_INTERLACED;
 	    else goto err_out_parse_error;
 	} else if (!strcmp(token[0], "double")) {
-	    CHECK_IN_MODE_DEF;
+	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
 	    if (get_token(1) < 0) goto err_out_parse_error;
 	    if (!strcmp(token[0], "false")) ;
 	    else if (!strcmp(token[0], "true")) _mode->vmode = FB_VMODE_DOUBLE;
@@ -507,14 +496,14 @@ int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
     }
     if (!validate_mode(_mode)) goto err_out_not_valid;
 out:
-    MSG_DBG2("%d modes\n", nr_modes);
+    mpxp_dbg2<<nr_modes<<"modes"<<std::endl;
     delete line;
     fclose(fp);
     return nr_modes;
 err_out_parse_error:
-    MSG_ERR("parse error");
+    mpxp_err<<"parse error";
 err_out_print_linenum:
-    PRINT_LINENUM;
+    PRINT_LINENUM(line_num);
 err_out:
     if (fb_modes) {
 	delete fb_modes;
@@ -525,7 +514,7 @@ err_out:
     delete fp;
     return -2;
 err_out_not_valid:
-    MSG_ERR("previous mode is not correct");
+    mpxp_err<<"previous mode is not correct"<<std::endl;
     goto err_out_print_linenum;
 }
 
@@ -572,21 +561,21 @@ static int __FASTCALL__ mode_works(fb_mode_t *m, range_t *hfreq, range_t *vfreq,
     float d = dcf(m);
     int ret = 1;
 
-    MSG_DBG2(FBDEV "mode %dx%d:", m->xres, m->yres);
+    mpxp_dbg2<<FBDEV<< "mode "<<m->xres<<"x"<<m->yres<<":";
     if (!in_range(hfreq, h)) {
 	ret = 0;
-	MSG_DBG2(" hsync out of range.");
+	mpxp_dbg2<<" hsync out of range.";
     }
     if (!in_range(vfreq, v)) {
 	ret = 0;
-	MSG_DBG2(" vsync out of range.");
+	mpxp_dbg2<<" vsync out of range.";
     }
     if (!in_range(dotclock, d)) {
 	ret = 0;
-	MSG_DBG2(" dotclock out of range.");
+	mpxp_dbg2<<" dotclock out of range.";
     }
-    if (ret)	MSG_DBG2(" hsync, vsync, dotclock ok.\n");
-    else	MSG_DBG2("\n");
+    if (ret)	mpxp_dbg2<<" hsync, vsync, dotclock ok."<<std::endl;
+    else	mpxp_dbg2<<std::endl;
     return ret;
 }
 
@@ -597,7 +586,7 @@ static fb_mode_t * __FASTCALL__ find_best_mode(unsigned xres, unsigned yres, ran
     fb_mode_t *best = fb_modes;
     fb_mode_t *curr;
 
-    MSG_DBG2(FBDEV "Searching for first working mode\n");
+    mpxp_dbg2<<FBDEV<< "Searching for first working mode"<<std::endl;
 
     for (i = 0; i < nr_modes; i++, best++)
 	if (mode_works(best, hfreq, vfreq, dotclock))
@@ -608,34 +597,32 @@ static fb_mode_t * __FASTCALL__ find_best_mode(unsigned xres, unsigned yres, ran
     if (i == nr_modes - 1)
 	return best;
 
-    MSG_DBG2(FBDEV "First working mode: %dx%d\n", best->xres, best->yres);
-    MSG_DBG2(FBDEV "Searching for better modes\n");
+    mpxp_dbg2<<FBDEV<< "First working mode: "<<best->xres<<"x"<<best->yres<<std::endl;
+    mpxp_dbg2<<FBDEV<< "Searching for better modes"<<std::endl;
 
     for (curr = best + 1; i < nr_modes - 1; i++, curr++) {
 	if (!mode_works(curr, hfreq, vfreq, dotclock))
 	continue;
 
-	MSG_DBG2(FBDEV);
+	mpxp_dbg2<<FBDEV;
 
 	if (best->xres < xres || best->yres < yres) {
 	    if (curr->xres > best->xres || curr->yres > best->yres) {
-		MSG_DBG2("better than %dx%d, which is too small.\n",
-			best->xres, best->yres);
+		mpxp_dbg2<<"better than "<<best->xres<<"x"<<best->yres<<", which is too small."<<std::endl;
 		best = curr;
-	    } else MSG_DBG2("too small.\n");
+	    } else mpxp_dbg2<<"too small."<<std::endl;
 	} else if (curr->xres == best->xres && curr->yres == best->yres &&
 			vsf(curr) > vsf(best)) {
-	    MSG_DBG2("faster screen refresh.\n");
+	    mpxp_dbg2<<"faster screen refresh."<<std::endl;
 	    best = curr;
 	} else if ((curr->xres <= best->xres && curr->yres <= best->yres) &&
 				(curr->xres >= xres && curr->yres >= yres)) {
-	    MSG_DBG2("better than %dx%d, which is too large.\n",
-			best->xres, best->yres);
+	    mpxp_dbg2<<"better than "<<best->xres<<"x"<<best->yres<<", which is too large."<<std::endl;
 	    best = curr;
 	} else {
-	    if (curr->xres < xres || curr->yres < yres) MSG_DBG2("too small.\n");
-	    else if (curr->xres > best->xres || curr->yres > best->yres) MSG_DBG2("too large.\n");
-	    else MSG_DBG2("it's worse, don't know why.\n");
+	    if (curr->xres < xres || curr->yres < yres) mpxp_dbg2<<"too small."<<std::endl;
+	    else if (curr->xres > best->xres || curr->yres > best->yres) mpxp_dbg2<<"too large."<<std::endl;
+	    else mpxp_dbg2<<"it's worse, don't know why."<<std::endl;
 	}
     }
     return best;
@@ -704,7 +691,7 @@ static range_t * __FASTCALL__ str2range(const char *s)
     for (i = 0; *endptr; i++) {
 	if (*s == ',') goto out_err;
 	if (!(r = (range_t *) mp_realloc(r, sizeof(*r) * (i + 2)))) {
-	    MSG_ERR("can't mp_realloc 'r'\n");
+	    mpxp_err<<"can't mp_realloc 'r'"<<std::endl;
 	    return NULL;
 	}
 	tmp_min = strtod(s, const_cast<char**>(&endptr));
@@ -768,7 +755,7 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
 
     red = new uint16_t [cols];
     if(!red) {
-	MSG_ERR("Can't allocate red palette with %d entries.\n", cols);
+	mpxp_err<<"Can't allocate red palette with "<<cols<<" entries"<<std::endl;
 	return NULL;
     }
     for(i=0; i< rcols; i++)
@@ -776,7 +763,7 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
 
     green = new uint16_t[cols];
     if(!green) {
-	MSG_ERR("Can't allocate green palette with %d entries.\n", cols);
+	mpxp_err<<"Can't allocate green palette with "<<cols<<" entries"<<std::endl;
 	delete red;
 	return NULL;
     }
@@ -785,7 +772,7 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
 
     blue = new uint16_t[cols];
     if(!blue) {
-	MSG_ERR("Can't allocate blue palette with %d entries.\n", cols);
+	mpxp_err<<"Can't allocate blue palette with "<<cols<<" entries"<<std::endl;
 	delete red;
 	delete green;
 	return NULL;
@@ -795,7 +782,7 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
 
     cmap = new struct fb_cmap;
     if(!cmap) {
-	MSG_ERR("Can't allocate color map\n");
+	mpxp_err<<"Can't allocate color map"<<std::endl;
 	delete red;
 	delete green;
 	delete blue;
@@ -814,69 +801,57 @@ static struct fb_cmap * __FASTCALL__ make_directcolor_cmap(struct fb_var_screeni
 
 void FBDev_VO_Interface::lots_of_printf() const
 {
-    MSG_V(FBDEV "var info:\n");
-    MSG_V(FBDEV "xres: %u\n", vinfo.xres);
-    MSG_V(FBDEV "yres: %u\n", vinfo.yres);
-    MSG_V(FBDEV "xres_virtual: %u\n", vinfo.xres_virtual);
-    MSG_V(FBDEV "yres_virtual: %u\n", vinfo.yres_virtual);
-    MSG_V(FBDEV "xoffset: %u\n", vinfo.xoffset);
-    MSG_V(FBDEV "yoffset: %u\n", vinfo.yoffset);
-    MSG_V(FBDEV "bits_per_pixel: %u\n", vinfo.bits_per_pixel);
-    MSG_V(FBDEV "grayscale: %u\n", vinfo.grayscale);
-    MSG_V(FBDEV "red: %lu %lu %lu\n",
-		(unsigned long) vinfo.red.offset,
-		(unsigned long) vinfo.red.length,
-		(unsigned long) vinfo.red.msb_right);
-    MSG_V(FBDEV "green: %lu %lu %lu\n",
-		(unsigned long) vinfo.green.offset,
-		(unsigned long) vinfo.green.length,
-		(unsigned long) vinfo.green.msb_right);
-    MSG_V(FBDEV "blue: %lu %lu %lu\n",
-		(unsigned long) vinfo.blue.offset,
-		(unsigned long) vinfo.blue.length,
-		(unsigned long) vinfo.blue.msb_right);
-    MSG_V(FBDEV "transp: %lu %lu %lu\n",
-		(unsigned long) vinfo.transp.offset,
-		(unsigned long) vinfo.transp.length,
-		(unsigned long) vinfo.transp.msb_right);
-    MSG_V(FBDEV "nonstd: %u\n", vinfo.nonstd);
-    MSG_DBG2(FBDEV "activate: %u\n", vinfo.activate);
-    MSG_DBG2(FBDEV "height: %u\n", vinfo.height);
-    MSG_DBG2(FBDEV "width: %u\n", vinfo.width);
-    MSG_DBG2(FBDEV "accel_flags: %u\n", vinfo.accel_flags);
-    MSG_DBG2(FBDEV "timing:\n");
-    MSG_DBG2(FBDEV "pixclock: %u\n", vinfo.pixclock);
-    MSG_DBG2(FBDEV "left_margin: %u\n", vinfo.left_margin);
-    MSG_DBG2(FBDEV "right_margin: %u\n", vinfo.right_margin);
-    MSG_DBG2(FBDEV "upper_margin: %u\n", vinfo.upper_margin);
-    MSG_DBG2(FBDEV "lower_margin: %u\n", vinfo.lower_margin);
-    MSG_DBG2(FBDEV "hsync_len: %u\n", vinfo.hsync_len);
-    MSG_DBG2(FBDEV "vsync_len: %u\n", vinfo.vsync_len);
-    MSG_DBG2(FBDEV "sync: %u\n", vinfo.sync);
-    MSG_DBG2(FBDEV "vmode: %u\n", vinfo.vmode);
-    MSG_V(FBDEV "fix info:\n");
-    MSG_V(FBDEV "framebuffer size: %d bytes\n", finfo.smem_len);
-    MSG_V(FBDEV "type: %lu\n", (unsigned long) finfo.type);
-    MSG_V(FBDEV "type_aux: %lu\n", (unsigned long) finfo.type_aux);
-    MSG_V(FBDEV "visual: %lu\n", (unsigned long) finfo.visual);
-    MSG_V(FBDEV "line_length: %lu bytes\n", (unsigned long) finfo.line_length);
-    MSG_DBG2(FBDEV "id: %.16s\n", finfo.id);
-    MSG_DBG2(FBDEV "smem_start: %p\n", (any_t*) finfo.smem_start);
-    MSG_DBG2(FBDEV "xpanstep: %u\n", finfo.xpanstep);
-    MSG_DBG2(FBDEV "ypanstep: %u\n", finfo.ypanstep);
-    MSG_DBG2(FBDEV "ywrapstep: %u\n", finfo.ywrapstep);
-    MSG_DBG2(FBDEV "mmio_start: %p\n", (any_t*) finfo.mmio_start);
-    MSG_DBG2(FBDEV "mmio_len: %u bytes\n", finfo.mmio_len);
-    MSG_DBG2(FBDEV "accel: %u\n", finfo.accel);
-    MSG_V(FBDEV "priv.bpp: %d\n", bpp);
-    MSG_V(FBDEV "priv.real_bpp: %d\n", real_bpp);
-    MSG_V(FBDEV "priv.pixel_size: %d bytes\n",pixel_size);
-    MSG_V(FBDEV "other:\n");
-    MSG_V(FBDEV "priv.in_width: %d\n", in_width);
-    MSG_V(FBDEV "priv.in_height: %d\n", in_height);
-    MSG_V(FBDEV "priv.out_width: %d\n", out_width);
-    MSG_V(FBDEV "priv.out_height: %d\n", out_height);
-    MSG_V(FBDEV "priv.last_row: %d\n", last_row);
+    mpxp_v<<FBDEV<< "var info:"<<std::endl;
+    mpxp_v<<FBDEV<< "xres: "<<vinfo.xres<<std::endl;
+    mpxp_v<<FBDEV<< "yres: "<<vinfo.yres<<std::endl;
+    mpxp_v<<FBDEV<< "xres_virtual: "<<vinfo.xres_virtual<<std::endl;
+    mpxp_v<<FBDEV<< "yres_virtual: "<<vinfo.yres_virtual<<std::endl;
+    mpxp_v<<FBDEV<< "xoffset: "<<vinfo.xoffset<<std::endl;
+    mpxp_v<<FBDEV<< "yoffset: "<<vinfo.yoffset<<std::endl;
+    mpxp_v<<FBDEV<< "bits_per_pixel: "<<vinfo.bits_per_pixel<<std::endl;
+    mpxp_v<<FBDEV<< "grayscale: "<<vinfo.grayscale<<std::endl;
+    mpxp_v<<FBDEV<< "red: "<<vinfo.red.offset<<" "<<vinfo.red.length<<" "<<vinfo.red.msb_right<<std::endl;
+    mpxp_v<<FBDEV<< "green: "<<vinfo.green.offset<<" "<<vinfo.green.length<<" "<<vinfo.green.msb_right<<std::endl;
+    mpxp_v<<FBDEV<< "blue: "<<vinfo.blue.offset<<" "<<vinfo.blue.length<<" "<<vinfo.blue.msb_right<<std::endl;
+    mpxp_v<<FBDEV<< "transp: "<<vinfo.transp.offset<<" "<<vinfo.transp.length<<" "<<vinfo.transp.msb_right<<std::endl;
+    mpxp_v<<FBDEV<< "nonstd: "<<vinfo.nonstd<<std::endl;
+    mpxp_dbg2<<FBDEV<< "activate: "<<vinfo.activate<<std::endl;
+    mpxp_dbg2<<FBDEV<< "height: "<<vinfo.height<<std::endl;
+    mpxp_dbg2<<FBDEV<< "width: "<<vinfo.width<<std::endl;
+    mpxp_dbg2<<FBDEV<< "accel_flags: "<<vinfo.accel_flags<<std::endl;
+    mpxp_dbg2<<FBDEV<< "timing:"<<std::endl;
+    mpxp_dbg2<<FBDEV<< "pixclock: "<<vinfo.pixclock<<std::endl;
+    mpxp_dbg2<<FBDEV<< "left_margin: "<<vinfo.left_margin<<std::endl;
+    mpxp_dbg2<<FBDEV<< "right_margin: "<<vinfo.right_margin<<std::endl;
+    mpxp_dbg2<<FBDEV<< "upper_margin: "<<vinfo.upper_margin<<std::endl;
+    mpxp_dbg2<<FBDEV<< "lower_margin: "<<vinfo.lower_margin<<std::endl;
+    mpxp_dbg2<<FBDEV<< "hsync_len: "<<vinfo.hsync_len<<std::endl;
+    mpxp_dbg2<<FBDEV<< "vsync_len: "<<vinfo.vsync_len<<std::endl;
+    mpxp_dbg2<<FBDEV<< "sync: "<<vinfo.sync<<std::endl;
+    mpxp_dbg2<<FBDEV<< "vmode: "<<vinfo.vmode<<std::endl;
+    mpxp_v<<FBDEV<< "fix info:"<<std::endl;
+    mpxp_v<<FBDEV<< "framebuffer size: "<<finfo.smem_len<<" bytes"<<std::endl;
+    mpxp_v<<FBDEV<< "type: "<<finfo.type<<std::endl;
+    mpxp_v<<FBDEV<< "type_aux: "<<finfo.type_aux<<std::endl;
+    mpxp_v<<FBDEV<< "visual: "<<finfo.visual<<std::endl;
+    mpxp_v<<FBDEV<< "line_length: "<<finfo.line_length<<" bytes"<<std::endl;
+    mpxp_dbg2<<FBDEV<< "id: "<<finfo.id<<std::endl;
+    mpxp_dbg2<<FBDEV<< "smem_start: "<<std::hex<<reinterpret_cast<any_t*>(finfo.smem_start)<<std::endl;
+    mpxp_dbg2<<FBDEV<< "xpanstep: "<<finfo.xpanstep<<std::endl;
+    mpxp_dbg2<<FBDEV<< "ypanstep: "<<finfo.ypanstep<<std::endl;
+    mpxp_dbg2<<FBDEV<< "ywrapstep: "<<finfo.ywrapstep<<std::endl;
+    mpxp_dbg2<<FBDEV<< "mmio_start: "<<std::hex<<reinterpret_cast<any_t*>(finfo.mmio_start)<<std::endl;
+    mpxp_dbg2<<FBDEV<< "mmio_len: "<<finfo.mmio_len<<" bytes"<<std::endl;
+    mpxp_dbg2<<FBDEV<< "accel: "<<finfo.accel<<std::endl;
+    mpxp_v<<FBDEV<< "priv.bpp: "<<bpp<<std::endl;
+    mpxp_v<<FBDEV<< "priv.real_bpp: "<<real_bpp<<std::endl;
+    mpxp_v<<FBDEV<< "priv.pixel_size: "<<pixel_size<<" bytes"<<std::endl;
+    mpxp_v<<FBDEV<< "other:"<<std::endl;
+    mpxp_v<<FBDEV<< "priv.in_width: "<<in_width<<std::endl;
+    mpxp_v<<FBDEV<< "priv.in_height: "<<in_height<<std::endl;
+    mpxp_v<<FBDEV<< "priv.out_width: "<<out_width<<std::endl;
+    mpxp_v<<FBDEV<< "priv.out_height: "<<out_height<<std::endl;
+    mpxp_v<<FBDEV<< "priv.last_row: "<<last_row<<std::endl;
 }
 
 void FBDev_VO_Interface::vt_set_textarea(int u, int l)
@@ -888,9 +863,9 @@ void FBDev_VO_Interface::vt_set_textarea(int u, int l)
     int lrow = l / 16;
 
     if (mp_conf.verbose > 1)
-	MSG_DBG2(FBDEV "vt_set_textarea(%d,%d): %d,%d\n", u, l, urow, lrow);
-    fprintf(vt_fp, "\33[%d;%dr\33[%d;%dH", urow, lrow, lrow, 0);
-    fflush(vt_fp);
+	mpxp_dbg2<<FBDEV<< "vt_set_textarea("<<u<<","<<l<<"): "<<urow<<","<<lrow<<std::endl;
+    ::fprintf(vt_fp, "\33[%d;%dr\33[%d;%dH", urow, lrow, lrow, 0);
+    ::fflush(vt_fp);
 }
 
 MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_width,
@@ -904,13 +879,13 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
     UNUSED(title);
     srcFourcc = format;
     if((int)pre_init_err == MPXP_Error) {
-	MSG_ERR(FBDEV "Internal fatal error: init() was called before preinit()\n");
+	mpxp_err<<FBDEV<< "Internal fatal error: init() was called before preinit()"<<std::endl;
 	return MPXP_False;
     }
     if (pre_init_err!=MPXP_Ok) return MPXP_False;
 
     if (priv_conf.mode_name && !flags&VOFLAG_MODESWITCHING) {
-	MSG_ERR(FBDEV "-fbmode can only be used with -vm\n");
+	mpxp_err<<FBDEV<< "-fbmode can only be used with -vm"<<std::endl;
 	return MPXP_False;
     }
     if ((flags&VOFLAG_MODESWITCHING) && (parse_fbmode_cfg(priv_conf.mode_cfgfile) < 0)) return MPXP_False;
@@ -927,7 +902,7 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
 
     if (priv_conf.mode_name) {
 	if (!(mode = find_mode_by_name(priv_conf.mode_name))) {
-	    MSG_ERR(FBDEV "can't find requested video mode\n");
+	    mpxp_err<<FBDEV<< "can't find requested video mode"<<std::endl;
 	    return MPXP_False;
 	}
 	fb_mode2fb_vinfo(mode, &vinfo);
@@ -936,18 +911,16 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
 	monitor_vfreq = str2range(priv_conf.monitor_vfreq_str);
 	monitor_dotclock = str2range(priv_conf.monitor_dotclock_str);
 	if (!monitor_hfreq || !monitor_vfreq || !monitor_dotclock) {
-	    MSG_ERR(FBDEV "you have to specify the capabilities of"
-			" the monitor.\n");
+	    mpxp_err<<FBDEV<< "you have to specify the capabilities of the monitor."<<std::endl;
 	    return MPXP_False;
 	}
 	if (!(mode = find_best_mode(out_width, out_height,
 					monitor_hfreq, monitor_vfreq,
 					monitor_dotclock))) {
-	    MSG_ERR(FBDEV "can't find best video mode\n");
+	    mpxp_err<<FBDEV<< "can't find best video mode"<<std::endl;
 	    return MPXP_False;
 	}
-	MSG_ERR(FBDEV "using mode %dx%d @ %.1fHz\n", mode->xres,
-		mode->yres, vsf(mode));
+	mpxp_err<<FBDEV<< "using mode "<<mode->xres<<"x"<<mode->yres<<" @ "<<vsf(mode)<<"Hz"<<std::endl;
 	fb_mode2fb_vinfo(mode, &vinfo);
     }
     bpp_we_want = bpp;
@@ -955,16 +928,16 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
     vinfo.xres_virtual = vinfo.xres;
     vinfo.yres_virtual = vinfo.yres;
 
-    if (tty_fd >= 0 && ioctl(tty_fd, KDSETMODE, KD_GRAPHICS) < 0) {
-	MSG_DBG2(FBDEV "Can't set graphics mode: %s\n", strerror(errno));
-	close(tty_fd);
+    if (tty_fd >= 0 && ::ioctl(tty_fd, KDSETMODE, KD_GRAPHICS) < 0) {
+	mpxp_dbg2<<FBDEV<< "Can't set graphics mode: "<<strerror(errno)<<std::endl;
+	::close(tty_fd);
 	tty_fd = -1;
     }
 
-    if (ioctl(dev_fd, FBIOPUT_VSCREENINFO, &vinfo)) {
-	MSG_ERR(FBDEV "Can't put VSCREENINFO: %s\n", strerror(errno));
-	if (tty_fd >= 0 && ioctl(tty_fd, KDSETMODE, KD_TEXT) < 0) {
-	    MSG_ERR(FBDEV "Can't restore text mode: %s\n", strerror(errno));
+    if (::ioctl(dev_fd, FBIOPUT_VSCREENINFO, &vinfo)) {
+	mpxp_err<<FBDEV<< "Can't put VSCREENINFO: "<<strerror(errno)<<std::endl;
+	if (tty_fd >= 0 && ::ioctl(tty_fd, KDSETMODE, KD_TEXT) < 0) {
+	    mpxp_err<<FBDEV<< "Can't restore text mode: "<<strerror(errno)<<std::endl;
 	}
 	return MPXP_False;
     }
@@ -974,8 +947,7 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
     vinfo.blue.length;
     bpp = (pixel_size == 4) ? 32 : real_bpp;
     if (bpp_we_want != bpp)
-	MSG_ERR(FBDEV "requested %d bpp, got %d bpp!!!\n",
-		bpp_we_want, bpp);
+	mpxp_err<<FBDEV<< "requested "<<bpp_we_want<<" bpp, got "<<bpp<<" bpp!!!"<<std::endl;
 
     switch (bpp) {
 	case 32:
@@ -994,8 +966,7 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
     }
 
     if ((flags&VOFLAG_FLIPPING) && ((((pixel_format & 0xff) + 7) / 8) != pixel_size)) {
-	MSG_ERR(FBDEV "Flipped output with depth conversion is not "
-			"supported\n");
+	mpxp_err<<FBDEV<< "Flipped output with depth conversion is not supported"<<std::endl;
 	return MPXP_False;
     }
 
@@ -1003,29 +974,29 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
     yres = vinfo.yres;
     last_row = (xres-out_height) / 2;
 
-    if (ioctl(dev_fd, FBIOGET_FSCREENINFO, &finfo)) {
-	MSG_ERR(FBDEV "Can't get FSCREENINFO: %s\n", strerror(errno));
+    if (::ioctl(dev_fd, FBIOGET_FSCREENINFO, &finfo)) {
+	mpxp_err<<FBDEV<< "Can't get FSCREENINFO: "<<strerror(errno)<<std::endl;
 	return MPXP_False;
     }
 
     lots_of_printf();
 
     if (finfo.type != FB_TYPE_PACKED_PIXELS) {
-	MSG_ERR(FBDEV "type %d not supported\n", finfo.type);
+	mpxp_err<<FBDEV<< "type "<<finfo.type<<" not supported"<<std::endl;
 	return MPXP_False;
     }
 
     switch (finfo.visual) {
 	case FB_VISUAL_TRUECOLOR: break;
 	case FB_VISUAL_DIRECTCOLOR:
-	    MSG_DBG2(FBDEV "creating cmap for directcolor\n");
-	    if (ioctl(dev_fd, FBIOGETCMAP, &oldcmap)) {
-		MSG_ERR(FBDEV "can't get cmap: %s\n",strerror(errno));
+	    mpxp_dbg2<<FBDEV<< "creating cmap for directcolor"<<std::endl;
+	    if (::ioctl(dev_fd, FBIOGETCMAP, &oldcmap)) {
+		mpxp_err<<FBDEV<< "can't get cmap: "<<strerror(errno)<<std::endl;
 		return MPXP_False;
 	    }
 	    if (!(cmap = make_directcolor_cmap(&vinfo))) return MPXP_False;
-	    if (ioctl(dev_fd, FBIOPUTCMAP, cmap)) {
-		MSG_ERR(FBDEV "can't put cmap: %s\n",strerror(errno));
+	    if (::ioctl(dev_fd, FBIOPUTCMAP, cmap)) {
+		mpxp_err<<FBDEV<< "can't put cmap: "<<strerror(errno)<<std::endl;
 		return MPXP_False;
 	    }
 	    cmap_changed = 1;
@@ -1035,7 +1006,7 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
 	    delete cmap;
 	    break;
 	default:
-	    MSG_ERR(FBDEV "visual: %d not yet supported\n",finfo.visual);
+	    mpxp_err<<FBDEV<< "visual: "<<finfo.visual<<" not yet supported"<<std::endl;
 	    return MPXP_False;
     }
 
@@ -1064,12 +1035,12 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
 	if(vidix->configure(width,height,x_offset,y_offset,out_width,
 		    out_height,format,bpp,
 		    xres,yres) != MPXP_Ok) {
-			MSG_ERR(FBDEV "Can't initialize VIDIX driver\n");
+			mpxp_err<<FBDEV<< "Can't initialize VIDIX driver"<<std::endl;
 			return MPXP_False;
-	} else MSG_V(FBDEV "Using VIDIX\n");
-	if ((frame_buffer = (uint8_t *) mmap(0, size, PROT_READ | PROT_WRITE,
+	} else mpxp_v<<FBDEV<< "Using VIDIX"<<std::endl;
+	if ((frame_buffer = (uint8_t *) ::mmap(0, size, PROT_READ | PROT_WRITE,
 						     MAP_SHARED, dev_fd, 0)) == (uint8_t *) -1) {
-	    MSG_ERR(FBDEV "Can't mmap %s: %s\n", priv_conf.dev_name, strerror(errno));
+	    mpxp_err<<FBDEV<< "Can't mmap "<<priv_conf.dev_name<<": "<<strerror(errno)<<std::endl;
 	    return MPXP_False;
 	}
 	memset(frame_buffer, 0, line_len * yres);
@@ -1077,31 +1048,31 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
     } else
 #endif
     {
-	if ((frame_buffer = (uint8_t *) mmap(0, size, PROT_READ | PROT_WRITE,
+	if ((frame_buffer = (uint8_t *) ::mmap(0, size, PROT_READ | PROT_WRITE,
 				    MAP_SHARED, dev_fd, 0)) == (uint8_t *) -1) {
-	    MSG_ERR(FBDEV "Can't mmap %s: %s\n", priv_conf.dev_name, strerror(errno));
+	    mpxp_err<<FBDEV<< "Can't mmap "<<priv_conf.dev_name<<": "<<strerror(errno)<<std::endl;
 	    return MPXP_False;
 	}
 	if(out_width > xres) out_width=xres;
 	if(out_height > yres) out_width=yres;
 	L123123875 = frame_buffer + x_offset * pixel_size + y_offset * line_len;
-	MSG_DBG2(FBDEV "frame_buffer @ %p\n", frame_buffer);
-	MSG_DBG2(FBDEV "L123123875 @ %p\n", L123123875);
-	MSG_V(FBDEV "pixel per line: %d\n", line_len / pixel_size);
+	mpxp_dbg2<<FBDEV<< "frame_buffer @ "<<std::hex<<reinterpret_cast<long>(frame_buffer)<<std::endl;
+	mpxp_dbg2<<FBDEV<< "L123123875 @ "<<std::hex<<reinterpret_cast<long>(L123123875)<<std::endl;
+	mpxp_v<<FBDEV<< "pixel per line: "<<(line_len/pixel_size)<<std::endl;
 
 	total_fr=vo_conf.xp_buffs;
 	for(i=0;i<total_fr;i++)
 	    if (!(next_frame[i] = (uint8_t *) mp_malloc(out_width * out_height * pixel_size))) {
-		MSG_ERR(FBDEV "Can't mp_malloc next_frame: %s\n", strerror(errno));
+		mpxp_err<<FBDEV<< "Can't mp_malloc next_frame: "<<strerror(errno)<<std::endl;
 		return MPXP_False;
 	    }
     }
     if (vt_doit && (vt_fd = open("/dev/tty", O_WRONLY)) == -1) {
-	MSG_ERR(FBDEV "can't open /dev/tty: %s\n", strerror(errno));
+	mpxp_err<<FBDEV<< "can't open /dev/tty: "<<strerror(errno)<<std::endl;
 	vt_doit = 0;
     }
     if (vt_doit && !(vt_fp = fdopen(vt_fd, "w"))) {
-	MSG_ERR(FBDEV "can't fdopen /dev/tty: %s\n", strerror(errno));
+	mpxp_err<<FBDEV<< "can't fdopen /dev/tty: "<<strerror(errno)<<std::endl;
 	vt_doit = 0;
     }
 

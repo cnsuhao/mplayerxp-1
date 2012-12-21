@@ -277,7 +277,7 @@ SDL_VO_Interface::SDL_VO_Interface(const std::string& arg)
 #ifdef CONFIG_VIDIX
     if(!vidix_name.empty()) {
 	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
-	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name.c_str());
+	    mpxp_err<<"Cannot initialze vidix with '"<<vidix_name<<"' argument"<<std::endl;
 	    exit_player("Vidix error");
 	}
     }
@@ -324,7 +324,7 @@ void SDL_VO_Interface::sdl_open( )
 {
     char drv[8];
     const SDL_VideoInfo *vidInfo = NULL;
-    MSG_DBG3("SDL: Opening Plugin\n");
+    mpxp_dbg3<<"SDL: Opening Plugin"<<std::endl;
     if(!sdl_subdevice.empty()) setenv("SDL_VIDEODRIVER", sdl_subdevice.c_str(), 1);
 
     /* does the user want SDL to try and force Xv */
@@ -342,7 +342,7 @@ void SDL_VO_Interface::sdl_open( )
     /* initialize the SDL Video system */
     if (!SDL_WasInit(SDL_INIT_VIDEO)) {
 	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_NOPARACHUTE)) {
-	    MSG_ERR("SDL: Initializing of SDL failed: %s.\n", SDL_GetError());
+	    mpxp_err<<"SDL: Initializing of SDL failed: "<<SDL_GetError()<<std::endl;
 	    exit_player("SDL error");
 	}
     }
@@ -352,14 +352,14 @@ void SDL_VO_Interface::sdl_open( )
 #endif
     SDL_VideoDriverName(drv, 8);
     driver=drv;
-    MSG_OK("SDL: Using driver: %s\n", driver.c_str());
+    mpxp_ok<<"SDL: Using driver: "<<driver<<std::endl;
     /* other default values */
 #ifdef SDL_NOHWSURFACE
-    MSG_V("SDL: using software-surface\n");
+    mpxp_v<<"SDL: using software-surface"<<std::endl;
     sdlflags = SDL_SWSURFACE|SDL_RESIZABLE|SDL_ASYNCBLIT|SDL_ANYFORMAT;
     sdlfullflags = SDL_SWSURFACE|SDL_FULLSCREEN|SDL_DOUBLEBUF|SDL_ASYNCBLIT|SDL_ANYFORMAT;
 #else
-    MSG_V("SDL: using hardware-surface\n");
+    mpxp_v<<"SDL: using hardware-surface"<<std::endl;
     sdlflags = SDL_HWSURFACE|SDL_RESIZABLE|SDL_ASYNCBLIT|SDL_HWACCEL/*|SDL_ANYFORMAT*/;
     sdlfullflags = SDL_HWSURFACE|SDL_FULLSCREEN|SDL_DOUBLEBUF|SDL_ASYNCBLIT|SDL_HWACCEL/*|SDL_ANYFORMAT*/;
 #endif
@@ -388,7 +388,7 @@ void SDL_VO_Interface::sdl_open( )
 	 */
 	sdlflags &= ~SDL_HWSURFACE;
 	if ((!SDL_ListModes (vidInfo->vfmt, sdlflags)) && (!fullmodes)) {
-	    MSG_ERR("SDL: Couldn't get any acceptable SDL Mode for output.\n");
+	    mpxp_err<<"SDL: Couldn't get any acceptable SDL Mode for output."<<std::endl;
 	    exit_player("SDL error");
 	}
     }
@@ -399,12 +399,11 @@ void SDL_VO_Interface::sdl_open( )
     */
     bpp = vidInfo->vfmt->BitsPerPixel;
     if (mode == YUV && bpp < 16) {
-	MSG_V("SDL: Your SDL display target wants to be at a color "
-		"depth of (%d), but we need it to be at least 16 "
+	mpxp_v<<"SDL: Your SDL display target wants to be at a color "
+		"depth of ("<<bpp<<"), but we need it to be at least 16 "
 		"bits, so we need to emulate 16-bit color. This is "
 		"going to slow things down; you might want to "
-		"increase your display's color depth, if possible.\n",
-		bpp);
+		"increase your display's color depth, if possible"<<std::endl;
 	bpp = 16;
     }
 
@@ -449,7 +448,7 @@ void SDL_VO_Interface::sdl_close ()
     if(SDL_WasInit(SDL_INIT_VIDEO))
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 
-    MSG_DBG3("SDL: Closed Plugin\n");
+    mpxp_dbg3<<"SDL: Closed Plugin"<<std::endl;
 }
 
 /* Set video mode. Not fullscreen */
@@ -473,7 +472,7 @@ MPXP_Rc SDL_VO_Interface::set_video_mode(int _width, int _height, int _bpp, uint
 	unlock_surfaces();
     }
     else
-	MSG_ERR("set_video_mode: SDL_SetVideoMode failed: %s\n", SDL_GetError());
+	mpxp_err<<"set_video_mode: SDL_SetVideoMode failed: "<<SDL_GetError()<<std::endl;
     return retval;
 }
 
@@ -527,7 +526,7 @@ MPXP_Rc SDL_VO_Interface::set_fullmode (int _mode) {
 	retval = setup_surfaces();
 	unlock_surfaces();
     } else
-	MSG_ERR("set_fullmode: SDL_SetVideoMode failed: %s\n", SDL_GetError());
+	mpxp_err<<"set_fullmode: SDL_SetVideoMode failed: "<<SDL_GetError()<<std::endl;
     return retval;
 }
 
@@ -572,12 +571,11 @@ MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t 
 	    mode = RGB;
 	    break;
 	default:
-	    MSG_ERR("SDL: Unsupported image format (0x%X)\n",_format);
+	    mpxp_err<<"SDL: Unsupported image format (0x"<<std::hex<<_format<<")"<<std::endl;
 	    return MPXP_False;
     }
 
-    MSG_V("SDL: Using 0x%X (%s) image format\n", _format,
-	vo_format_name(_format));
+    mpxp_v<<"SDL: Using 0x"<<std::hex<<_format<<" ("<<vo_format_name(_format)<<") image format"<<std::endl;
 
     if(mode != YUV) {
 	sdlflags |= SDL_ANYFORMAT;
@@ -645,7 +643,7 @@ MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t 
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,32);
 		break;
 	    default:
-		MSG_ERR("SDL: Unsupported image format in GL mode (0x%X)\n",_format);
+		mpxp_err<<"SDL: Unsupported image format in GL mode (0x"<<std::hex<<_format<<")"<<std::endl;
 		return MPXP_False;
 	}
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
@@ -663,21 +661,21 @@ MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t 
      * bit 3 (0x08) enables flipping (-flip)
      */
     if(flags&VOFLAG_FLIPPING) {
-	MSG_V("SDL: using flipped video (only with RGB/BGR/packed YUV)\n");
+	mpxp_v<<"SDL: using flipped video (only with RGB/BGR/packed YUV)"<<std::endl;
 	flip = 1;
     }
     if(flags&VOFLAG_FULLSCREEN) {
-	MSG_V("SDL: setting zoomed fullscreen without modeswitching\n");
-	MSG_V("SDL: Info - please use -vm or -zoom to switch to best resolution.\n");
+	mpxp_v<<"SDL: setting zoomed fullscreen without modeswitching"<<std::endl;
+	mpxp_v<<"SDL: Info - please use -vm or -zoom to switch to best resolution."<<std::endl;
 	fulltype = VOFLAG_FULLSCREEN;
 	retval = set_fullmode(fullmode);
 	if(retval!=MPXP_Ok) return retval;
     } else if(flags&VOFLAG_MODESWITCHING) {
-	MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
+	mpxp_v<<"SDL: setting zoomed fullscreen with modeswitching"<<std::endl;
 	fulltype = VOFLAG_MODESWITCHING;
 	set_fullmode(fullmode);
     } else if(flags&VOFLAG_SWSCALE) {
-	MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
+	mpxp_v<<"SDL: setting zoomed fullscreen with modeswitching"<<std::endl;
 	fulltype = VOFLAG_SWSCALE;
 	retval = set_fullmode(fullmode);
 	if(retval!=MPXP_Ok) return retval;
@@ -686,11 +684,11 @@ MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t 
 	    ||driver=="windib"
 	    ||driver=="directx"
 	    ||(driver=="aalib" && X)) {
-		MSG_V("SDL: setting windowed mode\n");
+		mpxp_v<<"SDL: setting windowed mode"<<std::endl;
 		retval = set_video_mode(dstwidth, dstheight, bpp, sdlflags);
 		if(retval!=MPXP_Ok) return retval;
 	    } else {
-		MSG_V("SDL: setting zoomed fullscreen with modeswitching\n");
+		mpxp_v<<"SDL: setting zoomed fullscreen with modeswitching"<<std::endl;
 		fulltype = VOFLAG_SWSCALE;
 		retval = set_fullmode(fullmode);
 		if(retval!=MPXP_Ok) return retval;
@@ -698,7 +696,7 @@ MPXP_Rc SDL_VO_Interface::configure(uint32_t _width, uint32_t _height, uint32_t 
     }
 
     if(!surface) { // cannot SetVideoMode
-	MSG_ERR("SDL: failed to set video mode: %s\n", SDL_GetError());
+	mpxp_err<<"SDL: failed to set video mode: "<<SDL_GetError()<<std::endl;
 	return MPXP_False;
     }
     return MPXP_Ok;
@@ -714,9 +712,9 @@ MPXP_Rc SDL_VO_Interface::setup_surfaces( )
 	if(vidix->configure(width,height,0,y,
 			dstwidth,dstheight,format,bpp,
 			XWidth,XHeight) != MPXP_Ok) {
-	    MSG_ERR("vo_sdl: Can't initialize VIDIX driver\n");
+	    mpxp_err<<"vo_sdl: Can't initialize VIDIX driver"<<std::endl;
 	    return MPXP_False;
-	} else MSG_V("vo_sdl: Using VIDIX\n");
+	} else mpxp_v<<"vo_sdl: Using VIDIX"<<std::endl;
 	if(vidix->start()!=0) return MPXP_False;
     } else
 #endif
@@ -796,19 +794,18 @@ MPXP_Rc SDL_VO_Interface::setup_surface(unsigned idx)
 	default:
 	    /* Initialize and create the YUV Overlay used for video out */
 	    if (!(overlay[idx] = SDL_CreateYUVOverlay (surfwidth, surfheight, format==IMGFMT_I420?IMGFMT_IYUV:format, surface))) {
-		MSG_ERR ("SDL: Couldn't create a YUV overlay: %s\n", SDL_GetError());
+		mpxp_err<<"SDL: Couldn't create a YUV overlay: "<<SDL_GetError()<<std::endl;
 		return MPXP_False;
 	    }
     }
     if(mode != YUV && mode != GL) {
 	if(!rgbsurface[idx]) {
-	    MSG_ERR ("SDL: Couldn't create a RGB surface: %s\n", SDL_GetError());
+	    mpxp_err<<"SDL: Couldn't create a RGB surface: "<<SDL_GetError()<<std::endl;
 	    return MPXP_False;
 	}
 
 	if((format&0xFF) != bpp)
-	    MSG_WARN("SDL: using depth/colorspace conversion, this will slow things"
-		   "down (%ibpp -> %ibpp).\n", format&0xFF, bpp);
+	    mpxp_warn<<"SDL: using depth/colorspace conversion, this will slow things down ("<<(format&0xFF)<<"bpp -> "<<bpp<<"bpp)"<<std::endl;
     }
     erase_rectangle(idx,0, 0, surfwidth, surfheight);
 
@@ -843,7 +840,7 @@ uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
 		/* save video extents, to restore them after going fullscreen */
 		windowsize.w = surface->w;
 		windowsize.h = surface->h;
-		MSG_DBG3("SDL: Window resize\n");
+		mpxp_dbg3<<"SDL: Window resize"<<std::endl;
 		retval = VO_EVENT_RESIZE;
 		break;
 
@@ -880,7 +877,7 @@ uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
 	    case SDL_KEYDOWN:
 #endif
 		keypressed = event.key.keysym.sym;
-		MSG_V("SDL: Key pressed: '%i'\n", keypressed);
+		mpxp_v<<"SDL: Key pressed: "<<keypressed<<std::endl;
 
 		/* c key pressed. c cycles through available fullscreenmodes, if we have some */
 		if ( ((keypressed == SDLK_c)) && (fullmodes) ) {
@@ -888,7 +885,7 @@ uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
 		    fullmode++;
 		    if (fullmode > (findArrayEnd(fullmodes) - 1)) fullmode = 0;
 		    if(set_fullmode(fullmode)!=0) exit_player("SDL set full mode");
-		    MSG_V("SDL: Set next available fullscreen mode.\n");
+		    mpxp_v<<"SDL: Set next available fullscreen mode."<<std::endl;
 		    retval = VO_EVENT_RESIZE;
 		} else if ( keypressed == SDLK_n ) {
 #ifdef HAVE_X11
@@ -898,13 +895,13 @@ uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
 			if(set_video_mode(dstwidth, dstheight, bpp, sdlflags)!=0) exit_player("SDL set video mode");
 			windowsize.w = surface->w;
 			windowsize.h = surface->h;
-			MSG_V("SDL: Normal size\n");
+			mpxp_v<<"SDL: Normal size"<<std::endl;
 			retval |= VO_EVENT_RESIZE;
 		    } else if (unsigned(surface->w) != dstwidth * 2 || unsigned(surface->h) != dstheight * 2) {
 			if(set_video_mode(dstwidth * 2, dstheight * 2, bpp, sdlflags)!=0) exit_player("SDL set video mode");
 			windowsize.w = surface->w;
 			windowsize.h = surface->h;
-			MSG_V("SDL: Double size\n");
+			mpxp_v<<"SDL: Double size"<<std::endl;
 			retval |= VO_EVENT_RESIZE;
 		    }
 		} else switch(keypressed) {
@@ -1080,7 +1077,7 @@ MPXP_Rc SDL_VO_Interface::select_frame(unsigned idx)
     } else {
 	/* blit to the RGB surface */
 	if(SDL_BlitSurface (rgbsurface[idx], NULL, surface, NULL))
-	    MSG_ERR("SDL: Blit failed: %s\n", SDL_GetError());
+	    mpxp_err<<"SDL: Blit failed: "<<SDL_GetError()<<std::endl;
 
 	/* update screen */
 	if(sdl_forcegl) SDL_UpdateRects(surface, 1, &surface->clip_rect);
@@ -1223,10 +1220,10 @@ MPXP_Rc SDL_VO_Interface::toggle_fullscreen() {
     if (surface->flags & SDL_FULLSCREEN) {
 	if(set_video_mode(windowsize.w, windowsize.h, bpp, sdlflags)!=0) exit_player("SDL set fullscreen");
 	SDL_ShowCursor(1);
-	MSG_V("SDL: Windowed mode\n");
+	mpxp_v<<"SDL: Windowed mode"<<std::endl;
     } else if (fullmodes) {
 	if(set_fullmode(fullmode)!=0) exit_player("SDL set fullmode");
-	MSG_V("SDL: Set fullscreen mode\n");
+	mpxp_v<<"SDL: Set fullscreen mode"<<std::endl;
     }
     return MPXP_True;
 }

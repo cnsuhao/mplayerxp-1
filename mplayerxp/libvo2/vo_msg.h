@@ -1,9 +1,6 @@
-#ifndef VO_MSG_H
-#define VO_MSG_H
+#ifndef VO_MSG_H_INCLUDED
+#define VO_MSG_H_INCLUDED 1
 
-#ifndef MSGT_CLASS
-#define MSGT_CLASS MSGT_VO
-#endif
 #include "mpxp_msg.h"
 
 namespace mpxp {

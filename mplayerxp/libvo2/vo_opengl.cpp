@@ -150,7 +150,7 @@ void OpenGL_VO_Interface::gl_init_fb(unsigned x,unsigned y,unsigned d_width,unsi
 }
 
 void OpenGL_VO_Interface::resize(int x,int y) const {
-    MSG_V("[gl] Resize: %dx%d\n",x,y);
+    mpxp_v<<"[gl] Resize: "<<x<<"x"<<y<<std::endl;
     gl_init_fb(0, 0, x, y);
     glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -241,13 +241,13 @@ MPXP_Rc OpenGL_VO_Interface::select_frame(unsigned idx) {
 
 MPXP_Rc OpenGL_VO_Interface::query_format( vo_query_fourcc_t* format ) const
 {
-    MSG_DBG2("vo_opengl: query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
+    mpxp_dbg2<<"vo_opengl: query_format was called: "<<std::hex<<format->fourcc<<" ("<<vo_format_name(format->fourcc)<<")"<<std::endl;
     if((IMGFMT_IS_BGR(format->fourcc)||IMGFMT_IS_RGB(format->fourcc))&&rgbfmt_depth(format->fourcc)<48) {
-	MSG_DBG2("vo_opengl: OK\n");
+	mpxp_dbg2<<"vo_opengl: OK"<<std::endl;
 	format->flags=VOCAP_SUPPORTED | VOCAP_HWSCALER | VOCAP_FLIP;
 	return MPXP_Ok;
     }
-    MSG_DBG2("vo_opengl: FALSE\n");
+    mpxp_dbg2<<"vo_opengl: FALSE"<<std::endl;
     return MPXP_False;
 }
 

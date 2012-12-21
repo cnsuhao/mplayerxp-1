@@ -3,12 +3,6 @@
 using namespace mpxp;
 /* Stuff for correct aspect scaling. */
 #include "aspect.h"
-
-//#define ASPECT_DEBUG
-
-#ifdef ASPECT_DEBUG
-#include <stdio.h>
-#endif
 #include "vo_msg.h"
 
 namespace mpxp {
@@ -49,8 +43,8 @@ void Aspect::calc(uint32_t& srcw, uint32_t& srch, zoom_e zoom) {
     uint32_t tmpw;
 
 #ifdef ASPECT_DEBUG
-    MSG_DBG2("aspect(0) fitin: %dx%d zoom: %d \n",screenw,screenh,zoom);
-    MSG_DBG2("aspect(1) wh: %dx%d (org: %dx%d)\n",srcw,srch,prew,preh);
+    mpxp_dbg2<<"aspect(0) fitin: "<<screenw<<"x"<<screenh<<" zoom: "<<zoom<<std::endl;
+    mpxp_dbg2<<"aspect(1) wh: "<<srcw<<"x"<<srch<<" (org: "<<prew<<"x"<<preh<<")"<<std::endl;
 #endif
     if(zoom){
 	if(prew >= preh) {
@@ -71,7 +65,7 @@ void Aspect::calc(uint32_t& srcw, uint32_t& srch, zoom_e zoom) {
     }
     srch+= srch%2; // round
 #ifdef ASPECT_DEBUG
-    MSG_DBG2("aspect(2) wh: %dx%d (org: %dx%d)\n",srcw,srch,prew,preh);
+    mpxp_dbg2<<"aspect(2) wh: "<<srcw<<"x"<<srch<<" (org: "<<prew<<"x"<<preh<<")"<<std::hex;
 #endif
     if(srch>screenh || srch<orgh){
 	if(zoom)
@@ -87,7 +81,7 @@ void Aspect::calc(uint32_t& srcw, uint32_t& srch, zoom_e zoom) {
 	}
     }
 #ifdef ASPECT_DEBUG
-    MSG_DBG2("aspect(3) wh: %dx%d (org: %dx%d)\n",srcw,srch,prew,preh);
+    mpxp_dbg2<<"aspect(3) wh: "<<srcw<<"x"<<srch<<" (org: "<<prew<<"x"<<preh<<")"<<std::endl;
 #endif
 }
 } // namesapce mpxp

@@ -123,7 +123,7 @@ std::string X11_VO_Interface::parse_sub_device(const std::string& sd)
 #ifdef CONFIG_VIDIX
     if(sd.substr(0,5)=="vidix") return &sd[5]; /* vidix_name will be valid within init() */
 #endif
-    MSG_ERR("vo_x11: Unknown subdevice: '%s'\n", sd.c_str());
+    mpxp_err<<"vo_x11: Unknown subdevice: "<<sd<<std::endl;
     return "";
 }
 
@@ -141,9 +141,9 @@ X11_VO_Interface::X11_VO_Interface(const std::string& arg)
     if(!arg.empty()) vidix_name = parse_sub_device(arg);
 #ifdef CONFIG_VIDIX
     if(!vidix_name.empty()) {
-MSG_INFO("args=%s vidix-name=%s\n",arg.c_str(),vidix_name.c_str());
+	mpxp_info<<"args="<<arg<<" vidix_name="<<vidix_name<<std::endl;
 	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
-	    MSG_ERR("Cannot initialze vidix with '%s' argument\n",vidix_name.c_str());
+	    mpxp_err<<"Cannot initialze vidix with '"<<vidix_name<<"' argument"<<std::endl;
 	    exit_player("Vidix error");
 	}
     }
@@ -174,7 +174,7 @@ void X11_VO_Interface::resize_vidix() const {
 	    winc.w, winc.h, in_format, x11->depth(),
 	    x11->screen_width(), x11->screen_height()) != MPXP_Ok)
     {
-	MSG_FATAL( "Can't initialize VIDIX: %s\n",strerror(errno));
+	mpxp_fatal<<"Can't initialize VIDIX: "<<strerror(errno)<<std::endl;
 	delete vidix;
 	exit_player("Vidix init"); /* !!! */
     }
@@ -272,16 +272,16 @@ MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_wi
 
 #ifdef WORDS_BIGENDIAN
     if(mode==MODE_BGR && bpp!=32) {
-	MSG_ERR("BGR%d not supported, please contact the developers\n", priv.bpp);
+	mpxp_err<<"BGR"<<priv.bpp<<" not supported, please contact the developers"<<std::endl;
 	return MPXP_False;
     }
     if(mode==MODE_RGB && bpp==32) {
-	MSG_ERR("RGB32 not supported on big-endian systems, please contact the developers\n");
+	mpxp_err<<"RGB32 not supported on big-endian systems, please contact the developers"<<std::endl;
 	return MPXP_False;
     }
 #else
     if(mode==MODE_BGR) {
-	MSG_ERR("BGR not supported, please contact the developers\n");
+	mpxp_err<<"BGR not supported, please contact the developers"<<std::endl;
 	return MPXP_False;
     }
 #endif
@@ -296,9 +296,9 @@ MPXP_Rc X11_VO_Interface::configure(uint32_t width,uint32_t height,uint32_t d_wi
 			winc.w,winc.h,
 			in_format,x11->depth(),
 			x11->screen_width(),x11->screen_height()) != MPXP_Ok) {
-	    MSG_ERR("vo_vesa: Can't initialize VIDIX driver\n");
+	    mpxp_err<<"vo_vesa: Can't initialize VIDIX driver"<<std::endl;
 	    return MPXP_False;
-	} else MSG_V("vo_vesa: Using VIDIX\n");
+	} else mpxp_v<<"vo_vesa: Using VIDIX"<<std::endl;
 	if(vidix->start()!=0) return MPXP_False;
 	if (vidix->grkey_support()) {
 	    vidix_grkey_t gr_key;
@@ -342,7 +342,7 @@ MPXP_Rc X11_VO_Interface::query_format(vo_query_fourcc_t* format) const
 #ifdef CONFIG_VIDIX
     if(vidix) return vidix->query_fourcc(format);
 #endif
-    MSG_DBG2("vo_x11: query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
+    mpxp_dbg2<<"vo_x11: query_format was called: "<<format->fourcc<<" ("<<vo_format_name(format->fourcc)<<")"<<std::endl;
 #ifdef WORDS_BIGENDIAN
     if (IMGFMT_IS_BGR(format->fourcc) && rgbfmt_depth(format->fourcc)<48)
 #else

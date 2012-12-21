@@ -116,7 +116,7 @@ void OSD_Render::render(int w,int h, const unsigned char* src, const unsigned ch
 }
 
 void OSD_Render::get_draw_alpha(unsigned fmt) {
-    MSG_DBG2("get_draw_alpha(%s)\n",vo_format_name(fmt));
+    mpxp_dbg2<<"get_draw_alpha("<<vo_format_name(fmt)<<")"<<std::endl;
     switch(fmt) {
     case IMGFMT_BGR15:
     case IMGFMT_RGB15:
@@ -150,7 +150,7 @@ void OSD_Render::get_draw_alpha(unsigned fmt) {
 	draw_alpha_ptr=draw_alpha_uyvy_ptr;
 	break;
     default:
-	MSG_ERR("draw alpha for %s fourcc not implemented yet!",vo_format_name(fmt));
+	mpxp_err<<"draw alpha for "<<vo_format_name(fmt)<<" fourcc not implemented yet!"<<std::endl;
 	draw_alpha_ptr=vo_draw_alpha_null;
 	break;
     }
@@ -170,7 +170,7 @@ OSD_Render::OSD_Render(unsigned fourcc)
 #ifdef __AVX__
 if(gCpuCaps.hasSSE41)
 {
-	MSG_V("Using SSE4 Optimized OnScreenDisplay\n");
+	mpxp_v<<"Using SSE4 Optimized OnScreenDisplay"<<std::endl;
 	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_AVX;
 	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_AVX;
 	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_AVX;
@@ -181,7 +181,7 @@ else
 #ifdef __SSE4_1__
 if(gCpuCaps.hasSSE41)
 {
-	MSG_V("Using SSE4 Optimized OnScreenDisplay\n");
+	mpxp_v<<"Using SSE4 Optimized OnScreenDisplay"<<std::endl;
 	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSE4;
 	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSE4;
 	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSE4;
@@ -192,7 +192,7 @@ else
 #ifdef __SSSE3__
 if(gCpuCaps.hasSSSE3)
 {
-	MSG_V("Using SSSE3 Optimized OnScreenDisplay\n");
+	mpxp_v<<"Using SSSE3 Optimized OnScreenDisplay"<<std::endl;
 	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSSE3;
 	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSSE3;
 	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSSE3;
@@ -203,7 +203,7 @@ else
 #ifdef __SSE3__
 if(gCpuCaps.hasSSE3)
 {
-	MSG_V("Using SSE3 Optimized OnScreenDisplay\n");
+	mpxp_v<<"Using SSE3 Optimized OnScreenDisplay"<<std::endl;
 	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSE3;
 	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSE3;
 	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSE3;
@@ -214,7 +214,7 @@ else
 #ifdef __SSE2__
 if(gCpuCaps.hasSSE2)
 {
-	MSG_V("Using SSE2 Optimized OnScreenDisplay\n");
+	mpxp_v<<"Using SSE2 Optimized OnScreenDisplay"<<std::endl;
 	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSE2;
 	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSE2;
 	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSE2;
@@ -226,7 +226,7 @@ else
 #ifdef __SSE__
 if(gCpuCaps.hasMMX2)
 {
-	MSG_V("Using MMX (with tiny bit MMX2) Optimized OnScreenDisplay\n");
+	mpxp_v<<"Using MMX (with tiny bit MMX2) Optimized OnScreenDisplay"<<std::endl;
 	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_SSE;
 	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_SSE;
 	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_SSE;
@@ -237,7 +237,7 @@ else
 //#ifdef __MMX__
 //if(gCpuCaps.hasMMX)
 //{
-//	MSG_V("Using MMX (with tiny bit MMX2) Optimized OnScreenDisplay\n");
+//	mpxp_v<<"Using MMX (with tiny bit MMX2) Optimized OnScreenDisplay"<<std::endl;
 //	draw_alpha_yv12_ptr=vo_draw_alpha_yv12_MMX;
 //	draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_MMX;
 //	draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_MMX;
@@ -247,7 +247,7 @@ else
 //#endif
 #endif
 {
-    MSG_V("Using generic OnScreenDisplay\n");
+    mpxp_v<<"Using generic OnScreenDisplay"<<std::endl;
     draw_alpha_yv12_ptr=vo_draw_alpha_yv12_c;
     draw_alpha_yuy2_ptr=vo_draw_alpha_yuy2_c;
     draw_alpha_rgb24_ptr=vo_draw_alpha_rgb24_c;

@@ -56,21 +56,20 @@ static struct pngdata create_png (char * fname)
     png.info_ptr = png_create_info_struct(png.png_ptr);
 
     if (!png.png_ptr) {
-       MSG_V("PNG Failed to init png pointer\n");
-       png.status = pngdata::ERROR;
-       return png;
+	mpxp_v<<"PNG Failed to init png pointer"<<std::endl;
+	png.status = pngdata::ERROR;
+	return png;
     }
 
     if (!png.info_ptr) {
-       MSG_V("PNG Failed to init png infopointer\n");
-       png_destroy_write_struct(&png.png_ptr,
-	 (png_infopp)NULL);
-       png.status = pngdata::ERROR;
-       return png;
+	mpxp_v<<"PNG Failed to init png infopointer"<<std::endl;
+	png_destroy_write_struct(&png.png_ptr,(png_infopp)NULL);
+	png.status = pngdata::ERROR;
+	return png;
     }
 
     if (setjmp(png.png_ptr->jmpbuf)) {
-	MSG_V("PNG Internal error!\n");
+	mpxp_v<<"PNG Internal error!"<<std::endl;
 	png_destroy_write_struct(&png.png_ptr, &png.info_ptr);
 	fclose(png.fp);
 	png.status = pngdata::ERROR;
@@ -79,12 +78,12 @@ static struct pngdata create_png (char * fname)
 
     png.fp = fopen (fname, "wb");
     if (png.fp == NULL) {
-	MSG_ERR("\nPNG Error opening %s for writing!\n", strerror(errno));
+	mpxp_err<<"PNG Error opening "<<strerror(errno)<<" for writing!"<<std::endl;
 	png.status = pngdata::ERROR;
 	return png;
     }
 
-    MSG_V("PNG Init IO\n");
+    mpxp_v<<"PNG Init IO"<<std::endl;
     png_init_io(png.png_ptr, png.fp);
 
     /* set the zlib compression level */
@@ -94,11 +93,11 @@ static struct pngdata create_png (char * fname)
        8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
        PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
-    MSG_V("PNG Write Info\n");
+    mpxp_v<<"PNG Write Info"<<std::endl;
     png_write_info(png.png_ptr, png.info_ptr);
 
     if(sshot.cspace) {
-	MSG_V("PNG Set BGR Conversion\n");
+	mpxp_v<<"PNG Set BGR Conversion"<<std::endl;
 	png_set_bgr(png.png_ptr);
     }
 
@@ -109,10 +108,10 @@ static struct pngdata create_png (char * fname)
 
 static uint8_t destroy_png(struct pngdata png) {
 
-    MSG_V("PNG Write End\n");
+    mpxp_v<<"PNG Write End"<<std::endl;
     png_write_end(png.png_ptr, png.info_ptr);
 
-    MSG_V("PNG Destroy Write Struct\n");
+    mpxp_v<<"PNG Destroy Write Struct"<<std::endl;
     png_destroy_write_struct(&png.png_ptr, &png.info_ptr);
 
     fclose (png.fp);
@@ -199,31 +198,31 @@ MPXP_Rc gr_screenshot(const char *fname,const uint8_t *planes[],const unsigned *
 #endif
     );
     if(!sws) {
-	MSG_ERR("vo_png: Can't initialize SwScaler\n");
+	mpxp_err<<"vo_png: Can't initialize SwScaler"<<std::endl;
 	return MPXP_False;
     }
     sshot.image_width = w;
     sshot.image_height = h;
     if(!(image_data = new uint8_t[sshot.image_width*sshot.image_height*3]))
     {
-	MSG_ERR("vo_png: Can't allocate temporary buffer\n");
+	mpxp_err<<"vo_png: Can't allocate temporary buffer"<<std::endl;
 	return MPXP_False;
     }
 #ifdef HAVE_PNG
     if((mp_conf.z_compression >= 0) && (mp_conf.z_compression <= 9)) {
 	    if(mp_conf.z_compression == 0) {
-		    MSG_HINT("PNG Warning: compression level set to 0, compression disabled!\n");
-		    MSG_HINT("PNG Info: Use the -z <n> switch to set compression level from 0 to 9.\n");
-		    MSG_HINT("PNG Info: (0 = no compression, 1 = fastest, lowest - 9 best, slowest compression)\n");
+		mpxp_hint<<"PNG Warning: compression level set to 0, compression disabled!"<<std::endl;
+		mpxp_hint<<"PNG Info: Use the -z <n> switch to set compression level from 0 to 9."<<std::endl;
+		mpxp_hint<<"PNG Info: (0 = no compression, 1 = fastest, lowest - 9 best, slowest compression)"<<std::endl;
 	    }
     }
     else {
-	    MSG_WARN("PNG Warning: compression level out of range setting to 1!\n");
-	    MSG_WARN("PNG Info: Use the -z <n> switch to set compression level from 0 to 9.\n");
-	    MSG_WARN("PNG Info: (0 = no compression, 1 = fastest, lowest - 9 best, slowest compression)\n");
+	mpxp_warn<<"PNG Warning: compression level out of range setting to 1!"<<std::endl;
+	mpxp_warn<<"PNG Info: Use the -z <n> switch to set compression level from 0 to 9."<<std::endl;
+	mpxp_warn<<"PNG Info: (0 = no compression, 1 = fastest, lowest - 9 best, slowest compression)"<<std::endl;
 	    mp_conf.z_compression = Z_BEST_SPEED;
     }
-    MSG_V("PNG Compression level %i\n", mp_conf.z_compression);
+    mpxp_v<<"PNG Compression level "<<mp_conf.z_compression<<std::endl;
 #endif
     dstStride[0]=sshot.image_width*3;
     dstStride[1]=
@@ -241,16 +240,12 @@ MPXP_Rc gr_screenshot(const char *fname,const uint8_t *planes[],const unsigned *
 #ifdef HAVE_PNG
     png = create_png(buf);
 
-    if(png.status){
-	    MSG_ERR("PNG Error in create_png\n");
-    }
+    if(png.status) mpxp_err<<"PNG Error in create_png"<<std::endl;
 
-    {
-	png_byte *row_pointers[sshot.image_height];
-	unsigned bppmul = (bpp+7)/8;
-	for ( k = 0; k < sshot.image_height; k++ ) row_pointers[k] = &image_data[sshot.image_width*k*bppmul];
-	png_write_image(png.png_ptr, row_pointers);
-    }
+    png_byte *row_pointers[sshot.image_height];
+    unsigned bppmul = (bpp+7)/8;
+    for ( k = 0; k < sshot.image_height; k++ ) row_pointers[k] = &image_data[sshot.image_width*k*bppmul];
+    png_write_image(png.png_ptr, row_pointers);
 
     destroy_png(png);
 #else

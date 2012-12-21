@@ -90,7 +90,7 @@ Xv_VO_Interface::Xv_VO_Interface(const std::string& arg)
 {
     num_buffers=1;
     if(!arg.empty()) {
-	MSG_ERR("vo_xv: Unknown subdevice: %s\n",arg.c_str());
+	mpxp_err<<"vo_xv: Unknown subdevice: "<<arg<<std::endl;
 	exit_player("Xv error");
     }
 }
@@ -206,8 +206,8 @@ MPXP_Rc Xv_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_w
 	return MPXP_Ok;
     }
 
-    MSG_FATAL("Sorry, Xv not supported by this X11 version/driver\n");
-    MSG_FATAL("******** Try with  -vo x11  or  -vo sdl  *********\n");
+    mpxp_fatal<<"Sorry, Xv not supported by this X11 version/driver"<<std::endl;
+    mpxp_fatal<<"******** Try with  -vo x11  or  -vo sdl  *********"<<std::endl;
     return MPXP_False;
 }
 
@@ -231,8 +231,7 @@ uint32_t Xv_VO_Interface::check_events(const vo_resize_t*vrest)
     if(e&VO_EVENT_RESIZE) {
 	vo_rect_t winc;
 	xv->get_win_coord(winc);
-	MSG_V( "[xv-resize] dx: %d dy: %d dw: %d dh: %d\n",
-		winc.x,winc.y,winc.w,winc.h);
+	mpxp_v<<"[xv-resize] dx: "<<winc.x<<" dy: "<<winc.y<<" dw: "<<winc.w<<" dh: "<<winc.h<<std::endl;
     }
     if ( e & VO_EVENT_EXPOSE ) {
 	vo_rect_t r,r2;

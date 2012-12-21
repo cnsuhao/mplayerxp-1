@@ -27,7 +27,7 @@ raw_file* load_raw(const char *name,int verbose){
     if(raw->w == 0) /* 2 bytes were not enough for the width... read 4 bytes from the end of the header */
 	raw->w = ((head[28]*0x100 + head[29])*0x100 + head[30])*0x100 + head[31];
     if(raw->c>256) { delete raw; fclose(f); return NULL; }  // too many colors!?
-    MSG_V("RAW: %s  %d x %d, %d colors\n",name,raw->w,raw->h,raw->c);
+    mpxp_v<<"RAW: "<<name<<" "<<raw->w<<" x "<<raw->h<<", "<<raw->c<<" colors"<<std::endl;
     if(raw->c){
 	raw->pal=new unsigned char [raw->c*3];
 	fread(raw->pal,3,raw->c,f);
@@ -59,7 +59,7 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 
     f=fopen(fname,"rt");
     if(!f) {
-	MSG_ERR("font: can't open file: %s\n",fname);
+	mpxp_err<<"font: can't open file: "<<fname<<std::endl;
 	delete desc;
 	return NULL;
     }
@@ -118,11 +118,11 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 	    int len=strlen(p[0]);
 	    if(len && len<63 && p[0][len-1]==']'){
 		strcpy(section,p[0]);
-		MSG_V("font: Reading section: %s\n",section);
+		mpxp_v<<"font: Reading section: "<<section<<std::endl;
 		if(strcmp(section,"[files]")==0){
 		    ++fontdb;
 		    if(fontdb>=16) {
-			MSG_ERR("font: Too many bitmaps defined!\n");
+			mpxp_err<<"font: Too many bitmaps defined!"<<std::endl;
 			delete desc;
 			return NULL;
 		    }
@@ -157,7 +157,7 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 		    snprintf(cp,strlen(default_dir)+strlen(p[1])+2,"%s/%s",
 			    default_dir,p[1]);
 		    if (!((desc->pic_a[fontdb]=load_raw(cp,verbose)))){
-			MSG_ERR("Can't load font bitmap: %s\n",p[1]);
+			mpxp_err<<"Can't load font bitmap: "<<p[1]<<std::endl;
 			delete cp;
 			delete desc;
 			return NULL;
@@ -183,7 +183,7 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 		    snprintf(cp,strlen(default_dir)+strlen(p[1])+2,"%s/%s",
 			    default_dir,p[1]);
 		    if (!((desc->pic_b[fontdb]=load_raw(cp,verbose)))){
-			MSG_ERR("Can't load font bitmap: %s\n",p[1]);
+			mpxp_err<<"Can't load font bitmap: "<<p[1]<<std::endl;
 			delete cp;
 			delete desc;
 			return NULL;
@@ -220,7 +220,7 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 		int end=atoi(p[2]);
 		if(sub_data.unicode && (chr>=0x80)) chr=(chr<<8)+p[0][1];
 		else if(strlen(p[0])!=1) chr=strtol(p[0],NULL,0);
-		if(end<start) MSG_ERR("error in font desc: end<start for char '%c'\n",chr);
+		if(end<start) mpxp_err<<"error in font desc: end<start for char '"<<chr<<"'"<<std::endl;
 		else {
 		    desc->start[chr]=start;
 		    desc->width[chr]=end-start+1;
@@ -230,12 +230,12 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 		continue;
 	    }
 	}
-	MSG_ERR("Syntax error in font desc: %s\n",sor);
+	mpxp_err<<"Syntax error in font desc: "<<sor<<std::endl;
     }
     fclose(f);
     for(i=0;i<=fontdb;i++){
 	if(!desc->pic_a[i] || !desc->pic_b[i]){
-	    MSG_ERR("font: Missing bitmap(s) for sub-font #%d\n",i);
+	    mpxp_err<<"font: Missing bitmap(s) for sub-font #"<<i<<std::endl;
 	    delete desc;
 	    return NULL;
 	}
@@ -243,7 +243,7 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 	int f=factor*256.0f;
 	int size=desc->pic_a[i]->w*desc->pic_a[i]->h;
 	int j;
-	MSG_V("font: resampling alpha by factor %5.3f (%d) ",factor,f);fflush(stdout);
+	mpxp_v<<"font: resampling alpha by factor "<<factor<<" ("<<f<<")"<<std::endl;
 	for(j=0;j<size;j++){
 	    int x=desc->pic_a[i]->bmp[j];	// alpha
 	    int y=desc->pic_b[i]->bmp[j];	// bitmap
@@ -263,7 +263,7 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 	    desc->pic_a[i]->bmp[j]=x;
 //          desc->pic_b[i]->bmp[j]=0; // hack
 	}
-	MSG_V("DONE!\n");
+	mpxp_v<<"DONE!"<<std::endl;
 	if(!desc->height) desc->height=desc->pic_a[i]->h;
     }
 
@@ -278,7 +278,7 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
     desc->font[' ']=-1;
     desc->width[' ']=desc->spacewidth;
 
-    MSG_OK("Font %s loaded successfully! (%d chars)\n",fname,chardb);
+    mpxp_ok<<"Font "<<fname<<" loaded successfully! ("<<chardb<<" chars)"<<std::endl;
     return desc;
 }
 

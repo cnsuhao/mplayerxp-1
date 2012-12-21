@@ -12,6 +12,8 @@ using namespace mpxp;
  * This file contains vidix interface to any mplayer's VO plugin.
  * (Partly based on vesa_lvo.c from mplayer's package)
  */
+#include <iomanip>
+
 #include <errno.h>
 #include <inttypes.h>
 #include <sys/ioctl.h>
@@ -46,26 +48,26 @@ Vidix_System::Vidix_System(const std::string& drvname)
 			mp_conf.verbose))
 {
     int err;
-    MSG_DBG2("vidix_preinit(%s) was called\n",drvname.c_str());
+    mpxp_dbg2<<"vidix_preinit("<<drvname<<") was called"<<std::endl;
     if(vidix->version() != VIDIX_VERSION) {
-	MSG_FATAL("You have wrong version of VIDIX library\n");
+	mpxp_fatal<<"You have wrong version of VIDIX library"<<std::endl;
 	exit_player("Vidix");
     }
     if(vidix->is_error()) {
-	MSG_FATAL("Couldn't find working VIDIX driver\n");
+	mpxp_fatal<<"Couldn't find working VIDIX driver"<<std::endl;
 	exit_player("Vidix");
     }
     if((err=vidix->get_capabilities()) != 0) {
-	MSG_FATAL("Couldn't get capability: %s\n",strerror(err));
+	mpxp_fatal<<"Couldn't get capability: "<<strerror(err)<<std::endl;
 	exit_player("Vidix");
     }
-    else MSG_V("Driver capability: %X\n",vidix->cap.flags);
-    MSG_V("Using: %s by %s\n",vidix->cap.name,vidix->cap.author);
+    else mpxp_v<<"Driver capability: "<<std::hex<<vidix->cap.flags<<std::endl;
+    mpxp_v<<"Using: "<<vidix->cap.name<<" by "<<vidix->cap.author<<std::endl;
 }
 
 Vidix_System::~Vidix_System() {
     size_t i;
-    MSG_DBG2("vidix_term() was called\n");
+    mpxp_dbg2<<"vidix_term() was called"<<std::endl;
     stop();
     if(vo_conf.use_bm) {
 	for(i=0;i<vo_conf.xp_buffs;i++) {
@@ -74,8 +76,7 @@ Vidix_System::~Vidix_System() {
 	    bm_buffs[i]=NULL;
 	}
 	if(bm_slow_frames)
-	    MSG_WARN("from %u frames %u were copied through memcpy()\n"
-			,bm_total_frames,bm_slow_frames);
+	    mpxp_warn<<"from "<<bm_total_frames<<" frames "<<bm_slow_frames<<" were copied through memcpy()"<<std::endl;
     }
 }
 
@@ -83,25 +84,18 @@ int Vidix_System::start()
 {
     int err;
     if((err=vidix->playback_on())!=0) {
-	MSG_FATAL("Can't start playback: %s\n",strerror(err));
+	mpxp_fatal<<"Can't start playback: "<<strerror(err)<<std::endl;
 	return -1;
     }
     video_on=1;
     if (vidix->cap.flags & FLAG_EQUALIZER) {
-	MSG_V("vo_gamma_brightness=%i\n"
-	      "vo_gamma_saturation=%i\n"
-	      "vo_gamma_contrast=%i\n"
-	      "vo_gamma_hue=%i\n"
-	      "vo_gamma_red_intensity=%i\n"
-	      "vo_gamma_green_intensity=%i\n"
-	      "vo_gamma_blue_intensity=%i\n"
-	       ,vo_conf.gamma.brightness
-	       ,vo_conf.gamma.saturation
-	       ,vo_conf.gamma.contrast
-	       ,vo_conf.gamma.hue
-	       ,vo_conf.gamma.red_intensity
-	       ,vo_conf.gamma.green_intensity
-	       ,vo_conf.gamma.blue_intensity);
+	mpxp_v<<"vo_gamma_brightness="<<vo_conf.gamma.brightness<<std::endl;
+	mpxp_v<<"vo_gamma_saturation="<<vo_conf.gamma.saturation<<std::endl;
+	mpxp_v<<"vo_gamma_contrast="<<vo_conf.gamma.contrast<<std::endl;
+	mpxp_v<<"vo_gamma_hue="<<vo_conf.gamma.hue<<std::endl;
+	mpxp_v<<"vo_gamma_red_intensity="<<vo_conf.gamma.red_intensity<<std::endl;
+	mpxp_v<<"vo_gamma_green_intensity="<<vo_conf.gamma.green_intensity<<std::endl;
+	mpxp_v<<"vo_gamma_blue_intensity="<<vo_conf.gamma.blue_intensity<<std::endl;
 	/* To use full set of priv.video_eq.cap */
 	if(vidix->get_eq() == 0) {
 	    vidix->video_eq.brightness = vo_conf.gamma.brightness;
@@ -122,7 +116,7 @@ int Vidix_System::stop()
 {
     int err;
     if((err=vidix->playback_off())!=0) {
-	MSG_ERR("Can't stop playback: %s\n",strerror(err));
+	mpxp_err<<"Can't stop playback: "<<strerror(err)<<std::endl;
 	return -1;
     }
     video_on=0;
@@ -133,11 +127,11 @@ void Vidix_System::copy_dma(unsigned idx,int sync_mode)
 {
     int err,i;
     int dma_busy;
-    MSG_DBG2("vidix_copy_dma(%u,%i) was called\n",idx,sync_mode);
+    mpxp_dbg2<<"vidix_copy_dma("<<idx<<","<<sync_mode<<") was called"<<std::endl;
     bm_total_frames++;
     if(idx > vidix->playback.num_frames-1 && vidix->playback.num_frames>1) {
-	MSG_FATAL("\nDetected internal error!\n"
-		"Request to copy %u frame into %u array\n",idx,vidix->playback.num_frames);
+	mpxp_fatal<<"Detected internal error!"<<std::endl;
+	mpxp_fatal<<"Request to copy "<<idx<<" frame into "<<vidix->playback.num_frames<<" array"<<std::endl;
 	return;
     }
     dma_busy = vidix->dma_status();
@@ -158,23 +152,23 @@ void Vidix_System::copy_dma(unsigned idx,int sync_mode)
 	err=vidix->dma_copy_frame();
 	if(err) {
 	    /* We can switch back to DR here but for now exit */
-	    MSG_FATAL("\nerror '%s' occured during DMA transfer\n"
-			"Please send BUGREPORT to developers!!!\n",strerror(err));
+	    mpxp_fatal<<"error '"<<strerror(err)<<"' occured during DMA transfer"<<std::endl;
+	    mpxp_fatal<<"Please send BUGREPORT to developers!!!"<<std::endl;
 	    exit(EXIT_FAILURE); /* it's OK vidix_term will be called */
 	}
 #if 0
-	printf("frame is DMA copied\n");
+	mpxp_info<<"frame is DMA copied"<<std::endl;
 #endif
     } else {
 	memcpy(reinterpret_cast<any_t*>(reinterpret_cast<long>(vidix->playback.dga_addr)+vidix->playback.offsets[0]),bm_buffs[idx],vidix->playback.frame_size);
-	MSG_WARN("DMA frame is memcpy() copied\n");
+	mpxp_warn<<"DMA frame is memcpy() copied"<<std::endl;
 	bm_slow_frames++;
     }
 }
 
 MPXP_Rc Vidix_System::select_frame(unsigned idx)
 {
-    MSG_DBG2("vidix_select_frame() was called\n");
+    mpxp_dbg2<<"vidix_select_frame() was called"<<std::endl;
     if(vo_conf.use_bm == 1) copy_dma(idx,0);
     else vidix->frame_select(idx);
     return MPXP_Ok;
@@ -182,7 +176,7 @@ MPXP_Rc Vidix_System::select_frame(unsigned idx)
 
 MPXP_Rc Vidix_System::query_fourcc(vo_query_fourcc_t* format)
 {
-    MSG_DBG2("query_format was called: %x (%s)\n",format->fourcc,vo_format_name(format->fourcc));
+    mpxp_dbg2<<"query_format was called: "<<std::hex<<format->fourcc<<" ("<<vo_format_name(format->fourcc)<<")"<<std::endl;
     vidix->fourcc.fourcc = format->fourcc;
     vidix->fourcc.srcw = format->w;
     vidix->fourcc.srch = format->h;
@@ -194,7 +188,7 @@ MPXP_Rc Vidix_System::query_fourcc(vo_query_fourcc_t* format)
 MPXP_Rc Vidix_System::grkey_support() const
 {
     MPXP_Rc retval = (vidix->fourcc.flags & VID_CAP_COLORKEY)?MPXP_Ok:MPXP_False;
-    MSG_DBG2("query_grkey_support: %i\n",retval);
+    mpxp_dbg2<<"query_grkey_support: "<<retval<<std::endl;
     return retval;
 }
 
@@ -308,18 +302,14 @@ MPXP_Rc Vidix_System::configure(unsigned src_width,unsigned src_height,
     int err;
     static int video_clean=0;
     uint32_t apitch;
-    MSG_DBG2("vidix_init() was called\n"
-	    "src_w=%u src_h=%u dest_x_y_w_h = %u %u %u %u\n"
-	    "format=%s dest_bpp=%u vid_w=%u vid_h=%u\n"
-	    ,src_width,src_height,x_org,y_org,dst_width,dst_height
-	    ,vo_format_name(format),dest_bpp,vid_w,vid_h);
+    mpxp_dbg2<<"vidix_init() was called"<<std::endl;
+    mpxp_dbg2<<"src_w="<<src_width<<" src_h="<<src_height<<" dest_x_y_w_h = "<<x_org<<" "<<y_org<<" "<<dst_width<<" "<<dst_height<<std::endl;
+    mpxp_dbg2<<"format="<<vo_format_name(format)<<" dest_bpp="<<dest_bpp<<" vid_w="<<vid_w<<" vid_h="<<vid_h<<std::endl;
     if(((vidix->cap.maxwidth != -1) && (vid_w > (unsigned)vidix->cap.maxwidth)) ||
 	    ((vidix->cap.minwidth != -1) && (vid_w < (unsigned)vidix->cap.minwidth)) ||
 	    ((vidix->cap.maxheight != -1) && (vid_h > (unsigned)vidix->cap.maxheight)) ||
 	    ((vidix->cap.minwidth != -1 ) && (vid_h < (unsigned)vidix->cap.minheight))) {
-	MSG_FATAL("video server has unsupported resolution (%dx%d), supported: %dx%d-%dx%d\n",
-		vid_w, vid_h, vidix->cap.minwidth, vidix->cap.minheight,
-		vidix->cap.maxwidth, vidix->cap.maxheight);
+	mpxp_fatal<<"video server has unsupported resolution ("<<vid_w<<"x"<<vid_h<<"), supported: "<<vidix->cap.maxwidth<<"x"<<vidix->cap.minwidth<<"-"<<vidix->cap.minheight<<"x"<<vidix->cap.maxheight<<std::endl;
 	return MPXP_False;
     }
     vidix->fourcc.fourcc = format;
@@ -338,18 +328,15 @@ MPXP_Rc Vidix_System::configure(unsigned src_width,unsigned src_height,
 	default: err=1; break;
     }
     if(err) {
-	MSG_FATAL("video server has unsupported color depth by vidix (%d)\n"
-		,vidix->fourcc.depth);
-		return MPXP_False;
+	mpxp_fatal<<"video server has unsupported color depth by vidix ("<<vidix->fourcc.depth<<")"<<std::endl;
+	return MPXP_False;
     }
     if((dst_width > src_width || dst_height > src_height) && (vidix->cap.flags & FLAG_UPSCALER) != FLAG_UPSCALER) {
-	MSG_FATAL("vidix driver can't upscale image (%d%d -> %d%d)\n",
-		src_width, src_height, dst_width, dst_height);
+	mpxp_fatal<<"vidix driver can't upscale image ("<<src_width<<"x"<<src_height<<" -> "<<dst_width<<"x"<<dst_height<<")"<<std::endl;
 	return MPXP_False;
     }
     if((dst_width > src_width || dst_height > src_height) && (vidix->cap.flags & FLAG_DOWNSCALER) != FLAG_DOWNSCALER) {
-	MSG_FATAL("vidix driver can't downscale image (%d%d -> %d%d)\n",
-		src_width, src_height, dst_width, dst_height);
+	mpxp_fatal<<"vidix driver can't downscale image ("<<src_width<<"x"<<src_height<<" -> "<<dst_width<<"x"<<dst_height<<")"<<std::endl;
 	return MPXP_False;
     }
     image_width = src_width;
@@ -372,10 +359,10 @@ MPXP_Rc Vidix_System::configure(unsigned src_width,unsigned src_height,
     if(vidix->playback.num_frames > vo_conf.xp_buffs) vidix->playback.num_frames = vo_conf.xp_buffs;
     vidix->playback.src.pitch.y = vidix->playback.src.pitch.u = vidix->playback.src.pitch.v = 0;
     if((err=vidix->config_playback())!=0) {
-	MSG_FATAL("Can't configure playback: %s\n",strerror(err));
+	mpxp_fatal<<"Can't configure playback: "<<strerror(err)<<std::endl;
 	return MPXP_False;
     }
-    MSG_V("using %d buffers\n", vidix->playback.num_frames);
+    mpxp_v<<"using "<<vidix->playback.num_frames<<" buffers"<<std::endl;
     /* configure busmastering */
     if(vo_conf.use_bm) {
 	if(vidix->cap.flags & FLAG_DMA) {
@@ -384,12 +371,12 @@ MPXP_Rc Vidix_System::configure(unsigned src_width,unsigned src_height,
 	    for(i=0;i<vo_conf.xp_buffs;i++) {
 		if(!bm_buffs[i]) bm_buffs[i] = new(alignmem,psize) uint8_t[vidix->playback.frame_size];
 		if(!(bm_buffs[i])) {
-		    MSG_ERR("Can't allocate memory for busmastering\n");
+		    mpxp_err<<"Can't allocate memory for busmastering"<<std::endl;
 		    return MPXP_False;
 		}
 		if(mlock(bm_buffs[i],vidix->playback.frame_size) != 0) {
 		    unsigned j;
-		    MSG_WARN("Can't lock memory for busmastering\n");
+		    mpxp_warn<<"Can't lock memory for busmastering"<<std::endl;
 		    for(j=0;j<i;j++) munlock(bm_buffs[i],vidix->playback.frame_size);
 		    bm_locked=0;
 		}
@@ -398,10 +385,10 @@ MPXP_Rc Vidix_System::configure(unsigned src_width,unsigned src_height,
 	    bm_total_frames=bm_slow_frames=0;
 	}
 	else
-	MSG_ERR("Can not configure bus mastering: your driver is not DMA capable\n");
+	mpxp_err<<"Can not configure bus mastering: your driver is not DMA capable"<<std::endl;
 	vo_conf.use_bm = 0;
     }
-    if(vo_conf.use_bm) MSG_OK("using BUSMASTERING\n");
+    if(vo_conf.use_bm) mpxp_ok<<"using BUSMASTERING"<<std::endl;
     mem = static_cast<uint8_t*>(vidix->playback.dga_addr);
 
     if(!video_clean) {
@@ -411,7 +398,7 @@ MPXP_Rc Vidix_System::configure(unsigned src_width,unsigned src_height,
 	    memset(mem + vidix->playback.offsets[i], 0x80, vidix->playback.frame_size);
 	video_clean=1;
     }
-    MSG_DBG2("vidix returns pitches %u %u %u\n",vidix->playback.dest.pitch.y,vidix->playback.dest.pitch.u,vidix->playback.dest.pitch.v);
+    mpxp_dbg2<<"vidix returns pitches "<<vidix->playback.dest.pitch.y<<" "<<vidix->playback.dest.pitch.u<<" "<<vidix->playback.dest.pitch.v<<std::endl;
     switch(format) {
 	case IMGFMT_Y800:
 	case IMGFMT_YVU9:

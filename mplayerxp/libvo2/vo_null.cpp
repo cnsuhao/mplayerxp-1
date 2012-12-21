@@ -123,8 +123,8 @@ MPXP_Rc Null_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d
 	if(!bm_buffs[i])
 	    bm_buffs[i] = new(alignmem,getpagesize()) uint8_t[frame_size];
 	if(!(bm_buffs[i])) {
-		MSG_ERR("Can't allocate memory for busmastering\n");
-		return MPXP_False;
+	    mpxp_err<<"Can't allocate memory for busmastering"<<std::endl;
+	    return MPXP_False;
 	}
     }
     return MPXP_Ok;
@@ -142,7 +142,7 @@ Null_VO_Interface::~Null_VO_Interface()
 Null_VO_Interface::Null_VO_Interface(const std::string& arg)
 		:VO_Interface(arg)
 {
-    if(!arg.empty()) MSG_ERR("vo_null: Unknown subdevice: %s\n",arg.c_str());
+    if(!arg.empty()) mpxp_err<<"vo_null: Unknown subdevice: "<<arg<<std::endl;
 }
 
 void Null_VO_Interface::get_surface_caps(dri_surface_cap_t *caps) const

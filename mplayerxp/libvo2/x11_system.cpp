@@ -1,6 +1,8 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
+#include <iomanip>
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,11 +37,9 @@ static int x11_errorhandler(::Display *display,::XErrorEvent *event)
     char msg[256];
 
     ::XGetErrorText(display, event->error_code, (char *)&msg, sizeof(msg));
-    MSG_ERR("X11_System: %s\n", msg);
-    MSG_V("Type: %x, display: %x, resourceid: %x, serial: %lx\n",
-	    event->type, event->display, event->resourceid, event->serial);
-    MSG_V("Error code: %x, request code: %x, minor code: %x\n",
-	    event->error_code, event->request_code, event->minor_code);
+    mpxp_err<<"X11_System: "<<msg<<std::endl;
+    mpxp_v<<"Type: "<<std::hex<<event->type<<", display: "<<std::hex<<event->display<<", resourceid: "<<std::hex<<event->resourceid<<", serial: "<<event->serial<<std::endl;
+    mpxp_v<<"Error code: "<<std::hex<<event->error_code<<", request code: "<<std::hex<<event->request_code<<", minor code: "<<event->minor_code<<std::endl;
     escape_player("X11_System error",mp_conf.max_trace);
     return 0;
 }
@@ -67,10 +67,10 @@ X11_System::X11_System(const char* DisplayName,int xinerama_screen)
 	    DisplayName=":0.0";
     dispName = ::XDisplayName(DisplayName);
 
-    MSG_V("X11 opening display: %s\n", dispName);
+    mpxp_v<<"X11 opening display: "<<dispName<<std::endl;
 
     if(!(mDisplay=::XOpenDisplay(dispName))) {
-	MSG_ERR( "X11_System: couldn't open the X11 display: '%s'!\n",dispName );
+	mpxp_err<<"X11_System: couldn't open the X11 display: "<<dispName<<std::endl;
 	exit_player("X11_System error");
     }
     mScreen=DefaultScreen( mDisplay );
@@ -133,8 +133,7 @@ X11_System::X11_System(const char* DisplayName,int xinerama_screen)
 	bpp=mXImage->bits_per_pixel;
 	if((_depth+7)/8 != (bpp+7)/8) _depth=bpp; // by A'rpi
 	mask=mXImage->red_mask|mXImage->green_mask|mXImage->blue_mask;
-	MSG_V("X11_System: color mask:  %X  (R:%lX G:%lX B:%lX)\n",
-	    mask,mXImage->red_mask,mXImage->green_mask,mXImage->blue_mask);
+	mpxp_v<<"X11_System: color mask:  "<<std::hex<<mask<<"  (R:"<<mXImage->red_mask<<" G:"<<mXImage->green_mask<<" B:"<<mXImage->blue_mask<<")"<<std::endl;
 	XDestroyImage( mXImage );
     }
     if(((_depth+7)/8)==2){
@@ -148,10 +147,7 @@ X11_System::X11_System(const char* DisplayName,int xinerama_screen)
     else		mLocalDisplay=0;
     XA_NET_WM_STATE=::XInternAtom(mDisplay,"_NET_WM_STATE",0 );
     XA_NET_WM_STATE_FULLSCREEN=::XInternAtom(mDisplay,"_NET_WM_STATE_FULLSCREEN",0 );
-    MSG_OK("X11_System: running  %dx%d with depth %d bits/pixel (\"%s\" => %s display)\n",
-	screenwidth,screenheight,
-	_depth,
-	dispName,mLocalDisplay?"local":"remote");
+    mpxp_ok<<"X11_System: running "<<screenwidth<<"x"<<screenheight<<" with depth "<<_depth<<" bits/pixel (\""<<dispName<<"\" => "<<(mLocalDisplay?"local":"remote")<<" display)"<<std::endl;
 }
 
 X11_System::~X11_System() {
@@ -284,20 +280,20 @@ void X11_System::getMyXImage(unsigned idx,Visual *visual,unsigned _dpth,unsigned
     if ( mLocalDisplay && ::XShmQueryExtension( mDisplay )) _Shmem_Flag=1;
     else {
 	_Shmem_Flag=0;
-	MSG_V( "Shared memory not supported\nReverting to normal Xlib\n" );
+	mpxp_v<<"Shared memory not supported\nReverting to normal Xlib"<<std::endl;
     }
     if ( _Shmem_Flag ) {
 	CompletionType=::XShmGetEventBase( mDisplay ) + ShmCompletion;
 	myximage[idx]=::XShmCreateImage( mDisplay,visual,_dpth,ZPixmap,NULL,&Shminfo[idx],w,h);
 	if ( myximage[idx] == NULL ) {
-	    MSG_V( "Shared memory error,disabling ( Ximage error )\n" );
+	    mpxp_v<<"Shared memory error,disabling ( Ximage error )"<<std::endl;
 	    goto shmemerror;
 	}
 	Shminfo[idx].shmid=::shmget( IPC_PRIVATE,
 		myximage[idx]->bytes_per_line * myximage[idx]->height,IPC_CREAT|0777);
 	if ( Shminfo[idx].shmid < 0 ) {
 	    XDestroyImage( myximage[idx] );
-	    MSG_V("Shared memory error '%s' disabling ( seg id error )\n",strerror(errno));
+	    mpxp_v<<"Shared memory error '"<<strerror(errno)<<"' disabling ( seg id error )"<<std::endl;
 	    goto shmemerror;
 	}
 	Shminfo[idx].shmaddr=(char *)::shmat( Shminfo[idx].shmid,0,0 );
@@ -305,7 +301,7 @@ void X11_System::getMyXImage(unsigned idx,Visual *visual,unsigned _dpth,unsigned
 	if (Shminfo[idx].shmaddr == ((char*)-1)) {
 	    XDestroyImage( myximage[idx] );
 	    if (Shminfo[idx].shmaddr != ((char*)-1)) ::shmdt(Shminfo[idx].shmaddr);
-	    MSG_V( "Shared memory error, disabling ( address error )\n" );
+	    mpxp_v<<"Shared memory error, disabling ( address error )"<<std::endl;
 	    goto shmemerror;
 	}
 	myximage[idx]->data=Shminfo[idx].shmaddr;
@@ -317,13 +313,13 @@ void X11_System::getMyXImage(unsigned idx,Visual *visual,unsigned _dpth,unsigned
 	if ( gXErrorFlag ) {
 	    XDestroyImage( myximage[idx] );
 	    shmdt( Shminfo[idx].shmaddr );
-	    MSG_V( "Shared memory error,disabling.\n" );
+	    mpxp_v<<"Shared memory error,disabling."<<std::endl;
 	    gXErrorFlag=0;
 	    goto shmemerror;
 	} else ::shmctl( Shminfo[idx].shmid,IPC_RMID,0 );
 	static int firstTime=1;
 	if (firstTime) {
-	    MSG_V( "Sharing memory.\n" );
+	    mpxp_v<<"Sharing memory."<<std::endl;
 	    firstTime=0;
 	}
     } else {
@@ -401,10 +397,7 @@ int X11_System::find_depth_from_visuals(Visual **visual_return) const
 			   &nvisuals);
   if (visuals != NULL) {
     for (i = 0; i < nvisuals; i++) {
-	MSG_V("vo: X11 truecolor visual %#x, depth %d, R:%lX G:%lX B:%lX\n",
-	       visuals[i].visualid, visuals[i].depth,
-	       visuals[i].red_mask, visuals[i].green_mask,
-	       visuals[i].blue_mask);
+	mpxp_v<<"vo: X11 truecolor visual #"<<visuals[i].visualid<<", depth "<<visuals[i].depth<<", R:"<<visuals[i].red_mask<<" G:"<<visuals[i].green_mask<<" B:"<<visuals[i].blue_mask<<std::endl;
 	/*
 	* save the visual index and it's depth, if this is the first
 	* truecolor visul, or a visual that is 'preferred' over the
@@ -680,7 +673,7 @@ uint32_t X11_System::check_events(vo_adjust_size_t adjust_size,const Video_Outpu
     unsigned ow,oh,nw,nh;
     while ( ::XPending( mDisplay ) ) {
 	::XNextEvent( mDisplay,&Event );
-	MSG_V("X11_common: event_type = %lX (%s)\n",Event.type,evt_name(Event.type));
+	mpxp_v<<"X11_common: event_type = "<<Event.type<<" ("<<evt_name(Event.type)<<")"<<std::endl;
 	switch( Event.type ) {
 	    case Expose:
 		ret|=VO_EVENT_EXPOSE;
@@ -706,7 +699,7 @@ uint32_t X11_System::check_events(vo_adjust_size_t adjust_size,const Video_Outpu
 		    ::XResizeWindow( mDisplay,window,curr.w,curr.h );
 		    ::XSync( mDisplay,True);
 		    update_win_coord();
-		    MSG_V("X11 Window %dx%d-%dx%d\n", curr.x, curr.y, curr.w, curr.h);
+		    mpxp_v<<"X11 Window "<<curr.x<<"x"<<curr.y<<"-"<<curr.w<<"x"<<curr.h<<std::endl;
 		    ret|=VO_EVENT_RESIZE;
 		}
 		break;
@@ -836,16 +829,16 @@ void X11_System::saver_on()
     if (dpms_disabled) {
 	if (DPMSQueryExtension(mDisplay, &nothing, &nothing)) {
 	    if (!DPMSEnable(mDisplay)) {  // restoring power saving settings
-		MSG_WARN("DPMS not available?\n");
+		mpxp_warn<<"DPMS not available?"<<std::endl;
 	    } else {
 		// DPMS does not seem to be enabled unless we call DPMSInfo
 		BOOL onoff;
 		CARD16 state;
 		DPMSInfo(mDisplay, &state, &onoff);
 		if (onoff) {
-		    MSG_V ("Successfully enabled DPMS\n");
+		    mpxp_v<<"Successfully enabled DPMS"<<std::endl;
 		} else {
-		    MSG_ERR ("Could not enable DPMS\n");
+		    mpxp_err<<"Could not enable DPMS"<<std::endl;
 		}
 	    }
 	}
@@ -872,10 +865,10 @@ void X11_System::saver_off()
 	::DPMSInfo(mDisplay, &state, &onoff);
 	if (onoff) {
 	    Status stat;
-	    MSG_V ("Disabling DPMS\n");
+	    mpxp_v<<"Disabling DPMS"<<std::endl;
 	    dpms_disabled=1;
 	    stat = ::DPMSDisable(mDisplay);  // monitor powersave off
-	    MSG_V ("stat: %d\n", stat);
+	    mpxp_v<<"stat: "<<stat<<std::endl;
 	}
     }
 #endif
@@ -905,10 +898,10 @@ void X11_System::vm_switch(uint32_t X, uint32_t Y, int* modeline_width, int* mod
 
     if (::XF86VidModeQueryExtension(mDisplay, &vm_event, &vm_error)) {
 	::XF86VidModeQueryVersion(mDisplay, &vm_ver, &vm_rev);
-	MSG_V("XF86VidMode Extension v%i.%i\n", vm_ver, vm_rev);
+	mpxp_v<<"XF86VidMode Extension v"<<vm_ver<<"."<<vm_rev<<std::endl;
 	have_vm=1;
     } else
-	MSG_WARN("XF86VidMode Extenstion not available.\n");
+	mpxp_warn<<"XF86VidMode Extenstion not available."<<std::endl;
 
     if (have_vm) {
 	if (vidmodes==NULL)
@@ -925,7 +918,7 @@ void X11_System::vm_switch(uint32_t X, uint32_t Y, int* modeline_width, int* mod
 		    j=i;
 		}
 
-	MSG_V("XF86VM: Selected video mode %dx%d for image size %dx%d.\n",*modeline_width, *modeline_height, X, Y);
+	mpxp_v<<"XF86VM: Selected video mode "<<*modeline_width<<"x"<<*modeline_height<<" for image size "<<X<<"x"<<Y<<std::endl;
 	::XF86VidModeLockModeSwitch(mDisplay,mScreen,0);
 	::XF86VidModeSwitchToMode(mDisplay,mScreen,vidmodes[j]);
 	X=(screenwidth-*modeline_width)/2;
@@ -944,7 +937,7 @@ void X11_System::vm_close()
 	::XF86VidModeGetAllModeLines(mDisplay,mScreen,&modecount,&vidmodes);
 	for (i=0; i<modecount; i++)
 	    if ((vidmodes[i]->hdisplay == screenwidth) && (vidmodes[i]->vdisplay == screenheight)) {
-		MSG_V("\nReturning to original mode %dx%d\n", screenwidth, screenheight);
+		mpxp_v<<"Returning to original mode "<<screenwidth<<"x"<<screenheight<<std::endl;
 		break;
 	    }
 	::XF86VidModeSwitchToMode(mDisplay,mScreen,vidmodes[i]);
@@ -968,7 +961,7 @@ unsigned Xv_System::query_port(uint32_t format)
     if (Success == ::XvQueryExtension(get_display(),&ver,&rel,&req,&ev,&err)) {
 	/* check for Xvideo support */
 	if (Success != ::XvQueryAdaptors(get_display(),DefaultRootWindow(get_display()), &adaptors,&ai)) {
-	    MSG_ERR("Xv_System: XvQueryAdaptors failed");
+	    mpxp_err<<"Xv_System: XvQueryAdaptors failed"<<std::endl;
 	    return 0;
 	}
 	/* check priv.adaptors */
@@ -979,7 +972,7 @@ unsigned Xv_System::query_port(uint32_t format)
 		    port = xv_p;
 		    break;
 		} else {
-		    MSG_ERR("Xv: could not grab port %i\n", (int)xv_p);
+		    mpxp_err<<"Xv: could not grab port "<<xv_p<<std::endl;
 		}
 	    }
 	}
@@ -990,14 +983,14 @@ unsigned Xv_System::query_port(uint32_t format)
 	    if(format==IMGFMT_BGR16) format=IMGFMT_RGB16;
 	    format = 0;
 	    for(i = 0; i < formats; i++) {
-		MSG_V("Xvideo image format: 0x%x (%4.4s) %s\n", fo[i].id,(char*)&fo[i].id, (fo[i].format == XvPacked) ? "packed" : "planar");
+		mpxp_v<<"Xvideo image format: 0x"<<std::hex<<fo[i].id<<" ("<<std::setw(4)<<(char*)&fo[i].id<<") "<<((fo[i].format==XvPacked)?"packed":"planar")<<std::endl;
 		if (fo[i].id == (int)format) format = fo[i].id;
 	    }
 	    if (!format) port = 0;
 	} else format = 0;
 
 	if (port != 0) {
-	    MSG_V( "using Xvideo port %d for hw scaling\n",port );
+	    mpxp_v<<"using Xvideo port "<<port<<" for hw scaling"<<std::endl;
 	}
     } else format = 0;
     return format;
@@ -1047,14 +1040,14 @@ int Xv_System::get_video_eq(vo_videq_t *info) const
 	    if (xv_atomka != None) {
 		int port_value,port_min,port_max,port_mid,has_value=0;;
 		::XvGetPortAttribute(get_display(), port, xv_atomka, &port_value);
-		MSG_DBG2("vo_xv: get: %s = %i\n",attributes[i].name,port_value);
+		mpxp_dbg2<<"vo_xv: get: "<<attributes[i].name<<" = "<<port_value<<std::endl;
 
 		port_min = xv_min;
 		port_max = xv_max;
 		port_mid = (port_min + port_max) / 2;
 		port_value = ((port_value - port_mid)*2000)/(port_max-port_min);
 
-		MSG_DBG2("vo_xv: assume: %s = %i\n",attributes[i].name,port_value);
+		mpxp_dbg2<<"vo_xv: assume: "<<attributes[i].name<<" = "<<port_value<<std::endl;
 
 		if(!strcmp(attributes[i].name,"XV_BRIGHTNESS") && !strcmp(info->name,VO_EC_BRIGHTNESS)) {
 		    has_value=1;
@@ -1139,7 +1132,7 @@ int Xv_System::set_video_eq(const vo_videq_t *info) const
 		    port_max = xv_max;
 		    port_mid = (port_min + port_max) / 2;
 		    port_value = port_mid + (port_value * (port_max - port_min)) / 2000;
-		    MSG_DBG2("vo_xv: set gamma %s to %i (min %i max %i mid %i)\n",attributes[i].name,port_value,port_min,port_max,port_mid);
+		    mpxp_dbg2<<"vo_xv: set gamma "<<attributes[i].name<<" to "<<port_value<<" (min "<<port_min<<" max "<<port_max<<" mid "<<port_mid<<")"<<std::endl;
 		    XvSetPortAttribute(get_display(), port, xv_atomka, port_value);
 		    return 0;
 		}
@@ -1161,7 +1154,7 @@ int Xv_System::reset_video_eq() const
     for (i = 0; (int)i < howmany && attributes; i++) {
 	if (attributes[i].flags & XvSettable && !strcmp(attributes[i].name,"XV_SET_DEFAULTS")) {
 	    was_reset = 1;
-	    MSG_DBG2("vo_xv: reset gamma correction\n");
+	    mpxp_dbg2<<"vo_xv: reset gamma correction"<<std::endl;
 	    xv_atomka = XInternAtom(get_display(), attributes[i].name, True);
 	    XvSetPortAttribute(get_display(), port, xv_atomka, attributes[i].max_value);
 	}
@@ -1186,7 +1179,7 @@ GLX_System::GLX_System(const char* DisplayName,int xinerama_screen)
     /* get an appropriate visual */
     vis = glXChooseVisual(get_display(), DefaultScreen(get_display()), visual_attribs);
     const char *extensions = glXQueryExtensionsString(get_display(), DefaultScreen(get_display()));
-    MSG_V("GLX extensions: %s\n",extensions);
+    mpxp_v<<"GLX extensions: "<<extensions<<std::endl;
 }
 
 GLX_System::~GLX_System() {
@@ -1207,7 +1200,7 @@ void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,unsigned f
 
     ctx=::glXCreateContext(get_display(), vi, NULL, GL_TRUE);
     if (ctx == NULL) {
-	MSG_ERR("[GLX_System]: Can't create GLX context\n");
+	mpxp_err<<"[GLX_System]: Can't create GLX context"<<std::endl;
 	exit_player("vo error");
     }
 

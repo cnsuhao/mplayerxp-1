@@ -320,7 +320,7 @@ static void __FASTCALL__ vo_update_text_sub(const Video_Output*vo,mp_osd_obj_t* 
 	      }
 	      if (k==MAX_UCS){
 		 len=j; // end here
-		 MSG_WARN("\nMAX_UCS exceeded!\n");
+		 mpxp_warn<<std::endl<<"MAX_UCS exceeded!"<<std::endl;
 	      }
 	      if (!c) c++; // avoid UCS 0
 	      if (c==' '){
@@ -474,9 +474,7 @@ int __FASTCALL__ vo_update_osd(const Video_Output*vo,int dxs,int dys){
 	    if(obj->bbox.y2>dys) obj->bbox.y2=dys;
 	    if(obj->flags&OSDFLAG_VISIBLE)
 	    // debug:
-	    MSG_DBG2("OSD update: %d;%d %dx%d  \n",
-		obj->bbox.x1,obj->bbox.y1,obj->bbox.x2-obj->bbox.x1,
-		obj->bbox.y2-obj->bbox.y1);
+	    mpxp_dbg2<<"OSD update: "<<obj->bbox.x1<<";"<<obj->bbox.y1<<" "<<(obj->bbox.x2-obj->bbox.x1)<<"x"<<(obj->bbox.y2-obj->bbox.y1)<<std::endl;
 	}
 	// check if visibility changed:
 	if(vis != (obj->flags&OSDFLAG_VISIBLE) ) obj->flags|=OSDFLAG_CHANGED;
@@ -486,7 +484,7 @@ int __FASTCALL__ vo_update_osd(const Video_Output*vo,int dxs,int dys){
       }
       if(obj->flags&OSDFLAG_CHANGED){
 	chg|=1<<obj->type;
-	MSG_DBG2("OSD chg: %d  V: %s  pb:%d  \n",obj->type,(obj->flags&OSDFLAG_VISIBLE)?"yes":"no",vo->osd_progbar_type);
+	mpxp_dbg2<<"OSD chg: "<<obj->type<<"  V: "<<((obj->flags&OSDFLAG_VISIBLE)?"yes":"no")<<"  pb:"<<vo->osd_progbar_type<<std::endl;
       }
       obj=obj->next;
     }
