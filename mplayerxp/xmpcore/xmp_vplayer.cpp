@@ -23,49 +23,40 @@ using namespace mpxp;
 float max_pts_correction=0;
 namespace mpxp {
 
-#ifdef ENABLE_DEC_AHEAD_DEBUG
-#define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
-#else
-#define MSG_T(args...)
-#endif
-
 static void __show_status_line(float a_pts,float v_pts,float delay,float AV_delay) {
-    MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f %3d/%3d  %2d%% %2d%% %4.1f%% %d [frms: [%i]]\n",
-		a_pts-delay,v_pts,AV_delay
-		,mpxp_context().engine().xp_core->video->num_played_frames,mpxp_context().engine().xp_core->video->num_decoded_frames
-		,(v_pts>0.5)?(int)(100.0*mpxp_context().bench->video/(double)v_pts):0
-		,(v_pts>0.5)?(int)(100.0*mpxp_context().bench->vout/(double)v_pts):0
-		,(v_pts>0.5)?(100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/(double)v_pts):0
-		,mpxp_context().output_quality
-		,dae_curr_vplayed(mpxp_context().engine().xp_core)
-		);
-    fflush(stdout);
+    mpxp_status <<"A:"<<(a_pts-delay)
+		<<" V:"<<v_pts
+		<<" A-V:"<<AV_delay
+		<<" "<<mpxp_context().engine().xp_core->video->num_played_frames
+		<<"/"<<mpxp_context().engine().xp_core->video->num_decoded_frames
+		<<" "<<((v_pts>0.5)?(int)(100.0*mpxp_context().bench->video/(double)v_pts):0)<<"%"
+		<<" "<<((v_pts>0.5)?(int)(100.0*mpxp_context().bench->vout/(double)v_pts):0)<<"%"
+		<<" "<<((v_pts>0.5)?(100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/(double)v_pts):0)<<"%"
+		<<" "<<mpxp_context().output_quality<<"%"
+		<<" [frms: ["<<dae_curr_vplayed(mpxp_context().engine().xp_core)<<"]]\r";
+    mpxp_status.flush();
 }
 
 static void show_status_line_no_apts(sh_audio_t* sh_audio,float v_pts) {
     if(mp_conf.av_sync_pts && sh_audio && (!mpxp_context().engine().xp_core->audio->eof || mpxp_context().audio().output->get_delay())) {
 	float a_pts = sh_audio->timer-mpxp_context().audio().output->get_delay();
-	MSG_STATUS("A:%6.1f V:%6.1f A-V:%7.3f ct:%7.3f  %3d/%3d  %2d%% %2d%% %4.1f%% %d\r"
-	,a_pts
-	,v_pts
-	,a_pts-v_pts
-	,0.0
-	,mpxp_context().engine().xp_core->video->num_played_frames,mpxp_context().engine().xp_core->video->num_decoded_frames
-	,(v_pts>0.5)?(int)(100.0*mpxp_context().bench->video/(double)v_pts):0
-	,(v_pts>0.5)?(int)(100.0*mpxp_context().bench->vout/(double)v_pts):0
-	,(v_pts>0.5)?(100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/(double)v_pts):0
-	,mpxp_context().output_quality
-	);
+	mpxp_status<<"A:"<<a_pts
+	<<" V:"<<v_pts
+	<<" A-V:"<<(a_pts-v_pts)
+	<<" ct: "<<mpxp_context().engine().xp_core->video->num_played_frames
+	<<"/"<<mpxp_context().engine().xp_core->video->num_decoded_frames
+	<<"  "<<((v_pts>0.5)?(int)(100.0*mpxp_context().bench->video/(double)v_pts):0)<<"%"
+	<<" "<<((v_pts>0.5)?(int)(100.0*mpxp_context().bench->vout/(double)v_pts):0)<<"%"
+	<<" "<<((v_pts>0.5)?(100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/(double)v_pts):0)<<"%"
+	<<" "<<mpxp_context().output_quality<<"\r";
     } else
-	MSG_STATUS("V:%6.1f  %3d  %2d%% %2d%% %4.1f%% %d\r"
-	,v_pts
-	,mpxp_context().engine().xp_core->video->num_played_frames
-	,(v_pts>0.5)?(int)(100.0*mpxp_context().bench->video/(double)v_pts):0
-	,(v_pts>0.5)?(int)(100.0*mpxp_context().bench->vout/(double)v_pts):0
-	,(v_pts>0.5)?(100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/(double)v_pts):0
-	,mpxp_context().output_quality
-	);
-    fflush(stdout);
+	mpxp_status<<"V:"<<v_pts
+	<<" "<<mpxp_context().engine().xp_core->video->num_played_frames
+	<<" "<<((v_pts>0.5)?(int)(100.0*mpxp_context().bench->video/(double)v_pts):0)<<"%"
+	<<" "<<((v_pts>0.5)?(int)(100.0*mpxp_context().bench->vout/(double)v_pts):0)<<"%"
+	<<" "<<((v_pts>0.5)?(100.0*(mpxp_context().bench->audio+mpxp_context().bench->audio_decode)/(double)v_pts):0)<<"%"
+	<<" "<<mpxp_context().output_quality<<"\r";
+    mpxp_status.flush();
 }
 
 static void vplayer_check_chapter_change(sh_audio_t* sh_audio,sh_video_t* sh_video,xmp_frame_t* shva_prev,float v_pts)
@@ -75,17 +66,17 @@ static void vplayer_check_chapter_change(sh_audio_t* sh_audio,sh_video_t* sh_vid
 	    while(v_pts < 1.0 && sh_audio->timer==0.0 && mpxp_context().audio().output->get_delay()==0.0)
 		yield_timeslice();	 /* Wait for audio to start play */
 	    if(sh_audio->timer > 2.0 && v_pts < 1.0) {
-		MSG_V("Video chapter change detected\n");
+		mpxp_v<<"Video chapter change detected"<<std::endl;
 		sh_video->chapter_change=1;
 	    } else {
 		sh_video->chapter_change=0;
 	    }
 	} else if(v_pts < 1.0 && shva_prev->v_pts > 2.0) {
-	    MSG_V("Video chapter change detected\n");
+	    mpxp_v<<"Video chapter change detected"<<std::endl;
 	    sh_video->chapter_change=1;
 	}
 	if(sh_video->chapter_change && sh_audio->chapter_change) {
-	    MSG_V("Reset chapter change\n");
+	    mpxp_v<<"Reset chapter change"<<std::endl;
 	    sh_video->chapter_change=0;
 	    sh_audio->chapter_change=0;
 	}
@@ -114,11 +105,11 @@ static float vplayer_compute_sleep_time(sh_audio_t* sh_audio,sh_video_t* sh_vide
     return sleep_time;
 }
 
+static const float XP_MIN_TIMESLICE=0.010f; /* under Linux on x86 min time_slice = 10 ms */
+static const float XP_MIN_AUDIOBUFF=0.05f;
+static const float XP_MAX_TIMESLICE=0.1f;
 static int vplayer_do_sleep(sh_audio_t* sh_audio,int rtc_fd,float sleep_time)
 {
-#define XP_MIN_TIMESLICE 0.010 /* under Linux on x86 min time_slice = 10 ms */
-#define XP_MIN_AUDIOBUFF 0.05
-#define XP_MAX_TIMESLICE 0.1
     if(!mpxp_context().engine().xp_core->audio) sh_audio=NULL;
     if(sh_audio && (!mpxp_context().engine().xp_core->audio->eof || mpxp_context().audio().output->get_delay()) && sleep_time>XP_MAX_TIMESLICE) {
 	float t;
@@ -169,20 +160,9 @@ static int mpxp_play_video(Demuxer* demuxer,sh_audio_t* sh_audio,sh_video_t*sh_v
 
     if(mpxp_context().engine().xp_core->video->eof) can_blit=1; /* force blitting until end of stream will be reached */
     vplayer_check_chapter_change(sh_audio,sh_video,&shva_prev,v_pts);
-#if 0
-MSG_INFO("mpxp_context().engine().xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_audio->timer=%f v_pts=%f stream_pts=%f duration=%f\n"
-,mpxp_context().engine().xp_core->initial_apts
-,mpxp_context().engine().xp_core->audio->eof
-,sh_audio && !mpxp_context().engine().xp_core->audio->eof?d_audio->pts+(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps:0
-,sh_audio && !mpxp_context().engine().xp_core->audio->eof?sh_audio->timer-ao_get_delay(mpxp_context().audio().output):0
-,shva.v_pts
-,shva.stream_pts
-,shva.duration);
-#endif
     /*--------- add OSD to the next frame contents ---------*/
     if(can_blit) {
 #ifdef USE_OSD
-	MSG_D("dec_ahead_main: draw_osd to %u\n",player_idx);
 	MP_UNIT("draw_osd");
 	update_osd(shva.v_pts);
 	mpxp_context().video().output->draw_osd(dae_next_played(mpxp_context().engine().xp_core->video));
@@ -198,7 +178,7 @@ MSG_INFO("mpxp_context().engine().xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_
 		else
 		    for(unsigned j=0;MSGTR_SystemTooSlow[j];j++) mpxp_warn<<MSGTR_SystemTooSlow[j]<<std::endl;
 	}
-	MSG_D("\ndec_ahead_main: stalling: %i %i\n",dae_cuurr_vplayed(),dae_curr_decoded());
+	mpxp_dbg2<<std::endl<<"dec_ahead_main: stalling: "<<dae_curr_vplayed(mpxp_context().engine().xp_core)<<" "<<dae_curr_vdecoded(mpxp_context().engine().xp_core)<<std::endl;
 	/* Don't burn CPU here! With using of v_pts for A-V sync we will enter
 	   xp_decore_video without any delay (like while(1);)
 	   Sleeping for 10 ms doesn't matter with frame dropping */
@@ -220,7 +200,7 @@ MSG_INFO("mpxp_context().engine().xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_
 	player_idx=dae_next_played(mpxp_context().engine().xp_core->video);
 	mpxp_context().video().output->select_frame(player_idx);
 	dae_inc_played(mpxp_context().engine().xp_core->video);
-	MSG_D("\ndec_ahead_main: schedule %u on screen\n",player_idx);
+	mpxp_dbg2<<std::endl<<"dec_ahead_main: schedule "<<player_idx<<" on screen"<<std::endl;
 	t2=GetTimer()-t2;
 	tt = t2*0.000001f;
 	mpxp_context().bench->vout+=tt;
@@ -249,7 +229,7 @@ MSG_INFO("mpxp_context().engine().xp_core->initial_apts=%f a_eof=%i a_pts=%f sh_
     if(!delay_corrected) if(a_pts) delay_corrected=1;
     a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 
-    MSG_DBG2("### A:%8.3f (%8.3f)  V:%8.3f  A-V:%7.4f  \n",a_pts,a_pts-delay,v_pts,(a_pts-delay)-v_pts);
+    mpxp_dbg2<<"### A:"<<a_pts<<" ("<<(a_pts-delay)<<")  V:"<<v_pts<<"  A-V:"<<((a_pts-delay)-v_pts)<<std::endl;
 
     if(delay_corrected && can_blit){
 	float AV_delay=0; /* average of A-V timestamp differences */
@@ -284,7 +264,7 @@ any_t* xmp_video_player( any_t* arg )
     priv->state=Pth_Run;
     priv->dae->eof = 0;
     if(mpxp_context().engine().xp_core->audio) mpxp_context().engine().xp_core->audio->eof=0;
-    MSG_T("\nDEC_AHEAD: entering...\n");
+    mpxp_dbg2<<std::endl<<"DEC_AHEAD: entering..."<<std::endl;
     __MP_UNIT(priv->p_idx,"dec_ahead");
     priv->pid = getpid();
 
@@ -300,14 +280,14 @@ while(!priv->dae->eof){
     priv->dae->eof=mpxp_play_video(demuxer,sh_audio,sh_video);
 /*------------------------ frame decoded. --------------------*/
 } /* while(!priv->dae->eof)*/
-  MSG_T("\nDEC_AHEAD: leaving...\n");
+  mpxp_dbg2<<"DEC_AHEAD: leaving..."<<std::endl;
   priv->state=Pth_Stand;
   return arg; /* terminate thread here !!! */
 }
 
 void sig_video_play( void )
 {
-    MSG_T("sig_audio_play\n");
+    mpxp_dbg2<<"sig_audio_play"<<std::endl;
     mpxp_print_flush();
 
     dec_ahead_can_aseek=1;

@@ -27,7 +27,7 @@ namespace mpxp {
 /* A dummy function to make the backtrace more interesting. */
 static void dump_trace (void) {
     show_backtrace("Obtained %zd stack frames.\n",mp_conf.max_trace);
-    MSG_HINT("\nFor source lines you may also print in (gdb): list *0xADDRESS\n");
+    mpxp_hint<<std::endl<<"For source lines you may also print in (gdb): list *0xADDRESS"<<std::endl;
 }
 
 static void my_callback(int signo)
@@ -38,11 +38,9 @@ static void my_callback(int signo)
     if(i >= mpxp_context().engine().xp_core->num_threads ||
 	!pthread_equal(mpxp_context().engine().xp_core->mpxp_threads[i]->pth_id, _self)) i = 0; /* Use 0 as default handler */
 
-    MSG_FATAL("catching signal: %s in thread: %s (%i) in module: %s\n"
-	,strsignal(signo)
-	,mpxp_context().engine().xp_core->mpxp_threads[i]->name
-	,i
-	,mpxp_context().engine().xp_core->mpxp_threads[i]->unit);
+    mpxp_fatal<<"catching signal: "<<strsignal(signo)
+	    <<" in thread: "<<mpxp_context().engine().xp_core->mpxp_threads[i]->name
+	    <<" ("<<i<<") in module: %s"<<mpxp_context().engine().xp_core->mpxp_threads[i]->unit<<std::endl;
     dump_trace();
 #ifdef NDEBUG
     mpxp_context().engine().xp_core->mpxp_threads[i]->sigfunc();

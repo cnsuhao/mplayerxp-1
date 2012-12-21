@@ -26,7 +26,6 @@ using namespace mpxp;
 #include "libmpcodecs/dec_audio.h"
 
 #include "sig_hand.h"
-#define DA_PREFIX "DEC_AHEAD:"
 #include "player_msg.h"
 #include "osdep/timer.h"
 #include "mplayerxp.h"
@@ -46,17 +45,10 @@ volatile int dec_ahead_can_aseek=0;  /* It is safe to seek audio */
 struct timespec audio_play_timeout;
 int audio_play_in_sleep=0;
 
+static const int MIN_BUFFER_RESERV=8;
 /* Min audio buffer to keep mp_free, used to tell differ between full and empty buffer */
-#define MIN_BUFFER_RESERV 8
 
 namespace mpxp {
-
-#ifdef ENABLE_DEC_AHEAD_DEBUG
-#define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
-#else
-#define MSG_T(args...)
-#endif
-
 void xmp_init(void) {
     mpxp_context().engine().xp_core=new(zeromem) xp_core_t;
     mpxp_context().engine().xp_core->initial_apts=HUGE;
@@ -83,7 +75,7 @@ unsigned xmp_register_main(sig_handler_t sigfunc) {
 }
 
 static void print_stopped_thread(unsigned idx) {
-    MSG_OK("*** stop thread: [%i] %s\n",idx,mpxp_context().engine().xp_core->mpxp_threads[idx]->name);
+    mpxp_ok<<"*** stop thread: ["<<idx<<"] "<<mpxp_context().engine().xp_core->mpxp_threads[idx]->name<<std::endl;
 }
 
 void xmp_killall_threads(pthread_t _self)
@@ -291,7 +283,7 @@ unsigned xmp_register_thread(dec_ahead_engine_t* dae,sig_handler_t sigfunc,mpxp_
     pthread_attr_init(&attr);
     rc=pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED);
     if(rc) {
-	MSG_ERR("running thread: attr_setdetachstate fault!!!\n");
+	mpxp_err<<"running thread: attr_setdetachstate fault!!!"<<std::endl;
 	pthread_attr_destroy(&attr);
 	return rc;
     }

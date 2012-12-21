@@ -44,7 +44,7 @@ mpaf_format_e __FASTCALL__ afmt2mpaf(unsigned ifmt)
 		break;
 	    }
 	    //This can not happen ....
-	    MSG_FATAL("[af_mp] Unrecognized input audio format %i\n",ifmt);
+	    mpxp_fatal<<"[af_mp] Unrecognized input audio format "<<ifmt<<std::endl;
 	break;
     }
     return ofmt;
@@ -261,7 +261,7 @@ mpaf_format_e mpaf_str2fmt(const char *str)
 	if(strcasecmp(str,fmt_aliases[i].name)==0) return mpaf_format_e(fmt_aliases[i].wtag<<16);
     }
     bad_fmt:
-    MSG_ERR("[af_format] Bad value %s. Examples: S08LE U24BE S32 MP3 AC3\n",str);
+    mpxp_err<<"[af_format] Bad value "<<str<<". Examples: S08LE U24BE S32 MP3 AC3"<<std::endl;
     return mpaf_format_e(MPAF_BE);
 }
 

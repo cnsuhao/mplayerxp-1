@@ -136,7 +136,7 @@ void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){
 	mpi->chroma_y_shift=1;
 	return;
     }
-    MSG_WARN("mp_image: Unknown out_fmt: 0x%X\n",out_fmt);
+    mpxp_warn<<"mp_image: Unknown out_fmt: 0x"<<std::hex<<out_fmt<<std::endl;
     show_backtrace("outfmt",10);
     mpi->bpp=0;
 }

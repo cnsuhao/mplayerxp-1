@@ -21,16 +21,9 @@ using namespace mpxp;
 #include "xmp_aplayer.h"
 #include "xmp_adecoder.h"
 
-
-#ifdef ENABLE_DEC_AHEAD_DEBUG
-#define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
-#else
-#define MSG_T(args...)
-#endif
-
-#define MIN_AUDIO_TIME 0.05
-#define NOTHING_PLAYED (-1.0)
-#define XP_MIN_TIMESLICE 0.010 /* under Linux on x86 min time_slice = 10 ms */
+static const float MIN_AUDIO_TIME=0.05f;
+static const float NOTHING_PLAYED=-1.0f;
+static const float XP_MIN_TIMESLICE=0.010f; /* under Linux on x86 min time_slice = 10 ms */
 
 namespace mpxp {
 
@@ -104,7 +97,7 @@ while(sh_audio){
 		  sh_audio->timer+=playsize/(float)(sh_audio->af_bps);
 	      } else {
 		  sh_audio->timer=sh_audio->a_pts-(float)sh_audio->a_pts_pos/(float)sh_audio->af_bps;
-		  MSG_V("Audio chapter change detected\n");
+		  mpxp_v<<"Audio chapter change detected"<<std::endl;
 		  sh_audio->chapter_change=1;
 		  sh_audio->a_pts = HUGE;
 	      }
@@ -154,7 +147,7 @@ any_t* audio_play_routine( any_t* arg )
     audio_buff_min = std::min(audio_buff_max, audio_buff_alert*2);
     audio_buff_norm = (audio_buff_max + audio_buff_min) / 2;
 
-    MSG_DBG2("alert %f, min %f, norm %f, max %f \n", audio_buff_alert, audio_buff_min, audio_buff_norm, audio_buff_max );
+    mpxp_dbg2<<"alert "<<audio_buff_alert<<", min "<<audio_buff_min<<", norm "<<audio_buff_norm<<", max"<<audio_buff_max<<std::endl;
 
     samples = 5;
     collect_samples = 1;
@@ -187,7 +180,7 @@ any_t* audio_play_routine( any_t* arg )
 	if( dec_ahead_audio_delay == NOTHING_PLAYED ) { /* To fast, we can sleep longer */
 	    if( min_audio_time > audio_buff_alert ) {
 		min_audio_time *= 0.75;
-		MSG_DBG2("To fast, set min_audio_time %.5f (delay %5f) \n", min_audio_time, dec_ahead_audio_delay );
+		mpxp_dbg2<<"To fast, set min_audio_time "<<min_audio_time<<" (delay "<<dec_ahead_audio_delay<<")"<<std::endl;
 	    }
 	    collect_samples = 1;
 	    samples = 5;
@@ -196,7 +189,7 @@ any_t* audio_play_routine( any_t* arg )
 	} else if( dec_ahead_audio_delay <= audio_buff_alert ) { /* To slow, sleep shorter */
 	    if ( min_audio_time < MAX_AUDIO_TIME ) {
 		min_audio_time *= 2.0;
-		MSG_DBG2("To slow, set min_audio_time %.5f (delay %5f) \n", min_audio_time, dec_ahead_audio_delay );
+		mpxp_dbg2<<"To slow, set min_audio_time "<<min_audio_time<<" (delay "<<dec_ahead_audio_delay<<")"<<std::endl;
 	    }
 	    collect_samples = 1;
 	    samples = 10;
@@ -213,14 +206,14 @@ any_t* audio_play_routine( any_t* arg )
 		if( min_audio > audio_buff_max ) {
 		    min_audio_time -= min_audio-audio_buff_norm;
 		    collect_samples = 1;
-		    MSG_DBG2("Decrease min_audio_time %.5f (min %.5f max %.5f) \n", min_audio_time, min_audio, max_audio );
+		    mpxp_dbg2<<"Decrease min_audio_time "<<min_audio_time<<" (min "<<min_audio<<" max "<<max_audio<<")"<<std::endl;
 		} else if( max_audio < audio_buff_min ) {
 		    min_audio_time *= 1.25;
 		    collect_samples = 1;
-		    MSG_DBG2("Increase min_audio_time %.5f (min %.5f max %.5f) \n", min_audio_time, min_audio, max_audio );
+		    mpxp_dbg2<<"Increase min_audio_time "<<min_audio_time<<" (min "<<min_audio<<" max "<<max_audio<<")"<<std::endl;
 		} else {
 		    collect_samples = 0; /* No change, stop */
-		    MSG_DBG2("Stop collecting samples time %.5f (min %.5f max %.5f) \n", min_audio_time, min_audio, max_audio );
+		    mpxp_dbg2<<"Stop collecting samples time "<<min_audio_time<<" (min "<<min_audio<<" max "<<max_audio<<")"<<std::endl;
 		}
 		if(collect_samples) {
 		    samples = 5;
@@ -275,7 +268,7 @@ any_t* audio_play_routine( any_t* arg )
 	    timeout.tv_sec = now.tv_sec + 1;
 	    retval = pthread_cond_timedwait( &audio_play_cond, &audio_play_mutex, &timeout );
 	    if( retval == ETIMEDOUT )
-		MSG_V("Audio seek timeout\n");
+		mpxp_v<<"Audio seek timeout"<<std::endl;
 	}
 #endif
 	dec_ahead_can_aseek = 0; /* Not safe to seek */
@@ -290,7 +283,7 @@ any_t* audio_play_routine( any_t* arg )
 
 void sig_audio_play( void )
 {
-    MSG_T("sig_audio_play\n");
+    mpxp_dbg2<<"sig_audio_play"<<std::endl;
     mpxp_print_flush();
 
     dec_ahead_can_aseek=1;

@@ -21,12 +21,6 @@ using namespace mpxp;
 /* Audio stuff */
 volatile float dec_ahead_audio_delay;
 namespace mpxp {
-#ifdef ENABLE_DEC_AHEAD_DEBUG
-#define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
-#else
-#define MSG_T(args...)
-#endif
-
 extern int get_free_audio_buffer(void);
 
 /************************************************************************
@@ -65,7 +59,7 @@ audio_buffer_t audio_buffer;
 
 int init_audio_buffer( int size, int min_reserv, int indices, sh_audio_t *sha )
 {
-    MSG_V("Using audio buffer %i bytes (min reserve = %i, indices %i)\n",size,min_reserv, indices);
+    mpxp_v<<"Using audio buffer "<<size<<" bytes (min reserve = "<<min_reserv<<", indices "<<indices<<")"<<std::endl;
     if( !(audio_buffer.buffer = new unsigned char[size]) )
 	return ENOMEM;
     if( !(audio_buffer.indices = new audio_buffer_index_t[indices])) {
@@ -104,8 +98,7 @@ void uninit_audio_buffer(void)
 	    loops--;
 	}
 	if( audio_buffer.blocked_readers > 0 )
-	    MSG_V("uninit_audio_buffer: %d blocked readers did not wake up\n",
-		  audio_buffer.blocked_readers);
+	    mpxp_v<<"uninit_audio_buffer: "<<audio_buffer.blocked_readers<<" blocked readers did not wake up"<<std::endl;
     }
 
     audio_buffer.index_len=0;
@@ -197,23 +190,29 @@ int read_audio_buffer( sh_audio_t *audio, unsigned char *buffer, unsigned minlen
 	}
 	*pts = audio_buffer.indices[audio_buffer.index_tail].pts;
 
-	MSG_DBG3("audio_ahead: len %i, tail %i pts %.3f  tail_idx %3i  head_idx %3i  head_pos %3i\n", len,audio_buffer.tail,*pts, audio_buffer.index_tail, head_idx, head_pos );
+	mpxp_dbg3<<"audio_ahead: len "<<len<<", tail "<<audio_buffer.tail
+		<<" pts "<<*pts<<"  tail_idx "<<audio_buffer.index_tail
+		<<"  head_idx "<<head_idx<<" head_pos "<<head_pos<<std::endl;
 	while( next_idx != head_idx &&
 	       ((audio_buffer.tail <= head &&
 		 (audio_buffer.indices[next_idx].index <= audio_buffer.tail ||
 		  head_pos < audio_buffer.indices[next_idx].index)) ||
 		(head < audio_buffer.indices[next_idx].index &&
 		 audio_buffer.indices[next_idx].index <= audio_buffer.tail))) {
-	    MSG_DBG3("audio_ahead: next_idx %3i index %3i \n", next_idx, audio_buffer.indices[next_idx].index);
+	    mpxp_dbg3<<"audio_ahead: next_idx "<<next_idx<<" index"<<audio_buffer.indices[next_idx].index<<std::endl;
 	    next_idx=(next_idx+1)%audio_buffer.index_len;
 	}
 	audio_buffer.index_tail = (next_idx-1+audio_buffer.index_len)%audio_buffer.index_len;
 	if( audio_buffer.indices[audio_buffer.index_tail].index != audio_buffer.tail ) {
 	    int buff_len = audio_buffer.len;
-	    MSG_DBG3("audio_ahead: orig idx %3i pts %.3f  pos %i   \n",audio_buffer.index_tail, audio_buffer.indices[audio_buffer.index_tail].pts,audio_buffer.indices[audio_buffer.index_tail].index );
+	    mpxp_dbg3<<"audio_ahead: orig idx "<<audio_buffer.index_tail
+		    <<" pts "<<audio_buffer.indices[audio_buffer.index_tail].pts
+		    <<" pos "<<audio_buffer.indices[audio_buffer.index_tail].index<<std::endl;
 	    audio_buffer.indices[audio_buffer.index_tail].pts += (float)((audio_buffer.tail - audio_buffer.indices[audio_buffer.index_tail].index + buff_len) % buff_len) / (float)audio_buffer.sh_audio->af_bps;
 	    audio_buffer.indices[audio_buffer.index_tail].index = audio_buffer.tail;
-	    MSG_DBG3("audio_ahead: read next_idx %3i next_pts %.3f  pos %i \n", audio_buffer.index_tail,audio_buffer.indices[audio_buffer.index_tail].pts,audio_buffer.indices[audio_buffer.index_tail].index );
+	    mpxp_dbg3<<"audio_ahead: read next_idx "<<audio_buffer.index_tail
+		    <<" next_pts "<<audio_buffer.indices[audio_buffer.index_tail].pts
+		    <<" pos "<<audio_buffer.indices[audio_buffer.index_tail].index<<std::endl;
 	}
     }
 
@@ -272,7 +271,7 @@ int decode_audio_buffer(Demuxer_Stream *d_audio,unsigned len)
 	    }
 	}
     }
-    MSG_DBG3("decode audio %d   h %d, t %d, l %d \n", len, audio_buffer.head, audio_buffer.tail,  audio_buffer.len);
+    mpxp_dbg3<<"decode audio "<<len<<" h "<<audio_buffer.head<<", t "<<audio_buffer.tail<<", l "<<audio_buffer.len<<std::endl;
 
     for( l = 0, l2 = len, ret = 0; l < len && l2 >= audio_buffer.sh_audio->audio_out_minsize; ) {
 	float pts;
@@ -282,21 +281,23 @@ int decode_audio_buffer(Demuxer_Stream *d_audio,unsigned len)
 
 	next_idx = (audio_buffer.index_head+1)%audio_buffer.index_len;
 	if( next_idx != audio_buffer.index_tail ) {
-	    MSG_DBG3("decode audio idx %3i tail %3i next pts %.3f  %i\n",audio_buffer.index_head, audio_buffer.index_tail, pts, audio_buffer.head );
+	    mpxp_dbg3<<"decode audio idx "<<audio_buffer.index_head
+		    <<" tail "<<audio_buffer.index_tail
+		    <<" next pts "<<pts<<" "<<audio_buffer.head<<std::endl;
 	    audio_buffer.indices[audio_buffer.index_head].pts = pts;
 	    audio_buffer.indices[audio_buffer.index_head].index = audio_buffer.head;
 	    audio_buffer.index_head = next_idx;
 	}
 	audio_buffer.head+=ret;
-	MSG_DBG3("new head %6d  \n", audio_buffer.head);
+	mpxp_dbg3<<"new head "<<audio_buffer.head<<std::endl;
 	l += ret;
 	l2 -= ret;
 	blen -= ret;
     }
-    MSG_DBG2("decoded audio %d   diff %d\n", l, l - len);
+    mpxp_dbg2<<"decoded audio "<<l<<" diff "<<(l - len)<<std::endl;
 
     if( ret <= 0 && d_audio->eof) {
-	MSG_V("audio eof\n");
+	mpxp_v<<"audio eof"<<std::endl;
 	audio_buffer.eof=1;
 	pthread_mutex_unlock( &audio_buffer.head_mutex );
 	pthread_mutex_lock( &audio_buffer.tail_mutex );
@@ -437,7 +438,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
     priv->state=Pth_Run;
     if(mpxp_context().engine().xp_core->video) mpxp_context().engine().xp_core->video->eof=0;
     mpxp_context().engine().xp_core->audio->eof=0;
-    MSG_T("\nDEC_AHEAD: entering...\n");
+    mpxp_dbg2<<std::endl<<"DEC_AHEAD: entering..."<<std::endl;
     priv->pid = getpid();
     __MP_UNIT(priv->p_idx,"dec_ahead");
 
@@ -500,7 +501,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
 	    timeout.tv_sec = now.tv_sec + 1;
 	    retval = pthread_cond_timedwait( &audio_decode_cond, &audio_decode_mutex, &timeout );
 	    if( retval == ETIMEDOUT )
-		MSG_V("Audio decode seek timeout\n");
+		mpxp_v<<"Audio decode seek timeout"<<std::endl;
 	}
 #endif
 	dec_ahead_can_adseek = 0; /* Not safe to seek */
@@ -514,7 +515,7 @@ any_t* a_dec_ahead_routine( any_t* arg )
 
 void sig_audio_decode( void )
 {
-    MSG_T("sig_audio_decode\n");
+    mpxp_dbg2<<"sig_audio_decode"<<std::endl;
     mpxp_print_flush();
 
     dec_ahead_can_adseek=1;

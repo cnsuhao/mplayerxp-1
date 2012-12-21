@@ -15,13 +15,6 @@ using namespace mpxp;
 #include "xmp_vdecoder.h"
 
 namespace mpxp {
-
-#ifdef ENABLE_DEC_AHEAD_DEBUG
-#define MSG_T(args...) mp_msg(MSGT_GLOBAL, MSGL_DBG2,__FILE__,__LINE__, ## args )
-#else
-#define MSG_T(args...)
-#endif
-
 /* this routine decodes video+audio but intends to be video only  */
 
 static void show_warn_cant_sync(sh_video_t*sh_video,float max_frame_delay) {
@@ -29,12 +22,11 @@ static void show_warn_cant_sync(sh_video_t*sh_video,float max_frame_delay) {
     static float prev_warn_delay=0;
     if(!warned || max_frame_delay > prev_warn_delay) {
 	warned=1;
-	MSG_WARN("*********************************************\n"
-		     "** Can't stabilize A-V sync!!!             **\n"
-		     "*********************************************\n"
-		     "Try increase number of buffer for decoding ahead\n"
-		     "Exist: %u, need: %u\n"
-		     ,mpxp_context().engine().xp_core->num_v_buffs,(unsigned)(max_frame_delay*3*sh_video->fps)+3);
+	mpxp_warn<<"*********************************************"<<std::endl;
+	mpxp_warn<<"** Can't stabilize A-V sync!!!             **"<<std::endl;
+	mpxp_warn<<"*********************************************"<<std::endl;
+	mpxp_warn<<"Try increase number of buffer for decoding ahead"<<std::endl;
+	mpxp_warn<<"Exist: "<<mpxp_context().engine().xp_core->num_v_buffs<<", need: "<<((unsigned)(max_frame_delay*3*sh_video->fps)+3)<<std::endl;
 	prev_warn_delay=max_frame_delay;
     }
 }
@@ -79,7 +71,12 @@ static unsigned compute_frame_dropping(sh_video_t* sh_video,float v_pts,float dr
 	rc = (dae_curr_vdecoded(mpxp_context().engine().xp_core)%fr_skip_divisor)?0:1;
 	if(delta>prev_delta) rc=0;
     }
-    MSG_D("DEC_AHEAD: max_frame_delay*3=%f drop_barrier=%f prev_delta=%f delta=%f(v_pts=%f screen_pts=%f) n_fr_to_drop=%u\n",max_frame_delay*3,drop_barrier,prev_delta,delta,v_pts,xp_screen_pts,xp_n_frame_to_drop);
+    mpxp_dbg2<<"DEC_AHEAD: max_frame_delay*3="<<(max_frame_delay*3)
+	    <<" drop_barrier="<<drop_barrier
+	    <<" prev_delta="<<prev_delta
+	    <<" delta="<<delta
+	    <<"(v_pts="<<v_pts<<" screen_pts="<<screen_pts
+	    <<") n_fr_to_drop="<<rc<<std::endl;
     prev_delta=delta;
     return rc;
 }
@@ -132,7 +129,7 @@ any_t* xmp_video_decoder( any_t* arg )
     priv->state=Pth_Run;
     priv->dae->eof = 0;
     if(mpxp_context().engine().xp_core->audio) mpxp_context().engine().xp_core->audio->eof=0;
-    MSG_T("\nDEC_AHEAD: entering...\n");
+    mpxp_dbg2<<std::endl<<"DEC_AHEAD: entering..."<<std::endl;
     __MP_UNIT(priv->p_idx,"dec_ahead");
     priv->pid = getpid();
     if(!xmp_test_model(XMP_Run_VA_Decoder) && mpxp_context().engine().xp_core->audio)
@@ -180,7 +177,7 @@ pt_sleep:
 	if(mpeg_timer==HUGE) mpeg_timer=frame->pts;
 	else if( mpeg_timer-duration<frame->pts ) {
 	    mpeg_timer=frame->pts;
-	    MSG_DBG2("Sync mpeg pts %f\n", mpeg_timer);
+	    mpxp_dbg2<<"Sync mpeg pts "<<mpeg_timer<<std::endl;
 	}
 	else mpeg_timer+=frame->duration;
     }
@@ -192,7 +189,7 @@ pt_sleep:
 	/* Ugly solution: disable frame dropping right after seeking! */
 	if(cur_time - mpxp_context().seek_time > (mpxp_context().engine().xp_core->num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(sh_video,frame->pts,drop_barrier);
     } /* if( mp_conf.frame_dropping ) */
-    if(!finite(frame->pts)) MSG_WARN("Bug of demuxer! Value of video pts=%f\n",frame->pts);
+    if(!finite(frame->pts)) mpxp_warn<<"Bug of demuxer! Value of video pts="<<frame->pts<<std::endl;
     if(frame->type!=VideoFrame) escape_player("VideoDecoder doesn't parse non video frames",mp_conf.max_trace);
 #if 0
 /*
@@ -220,7 +217,7 @@ if(ada_active_frame) /* don't emulate slow systems until xp_players are not star
     }
     frame->flags=drop_param;
     blit_frame=mpcv_decode(mpxp_context().video().decoder,frame);
-MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(mpxp_context().engine().xp_core),frame->len,frame->pts);
+    mpxp_dbg2<<"DECODER: "<<dae_curr_vdecoded(mpxp_context().engine().xp_core)<<"["<<frame->len<<"] "<<frame->pts<<std::endl;
     if(mpxp_context().output_quality) {
 	if(drop_param) mpcv_set_quality(mpxp_context().video().decoder,mpxp_context().output_quality);
     }
@@ -244,8 +241,6 @@ MSG_DBG2("DECODER: %i[%i] %f\n",dae_curr_vdecoded(mpxp_context().engine().xp_cor
     /* sleep if thread is too fast ;) */
     if(blit_frame)
     while(!dae_inc_decoded(mpxp_context().engine().xp_core->video)) {
-	MSG_T("DEC_AHEAD: sleep: player=%i decoder=%i)\n"
-	    ,dae_curr_vplayed(),dae_curr_vdecoded());
 	if(priv->state==Pth_Canceling) goto pt_exit;
 	if(priv->state==Pth_Sleep) goto pt_sleep;
 	if(mpxp_context().engine().xp_core->audio && xmp_test_model(XMP_Run_VA_Decoder)) {
@@ -267,14 +262,14 @@ if(mpxp_context().engine().xp_core->audio && xmp_test_model(XMP_Run_VA_Decoder))
     }
 }
   pt_exit:
-  MSG_T("\nDEC_AHEAD: leaving...\n");
+  mpxp_dbg2<<std::endl<<"DEC_AHEAD: leaving..."<<std::endl;
   priv->state=Pth_Stand;
   return arg; /* terminate thread here !!! */
 }
 
 void sig_video_decode( void )
 {
-    MSG_T("sig_video_decode\n");
+    mpxp_dbg2<<"sig_video_decode"<<std::endl;
     mpxp_print_flush();
 
     mpxp_context().engine().xp_core->video->eof = 1;

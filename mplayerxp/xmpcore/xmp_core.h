@@ -174,21 +174,10 @@ extern pthread_cond_t audio_play_cond;
 extern pthread_mutex_t audio_decode_mutex;
 extern pthread_cond_t audio_decode_cond;
 
-#ifdef ENABLE_DEC_AHEAD_DEBUG
-#include "mpxp_msg.h"
-#ifndef DA_PREFIX
-#define DA_PREFIX "dec_ahead:"
-#endif
-#define MSG_D(args...) { mp_msg(MSGT_GLOBAL, MSGL_V, __FILE__, __LINE__, ## args ); mp_msg_flush(); }
-#else
-#define MSG_D(args...)
-#endif
-
-#define LOCK_AUDIO_PLAY() { MSG_D(DA_PREFIX"LOCK_AUDIO_PLAY\n"); pthread_mutex_lock(&audio_play_mutex); }
-#define UNLOCK_AUDIO_PLAY() { MSG_D(DA_PREFIX"UNLOCK_AUDIO_PLAY\n"); pthread_mutex_unlock(&audio_play_mutex); }
-
-#define LOCK_AUDIO_DECODE() { MSG_D(DA_PREFIX"LOCK_AUDIO_DECODE\n"); pthread_mutex_lock(&audio_decode_mutex); }
-#define UNLOCK_AUDIO_DECODE() { MSG_D(DA_PREFIX"UNLOCK_AUDIO_DECODE\n"); pthread_mutex_unlock(&audio_decode_mutex); }
+inline void LOCK_AUDIO_PLAY() { pthread_mutex_lock(&audio_play_mutex); }
+inline void UNLOCK_AUDIO_PLAY() { pthread_mutex_unlock(&audio_play_mutex); }
+inline void LOCK_AUDIO_DECODE() { pthread_mutex_lock(&audio_decode_mutex); }
+inline void UNLOCK_AUDIO_DECODE() { pthread_mutex_unlock(&audio_decode_mutex); }
 
 #define __MP_ATOMIC(OP) { static pthread_mutex_t loc_mutex; pthread_mutex_lock(&loc_mutex); OP; pthread_mutex_unlock(&loc_mutex); }
 #define __MP_SYNCHRONIZE(mtx,OP) { pthread_mutex_lock(&mtx); OP; pthread_mutex_unlock(&mtx); }
