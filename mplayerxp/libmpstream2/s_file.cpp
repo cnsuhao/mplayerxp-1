@@ -53,7 +53,7 @@ MPXP_Rc File_Stream_Interface::open(const std::string& filename,unsigned flags)
     if(filename=="-") fd=0;
     else fd=::open(filename.c_str(),O_RDONLY);
     if(fd<0) {
-	MSG_ERR("[s_file] Cannot open file: '%s'\n",filename.c_str());
+	mpxp_err<<"[s_file] Cannot open file: "<<filename<<std::endl;
 	return MPXP_False;
     }
     was_open = (fd==0)?0:1;

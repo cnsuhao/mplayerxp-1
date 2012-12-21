@@ -240,10 +240,10 @@ NULL
 #define MSGTR_ReadSTDIN "Reading from stdin...\n"
 #endif
 #ifndef MSGTR_UnableOpenURL
-#define MSGTR_UnableOpenURL "Unable to open URL: %s\n"
+#define MSGTR_UnableOpenURL "Unable to open URL"
 #endif
 #ifndef MSGTR_ConnToServer
-#define MSGTR_ConnToServer "Connected to server: %s\n"
+#define MSGTR_ConnToServer "Connected to server"
 #endif
 #ifndef MSGTR_ConnTimeout
 #define MSGTR_ConnTimeout "Connection timeout\n"
@@ -262,37 +262,37 @@ NULL
 #endif
 
 #ifndef MSGTR_CantOpenDVD
-#define MSGTR_CantOpenDVD "Couldn't open DVD device: %s\n"
+#define MSGTR_CantOpenDVD "Couldn't open DVD device"
 #endif
 #ifndef MSGTR_DVDwait
-#define MSGTR_DVDwait "Reading disc structure, please wait...\n"
+#define MSGTR_DVDwait "Reading disc structure, please wait"
 #endif
 #ifndef MSGTR_DVDnumTitles
-#define MSGTR_DVDnumTitles "There are %d titles on this DVD.\n"
+#define MSGTR_DVDnumTitles "There are %d titles on this DVD"
 #endif
 #ifndef MSGTR_DVDinvalidTitle
-#define MSGTR_DVDinvalidTitle "Invalid DVD title number: %d\n"
+#define MSGTR_DVDinvalidTitle "Invalid DVD title number"
 #endif
 #ifndef MSGTR_DVDnumChapters
-#define MSGTR_DVDnumChapters "Title #%i has %d chapters.\n"
+#define MSGTR_DVDnumChapters "Title #%i has %d chapters"
 #endif
 #ifndef MSGTR_DVDinvalidChapter
-#define MSGTR_DVDinvalidChapter "Invalid DVD chapter number: %d\n"
+#define MSGTR_DVDinvalidChapter "Invalid DVD chapter number"
 #endif
 #ifndef MSGTR_DVDnumAngles
-#define MSGTR_DVDnumAngles "There are %d angles in this DVD title.\n"
+#define MSGTR_DVDnumAngles "There are %d angles in this DVD title"
 #endif
 #ifndef MSGTR_DVDinvalidAngle
-#define MSGTR_DVDinvalidAngle "Invalid DVD angle number: %d\n"
+#define MSGTR_DVDinvalidAngle "Invalid DVD angle number"
 #endif
 #ifndef MSGTR_DVDnoIFO
-#define MSGTR_DVDnoIFO "Can't open the IFO file for DVD title %d.\n"
+#define MSGTR_DVDnoIFO "Can't open the IFO file for DVD title"
 #endif
 #ifndef MSGTR_DVDnoVOBs
-#define MSGTR_DVDnoVOBs "Can't open title VOBS (VTS_%02d_1.VOB).\n"
+#define MSGTR_DVDnoVOBs "Can't open title VOBS"
 #endif
 #ifndef MSGTR_DVDopenOk
-#define MSGTR_DVDopenOk "DVD successfully opened!\n"
+#define MSGTR_DVDopenOk "DVD successfully opened"
 #endif
 
 // demuxer.c, demux_*.c:
@@ -306,13 +306,13 @@ NULL
 #define MSGTR_SubStreamRedefined "Warning! subtitle stream header redefined"
 #endif
 #ifndef MSGTR_TooManyAudioInBuffer
-#define MSGTR_TooManyAudioInBuffer "\nDEMUXER: Too many (%d in %d bytes) audio packets in the buffer!\n"
+#define MSGTR_TooManyAudioInBuffer "Too many audio packets in the buffer"
 #endif
 #ifndef MSGTR_TooManyVideoInBuffer
-#define MSGTR_TooManyVideoInBuffer "\nDEMUXER: Too many (%d in %d bytes) video packets in the buffer!\n"
+#define MSGTR_TooManyVideoInBuffer "Too many video packets in the buffer"
 #endif
 #ifndef MSGTR_MaybeNI
-#define MSGTR_MaybeNI "(maybe you play a non-interleaved stream/file or the codec failed)\n"
+#define MSGTR_MaybeNI "maybe you play a non-interleaved stream/file or the codec failed"
 #endif
 #ifndef MSGTR_FormatNotRecognized
 #define MSGTR_FormatNotRecognized "============= Sorry, this file format not recognized/supported ==============="

@@ -39,8 +39,7 @@ static float get_ds_stream_pts(Demuxer_Stream *ds,int nbytes)
     float retval;
     Demuxer* demuxer=ds->demuxer;
     mpxp_context().engine().xp_core->initial_apts_corr.need_correction=0;
-    MSG_DBG2("initial_apts from: stream_pts=%f pts_bytes=%u got_bytes=%u i_bps=%u\n"
-    ,ds->pts,ds->tell_pts(),nbytes,((sh_audio_t*)ds->demuxer->audio->sh)->i_bps);
+    mpxp_dbg2<<"initial_apts from: stream_pts="<<ds->pts<<" pts_bytes="<<ds->tell_pts()<<" got_bytes="<<nbytes<<" i_bps="<<(((sh_audio_t*)ds->demuxer->audio->sh)->i_bps)<<std::endl;
     /* FIXUP AUDIO PTS*/
     if((demuxer->file_format == Demuxer::Type_MPEG_ES ||
 	demuxer->file_format == Demuxer::Type_MPEG4_ES ||
@@ -55,7 +54,7 @@ static float get_ds_stream_pts(Demuxer_Stream *ds,int nbytes)
 	    spts=ds->demuxer->stream->stream_pts();
 	    ds->pts_corr=spts>0?spts:ds->prev_pts;
 	    ds->pts_flags=0;
-	    MSG_V("***PTS discontinuity happens*** correct audio %f pts as %f\n",ds->pts,ds->pts_corr);
+	    mpxp_v<<"***PTS discontinuity happens*** correct audio "<<ds->pts<<" pts as "<<ds->pts_corr<<std::endl;
 	}
 	if(ds->pts>1.0) ds->pts_flags=1;
 	if(!ds->eof) ds->prev_pts=ds->pts+ds->pts_corr;
@@ -69,7 +68,7 @@ static float get_ds_stream_pts(Demuxer_Stream *ds,int nbytes)
 	mpxp_context().engine().xp_core->initial_apts_corr.nbytes=nbytes;
 	retval = ds->pts;
     }
-    MSG_DBG2("initial_apts is: %f\n",retval);
+    mpxp_dbg2<<"initial_apts is: "<<retval<<std::endl;
     return retval;
 }
 

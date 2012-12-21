@@ -80,7 +80,7 @@ MPXP_Rc Rtsp_Stream_Interface::open(const std::string& filename,unsigned flags)
     UNUSED(flags);
     if(filename.substr(0,7)!="rtsp://") return MPXP_False;
 
-    MSG_V("STREAM_RTSP, URL: %s\n", filename.c_str());
+    mpxp_v<<"STREAM_RTSP, URL: "<<filename<<std::endl;
 
     url.redirect (filename);
     url.check4proxies ();

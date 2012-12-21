@@ -53,10 +53,10 @@ MPXP_Rc Network_Stream_Interface::open(const std::string& filename,unsigned flag
     UNUSED(flags);
     if(url.redirect(filename)==MPXP_Ok) {
 	if((networking=Networking::start(tcp,url))==NULL){
-	    MSG_ERR(MSGTR_UnableOpenURL, filename.c_str());
+	    mpxp_err<<MSGTR_UnableOpenURL<<":"<<filename<<std::endl;
 	    return MPXP_False;
 	}
-	MSG_INFO(MSGTR_ConnToServer, url.host().c_str());
+	mpxp_info<<MSGTR_ConnToServer<<":"<<url.host()<<std::endl;
 	spos = 0;
 	return MPXP_Ok;
     }
@@ -82,7 +82,7 @@ off_t Network_Stream_Interface::seek(off_t pos)
     if(networking!=NULL) {
 	newpos=networking->seek(tcp, pos);
 	if( newpos<0 ) {
-	    MSG_WARN("Stream not seekable!\n");
+	    mpxp_warn<<"Stream not seekable!"<<std::endl;
 	    return 1;
 	}
     }

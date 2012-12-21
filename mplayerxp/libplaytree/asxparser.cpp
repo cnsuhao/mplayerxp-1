@@ -17,8 +17,12 @@ using namespace mpxp;
 
 namespace mpxp {
 
-void ASX_Parser::warning_attrib_required(const char *e, const char *a) const { MSG_WARN("At line %d : element %s don't have the required attribute %s",line,e,a); }
-void ASX_Parser::warning_body_parse_error(const char *e) const { MSG_WARN("At line %d : error while parsing %s body",line,e); }
+void ASX_Parser::warning_attrib_required(const char *e, const char *a) const {
+    mpxp_warn<<"At line "<<line<<" : element "<<e<<" don't have the required attribute "<<a;
+}
+void ASX_Parser::warning_body_parse_error(const char *e) const {
+    mpxp_warn<<"At line "<<line<<" : error while parsing "<<e<<" body";
+}
 
 ASX_Parser::ASX_Parser() {}
 ASX_Parser::~ASX_Parser() { if(ret_stack) delete ret_stack; }
@@ -37,7 +41,7 @@ int ASX_Parser::parse_attribs(const char* buffer,ASX_Attrib& _attribs) const {
 	if(ptr3 == NULL) break;
 	for(ptr2 = ptr3-1; isspace(*ptr2); ptr2--) {
 	    if (ptr2 <= ptr1) {
-		MSG_ERR("At line %d : this should never append, back to attribute begin while skipping end space",line);
+		mpxp_err<<"At line "<<line<<" : this should never append, back to attribute begin while skipping end space"<<std::endl;
 		goto pa_end;
 	    }
 	}
@@ -47,14 +51,14 @@ int ASX_Parser::parse_attribs(const char* buffer,ASX_Attrib& _attribs) const {
 
 	ptr1 = strchr(ptr3,'"');
 	if(ptr1 == NULL || ptr1[1] == '\0') {
-	    MSG_WARN("At line %d : can't find attribute %s value",line,attrib);
+	    mpxp_warn<<"At line "<<line<<" : can't find attribute "<<attrib<<" value"<<std::endl;
 	    delete attrib;
 	    break;
 	}
 	ptr1++;
 	ptr2 = strchr(ptr1,'"');
 	if (ptr2 == NULL) {
-	    MSG_WARN("At line %d : value of attribute %s isn't finished\n",line,attrib);
+	    mpxp_warn<<"At line "<<line<<" : value of attribute "<<attrib<<" isn't finished"<<std::endl;
 	    delete attrib;
 	    break;
 	}
@@ -84,7 +88,7 @@ int ASX_Parser::get_element(const char** _buffer, ASX_Element& _element) {
     int body_line = 0,attrib_line,ret_line,in = 0;
 
     if(_buffer == NULL) {
-	MSG_ERR("At line %d : asx_get_element called with invalid value",line);
+	mpxp_err<<"At line "<<line<<" : asx_get_element called with invalid value"<<std::endl;
 	return -1;
     }
 
@@ -135,7 +139,7 @@ int ASX_Parser::get_element(const char** _buffer, ASX_Element& _element) {
 	    }
 	    //ptr1 = strstr(ptr1,"-->");
 	    if(!ptr1) {
-		MSG_ERR("At line %d : unfinished comment",line);
+		mpxp_err<<"At line "<<line<<" : unfinished comment"<<std::endl;
 		return -1;
 	    }
 	} else break;
@@ -144,7 +148,7 @@ int ASX_Parser::get_element(const char** _buffer, ASX_Element& _element) {
     // Is this space skip very useful ??
     for(ptr1++; isspace(ptr1[0]); ptr1++) { // Skip space
 	if(ptr1[0] == '\0') {
-	    MSG_ERR("At line %d : EOB reached while parsing element start",line);
+	    mpxp_err<<"At line "<<line<<" : EOB reached while parsing element start"<<std::endl;
 	    return -1;
 	}
 	if(ptr1[0] == '\n') line++;
@@ -152,7 +156,7 @@ int ASX_Parser::get_element(const char** _buffer, ASX_Element& _element) {
 
     for(ptr2 = ptr1; isalpha(*ptr2); ptr2++) { // Go to end of name
 	if(*ptr2 == '\0'){
-	    MSG_ERR("At line %d : EOB reached while parsing element start",line);
+	    mpxp_err<<"At line "<<line<<" : EOB reached while parsing element start"<<std::endl;
 	    return -1;
 	}
 	if(ptr2[0] == '\n') line++;
@@ -164,7 +168,7 @@ int ASX_Parser::get_element(const char** _buffer, ASX_Element& _element) {
 
     for( ; isspace(*ptr2); ptr2++) { // Skip space
 	if(ptr2[0] == '\0') {
-	    MSG_ERR("At line %d : EOB reached while parsing element start",line);
+	    mpxp_err<<"At line "<<line<<" : EOB reached while parsing element start"<<std::endl;
 	    delete element;
 	    return -1;
 	}
@@ -177,7 +181,7 @@ int ASX_Parser::get_element(const char** _buffer, ASX_Element& _element) {
 	if(ptr3[0] == '\n') line++;
     }
     if(ptr3[0] == '\0' || ptr3[1] == '\0') { // End of file
-	MSG_ERR("At line %d : EOB reached while parsing element start",line);
+	mpxp_err<<"At line "<<line<<" : EOB reached while parsing element start"<<std::endl;
 	delete element;
 	return -1;
     }
@@ -193,7 +197,7 @@ int ASX_Parser::get_element(const char** _buffer, ASX_Element& _element) {
 	ptr3++;
 	for( ; isspace(*ptr3); ptr3++) { // Skip space on body begin
 	    if(*ptr3 == '\0') {
-		MSG_ERR("At line %d : EOB reached while parsing %s element body",line,element);
+		mpxp_err<<"At line "<<line<<" : EOB reached while parsing "<<element<<" element body"<<std::endl;
 		delete element;
 		if(cattribs) delete cattribs;
 		return -1;
@@ -221,7 +225,7 @@ int ASX_Parser::get_element(const char** _buffer, ASX_Element& _element) {
 		continue;
 	    }
 	    if(ptr4 == NULL || ptr4[1] == '\0') {
-		MSG_ERR("At line %d : EOB reached while parsing %s element body",line,element);
+		mpxp_err<<"At line "<<line<<" : EOB reached while parsing "<<element<<" element body"<<std::endl;
 		delete element;
 		if(cattribs) delete cattribs;
 		return -1;
@@ -267,7 +271,7 @@ int ASX_Parser::get_element(const char** _buffer, ASX_Element& _element) {
 	n_attrib = parse_attribs(cattribs,_element.attribs());
 	delete cattribs;
 	if(n_attrib < 0) {
-	    MSG_WARN("At line %d : error while parsing element %s attributes",line,element);
+	    mpxp_warn<<"At line "<<line<<" : error while parsing element "<<element<<" attributes"<<std::endl;
 	    delete element;
 	    delete body;
 	    return -1;
@@ -299,9 +303,9 @@ void ASX_Parser::param(ASX_Attrib& cattribs, play_tree_t* pt) const {
     }
     val = cattribs.get("VALUE");
     if(m_config_get_option(*mpxp_context().mconfig,name.c_str()) == NULL) {
-	MSG_WARN("Found unknow param in asx: %s",name.c_str());
-	if(!val.empty())MSG_WARN("=%s\n",val.c_str());
-	else		MSG_WARN("\n");
+	mpxp_warn<<"Found unknow param in asx: "<<name<<std::endl;
+	if(!val.empty())mpxp_warn<<"="<<val<<std::endl;
+	else		mpxp_warn<<std::endl;
 	return;
     }
     play_tree_set_param(pt,mp_strdup(name.c_str()),mp_strdup(val.c_str()));
@@ -320,7 +324,7 @@ void ASX_Parser::ref(ASX_Attrib& cattribs, play_tree_t* pt) const {
 	href = "mms"+href;
     }
     play_tree_add_file(pt,mp_strdup(href.c_str()));
-    MSG_V("Adding file %s to element entry\n",href.c_str());
+    mpxp_v<<"Adding file "<<href<<" to element entry"<<std::endl;
 }
 
 play_tree_t* ASX_Parser::entryref(libinput_t& libinput,const char* buffer,ASX_Attrib& _attribs) const {
@@ -340,21 +344,20 @@ play_tree_t* ASX_Parser::entryref(libinput_t& libinput,const char* buffer,ASX_At
     }
     stream=new(zeromem) Stream;
     if(stream->open(libinput,href,&f)!=MPXP_Ok) {
-	MSG_WARN("Can't open playlist %s\n",href.c_str());
+	mpxp_warn<<"Can't open playlist "<<href<<std::endl;
 	delete stream;
 	return NULL;
     }
     if(!(stream->type() & Stream::Type_Text)) {
-	MSG_WARN("URL %s dont point to a playlist\n",href.c_str());
+	mpxp_warn<<"URL "<<href<<" dont point to a playlist"<<std::endl;
 	delete stream;
 	return NULL;
     }
-    MSG_V("Adding playlist %s to element entryref\n",href.c_str());
+    mpxp_v<<"Adding playlist "<<href<<" to element entryref"<<std::endl;
     ptp = play_tree_parser_new(stream,deep+1);
     pt = play_tree_parser_get_play_tree(libinput,ptp);
     play_tree_parser_free(ptp);
     delete stream;
-//MSG_INFO("Need to implement entryref\n");
     return pt;
 }
 
@@ -374,9 +377,9 @@ play_tree_t* ASX_Parser::entry(const char* buffer,ASX_Attrib& _attribs) {
 	} else if (r == 0) break; // No more element
 	if(strcasecmp(element.name().c_str(),"REF") == 0) {
 	    ref(element.attribs(),pt_ref);
-	    MSG_DBG2("Adding element %s to entry\n",element.name().c_str());
+	    mpxp_dbg2<<"Adding element "<<element.name()<<" to entry"<<std::endl;
 	    nref++;
-	} else MSG_DBG2("Ignoring element %s\n",element.name().c_str());
+	} else mpxp_dbg2<<"Ignoring element "<<element.name()<<std::endl;
     }
     if(nref <= 0) {
 	play_tree_free(pt_ref,1);
@@ -395,12 +398,12 @@ play_tree_t* ASX_Parser::repeat(libinput_t&libinput,const char* buffer,ASX_Attri
 
     count = _attribs.get("COUNT");
     if(count.empty()) {
-	MSG_DBG2("Setting element repeat loop to infinit\n");
+	mpxp_dbg2<<"Setting element repeat loop to infinit"<<std::endl;
 	pt_repeat->loop = -1; // Infinit
     } else {
 	pt_repeat->loop = ::atoi(count.c_str());
 	if(pt_repeat->loop == 0) pt_repeat->loop = 1;
-	MSG_DBG2("Setting element repeat loop to %d\n",pt_repeat->loop);
+	mpxp_dbg2<<"Setting element repeat loop to "<<pt_repeat->loop<<std::endl;
     }
 
     while(buffer && buffer[0] != '\0') {
@@ -414,25 +417,25 @@ play_tree_t* ASX_Parser::repeat(libinput_t&libinput,const char* buffer,ASX_Attri
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
 		else play_tree_append_entry(list,pt_entry);
-		MSG_DBG2("Adding element %s to repeat\n",element.name().c_str());
+		mpxp_dbg2<<"Adding element "<<element.name()<<" to repeat"<<std::endl;
 	    }
 	} else if(strcasecmp(element.name().c_str(),"ENTRYREF") == 0) {
 	    pt_entry = entryref(libinput,element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
 		else play_tree_append_entry(list,pt_entry);
-		MSG_DBG2("Adding element %s to repeat\n",element.name().c_str());
+		mpxp_dbg2<<"Adding element "<<element.name()<<" to repeat"<<std::endl;
 	    }
 	} else if(strcasecmp(element.name().c_str(),"REPEAT") == 0) {
 	    pt_entry = repeat(libinput,element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
 		else play_tree_append_entry(list,pt_entry);
-		MSG_DBG2("Adding element %s to repeat\n",element.name().c_str());
+		mpxp_dbg2<<"Adding element "<<element.name()<<" to repeat"<<std::endl;
 	    }
 	} else if(strcasecmp(element.name().c_str(),"PARAM") == 0) {
 	    param(element.attribs(),pt_repeat);
-	} else MSG_DBG2("Ignoring element %s\n",element.name().c_str());
+	} else mpxp_dbg2<<"Ignoring element "<<element.name()<<std::endl;
     }
 
     if(!list) {
@@ -454,23 +457,23 @@ play_tree_t* ASX_Parser::build_tree(libinput_t&libinput,const char* buffer,int d
 
     r = parser.get_element(&buffer,asx_element);
     if(r < 0) {
-	MSG_ERR("At line %d : Syntax error ???",parser.line);
+	mpxp_err<<"At line "<<parser.line<<" : Syntax error ???"<<std::endl;
 	delete &parser;
 	return NULL;
     } else if(r == 0) { // No contents
-	MSG_ERR("empty asx element");
+	mpxp_err<<"empty asx element"<<std::endl;
 	delete &parser;
 	return NULL;
     }
 
     if(strcasecmp(element.name().c_str(),"ASX") != 0) {
-	MSG_ERR("first element isn't ASX, it's %s\n",element.name().c_str());
+	mpxp_err<<"first element isn't ASX, it's "<<element.name()<<std::endl;
 	delete &parser;
 	return NULL;
     }
 
     if(asx_element.body().empty()) {
-	MSG_ERR("ASX element is empty");
+	mpxp_err<<"ASX element is empty"<<std::endl;
 	delete &parser;
 	return NULL;
     }
@@ -489,23 +492,23 @@ play_tree_t* ASX_Parser::build_tree(libinput_t&libinput,const char* buffer,int d
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
 		else play_tree_append_entry(list,pt_entry);
-		MSG_DBG2("Adding element %s to asx\n",element.name().c_str());
+		mpxp_dbg2<<"Adding element "<<element.name()<<" to asx"<<std::endl;
 	    }
 	} else if(strcasecmp(element.name().c_str(),"ENTRYREF") == 0) {
 	    pt_entry = parser.entryref(libinput,element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
 		else play_tree_append_entry(list,pt_entry);
-		MSG_DBG2("Adding element %s to asx\n",element.name().c_str());
+		mpxp_dbg2<<"Adding element "<<element.name()<<" to asx"<<std::endl;
 	    }
 	} else if(strcasecmp(element.name().c_str(),"REPEAT") == 0) {
 	    pt_entry = parser.repeat(libinput,element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
 		else play_tree_append_entry(list,pt_entry);
-		MSG_DBG2("Adding element %s to asx\n",element.name().c_str());
+		mpxp_dbg2<<"Adding element "<<element.name()<<" to asx"<<std::endl;
 	    }
-	} else MSG_DBG2("Ignoring element %s\n",element.name().c_str());
+	} else mpxp_dbg2<<"Ignoring element "<<element.name()<<std::endl;
     }
 
     delete &parser;

@@ -130,7 +130,7 @@ MPXP_Rc DvdNav_Stream_Interface::new_stream(const std::string& _filename) {
 
     /* report the title?! */
      if (dvdnav_get_title_string(dvdnav,&title_str)==DVDNAV_STATUS_OK) {
-	    MSG_INFO("Title: '%s'\n",title_str);
+	    mpxp_info<<"Title: "<<title_str<<std::endl;
     }
     return MPXP_Ok;
 }
@@ -144,11 +144,11 @@ void DvdNav_Stream_Interface::stream_sleep(int seconds) {
 	case 0:
 	    return;
 	case 0xff:
-	    MSG_V( "Sleeping indefinately\n" );
+	    mpxp_v<<"Sleeping indefinately"<<std::endl;
 	    sleeping=2;
 	    break;
 	default:
-	    MSG_V( "Sleeping %d sec(s)\n", seconds );
+	    mpxp_v<<"Sleeping "<<seconds<<"sec(s)"<<std::endl;
 	    sleep_until = GetTimer();// + seconds*1000000;
 	    sleeping=1;
 	    break;
@@ -167,10 +167,10 @@ int DvdNav_Stream_Interface::stream_sleeping() {
 	}
 	dvdnav_still_skip(dvdnav); // continue past...
 	sleeping=0;
-	MSG_V("%s: woke up!\n",__FUNCTION__);
+	mpxp_v<<"woke up!"<<std::endl;
     }
     dvd_nav_still=0;
-    MSG_V("%s: active\n",__FUNCTION__);
+    mpxp_v<<"active"<<std::endl;
     return 0;
 }
 
@@ -187,15 +187,15 @@ MPXP_Rc DvdNav_Stream_Interface::open(const std::string& _filename,unsigned flag
     filename=_filename;
     param=mrl_parse_line(_filename,NULL,NULL,&dvd_device,NULL);
     if(strcmp(param,"help") == 0) {
-	MSG_HINT("Usage: dvdnav://<title>,<chapter>\n");
+	mpxp_hint<<"Usage: dvdnav://<title>,<chapter>"<<std::endl;
 	return MPXP_False;
     }
     param=mrl_parse_params(param,dvdnavopts_conf);
     if (new_stream(dvd_device?dvd_device:DEFAULT_DVD_DEVICE)!=MPXP_Ok) {
-	MSG_ERR(MSGTR_CantOpenDVD,dvd_device?dvd_device:DEFAULT_DVD_DEVICE);
+	mpxp_err<<MSGTR_CantOpenDVD<<":"<<(dvd_device?dvd_device:DEFAULT_DVD_DEVICE)<<std::endl;
 	if(!dvd_device) {
 	    if (new_stream(DEFAULT_CDROM_DEVICE)!=MPXP_Ok)
-		MSG_ERR(MSGTR_CantOpenDVD,DEFAULT_CDROM_DEVICE);
+		mpxp_err<<MSGTR_CantOpenDVD<<":"<<DEFAULT_CDROM_DEVICE<<std::endl;
 	    else
 		goto dvd_ok;
 	}
@@ -214,16 +214,16 @@ MPXP_Rc DvdNav_Stream_Interface::open(const std::string& _filename,unsigned flag
     dvdnav_set_PGC_positioning_flag(dvdnav,1);
     ntitles=0;
     dvdnav_get_number_of_titles(dvdnav,&ntitles);
-    MSG_INFO(MSGTR_DVDnumTitles,ntitles);
+    mpxp_info<<MSGTR_DVDnumTitles<<":"<<ntitles<<std::endl;
     if(dvdnav_conf.title != -1) {
 	int nparts;
 	dvdnav_get_number_of_parts(dvdnav,dvdnav_conf.title,&nparts);
-	MSG_INFO(MSGTR_DVDnumChapters,dvdnav_conf.title,nparts);
+	mpxp_info<<MSGTR_DVDnumChapters<<":"<<dvdnav_conf.title<<":"<<nparts<<std::endl;
 	if(dvdnav_conf.chapter != -1)	dvdnav_part_play(dvdnav,dvdnav_conf.title,dvdnav_conf.chapter);
 	else				dvdnav_title_play(dvdnav,dvdnav_conf.title);
 	cpos=2048; /* disallow dvdnav_reset */
 	dvdnav_current_title_info(dvdnav,&dvdnav_conf.title,&dvdnav_conf.chapter);
-	MSG_INFO("Playing %i part of %i title\n",dvdnav_conf.chapter,dvdnav_conf.title);
+	mpxp_info<<"Playing "<<dvdnav_conf.chapter<<" part of "<<dvdnav_conf.title<<" title"<<std::endl;
     }
     return MPXP_Ok;
 }
@@ -248,7 +248,7 @@ void DvdNav_Stream_Interface::stream_read(dvdnav_event_t*de) {
     if (!de->details) return;
 
     if (dvd_nav_still) {
-	MSG_V("%s: got a stream_read while I should be asleep!\n",__FUNCTION__);
+	mpxp_v<<"got a stream_read while I should be asleep!"<<std::endl;
 	de->event=DVDNAV_STILL_FRAME;
 	de->len=0;
 	return;
@@ -256,7 +256,7 @@ void DvdNav_Stream_Interface::stream_read(dvdnav_event_t*de) {
     done=0;
     while(!done) {
 	if (dvdnav_get_next_block(dvdnav,reinterpret_cast<uint8_t*>(de->details),&event,&de->len)!=DVDNAV_STATUS_OK) {
-	    MSG_ERR( "Error getting next block from DVD (%s)\n",dvdnav_err_to_string(dvdnav) );
+	    mpxp_err<<"Error getting next block from DVD: "<<dvdnav_err_to_string(dvdnav)<<std::endl;
 	    de->len=-1;
 	}
 	if(event == DVDNAV_STILL_FRAME) {
@@ -275,13 +275,11 @@ void DvdNav_Stream_Interface::stream_read(dvdnav_event_t*de) {
 	    _this=dvdnav_get_current_nav_pci(dvdnav);
 	    vobu_s_pts=_this->pci_gi.vobu_s_ptm/90000.;
 	    vobu_e_pts=_this->pci_gi.vobu_e_ptm/90000.;
-	    MSG_V("Handling NAV_PACKET: vobu_s_ptm=%f vobu_e_ptm=%f e_eltm=%f\n"
-		,vobu_s_pts
-		,vobu_e_pts
-		,(float)_this->pci_gi.e_eltm.second+_this->pci_gi.e_eltm.minute*60.+_this->pci_gi.e_eltm.hour*3600.);
+	    mpxp_v<<"Handling NAV_PACKET: vobu_s_ptm="<<vobu_s_pts
+		<<" vobu_e_ptm="<<vobu_e_pts<<" e_eltm="<<((float)_this->pci_gi.e_eltm.second+_this->pci_gi.e_eltm.minute*60.+_this->pci_gi.e_eltm.hour*3600.)<<std::endl;
 	    if(vobu_s_pts < vobu_e_pts) {
 		_stream_pts += vobu_e_pts-vobu_s_pts;
-		MSG_V("DVD's discontinuities found! Applying delta: %f\n",_stream_pts);
+		mpxp_v<<"DVD's discontinuities found! Applying delta: "<<_stream_pts<<std::endl;
 	    }
 	    else _stream_pts = vobu_s_pts;
 	    vobu_s_pts = vobu_s_pts;
@@ -291,13 +289,11 @@ void DvdNav_Stream_Interface::stream_read(dvdnav_event_t*de) {
 	    dvdnav_current_title_info(dvdnav, &ct, &cc);
 	    if(ct<=0) {
 		menu_mode=1;
-		MSG_V("entering menu mode: %i %i\n",ct,cc);
-		MSG_V("vmgm: %i vtsm: %i\n",
-		    dvdnav_is_domain_vmgm(dvdnav),
-		    dvdnav_is_domain_vtsm(dvdnav));
+		mpxp_v<<"entering menu mode: "<<ct<<" "<<cc<<std::endl;
+		mpxp_v<<"vmgm: "<<dvdnav_is_domain_vmgm(dvdnav)<<" vtsm: "<<dvdnav_is_domain_vtsm(dvdnav)<<std::endl;
 	    } else {
 		menu_mode=0;
-		MSG_V("leaving menu mode: %i %i\n",ct,cc);
+		mpxp_v<<"leaving menu mode: "<<ct<<" "<<cc<<std::endl;
 	    }
 	} else done=1;
     }
@@ -402,7 +398,7 @@ void DvdNav_Stream_Interface::event_handler(const stream_packet_t*sp)
 	    dvdnav_highlight_event_t *_hlev = (dvdnav_highlight_event_t*)(sp->buf);
 	    int btnum;
 	    int display_mode=1;
-	    MSG_V("DVDNAV_HIGHLIGHT: %i %i %i %i\n",_hlev->sx,_hlev->sy,_hlev->ex,_hlev->ey);
+	    mpxp_v<<"DVDNAV_HIGHLIGHT: "<<_hlev->sx<<" "<<_hlev->sy<<" "<<_hlev->ex<<" "<<_hlev->ey<<std::endl;
 	    if (!dvdnav)  return;
 	    memcpy(&hlev,_hlev,sizeof(dvdnav_highlight_event_t));
 	    pnavpci = dvdnav_get_current_nav_pci (dvdnav);
@@ -435,7 +431,7 @@ void DvdNav_Stream_Interface::event_handler(const stream_packet_t*sp)
 	}
 	case DVDNAV_STILL_FRAME: {
 	    const dvdnav_still_event_t *still_event = (const dvdnav_still_event_t*)(sp->buf);
-		MSG_DBG2( "######## DVDNAV Event: Still Frame: %d sec(s)\n", still_event->length );
+		mpxp_dbg2<<"######## DVDNAV Event: Still Frame: "<<still_event->length<<" sec(s)"<<std::endl;
 		while (stream_sleeping()) {
 		    yield_timeslice();
 		}
@@ -443,22 +439,15 @@ void DvdNav_Stream_Interface::event_handler(const stream_packet_t*sp)
 		break;
 	    }
 	case DVDNAV_STOP:
-	    MSG_DBG2( "DVDNAV Event: Nav Stop\n" );
+	    mpxp_dbg2<<"DVDNAV Event: Nav Stop"<<std::endl;
 	    break;
 	case DVDNAV_NOP:
-	    MSG_V("DVDNAV Event: Nav NOP\n");
+	    mpxp_v<<"DVDNAV Event: Nav NOP"<<std::endl;
 	    break;
 #if 0
 	case DVDNAV_SPU_STREAM_CHANGE: {
 	    const dvdnav_spu_stream_change_event_t * stream_change=(const dvdnav_spu_stream_change_event_t*)(sp->buf);
-	    MSG_DBG2("DVDNAV Event: Nav SPU Stream Change: phys_wide: %d phys_letterbox: %d phys_panscan: %d logical: %d\n",
-	    stream_change->physical_wide,
-	    stream_change->physical_letterbox,
-	    stream_change->physical_pan_scan,
-	    stream_change->logical);
 	    if (mpxp_context().video().output->spudec && mp_conf.dvdsub_id!=stream_change->physical_wide) {
-		MSG_DBG2("d_dvdsub->id change: was %d is now %d\n",
-			d_dvdsub->id,stream_change->physical_wide);
 		    // FIXME: need a better way to change SPU id
 		d_dvdsub->id=mp_conf.dvdsub_id=stream_change->physical_wide;
 		if (mpxp_context().video().output->spudec) spudec_reset(mpxp_context().video().output->spudec);
@@ -468,14 +457,9 @@ void DvdNav_Stream_Interface::event_handler(const stream_packet_t*sp)
 	case DVDNAV_AUDIO_STREAM_CHANGE: {
 	    int aid_temp;
 	    const dvdnav_audio_stream_change_event_t *stream_change = (const dvdnav_audio_stream_change_event_t*)(sp->buf);
-	    MSG_DBG2("DVDNAV Event: Nav Audio Stream Change: phys: %d logical: %d\n",
-		    stream_change->physical,
-		    stream_change->logical);
 	    aid_temp=stream_change->physical;
 	    if (aid_temp>=0) aid_temp+=128; // FIXME: is this sane?
 	    if (d_audio && mp_conf.audio_id!=aid_temp) {
-		MSG_DBG2("d_audio->id change: was %d is now %d\n",
-			d_audio->id,aid_temp);
 		// FIXME: need a bettery way to change audio stream id
 		d_audio->id=mp_conf.dvdsub_id=aid_temp;
 		mpxp_resync_audio_stream();
@@ -485,27 +469,25 @@ void DvdNav_Stream_Interface::event_handler(const stream_packet_t*sp)
 #endif
 	case DVDNAV_VTS_CHANGE:{
 	    const dvdnav_vts_change_event_t *evts = (const dvdnav_vts_change_event_t *)(sp->buf);
-	    MSG_V("DVDNAV Event: Nav VTS Change %u\n",evts->new_domain);
+	    mpxp_v<<"DVDNAV Event: Nav VTS Change "<<evts->new_domain<<std::endl;
 	    }
 	    break;
 	case DVDNAV_CELL_CHANGE: {
 	    const dvdnav_cell_change_event_t *ecell=(const dvdnav_cell_change_event_t*)(sp->buf);
-	    MSG_V("DVDNAV_CELL_CHANGE: N=%i pgN=%i cell_start=%f pg_start=%f cell_length=%f pg_length=%f pgc_length=%f\n"
-		,ecell->cellN
-		,ecell->pgN
-		,ecell->cell_start/90000.
-		,ecell->pg_start/90000.
-		,ecell->cell_length/90000.
-		,ecell->pg_length/90000.
-		,ecell->pgc_length/90000.);
+	    mpxp_v<<"DVDNAV_CELL_CHANGE: N="<<ecell->cellN
+		<<" pgN="<<ecell->pgN<<" cell_start="<<(ecell->cell_start/90000.)
+		<<" pg_start="<<(ecell->pg_start/90000.)
+		<<" cell_length="<<(ecell->cell_length/90000.)
+		<<" pg_length="<<(ecell->pg_length/90000.)
+		<<" pgc_length="<<(ecell->pgc_length/90000.)<<std::endl;
 	    }
 	    break;
 	case DVDNAV_NAV_PACKET:
-	    MSG_V("DVDNAV Event: Nav Packet\n");
+	    mpxp_v<<"DVDNAV Event: Nav Packet"<<std::endl;
 	    break;
 	case DVDNAV_SPU_CLUT_CHANGE:
-	    MSG_DBG2("DVDNAV Event: Nav SPU CLUT Change\n");
-	    if(sp->len!=64) MSG_WARN("DVDNAV Event: Nav SPU CLUT Change: %i bytes <> 64\n",sp->len);
+	    mpxp_dbg2<<"DVDNAV Event: Nav SPU CLUT Change"<<std::endl;
+	    if(sp->len!=64) mpxp_warn<<"DVDNAV Event: Nav SPU CLUT Change: "<<sp->len<<" bytes <> 64"<<std::endl;
 	    // send new palette to SPU decoder
 	    if (mpxp_context().video().output->spudec) spudec_update_palette(mpxp_context().video().output->spudec,(const unsigned int *)(sp->buf));
 	    break;
@@ -531,7 +513,7 @@ void DvdNav_Stream_Interface::cmd_handler(unsigned cmd)
 	  break;
 	case MP_CMD_DVDNAV_MENU: {
 	    int title,part;
-	    MSG_V("Menu call\n");
+	    mpxp_v<<"Menu call"<<std::endl;
 	    dvdnav_current_title_info(dvdnav, &title, &part);
 	    if(title>0) {
 		if(dvdnav_menu_call(dvdnav, DVD_MENU_Part) == DVDNAV_STATUS_OK
@@ -546,7 +528,7 @@ void DvdNav_Stream_Interface::cmd_handler(unsigned cmd)
 	  dvdnav_button_activate(dvdnav,pci);
 	  break;
 	default:
-	  MSG_V("Weird DVD Nav cmd %d\n",cmd);
+	  mpxp_v<<"Weird DVD Nav cmd "<<cmd<<std::endl;
 	  break;
     }
     dvdnav_get_current_highlight(dvdnav, &button);

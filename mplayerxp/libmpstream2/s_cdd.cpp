@@ -53,7 +53,7 @@ MPXP_Rc Cdda_Stream_Interface::open(const std::string& filename,unsigned flags)
     char *device;
     UNUSED(flags);
     if(filename=="help") {
-	MSG_HINT("Usage: cdda://<@device><#trackno>\n");
+	mpxp_hint<<"Usage: cdda://<@device><#trackno>"<<std::endl;
 	return MPXP_False;
     }
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
@@ -103,7 +103,7 @@ MPXP_Rc Cdda_Stream_Interface::ctrl(unsigned cmd,any_t*args)
 	case SCTRL_AUD_GET_CHANNELS:
 	    *(int *)args=priv->channels(track_idx);
 	    if(*(int *)args<=0) *(int *)args=2;
-	    MSG_V("cdda channels: %u\n",*(int *)args);
+	    mpxp_v<<"cdda channels: "<<*(int *)args<<std::endl;
 	    return MPXP_Ok;
 	case SCTRL_AUD_GET_SAMPLERATE:
 	    *(int *)args = 44100;
@@ -150,7 +150,7 @@ MPXP_Rc Cddb_Stream_Interface::open(const std::string& filename,unsigned flags)
     MPXP_Rc retval;
     UNUSED(flags);
     if(filename=="help") {
-	MSG_HINT("Usage: cddb://<@device><#trackno>\n");
+	mpxp_hint<<"Usage: cddb://<@device><#trackno>"<<std::endl;
 	return MPXP_False;
     }
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);

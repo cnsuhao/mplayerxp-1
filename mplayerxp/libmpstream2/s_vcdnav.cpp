@@ -80,7 +80,7 @@ static void __FASTCALL__ _cdio_detect_media(const std::string& device)
   if(img)
   {
     discmode_t mode=cdio_get_discmode(img);
-    MSG_HINT("Detected %s disk\n",discmode2str[mode]);
+    mpxp_hint<<"Detected "<<discmode2str[mode]<<" disk"<<std::endl;
   }
 }
 
@@ -93,7 +93,7 @@ MPXP_Rc VcdNav_Stream_Interface::open(const std::string& filename,unsigned flags
     vcdinfo_open_return_t open_rc;
     UNUSED(flags);
     if(filename=="help") {
-	MSG_HINT("Usage: vcdnav://<@device><#trackno>\n");
+	mpxp_hint<<"Usage: vcdnav://<@device><#trackno>"<<std::endl;
 	return MPXP_False;
     }
     param=mrl_parse_line(filename,NULL,NULL,&device,NULL);
@@ -107,20 +107,20 @@ MPXP_Rc VcdNav_Stream_Interface::open(const std::string& filename,unsigned flags
 	open_rc=vcdinfo_open(&fd,device?&device:&dev,DRIVER_UNKNOWN,NULL);
 	delete device;
 	if(!fd) {
-	    MSG_ERR("Can't open stream\n");
+	    mpxp_err<<"Can't open stream"<<std::endl;
 	    _cdio_detect_media(device?device:dev);
 	    return MPXP_False;
 	}
     }
     nlids=vcdinfo_get_num_LIDs(fd);
     if(vcdinfo_read_psd(fd)) vcdinfo_visit_lot (fd, false);
-    MSG_DBG2("VCDNAV geometry:\n");
+    mpxp_dbg2<<"VCDNAV geometry:"<<std::endl;
     if((ntracks=vcdinfo_get_num_tracks(fd))>0) {
 	track=new(zeromem) vcd_item_info_t[ntracks];
 	for(i=0;i<ntracks;i++) {
 	    track[i].size=vcdinfo_get_track_sect_count(fd,i+1);
 	    track[i].start_LSN=vcdinfo_get_track_lsn(fd,i+1);
-	    MSG_DBG2("track=%i start=%i size=%i\n",i,track[i].start_LSN,track[i].size);
+	    mpxp_dbg2<<"track="<<i<<" start="<<track[i].start_LSN<<" size="<<track[i].size<<std::endl;
 	}
 	start=track[0].start_LSN;
 	total=track[i-1].size;
@@ -130,7 +130,7 @@ MPXP_Rc VcdNav_Stream_Interface::open(const std::string& filename,unsigned flags
 	for(i=0;i<nentries;i++) {
 	    entry[i].size=vcdinfo_get_entry_sect_count(fd,i);
 	    entry[i].start_LSN=vcdinfo_get_entry_lsn(fd,i);
-	    MSG_DBG2("entry=%i start=%i size=%i\n",i,entry[i].start_LSN,entry[i].size);
+	    mpxp_dbg2<<"entry="<<i<<" start="<<entry[i].start_LSN<<" size=%i"<<entry[i].size<<std::endl;
 	}
     }
     if((nsegments=vcdinfo_get_num_segments(fd))>0) {
@@ -138,25 +138,22 @@ MPXP_Rc VcdNav_Stream_Interface::open(const std::string& filename,unsigned flags
 	for(i=0;i<nsegments;i++) {
 	    segment[i].size=vcdinfo_get_seg_sector_count(fd,i);
 	    segment[i].start_LSN=vcdinfo_get_seg_lsn(fd,i);
-	    MSG_DBG2("segment=%i start=%i size=%i\n",i,segment[i].start_LSN,segment[i].size);
+	    mpxp_dbg2<<"segment="<<i<<" start="<<segment[i].start_LSN<<" size="<<segment[i].size<<std::endl;
 	}
     }
-    MSG_INFO("This VCD contains: tracks=%i entries=%i segments=%i\n"
-	,ntracks
-	,nentries
-	,nsegments);
+    mpxp_info<<"This VCD contains: tracks="<<ntracks<<" entries="<<nentries<<" segments="<<nsegments<<std::endl;
     if(vcd_track!=-1) {
 	if(vcd_track>0 && (unsigned)vcd_track<=ntracks) {
 	    start=track[vcd_track-1].start_LSN;
 	    total=track[vcd_track-1].size;
 	}
-	else MSG_ERR("Wrong track number %i Playing whole VCD!\n",vcd_track);
+	else mpxp_err<<"Wrong track number "<<vcd_track<<" Playing whole VCD!"<<std::endl;
     }
     lsn=start;
     read(NULL); /* Find first non empty segment */
     lsn--;
     start=lsn;
-    MSG_DBG2("vcdnav_open start=%i end=%i\n",lsn,total);
+    mpxp_dbg2<<"vcdnav_open start="<<lsn<<" end="<<total<<std::endl;
     return MPXP_Ok;
 }
 Stream::type_e VcdNav_Stream_Interface::type() const { return Stream::Type_Seekable|Stream::Type_Program; }
@@ -183,46 +180,45 @@ void VcdNav_Stream_Interface::inc_lsn()
 int VcdNav_Stream_Interface::read(stream_packet_t*sp)
 {
     CdIo *img=vcdinfo_get_cd_image(fd);
-    MSG_DBG2("vcdnav_read: lsn=%i total=%i\n",lsn,total);
+    mpxp_dbg2<<"vcdnav_read: lsn="<<lsn<<" total="<<total<<std::endl;
     if(sp) sp->type=0;
     do {
 	if(lsn!=vcd_sector_lsn) {
 	    if (cdio_read_mode2_sector(img, &vcd_sector, lsn, true)!=0) {
-		MSG_ERR("vcdnav: read error\n");
+		mpxp_err<<"vcdnav: read error"<<std::endl;
 		inc_lsn();
 		return 0;
 	    }
-	    MSG_DBG3("LSN=%i SUBHEADER: %02X %02X %02X %02X %02X %02X %02X %02X\n"
-		,lsn
-		,vcd_sector.subheader[0]
-		,vcd_sector.subheader[1]
-		,vcd_sector.subheader[2]
-		,vcd_sector.subheader[3]
-		,vcd_sector.subheader[4]
-		,vcd_sector.subheader[5]
-		,vcd_sector.subheader[6]
-		,vcd_sector.subheader[7]);
-	    MSG_DBG3("DATA: %02X %02X %02X %02X %02X %02X %02X %02X ...\n"
-		,vcd_sector.data[0]
-		,vcd_sector.data[1]
-		,vcd_sector.data[2]
-		,vcd_sector.data[3]
-		,vcd_sector.data[4]
-		,vcd_sector.data[5]
-		,vcd_sector.data[6]
-		,vcd_sector.data[7]);
-	    MSG_DBG3("SPARE: %02X %02X %02X %02X\n"
-		,vcd_sector.spare[0]
-		,vcd_sector.spare[1]
-		,vcd_sector.spare[2]
-		,vcd_sector.spare[3]);
+	    mpxp_dbg3<<"LSN="<<lsn<<" SUBHEADER: "
+		<<std::hex<<vcd_sector.subheader[0]<<" "
+		<<std::hex<<vcd_sector.subheader[1]<<" "
+		<<std::hex<<vcd_sector.subheader[2]<<" "
+		<<std::hex<<vcd_sector.subheader[3]<<" "
+		<<std::hex<<vcd_sector.subheader[4]<<" "
+		<<std::hex<<vcd_sector.subheader[5]<<" "
+		<<std::hex<<vcd_sector.subheader[6]<<" "
+		<<std::hex<<vcd_sector.subheader[7]<<std::endl;
+	    mpxp_dbg3<<"DATA: "
+		<<std::hex<<vcd_sector.data[0]<<" "
+		<<std::hex<<vcd_sector.data[1]<<" "
+		<<std::hex<<vcd_sector.data[2]<<" "
+		<<std::hex<<vcd_sector.data[3]<<" "
+		<<std::hex<<vcd_sector.data[4]<<" "
+		<<std::hex<<vcd_sector.data[5]<<" "
+		<<std::hex<<vcd_sector.data[6]<<" "
+		<<std::hex<<vcd_sector.data[7]<<std::endl;
+	    mpxp_dbg3<<"SPARE: "
+		<<std::hex<<vcd_sector.spare[0]<<" "
+		<<std::hex<<vcd_sector.spare[1]<<" "
+		<<std::hex<<vcd_sector.spare[2]<<" "
+		<<std::hex<<vcd_sector.spare[3]<<std::endl;
 	}
 	vcd_sector_lsn=lsn;
 	inc_lsn();
 
 	if ( lsn >= start+total ) {
 	    /* We've run off of the end of this entry. Do we continue or stop? */
-	    MSG_DBG2("end reached in reading, cur: %u, end: %u\n", lsn, total);
+	    mpxp_dbg2<<"end reached in reading, cur: "<<lsn<<", end: "<<total<<std::endl;
 	    break;
 	}
       /* Check header ID for a padding sector and simply discard
@@ -248,19 +244,19 @@ off_t VcdNav_Stream_Interface::seek(off_t pos)
     lsn--;
     inc_lsn();
     cdio_lseek(img,lsn,SEEK_SET);
-    MSG_DBG2("vcdnav_seek: lsn=%i newlsn=%i pos=%lli\n",oldlsn,lsn,pos);
+    mpxp_dbg2<<"vcdnav_seek: lsn="<<oldlsn<<" newlsn="<<lsn<<" pos="<<pos<<std::endl;
     return lsn*sizeof(vcdsector_t);
 }
 
 off_t VcdNav_Stream_Interface::tell() const
 {
-    MSG_DBG2("vcdnav_tell: lsn=%i\n",lsn);
+    mpxp_dbg2<<"vcdnav_tell: lsn="<<lsn<<std::endl;
     return lsn*sizeof(vcdsector_t);
 }
 
 void VcdNav_Stream_Interface::close()
 {
-    MSG_DBG2("vcdnav_close\n");
+    mpxp_dbg2<<"vcdnav_close"<<std::endl;
 }
 
 MPXP_Rc VcdNav_Stream_Interface::ctrl(unsigned cmd,any_t*args) {

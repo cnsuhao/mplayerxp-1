@@ -69,12 +69,10 @@ void Demuxer_Stream::add_packet(Demuxer_Packet* dp){
 	    // _first packet in stream
 	    _first=_last=dp;
 	}
-	MSG_DBG2("DEMUX: Append packet: len=%d  pts=%5.3f  pos=%u  [_packs: A=%d V=%d]\n",
-	    dp->length(),dp->pts,(unsigned int)dp->pos,demuxer->audio->_packs,demuxer->video->_packs);
+	mpxp_dbg2<<"DEMUX: Append packet: len="<<dp->length()<<"  pts="<<dp->pts<<"  pos="<<(unsigned int)dp->pos<<"  [_packs: A="<<demuxer->audio->_packs<<" V="<<demuxer->video->_packs<<"]"<<std::endl;
     }
     else
-	MSG_DBG2("DEMUX: Skip packet: len=%d  pts=%5.3f  pos=%u  [_packs: A=%d V=%d]\n",
-	    dp->length(),dp->pts,(unsigned int)dp->pos,demuxer->audio->_packs,demuxer->video->_packs);
+	mpxp_dbg2<<"DEMUX: Skip packet: len="<<dp->length()<<"  pts="<<dp->pts<<"  pos="<<(unsigned int)dp->pos<<"  [_packs: A="<<demuxer->audio->_packs<<" V="<<demuxer->video->_packs<<"]"<<std::endl;
 }
 
 void Demuxer_Stream::read_packet(Stream *stream,int len,float _pts,off_t _pos,dp_flags_e _flags){
@@ -86,7 +84,7 @@ void Demuxer_Stream::read_packet(Stream *stream,int len,float _pts,off_t _pos,dp
     dp->flags=_flags;
     // append packet to DS stream:
     add_packet(dp);
-    MSG_DBG2("ds_read_packet(%u,%f,%llu,%i)\n",len,pts,pos,flags);
+    mpxp_dbg2<<"ds_read_packet("<<len<<","<<pts<<","<<pos<<","<<flags<<")"<<std::endl;
 }
 
 // return value:
@@ -96,10 +94,10 @@ int Demuxer_Stream::fill_buffer() {
     if (_buffer) delete _buffer;
 /*  free_packs(ds); */
     if(mp_conf.verbose>2) {
-	if(this==demuxer->audio) MSG_DBG3("ds_fill_buffer(d_audio) called\n");
-	else if(this==demuxer->video) MSG_DBG3("ds_fill_buffer(d_video) called\n");
-	else if(this==demuxer->sub) MSG_DBG3("ds_fill_buffer(d_sub) called\n");
-	else MSG_DBG3("ds_fill_buffer(unknown %p) called\n",this);
+	if(this==demuxer->audio) mpxp_dbg3<<"ds_fill_buffer(d_audio) called"<<std::endl;
+	else if(this==demuxer->video) mpxp_dbg3<<"ds_fill_buffer(d_video) called"<<std::endl;
+	else if(this==demuxer->sub) mpxp_dbg3<<"ds_fill_buffer(d_sub) called"<<std::endl;
+	else mpxp_dbg3<<"ds_fill_buffer(unknown) called"<<std::endl;
     }
     while(1){
 	if(_packs){
@@ -127,24 +125,24 @@ int Demuxer_Stream::fill_buffer() {
 	    return 1; //ds->_buffer_size;
 	}
 	if(demuxer->audio->_bytes>=MAX_PACK_BYTES){
-	    MSG_ERR(MSGTR_TooManyAudioInBuffer,demuxer->audio->_packs,demuxer->audio->_bytes);
-	    MSG_HINT(MSGTR_MaybeNI);
+	    mpxp_err<<"[Demuxer]:"<<MSGTR_TooManyAudioInBuffer<<":"<<demuxer->audio->_packs<<" "<<demuxer->audio->_bytes<<"bytes"<<std::endl;
+	    mpxp_hint<<MSGTR_MaybeNI<<std::endl;
 	    break;
 	}
 	if(demuxer->video->_bytes>=MAX_PACK_BYTES){
-	    MSG_ERR(MSGTR_TooManyVideoInBuffer,demuxer->video->_packs,demuxer->video->_bytes);
-	    MSG_HINT(MSGTR_MaybeNI);
+	    mpxp_err<<"[Demuxer]:"<<MSGTR_TooManyVideoInBuffer<<":"<<demuxer->video->_packs<<" "<<demuxer->video->_bytes<<"bytes"<<std::endl;
+	    mpxp_hint<<MSGTR_MaybeNI<<std::endl;
 	    break;
 	}
 	if(!demuxer->demux(this)){
-	    MSG_DBG2("ds_fill_buffer: demuxer->demux() failed\n");
+	    mpxp_dbg2<<"ds_fill_buffer: demuxer->demux() failed"<<std::endl;
 	    break; // EOF
 	}
     }
     _buffer_pos=_buffer_size=0;
     _buffer=NULL;
     _current=NULL;
-    MSG_V("ds_fill_buffer: EOF reached (stream: %s)  \n",this==demuxer->audio?"audio":"video");
+    mpxp_v<<"ds_fill_buffer: EOF reached (stream: "<<(this==demuxer->audio?"audio":"video")<<")"<<std::endl;
     eof=1;
     check_pin("demuxer",pin,DS_PIN);
     return 0;
@@ -260,13 +258,13 @@ int Demuxer_Stream::get_packet_sub(unsigned char **start){
 float Demuxer_Stream::get_next_pts() {
     while(!_first) {
 	if(demuxer->audio->_bytes>=MAX_PACK_BYTES){
-	    MSG_ERR(MSGTR_TooManyAudioInBuffer,demuxer->audio->_packs,demuxer->audio->_bytes);
-	    MSG_HINT(MSGTR_MaybeNI);
+	    mpxp_err<<"[Demuxer]:"<<MSGTR_TooManyAudioInBuffer<<":"<<demuxer->audio->_packs<<" "<<demuxer->audio->_bytes<<"bytes"<<std::endl;
+	    mpxp_hint<<MSGTR_MaybeNI<<std::endl;
 	    return -1;
 	}
 	if(demuxer->video->_bytes>=MAX_PACK_BYTES){
-	    MSG_ERR(MSGTR_TooManyVideoInBuffer,demuxer->video->_packs,demuxer->video->_bytes);
-	    MSG_HINT(MSGTR_MaybeNI);
+	    mpxp_err<<"[Demuxer]:"<<MSGTR_TooManyVideoInBuffer<<":"<<demuxer->video->_packs<<" "<<demuxer->video->_bytes<<"bytes"<<std::endl;
+	    mpxp_hint<<MSGTR_MaybeNI<<std::endl;
 	    return -1;
 	}
 	if(!demuxer->fill_buffer(this)) return -1;

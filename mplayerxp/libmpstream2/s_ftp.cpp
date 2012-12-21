@@ -117,12 +117,12 @@ int Ftp_Stream_Interface::readline(char *_buf,int max)
 	    break;
 	}
 	if(!tcp.has_data(15)) {
-	    MSG_ERR("[ftp] read timed out\n");
+	    mpxp_err<<"[ftp] read timed out"<<std::endl;
 	    retval = -1;
 	    break;
 	}
 	if ((x = tcp.read((uint8_t*)cput,cleft)) == -1) {
-	    MSG_ERR("[ftp] read error: %s\n",strerror(errno));
+	    mpxp_err<<"[ftp] read error: "<<strerror(errno)<<std::endl;
 	    retval = -1;
 	    break;
 	}
@@ -151,7 +151,7 @@ int Ftp_Stream_Interface::readresp(char* rsp)
     r = atoi(response)/100;
     if(rsp) strcpy(rsp,response);
 
-    MSG_V("[ftp] < %s",response);
+    mpxp_v<<"[ftp] < "<<response;
 
     if (response[3] == '-') {
 	strncpy(match,response,3);
@@ -159,10 +159,10 @@ int Ftp_Stream_Interface::readresp(char* rsp)
 	match[4] = '\0';
 	do {
 	    if (readline(response,256) == -1) {
-		MSG_ERR("[ftp] Control socket read failed\n");
+		mpxp_err<<"[ftp] Control socket read failed"<<std::endl;
 		return 0;
 	    }
-	    MSG_V("[ftp] < %s",response);
+	    mpxp_v<<"[ftp] < "<<response;
 	} while (strncmp(response,match,4));
     }
     return r;
@@ -174,12 +174,12 @@ int Ftp_Stream_Interface::SendCmd(const std::string& _cmd,char* rsp)
     int l = _cmd.length();
     int hascrlf = cmd[l - 2] == '\r' && cmd[l - 1] == '\n';
 
-    if(hascrlf && l == 2) MSG_V("\n");
-    else MSG_V("[ftp] > %s",cmd);
+    if(hascrlf && l == 2) mpxp_v<<std::endl;
+    else mpxp_v<<"[ftp] > "<<cmd;
     while(l > 0) {
 	int s = tcp.write((const uint8_t*)cmd,l);
 	if(s <= 0) {
-	    MSG_ERR("[ftp] write error: %s\n",strerror(errno));
+	    mpxp_err<<"[ftp] write error: "<<strerror(errno)<<std::endl;
 	    return 0;
 	}
 	cmd += s;
@@ -197,12 +197,12 @@ int Ftp_Stream_Interface::OpenPort() {
 
     resp = SendCmd("PASV",rsp_txt);
     if(resp != 2) {
-	MSG_WARN("[ftp] command 'PASV' failed: %s\n",rsp_txt);
+	mpxp_warn<<"[ftp] command 'PASV' failed: "<<rsp_txt<<std::endl;
 	return 0;
     }
     par = strchr(rsp_txt,'(');
     if(!par || !par[0] || !par[1]) {
-	MSG_ERR("[ftp] invalid server response: %s ??\n",rsp_txt);
+	mpxp_err<<"[ftp] invalid server response: "<<rsp_txt<<std::endl;
 	return 0;
     }
     sscanf(par+1,"%u,%u,%u,%u,%u,%u",&num[0],&num[1],&num[2],&num[3],&num[4],&num[5]);
@@ -210,7 +210,7 @@ int Ftp_Stream_Interface::OpenPort() {
     url.redirect(str);
     tcp.open(url);
 
-    if(!tcp.established()) MSG_ERR("[ftp] failed to create data connection\n");
+    if(!tcp.established()) mpxp_err<<"[ftp] failed to create data connection"<<std::endl;
     return 1;
 }
 
@@ -227,7 +227,7 @@ int Ftp_Stream_Interface::OpenData(size_t newpos) {
 	snprintf(str,255,"REST %"PRId64, (int64_t)newpos);
 	resp = SendCmd(str,rsp_txt);
 	if(resp != 3) {
-	    MSG_WARN("[ftp] command '%s' failed: %s\n",str,rsp_txt);
+	    mpxp_warn<<"[ftp] command '"<<str<<"' failed: "<<rsp_txt<<std::endl;
 	    newpos = 0;
 	}
     }
@@ -236,7 +236,7 @@ int Ftp_Stream_Interface::OpenData(size_t newpos) {
     resp = SendCmd(str,rsp_txt);
 
     if(resp != 1) {
-	MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
+	mpxp_err<<"[ftp] command '"<<str<<"' failed: "<<rsp_txt<<std::endl;
 	return 0;
     }
     spos = newpos;
@@ -249,10 +249,10 @@ int Ftp_Stream_Interface::read(stream_packet_t*sp){
     if(!OpenData(spos)) return -1;
 
     if(!tcp.has_data(15)) {
-	MSG_ERR("[ftp] read timed out\n");
+	mpxp_err<<"[ftp] read timed out"<<std::endl;
 	return -1;
     }
-    MSG_V("ftp read: %u bytes\n",sp->len);
+    mpxp_v<<"ftp read: "<<sp->len<<" bytes"<<std::endl;
     r = tcp.read((uint8_t*)sp->buf,sp->len);
     spos+=r;
     return (r <= 0) ? -1 : r;
@@ -263,13 +263,13 @@ off_t Ftp_Stream_Interface::seek(off_t newpos) {
     char rsp_txt[256];
 
     if(spos==newpos) return spos;
-    MSG_V("ftp seek: %llu bytes\n",newpos);
+    mpxp_v<<"ftp seek: "<<newpos<<" bytes"<<std::endl;
     if(spos > file_len) return 0;
 
     // Check to see if the server did not already terminate the transfer
     if(tcp.has_data(0)) {
 	if(readresp(rsp_txt) != 2)
-	    MSG_WARN("[ftp] Warning the server didn't finished the transfer correctly: %s\n",rsp_txt);
+	    mpxp_warn<<"[ftp] Warning the server didn't finished the transfer correctly: "<<rsp_txt<<std::endl;
 	tcp.close();
     }
 
@@ -287,7 +287,7 @@ off_t Ftp_Stream_Interface::seek(off_t newpos) {
 	// Or the 226 Transfer complete
 	resp = readresp(rsp_txt);
 	if(resp != 4 && resp != 2) {
-	    MSG_ERR("[ftp] Server didn't abort correctly: %s\n",rsp_txt);
+	    mpxp_err<<"[ftp] Server didn't abort correctly: "<<rsp_txt<<std::endl;
 	    return 0;
 	}
 	// Send the ABOR command
@@ -322,15 +322,12 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
 //  url = check4proxies (rurl);
     if(url.host().empty() && !url.file().empty()) {
 	bad_url:
-	MSG_ERR("[ftp] Bad url\n");
+	mpxp_err<<"[ftp] Bad url"<<std::endl;
 	return MPXP_False;
     }
     if(url.user().empty()) url.set_login("anonymous","no@spam");
     url.assign_port(21);
-    MSG_V("FTP: Opening ~%s :%s @%s :%i %s\n"
-	,url.user().c_str(),url.password().c_str(),url.host().c_str(),
-	url.port(),url.file().c_str());
-
+    mpxp_v<<"FTP: Opening ~"<<url.user()<<" :"<<url.password()<<" @"<<url.host()<<" :"<<url.port()<<" "<<url.file()<<std::endl;
     // Open the control connection
     tcp.open(url);
 
@@ -351,12 +348,12 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
 	snprintf(str,255,"PASS %s",url.password().c_str());
 	resp = SendCmd(str,rsp_txt);
 	if(resp != 2) {
-	    MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
+	    mpxp_err<<"[ftp] command '"<<str<<"' failed: "<<rsp_txt<<std::endl;
 	    close();
 	    return MPXP_False;
 	}
     } else if(resp != 2) {
-	MSG_ERR("[ftp] command '%s' failed: %s\n",str,rsp_txt);
+	mpxp_err<<"[ftp] command '"<<str<<"' failed: "<<rsp_txt<<std::endl;
 	close();
 	return MPXP_False;
     }
@@ -364,7 +361,7 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
     // Set the transfer type
     resp = SendCmd("TYPE I",rsp_txt);
     if(resp != 2) {
-	MSG_ERR("[ftp] command 'TYPE I' failed: %s\n",rsp_txt);
+	mpxp_err<<"[ftp] command 'TYPE I' failed: "<<rsp_txt<<std::endl;
 	close();
 	return MPXP_False;
     }
@@ -372,14 +369,14 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
     // Get System of FTP
     resp = SendCmd("SYST",rsp_txt);
     if(resp != 2) {
-	MSG_ERR("[ftp] command 'SYST' failed: %s\n",rsp_txt);
+	mpxp_err<<"[ftp] command 'SYST' failed: "<<rsp_txt<<std::endl;
 	close();
 	return MPXP_False;
     }
-    MSG_INFO("[ftp] System: %s\n",rsp_txt);
+    mpxp_info<<"[ftp] System: "<<rsp_txt<<std::endl;
     resp = SendCmd("STAT",rsp_txt);
     if(resp != 2) {
-	MSG_ERR("[ftp] command 'STAT' failed: %s\n",rsp_txt);
+	mpxp_err<<"[ftp] command 'STAT' failed: "<<rsp_txt<<std::endl;
 	close();
 	return MPXP_False;
     }
@@ -389,7 +386,7 @@ MPXP_Rc Ftp_Stream_Interface::open(const std::string& _filename,unsigned flags)
     snprintf(str,255,"SIZE %s",url.file().c_str());
     resp = SendCmd(str,rsp_txt);
     if(resp != 2) {
-	MSG_WARN("[ftp] command '%s' failed: %s\n",str,rsp_txt);
+	mpxp_warn<<"[ftp] command '"<<str<<"' failed: "<<rsp_txt<<std::endl;
     } else {
 	int dummy;
 	sscanf(rsp_txt,"%d %"PRId64,&dummy,&file_len);

@@ -36,12 +36,12 @@ Demuxer_Info::~Demuxer_Info() {
 MPXP_Rc Demuxer_Info::add(unsigned opt, const char *param)
 {
     if(!opt || opt > INFOT_MAX) {
-	MSG_WARN("Unknown info type %u\n",opt);
+	mpxp_warn<<"Unknown info type "<<opt<<std::endl;
 	return MPXP_False;
     }
     opt--;
     if(id[opt]) {
-	MSG_V( "Demuxer info '%s' already present as '%s'!\n",info_names[opt],id[opt]);
+	mpxp_v<<"Demuxer info '"<<info_names[opt]<<"' already present as '"<<id[opt]<<"'!"<<std::endl;
 	delete id[opt];
     }
     id[opt]=nls_recode2screen_cp(sub_data.cp,param,strlen(param));
@@ -51,10 +51,10 @@ MPXP_Rc Demuxer_Info::add(unsigned opt, const char *param)
 int Demuxer_Info::print(const std::string& filename) const
 {
     unsigned i;
-    MSG_HINT(" CLIP INFO (%s):\n",filename.c_str());
+    mpxp_hint<<" CLIP INFO ("<<filename<<"):"<<std::endl;
     for(i=0;i<INFOT_MAX;i++)
 	if(id[i])
-	    MSG_HINT("   %s: %s\n",info_names[i],id[i]);
+	    mpxp_hint<<"   "<<info_names[i]<<": "<<id[i]<<std::endl;
     return 0;
 }
 

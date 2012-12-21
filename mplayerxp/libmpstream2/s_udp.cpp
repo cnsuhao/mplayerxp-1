@@ -97,16 +97,16 @@ MPXP_Rc Udp_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
     URL url;
     UNUSED(flags);
-    MSG_V("STREAM_UDP, URL: %s\n", filename.c_str());
+    mpxp_v<<"STREAM_UDP, URL: "<<filename<<std::endl;
 
     url.redirect(filename);
     url.check4proxies ();
     if (url.port() == 0) {
-	MSG_ERR("You must enter a port number for UDP streams!\n");
+	mpxp_err<<"You must enter a port number for UDP streams!"<<std::endl;
 	return MPXP_False;
     }
     if (start(url,net_conf.bandwidth) != MPXP_Ok) {
-	MSG_ERR("udp_networking_start failed\n");
+	mpxp_err<<"udp_networking_start failed"<<std::endl;
 	return MPXP_False;
     }
     networking->fixup_cache ();

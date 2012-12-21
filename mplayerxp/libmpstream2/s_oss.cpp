@@ -64,7 +64,7 @@ MPXP_Rc Oss_Stream_Interface::open(const std::string& filename,unsigned flags)
     int err;
     UNUSED(flags);
     if(filename=="help") {
-	MSG_HINT("Usage: oss://<@device>#<channels>,<samplerate>,<sampleformat>\n");
+	mpxp_hint<<"Usage: oss://<@device>#<channels>,<samplerate>,<sampleformat>"<<std::endl;
 	return MPXP_False;
     }
     args=mp_strdup(mrl_parse_line(filename,NULL,NULL,&oss_device,NULL));
@@ -93,9 +93,9 @@ MPXP_Rc Oss_Stream_Interface::open(const std::string& filename,unsigned flags)
     tmp = samplerate;
     err=0;
     if (::ioctl(fd, SNDCTL_DSP_SPEED, &samplerate)<0)
-	MSG_ERR("[s_oss] Can't set samplerate to %u (will use %u)\n",tmp,samplerate);
+	mpxp_err<<"[s_oss] Can't set samplerate to "<<tmp<<" (will use "<<samplerate<<")"<<std::endl;
     else
-	MSG_DBG2("[o_oss] Did set samplerate to %u\n",samplerate);
+	mpxp_dbg2<<"[o_oss] Did set samplerate to "<<samplerate<<std::endl;
     tmp = nchannels;
     if(tmp>2)
 	err=::ioctl(fd, SNDCTL_DSP_CHANNELS, &nchannels);
@@ -104,8 +104,8 @@ MPXP_Rc Oss_Stream_Interface::open(const std::string& filename,unsigned flags)
 	err=::ioctl(fd, SNDCTL_DSP_STEREO, &param);
 	nchannels=param?2:1;
     }
-    if(err<0) MSG_ERR("[s_oss] Can't set channels to %u (will use %u)\n",tmp,nchannels);
-    else MSG_DBG2("[o_oss] Did set channels to %u\n",nchannels);
+    if(err<0) mpxp_err<<"[s_oss] Can't set channels to "<<tmp<<" (will use "<<nchannels<<")"<<std::endl;
+    else mpxp_dbg2<<"[o_oss] Did set channels to "<<nchannels<<std::endl;
     mp_aframe_t afd;
     int oss_fmt;
     afd.rate=samplerate;
@@ -114,27 +114,27 @@ MPXP_Rc Oss_Stream_Interface::open(const std::string& filename,unsigned flags)
     oss_fmt=mpaf2afmt(sampleformat);
     tmp=oss_fmt;
     if(::ioctl(fd, SNDCTL_DSP_SETFMT, &oss_fmt)<0)
-	MSG_ERR("[s_oss] Can't set format %s (will use %s)\n",ao_format_name(tmp),ao_format_name(oss_fmt));
+	mpxp_err<<"[s_oss] Can't set format "<<ao_format_name(tmp)<<" (will use "<<ao_format_name(oss_fmt)<<")"<<std::endl;
     else
-	MSG_DBG2("[o_oss] Did set format to %s\n",ao_format_name(oss_fmt));
+	mpxp_dbg2<<"[o_oss] Did set format to "<<ao_format_name(oss_fmt)<<std::endl;
     tmp = PCM_ENABLE_INPUT;
     if(::ioctl(fd, SNDCTL_DSP_SETTRIGGER, &tmp)<0)
-	MSG_ERR("[s_oss] Can't enable input\n");
+	mpxp_err<<"[s_oss] Can't enable input"<<std::endl;
     else
-	MSG_DBG2("[o_oss] Did set trigger to %u\n",tmp);
+	mpxp_dbg2<<"[o_oss] Did set trigger to "<<tmp<<std::endl;
     _sector_size = 0;
     err = ::ioctl(fd, SNDCTL_DSP_GETBLKSIZE, &_sector_size);
     if (err < 0)
-	MSG_ERR("[s_oss] Can't get blocksize\n");
+	mpxp_err<<"[s_oss] Can't get blocksize"<<std::endl;
     else
-	MSG_DBG2("[o_oss] Did get blocksize as %u\n",_sector_size);
+	mpxp_dbg2<<"[o_oss] Did get blocksize as "<<_sector_size<<std::endl;
     // correct the blocksize to a reasonable value
     if (_sector_size <= 0) {
 	_sector_size = 4096*nchannels*(sampleformat&MPAF_BPS_MASK);
     } else if (_sector_size < 4096*nchannels*(sampleformat&MPAF_BPS_MASK)) {
 	_sector_size *= 4096*nchannels*(sampleformat&MPAF_BPS_MASK)/_sector_size;
     }
-    MSG_DBG2("[o_oss] Correct blocksize as %u\n",_sector_size);
+    mpxp_dbg2<<"[o_oss] Correct blocksize as "<<_sector_size<<std::endl;
     delete args;
     return MPXP_Ok;
 }

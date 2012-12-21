@@ -73,7 +73,7 @@ MPXP_Rc Lavs_Stream_Interface::open(const std::string& filename,unsigned flags)
 
     UNUSED(flags);
     av_register_all();
-    MSG_V("[lavc] Opening %s\n", filename.c_str());
+    mpxp_v<<"[lavc] Opening "<<filename<<std::endl;
 
     if (ffurl_open(&ctx, filename.c_str(), 0, &int_cb, NULL) < 0) return MPXP_False;
     spos = 0;

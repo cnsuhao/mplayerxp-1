@@ -146,7 +146,7 @@ int __FASTCALL__ stream_open_tv(tvi_handle_t *tvh)
     int picture_format = 0;
     if (funcs->control(tvh->priv, TVI_CONTROL_IS_VIDEO, 0) != TVI_CONTROL_TRUE)
     {
-	MSG_ERR( "Error: no video input present!\n");
+	mpxp_err<<"Error: no video input present!"<<std::endl;
 	return 0;
     }
 
@@ -168,8 +168,8 @@ int __FASTCALL__ stream_open_tv(tvi_handle_t *tvh)
 	picture_format = IMGFMT_RGB15;
     else
     {
-	MSG_ERR( "Unknown format given: %s\n", tv_param.outfmt);
-	MSG_V( "Using default: Planar YV12\n");
+	mpxp_err<<"Unknown format given: "<<tv_param.outfmt<<std::endl;
+	mpxp_v<<"Using default: Planar YV12"<<std::endl;
 	picture_format = IMGFMT_YV12;
     }
     funcs->control(tvh->priv, TVI_CONTROL_VID_SET_FORMAT, &picture_format);
@@ -181,7 +181,7 @@ int __FASTCALL__ stream_open_tv(tvi_handle_t *tvh)
 	    funcs->control(tvh->priv, TVI_CONTROL_VID_SET_WIDTH, &tv_param.width);
 	else
 	{
-	    MSG_ERR( "Unable set requested width: %d\n", tv_param.width);
+	    mpxp_err<<"Unable set requested width: "<<tv_param.width<<std::endl;
 	    funcs->control(tvh->priv, TVI_CONTROL_VID_GET_WIDTH, &tv_param.width);
 	}
     }
@@ -193,7 +193,7 @@ int __FASTCALL__ stream_open_tv(tvi_handle_t *tvh)
 	    funcs->control(tvh->priv, TVI_CONTROL_VID_SET_HEIGHT, &tv_param.height);
 	else
 	{
-	    MSG_ERR( "Unable set requested height: %d\n", tv_param.height);
+	    mpxp_err<<"Unable set requested height: "<<tv_param.height<<std::endl;
 	    funcs->control(tvh->priv, TVI_CONTROL_VID_GET_HEIGHT, &tv_param.height);
 	}
     }
@@ -209,12 +209,12 @@ int __FASTCALL__ stream_open_tv(tvi_handle_t *tvh)
     else if (!strcasecmp(tv_param.norm, "secam"))
 	tvh->norm = TV_NORM_SECAM;
 
-    MSG_V( "Selected norm: %s\n", tv_param.norm);
+    mpxp_v<<"Selected norm: "<<tv_param.norm<<std::endl;
     funcs->control(tvh->priv, TVI_CONTROL_TUN_SET_NORM, &tvh->norm);
 
     if (funcs->control(tvh->priv, TVI_CONTROL_IS_TUNER, 0) != TVI_CONTROL_TRUE)
     {
-	MSG_WARN( "Selected input hasn't got a tuner!\n");
+	mpxp_warn<<"Selected input hasn't got a tuner!"<<std::endl;
 	goto done;
     }
 
@@ -230,15 +230,11 @@ int __FASTCALL__ stream_open_tv(tvi_handle_t *tvh)
     }
 
     if (tvh->chanlist == -1)
-	MSG_WARN( "Unable to find selected channel list! (%s)\n",
-	    tv_param.chanlist);
+	mpxp_warn<<"Unable to find selected channel list! ("<<tv_param.chanlist<<")"<<std::endl;
     else
-	MSG_V( "Selected channel list: %s (including %d channels)\n",
-	    chanlists[tvh->chanlist].name, chanlists[tvh->chanlist].count);
-
-    if (tv_param.freq && tv_param.channel)
-    {
-	MSG_WARN( "You can't set frequency and channel simultanly!\n");
+	mpxp_v<<"Selected channel list: "<<chanlists[tvh->chanlist].name<<" (including "<<chanlists[tvh->chanlist].count<<" channels)"<<std::endl;
+    if (tv_param.freq && tv_param.channel) {
+	mpxp_warn<<"You can't set frequency and channel simultanly!"<<std::endl;
 	goto done;
     }
 
@@ -251,23 +247,21 @@ int __FASTCALL__ stream_open_tv(tvi_handle_t *tvh)
 	funcs->control(tvh->priv, TVI_CONTROL_TUN_SET_FREQ, &freq);
 
 	funcs->control(tvh->priv, TVI_CONTROL_TUN_GET_FREQ, &freq);
-	MSG_V( "Selected frequency: %lu (%.3f)\n",
-	    freq, (float)freq/16);
+	mpxp_v<<"Selected frequency: "<<freq<<" ("<<((float)freq/16)<<")"<<std::endl;
     }
 
     if (tv_param.channel)
     {
 	struct CHANLIST cl;
 
-	MSG_V( "Requested channel: %s\n", tv_param.channel);
+	mpxp_v<<"Requested channel: "<<tv_param.channel<<std::endl;
 	for (i = 0; i < chanlists[tvh->chanlist].count; i++)
 	{
 	    cl = tvh->chanlist_s[i];
 	    if (!strcasecmp(cl.name, tv_param.channel))
 	    {
 		tvh->channel = i;
-		MSG_V( "Selected channel: %s (freq: %.3f)\n",
-		    cl.name, (float)cl.freq/1000);
+		mpxp_v<<"Selected channel: "<<cl.name<<" (freq: "<<((float)cl.freq/1000)<<")"<<std::endl;
 		tv_set_freq(tvh, (unsigned long)(((float)cl.freq/1000)*16));
 		break;
 	    }
@@ -305,7 +299,7 @@ int __FASTCALL__ demux_open_tv(Demuxer *demuxer, tvi_handle_t *tvh)
     if (tv_param.fps != -1.0f)
 	sh_video->fps = tv_param.fps;
 
-    MSG_V("fps: %f, frametime: %f\n", sh_video->fps, 1.0f/sh_video->fps);
+    mpxp_v<<"fps: "<<sh_video->fps<<", frametime: "<<(1.0f/sh_video->fps)<<std::endl;
 
 #ifdef HAVE_TV_BSDBT848
     /* If playback only mode, go to immediate mode, fail silently */
@@ -322,7 +316,7 @@ int __FASTCALL__ demux_open_tv(Demuxer *demuxer, tvi_handle_t *tvh)
     /* set height */
     funcs->control(tvh->priv, TVI_CONTROL_VID_GET_HEIGHT, &sh_video->src_h);
 
-    MSG_V( "Output size: %dx%d\n", sh_video->src_w, sh_video->src_h);
+    mpxp_v<<"Output size: "<<sh_video->src_w<<"x"<<sh_video->src_h<<std::endl;
 
     demuxer->video->sh = sh_video;
     sh_video->ds = demuxer->video;
@@ -363,8 +357,7 @@ int __FASTCALL__ demux_open_tv(Demuxer *demuxer, tvi_handle_t *tvh)
 	    case AFMT_MPEG:
 	    case AFMT_AC3:
 	    default:
-		MSG_ERR( "Audio type '%s (%x)' unsupported!\n",
-		    ao_format_name(audio_format), audio_format);
+		mpxp_err<<"Audio type '"<<ao_format_name(audio_format)<<" ("<<std::hex<<audio_format<<")' unsupported!"<<std::endl;
 		goto no_audio;
 	}
 
@@ -390,9 +383,7 @@ int __FASTCALL__ demux_open_tv(Demuxer *demuxer, tvi_handle_t *tvh)
 	sh_audio->wf->nBlockAlign = afmt2bps(sh_audio->afmt) * sh_audio->nch;
 	sh_audio->wf->nAvgBytesPerSec = sh_audio->i_bps;
 
-	MSG_V( "  TV audio: %d channels, %d bits, %d Hz\n",
-	  sh_audio->wf->nChannels, sh_audio->wf->wBitsPerSample,
-	  sh_audio->wf->nSamplesPerSec);
+	mpxp_v<<"  TV audio: "<<sh_audio->wf->nChannels<<" channels, "<<sh_audio->wf->wBitsPerSample<<" bits, "<<sh_audio->wf->nSamplesPerSec<<" Hz"<<std::endl;
 
 	demuxer->audio->sh = sh_audio;
 	sh_audio->ds = demuxer->audio;
@@ -419,17 +410,17 @@ tvi_handle_t * __FASTCALL__ tv_begin(void)
 	return (tvi_handle_t *)tvi_init_bsdbt848(tv_param.device);
 #endif
 
-    MSG_ERR( "No such driver: %s\n", tv_param.driver);
+    mpxp_err<< "No such driver: "<<tv_param.driver<<std::endl;
     return(NULL);
 }
 
 int __FASTCALL__ tv_init(tvi_handle_t *tvh)
 {
-    MSG_V( "Selected driver: %s\n", tvh->info->short_name);
-    MSG_V( " name: %s\n", tvh->info->name);
-    MSG_V( " author: %s\n", tvh->info->author);
+    mpxp_v<<"Selected driver: "<<tvh->info->short_name<<std::endl;
+    mpxp_v<<" name: "<<tvh->info->name<<std::endl;
+    mpxp_v<<" author: "<<tvh->info->author<<std::endl;
     if (tvh->info->comment)
-	MSG_V( " comment: %s\n", tvh->info->comment);
+	mpxp_v<<" comment: "<<tvh->info->comment<<std::endl;
 
     return tvh->functions->init(tvh->priv);
 }
@@ -515,7 +506,7 @@ int __FASTCALL__ tv_set_color_options(tvi_handle_t *tvh, int opt, int value)
 	    funcs->control(tvh->priv, TVI_CONTROL_VID_SET_CONTRAST, &value);
 	    break;
 	default:
-	    MSG_WARN( "Unknown color option (%d) specified!\n", opt);
+	    mpxp_warn<<"Unknown color option ("<<opt<<") specified!"<<std::endl;
     }
 
     return(1);
@@ -531,8 +522,7 @@ int __FASTCALL__ tv_set_freq(tvi_handle_t *tvh, unsigned long freq)
 	tvh->functions->control(tvh->priv, TVI_CONTROL_TUN_SET_FREQ, &freq);
 
 	tvh->functions->control(tvh->priv, TVI_CONTROL_TUN_GET_FREQ, &freq);
-	MSG_V( "Current frequency: %lu (%.3f)\n",
-	    freq, (float)freq/16);
+	mpxp_v<<"Current frequency: "<<freq<<" ("<<((float)freq/16)<<")"<<std::endl;
     }
     return 0;
 }
@@ -546,8 +536,7 @@ int __FASTCALL__ tv_step_channel(tvi_handle_t *tvh, int direction)
 	if (tvh->channel-1 >= 0)
 	{
 	    cl = tvh->chanlist_s[--tvh->channel];
-	    MSG_V( "Selected channel: %s (freq: %.3f)\n",
-		cl.name, (float)cl.freq/1000);
+	    mpxp_v<<"Selected channel: "<<cl.name<<" (freq: "<<((float)cl.freq/1000)<<")"<<std::endl;
 	    tv_set_freq(tvh, (unsigned long)(((float)cl.freq/1000)*16));
 	}
     }
@@ -557,8 +546,7 @@ int __FASTCALL__ tv_step_channel(tvi_handle_t *tvh, int direction)
 	if (tvh->channel+1 < chanlists[tvh->chanlist].count)
 	{
 	    cl = tvh->chanlist_s[++tvh->channel];
-	    MSG_V( "Selected channel: %s (freq: %.3f)\n",
-		cl.name, (float)cl.freq/1000);
+	    mpxp_v<<"Selected channel: "<<cl.name<<" (freq: "<<((float)cl.freq/1000)<<")"<<std::endl;
 	    tv_set_freq(tvh, (unsigned long)(((float)cl.freq/1000)*16));
 	}
     }
@@ -614,7 +602,7 @@ MPXP_Rc Tv_Stream_Interface::open(const std::string& filename,unsigned flags)
 
     /* something went wrong - uninit */
 tv_err:
-    MSG_ERR("Can not initialize TV\n");
+    mpxp_err<<"Can not initialize TV"<<std::endl;
     tv_uninit(priv);
     return MPXP_False;
 }
