@@ -620,7 +620,7 @@ void X11_System::classhint(const char *name) const
     ::XSetClassHint(mDisplay,window,&wmClass);
 }
 
-const char *evt_names[] = {
+static const char *evt_names[] = {
 "KeyPress",
 "KeyRelease",
 "ButtonPress",
