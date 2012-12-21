@@ -13,6 +13,7 @@ using namespace mpxp;
  *
  */
 #include <algorithm>
+#include <iomanip>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,7 +77,7 @@ SDL_AO_Interface::SDL_AO_Interface(const std::string& _subdevice)
 		:AO_Interface(_subdevice),volume(new unsigned) {}
 
 SDL_AO_Interface::~SDL_AO_Interface() {
-    MSG_V("SDL: Audio Subsystem shutting down!\n");
+    mpxp_v<<"SDL: Audio Subsystem shutting down!"<<std::endl;
     SDL_CloseAudio();
     SDL_QuitSubSystem(SDL_INIT_AUDIO);
     delete volume;
@@ -210,7 +211,7 @@ MPXP_Rc SDL_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
 	    aspec.format = AUDIO_U16MSB;
 	    break;
 	default:
-	    MSG_ERR("SDL: Unsupported audio format: 0x%x.\n", _format);
+	    mpxp_err<<"SDL: Unsupported audio format: 0x"<<std::hex<<_format<<std::endl;
 	    return MPXP_False;
     }
 
@@ -232,13 +233,13 @@ MPXP_Rc SDL_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
 
     /* initialize the SDL Audio system */
     if (SDL_Init (SDL_INIT_AUDIO/*|SDL_INIT_NOPARACHUTE*/)) {
-	MSG_ERR("SDL: Initializing of SDL Audio failed: %s.\n", SDL_GetError());
+	mpxp_err<<"SDL: Initializing of SDL Audio failed: "<<SDL_GetError()<<std::endl;
 	return MPXP_False;
     }
 
     /* Open the audio device and start playing sound! */
     if(SDL_OpenAudio(&aspec, &obtained) < 0) {
-	MSG_ERR("SDL: Unable to open audio: %s\n", SDL_GetError());
+	mpxp_err<<"SDL: Unable to open audio: "<<SDL_GetError()<<std::endl;
 	return MPXP_False;
     }
 
@@ -266,19 +267,15 @@ MPXP_Rc SDL_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
 	    _format = AFMT_U16_BE;
 	    break;
 	default:
-	    MSG_WARN("SDL: Unsupported SDL audio format: 0x%x.\n", obtained.format);
+	    mpxp_warn<<"SDL: Unsupported SDL audio format: 0x"<<std::hex<<obtained.format<<std::endl;
 	    return MPXP_False;
     }
 
-    MSG_V("SDL: buf size = %d\n",aspec.size);
+    mpxp_v<<"SDL: buf size = "<<aspec.size<<std::endl;
     _buffersize=obtained.size;
 
     SDL_AudioDriverName(drv_name, sizeof(drv_name));
-    MSG_OK("SDL: using %s audio driver (%iHz %s \"%s\")\n"
-		,drv_name
-		,_samplerate
-		,_channels>4?"Surround":_channels>2?"Quadro":_channels>1?"Stereo":"Mono"
-		,ao_format_name(_format));
+    mpxp_ok<<"SDL: using "<<drv_name<<" audio driver ("<<_samplerate<<"Hz "<<(_channels>4?"Surround":_channels>2?"Quadro":_channels>1?"Stereo":"Mono")<<" \""<<ao_format_name(_format)<<"\")"<<std::endl;
 
     /* unsilence audio, if callback is ready */
     SDL_PauseAudio(0);

@@ -86,11 +86,11 @@ MPXP_Rc Arts_AO_Interface::open(unsigned flags)
     UNUSED(flags);
 
     if( (err=arts_init()) ) {
-	MSG_ERR("[aRts] init failed: %s\n", arts_error_text(err));
+	mpxp_err<<"[aRts] init failed: "<<arts_error_text(err)<<std::endl;
 	/*TODO: system("artsd -l0");*/
 	return MPXP_False;
     }
-    MSG_INFO("[aRts] connected to server\n");
+    mpxp_info<<"[aRts] connected to server"<<std::endl;
     return MPXP_Ok;
 }
 
@@ -138,7 +138,7 @@ MPXP_Rc Arts_AO_Interface::configure(unsigned r,unsigned c,unsigned f) {
     stream=arts_play_stream(_samplerate, samplesize*8, _channels, "MPlayerXP");
 
     if(stream == NULL) {
-	MSG_ERR("[aRts] Can't open stream\n");
+	mpxp_err<<"[aRts] Can't open stream"<<std::endl;
 	arts_free();
 	return MPXP_False;
     }
@@ -149,10 +149,10 @@ MPXP_Rc Arts_AO_Interface::configure(unsigned r,unsigned c,unsigned f) {
     frag_spec = ARTS_PACKET_SIZE_LOG2 | ARTS_PACKETS << 16;
     arts_stream_set(stream, ARTS_P_PACKET_SETTINGS, frag_spec);
     _buffersize = arts_stream_get(stream, ARTS_P_BUFFER_SIZE);
-    MSG_INFO("[aRts] Stream opened\n");
+    mpxp_info<<"[aRts] Stream opened"<<std::endl;
 
-    MSG_V("[aRts] buffersize=%u\n",_buffersize);
-    MSG_V("[aRts] buffersize=%u\n", arts_stream_get(stream, ARTS_P_PACKET_SIZE));
+    mpxp_v<<"[aRts] buffersize="<<_buffersize<<std::endl;
+    mpxp_v<<"[aRts] buffersize="<<arts_stream_get(stream, ARTS_P_PACKET_SIZE)<<std::endl;
 
     return MPXP_Ok;
 }

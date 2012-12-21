@@ -224,7 +224,7 @@ unsigned Null_AO_Interface::play(const any_t* data,unsigned len,unsigned flags) 
     buffer += bursts * _outburst;
     UNUSED(flags);
     if(fd && len) {
-	MSG_DBG2("writing %u bytes into file\n",len);
+	mpxp_dbg2<<"writing "<<len<<" bytes into file"<<std::endl;
 	::fwrite(data,len,1,fd);
 	wavhdr.data_length += len;
     }

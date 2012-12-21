@@ -165,7 +165,7 @@ Nas_AO_Interface::Nas_AO_Interface(const std::string& _subdevice)
     pthread_create(&event_thread, NULL, &nas_event_thread_start, this);
 }
 Nas_AO_Interface::~Nas_AO_Interface() {
-    MSG_DBG3("ao_nas: uninit()\n");
+    mpxp_dbg3<<"ao_nas: uninit()"<<std::endl;
 
     expect_underrun = 1;
     while (state != AuStateStop) yield_timeslice();
@@ -200,20 +200,17 @@ const char* Nas_AO_Interface::nas_state(unsigned int _state) const {
 void Nas_AO_Interface::nas_print_error(const char *prefix, AuStatus as) const {
     char s[100];
     AuGetErrorText(aud, as, s, 100);
-    MSG_ERR("ao_nas: %s: returned status %d (%s)\n", prefix, as, s);
+    mpxp_err<<"ao_nas: "<<prefix<<": returned status "<<as<<" ("<<s<<")"<<std::endl;
 }
 
 int Nas_AO_Interface::nas_readBuffer(unsigned int num) {
     AuStatus as;
 
     pthread_mutex_lock(&buffer_mutex);
-    MSG_DBG2("ao_nas: nas_readBuffer(): num=%d client=%d/%d server=%d/%d\n",
-			num,
-			client_buffer_used, client_buffer_size,
-			server_buffer_used, server_buffer_size);
+    mpxp_dbg2<<"ao_nas: nas_readBuffer(): num="<<num<<" client="<<client_buffer_used<<"/"<<client_buffer_size<<" server="<<server_buffer_used<<"/"<<server_buffer_size<<std::endl;
 
     if (client_buffer_used == 0) {
-	MSG_DBG2("ao_nas: buffer is empty, nothing read.\n");
+	mpxp_dbg2<<"ao_nas: buffer is empty, nothing read."<<std::endl;
 	pthread_mutex_unlock(&buffer_mutex);
 	return 0;
     }
@@ -252,9 +249,7 @@ int Nas_AO_Interface::nas_readBuffer(unsigned int num) {
 
 int Nas_AO_Interface::nas_writeBuffer(const any_t*data, unsigned int len) {
     pthread_mutex_lock(&buffer_mutex);
-    MSG_DBG2("ao_nas: nas_writeBuffer(): len=%d client=%d/%d server=%d/%d\n",
-		len, client_buffer_used, client_buffer_size,
-		server_buffer_used, server_buffer_size);
+    mpxp_dbg2<<"ao_nas: nas_writeBuffer(): len="<<len<<" client="<<client_buffer_used<<"/"<<client_buffer_size<<" server="<<server_buffer_used<<"/%d"<<server_buffer_size<<std::endl;
 
     /* make sure we don't overflow the buffer */
     if (len > client_buffer_size - client_buffer_used)
@@ -283,9 +278,7 @@ int Nas_AO_Interface::nas_empty_event_queue() const
 any_t* Nas_AO_Interface::nas_event_thread_start(any_t*data) {
     Nas_AO_Interface& _this=*reinterpret_cast<Nas_AO_Interface*>(data);
     do {
-	MSG_DBG2(
-	       "ao_nas: event thread heartbeat (state=%s)\n",
-	       _this.nas_state(_this.state));
+	mpxp_dbg2<<"ao_nas: event thread heartbeat (state="<<_this.nas_state(_this.state)<<")"<<std::endl;
 	_this.nas_empty_event_queue();
 	yield_timeslice();
     } while (!_this.stop_thread);
@@ -295,14 +288,10 @@ any_t* Nas_AO_Interface::nas_event_thread_start(any_t*data) {
 static AuBool nas_error_handler_callback(AuServer* aud,AuErrorEvent* ev) {
     char s[100];
     AuGetErrorText(aud, ev->error_code, s, 100);
-    MSG_ERR( "ao_nas: error [%s]\n"
-		"error_code: %d\n"
-		"request_code: %d\n"
-		"minor_code: %d\n",
-		s,
-		ev->error_code,
-		ev->request_code,
-		ev->minor_code);
+    mpxp_err<<"ao_nas: error ["<<s<<"]"<<std::endl;
+    mpxp_err<<"error_code: "<<ev->error_code<<std::endl;
+    mpxp_err<<"request_code: "<<ev->request_code<<std::endl;
+    mpxp_err<<"minor_code: "<<ev->minor_code<<std::endl;
 
     return AuTrue;
 }
@@ -311,16 +300,13 @@ AuBool Nas_AO_Interface::nas_event_handler(AuServer *aud, AuEvent *ev, AuEventHa
     AuElementNotifyEvent *event = (AuElementNotifyEvent *) ev;
     Nas_AO_Interface& _this = *reinterpret_cast<Nas_AO_Interface*>(hnd->data);
 
-    MSG_DBG2("ao_nas: event_handler(): type %s kind %s state %s->%s reason %s numbytes %d expect_underrun %d\n",
-		_this.nas_event_type(event->type),
-		_this.nas_elementnotify_kind(event->kind),
-		_this.nas_state(event->prev_state),
-		_this.nas_state(event->cur_state),
-		_this.nas_reason(event->reason),
-		(int)event->num_bytes,
-		_this.expect_underrun);
+    mpxp_dbg2<<"ao_nas: event_handler(): type "<<_this.nas_event_type(event->type)
+	    <<" kind "<<_this.nas_elementnotify_kind(event->kind)
+	    <<" state "<<_this.nas_state(event->prev_state)<<"->"<<_this.nas_state(event->cur_state)
+	    <<" reason "<<_this.nas_reason(event->reason)
+	    <<" numbytes "<<event->num_bytes<<" expect_underrun"<<_this.expect_underrun<<std::endl;
     if (event->num_bytes > INT_MAX) {
-	MSG_ERR( "ao_nas: num_bytes > 2GB, server buggy?\n");
+	mpxp_err<<"ao_nas: num_bytes > 2GB, server buggy?"<<std::endl;
     }
 
     if (event->num_bytes > _this.server_buffer_used)
@@ -338,20 +324,20 @@ AuBool Nas_AO_Interface::nas_event_handler(AuServer *aud, AuEvent *ev, AuEventHa
 		_this.expect_underrun = 0;
 	    } else {
 		static int hint = 1;
-		MSG_WARN("ao_nas: Buffer underrun.\n");
+		mpxp_warn<<"ao_nas: Buffer underrun."<<std::endl;
 		if (hint) {
 		    hint = 0;
-		    MSG_HINT("Possible reasons are:\n"
-			    "1) Network congestion.\n"
-			    "2) Your NAS server is too slow.\n"
-			    "Try renicing your nasd to e.g. -15.\n");
+		    mpxp_hint<<"Possible reasons are:"<<std::endl
+			    <<"1) Network congestion."<<std::endl
+			    <<"2) Your NAS server is too slow."<<std::endl
+			    <<"Try renicing your nasd to e.g. -15."<<std::endl;
 		}
 	    }
 	    if (_this.nas_readBuffer(_this.server_buffer_size - _this.server_buffer_used) != 0) {
 		event->cur_state = AuStateStart;
 		break;
 	    }
-	    MSG_DBG2("ao_nas: Can't refill buffer, stopping flow.\n");
+	    mpxp_dbg2<<"ao_nas: Can't refill buffer, stopping flow."<<std::endl;
 	    AuStopFlow(_this.aud, _this.flow, NULL);
 	    break;
 	default:
@@ -409,7 +395,7 @@ MPXP_Rc Nas_AO_Interface::ctrl(int cmd, long arg) const {
 	case AOCONTROL_GET_VOLUME:
 	    vol->right = (float)gain/AU_FIXED_POINT_SCALE*50;
 	    vol->left = vol->right;
-	    MSG_DBG2( "ao_nas: AOCONTROL_GET_VOLUME: %.2f\n", vol->right);
+	    mpxp_dbg2<<"ao_nas: AOCONTROL_GET_VOLUME: "<<vol->right<<std::endl;
 	    retval = MPXP_Ok;
 	    break;
 	case AOCONTROL_SET_VOLUME:
@@ -419,7 +405,7 @@ MPXP_Rc Nas_AO_Interface::ctrl(int cmd, long arg) const {
 	     * so i take the mean of both values.
 	     */
 	    g = AU_FIXED_POINT_SCALE*((vol->left+vol->right)/2)/50;
-	    MSG_DBG2( "ao_nas: AOCONTROL_SET_VOLUME: %.2f\n", (vol->left+vol->right)/2);
+	    mpxp_dbg2<<"ao_nas: AOCONTROL_SET_VOLUME: "<<((vol->left+vol->right)/2)<<std::endl;
 
 	    aep.parameters[AuParmsMultiplyConstantConstant]=g;
 	    aep.flow = flow;
@@ -457,7 +443,7 @@ MPXP_Rc Nas_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
     _outburst = NAS_FRAG_SIZE;
     buffer_size = bps(); /* buffer 1 second */
 
-    MSG_V("ao3: %d Hz  %d chans  %s\n",r,c,afmt2str(f));
+    mpxp_v<<"ao3: "<<r<<" Hz  "<<c<<" chans "<<afmt2str(f)<<std::endl;
 
     /*
      * round up to multiple of NAS_FRAG_SIZE
@@ -472,21 +458,21 @@ MPXP_Rc Nas_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
     server_buffer = new char [server_buffer_size];
 
     if (!bytes_per_sample) {
-	MSG_ERR("ao_nas: init(): Zero bytes per sample -> nosound\n");
+	mpxp_err<<"ao_nas: init(): Zero bytes per sample -> nosound"<<std::endl;
 	return MPXP_False;
     }
 
     if (!(server = ::getenv("AUDIOSERVER")) &&
 	    !(server = ::getenv("DISPLAY"))) {
-	MSG_ERR("ao_nas: init(): AUDIOSERVER environment variable not set -> nosound\n");
+	mpxp_err<<"ao_nas: init(): AUDIOSERVER environment variable not set -> nosound"<<std::endl;
 	return MPXP_False;
     }
 
-    MSG_V("ao_nas: init(): Using audioserver %s\n", server);
+    mpxp_v<<"ao_nas: init(): Using audioserver "<<server<<std::endl;
 
     aud = AuOpenServer(server, 0, NULL, 0, NULL, NULL);
     if (!aud) {
-	MSG_ERR("ao_nas: init(): Can't open nas audio server -> nosound\n");
+	mpxp_err<<"ao_nas: init(): Can't open nas audio server -> nosound"<<std::endl;
 	return MPXP_False;
     }
 
@@ -499,7 +485,7 @@ MPXP_Rc Nas_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
     }
 
     if (flow == 0) {
-	MSG_ERR("ao_nas: init(): Can't find a suitable output device -> nosound\n");
+	mpxp_err<<"ao_nas: init(): Can't find a suitable output device -> nosound"<<std::endl;
 	AuCloseServer(aud);
 	aud = 0;
 	return MPXP_False;
@@ -535,7 +521,7 @@ MPXP_Rc Nas_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
 void Nas_AO_Interface::reset() {
     AuStatus as;
 
-    MSG_DBG3("ao_nas: reset()\n");
+    mpxp_dbg3<<"ao_nas: reset()"<<std::endl;
 
     pthread_mutex_lock(&buffer_mutex);
     client_buffer_used = 0;
@@ -551,7 +537,7 @@ void Nas_AO_Interface::reset() {
 // stop playing, keep buffers (for pause)
 void Nas_AO_Interface::pause() {
     AuStatus as;
-    MSG_DBG3("ao_nas: audio_pause()\n");
+    mpxp_dbg3<<"ao_nas: audio_pause()"<<std::endl;
 
     AuStopFlow(aud, flow, &as);
 }
@@ -561,7 +547,7 @@ void Nas_AO_Interface::resume()
 {
     AuStatus as;
 
-    MSG_DBG3("ao_nas: audio_resume()\n");
+    mpxp_dbg3<<"ao_nas: audio_resume()"<<std::endl;
 
     AuStartFlow(aud, flow, &as);
     if (as != AuSuccess) nas_print_error("play(): AuStartFlow", as);
@@ -573,7 +559,7 @@ unsigned Nas_AO_Interface::get_space()
 {
     unsigned result;
 
-    MSG_DBG3("ao_nas: get_space()\n");
+    mpxp_dbg3<<"ao_nas: get_space()"<<std::endl;
 
     pthread_mutex_lock(&buffer_mutex);
     result = client_buffer_size - client_buffer_used;
@@ -589,7 +575,7 @@ unsigned Nas_AO_Interface::play(const any_t* data,unsigned len,unsigned flags) {
     unsigned written, maxbursts = 0, playbursts = 0;
     AuStatus as;
     UNUSED(flags);
-    MSG_DBG3("ao_nas: play(%p, %d, %d)\n", data, len, flags);
+    mpxp_dbg3<<"ao_nas: play("<<data<<", "<<len<<", "<<flags<<")"<<std::endl;
 
     if (len == 0) return 0;
     /*
@@ -602,7 +588,7 @@ unsigned Nas_AO_Interface::play(const any_t* data,unsigned len,unsigned flags) {
 
     if (state != AuStateStart &&
 	(maxbursts == playbursts /*|| flags & AOPLAY_FINAL_CHUNK*/)) {
-	    MSG_DBG2("ao_nas: play(): Starting flow.\n");
+	    mpxp_dbg2<<"ao_nas: play(): Starting flow."<<std::endl;
 	    expect_underrun = 1;
 	    AuStartFlow(aud, flow, &as);
 	    if (as != AuSuccess) nas_print_error("play(): AuStartFlow", as);
@@ -614,7 +600,7 @@ unsigned Nas_AO_Interface::play(const any_t* data,unsigned len,unsigned flags) {
 float Nas_AO_Interface::get_delay() {
     float result;
 
-    MSG_DBG3( "ao_nas: get_delay()\n");
+    mpxp_dbg3<<"ao_nas: get_delay()"<<std::endl;
 
     pthread_mutex_lock(&buffer_mutex);
     result = ((float)(client_buffer_used + server_buffer_used)) / (float)bps();

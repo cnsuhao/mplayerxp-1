@@ -109,9 +109,9 @@ Wave_AO_Interface::~Wave_AO_Interface() {
 	broken_seek = GetFileType((HANDLE)_get_osfhandle(_fileno(fp))) != FILE_TYPE_DISK;
 #endif
 	if (broken_seek || fseek(fp, 0, SEEK_SET) != 0)
-	    MSG_ERR("Could not seek to start, WAV size headers not updated!\n");
+	    mpxp_err<<"Could not seek to start, WAV size headers not updated!"<<std::endl;
 	else if (data_length > 0x7ffff000)
-	    MSG_ERR("File larger than allowed for WAV files, may play truncated!\n");
+	    mpxp_err<<"File larger than allowed for WAV files, may play truncated!"<<std::endl;
 	else {
 	    wavhdr.file_length = data_length + sizeof(wavhdr) - 8;
 	    wavhdr.file_length = le2me_32(wavhdr.file_length);
@@ -188,12 +188,7 @@ MPXP_Rc Wave_AO_Interface::configure(unsigned r,unsigned c,unsigned f){
     wavhdr.data_length=le2me_32(0x7ffff000);
     wavhdr.file_length = wavhdr.data_length + sizeof(wavhdr) - 8;
 
-    MSG_INFO("ao_wav: %s %d-%s %s\n"
-		,out_filename.c_str()
-		,_samplerate
-		,(_channels > 1) ? "Stereo" : "Mono"
-		,afmt2str(_format));
-
+    mpxp_info<<"ao_wav: "<<out_filename<<" "<<_samplerate<<"-"<<((_channels > 1) ? "Stereo" : "Mono")<<" "<<afmt2str(_format)<<std::endl;
     fp = ::fopen(out_filename.c_str(), "wb");
     if(fp) {
 	if(pcm_waveheader){ /* Reserve space for wave header */
@@ -201,7 +196,7 @@ MPXP_Rc Wave_AO_Interface::configure(unsigned r,unsigned c,unsigned f){
 	}
 	return MPXP_Ok;
     }
-    MSG_ERR("ao_wav: can't open output file: %s\n", out_filename.c_str());
+    mpxp_err<<"ao_wav: can't open output file: "<<out_filename<<std::endl;
     return MPXP_False;
 }
 

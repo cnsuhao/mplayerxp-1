@@ -87,21 +87,21 @@ Alsa_AO_Interface::Alsa_AO_Interface(const std::string& _subdevice)
 Alsa_AO_Interface::~Alsa_AO_Interface() {
     int err;
     if(!handler) {
-	MSG_ERR("alsa-uninit: no handler defined!\n");
+	mpxp_err<<"alsa-uninit: no handler defined!"<<std::endl;
 	return;
     }
     if (!priv_conf.noblock) {
 	if ((err = snd_pcm_drain(handler)) < 0) {
-	    MSG_ERR("alsa-uninit: pcm drain error: %s\n", snd_strerror(err));
+	    mpxp_err<<"alsa-uninit: pcm drain error: "<<snd_strerror(err)<<std::endl;
 	    return;
 	}
     }
     if ((err = snd_pcm_close(handler)) < 0) {
-	MSG_ERR("alsa-uninit: pcm close error: %s\n", snd_strerror(err));
+	mpxp_err<<"alsa-uninit: pcm close error: "<<snd_strerror(err)<<std::endl;
 	return;
     } else {
 	handler = NULL;
-	MSG_V("alsa-uninit: pcm closed\n");
+	mpxp_v<<"alsa-uninit: pcm closed"<<std::endl;
     }
     snd_pcm_hw_params_free(hwparams);
     snd_pcm_sw_params_free(swparams);
@@ -207,30 +207,30 @@ MPXP_Rc Alsa_AO_Interface::ctrl(int cmd, long arg) const {
 	    snd_mixer_selem_id_set_name(sid, mix_name);
 
 	    if ((err = snd_mixer_open(&handle, 0)) < 0) {
-		MSG_ERR("alsa-control_ao: mixer open error: %s\n", snd_strerror(err));
+		mpxp_err<<"alsa-control_ao: mixer open error: "<<snd_strerror(err)<<std::endl;
 		return MPXP_Error;
 	    }
 
 	    if ((err = snd_mixer_attach(handle, card)) < 0) {
-		MSG_ERR("alsa-control_ao: mixer attach %s error: %s", card, snd_strerror(err));
+		mpxp_err<<"alsa-control_ao: mixer attach "<<card<<" error: "<<snd_strerror(err)<<std::endl;
 		snd_mixer_close(handle);
 		return MPXP_Error;
 	    }
 
 	    if ((err = snd_mixer_selem_register(handle, NULL, NULL)) < 0) {
-		MSG_ERR("alsa-control_ao: mixer register error: %s", snd_strerror(err));
+		mpxp_err<<"alsa-control_ao: mixer register error: "<<snd_strerror(err)<<std::endl;
 		snd_mixer_close(handle);
 		return MPXP_Error;
 	    }
 	    if ((err = snd_mixer_load(handle)) < 0) {
-		MSG_ERR("alsa-control_ao: mixer load error: %s", snd_strerror(err));
+		mpxp_err<<"alsa-control_ao: mixer load error: "<<snd_strerror(err)<<std::endl;
 		snd_mixer_close(handle);
 		return MPXP_Error;
 	    }
 
 	    elem = snd_mixer_find_selem(handle, sid);
 	    if (!elem) {
-		MSG_ERR("alsa-control_ao: unable to find simple control_ao '%s',%i\n", snd_mixer_selem_id_get_name(sid), snd_mixer_selem_id_get_index(sid));
+		mpxp_err<<"alsa-control_ao: unable to find simple control_ao '"<<snd_mixer_selem_id_get_name(sid)<<"',"<<snd_mixer_selem_id_get_index(sid)<<std::endl;
 		snd_mixer_close(handle);
 		return MPXP_Error;
 	    }
@@ -248,11 +248,11 @@ MPXP_Rc Alsa_AO_Interface::ctrl(int cmd, long arg) const {
 
 		//setting channels
 		if ((err = snd_mixer_selem_set_playback_volume(elem, snd_mixer_selem_channel_id_t(0), set_vol)) < 0) {
-		    MSG_ERR("alsa-control_ao: error setting left channel, %s",snd_strerror(err));
+		    mpxp_err<<"alsa-control_ao: error setting left channel, "<<snd_strerror(err)<<std::endl;
 		    return MPXP_Error;
 		}
 		if ((err = snd_mixer_selem_set_playback_volume(elem, snd_mixer_selem_channel_id_t(1), set_vol)) < 0) {
-		    MSG_ERR("alsa-control_ao: error setting right channel, %s",snd_strerror(err));
+		    mpxp_err<<"alsa-control_ao: error setting right channel, "<<snd_strerror(err)<<std::endl;
 		    return MPXP_Error;
 		}
 	    } else {
@@ -283,48 +283,47 @@ void Alsa_AO_Interface::show_caps(unsigned device) const {
     unsigned rmin,rmax;
     unsigned j,sdmin,sdmax;
     char adevice[ALSA_DEVICE_SIZE];
-    if ((err = snd_card_next(&cards)) < 0 || cards < 0)
-    {
-	MSG_ERR("AO-INFO: alsa-init: no soundcards found: %s\n", snd_strerror(err));
+    if ((err = snd_card_next(&cards)) < 0 || cards < 0) {
+	mpxp_err<<"AO-INFO: alsa-init: no soundcards found: "<<snd_strerror(err)<<std::endl;
 	return;
     }
     snd_pcm_info_malloc(&alsa_info);
     snd_pcm_info_set_device(alsa_info,device);
     sdmin=snd_pcm_info_get_subdevice(alsa_info);
     sdmax=sdmin+snd_pcm_info_get_subdevices_count(alsa_info);
-    MSG_INFO("AO-INFO: show caps for device %i:%i-%i\n",device,sdmin,sdmax);
+    mpxp_info<<"AO-INFO: show caps for device "<<device<<":"<<sdmin<<"-"<<sdmax<<std::endl;
     for(j=sdmin;j<=sdmax;j++) {
 	int i;
 	snd_pcm_info_set_subdevice(alsa_info,j);
 	sprintf(adevice,"hw:%u,%u",snd_pcm_info_get_device(alsa_info),snd_pcm_info_get_subdevice(alsa_info));
-	MSG_INFO("AO-INFO: %s %s.%s.%s\n\n",adevice,snd_pcm_info_get_id(alsa_info),snd_pcm_info_get_name(alsa_info),snd_pcm_info_get_subdevice_name(alsa_info));
+	mpxp_info<<"AO-INFO: "<<adevice<<" "<<snd_pcm_info_get_id(alsa_info)<<"."<<snd_pcm_info_get_name(alsa_info)<<"."<<snd_pcm_info_get_subdevice_name(alsa_info)<<std::endl;
 	if(snd_pcm_open(&pcm,adevice,SND_PCM_STREAM_PLAYBACK,SND_PCM_NONBLOCK)<0) {
-	    MSG_ERR("alsa-init: playback open error: %s\n", snd_strerror(err));
+	    mpxp_err<<"alsa-init: playback open error: "<<snd_strerror(err)<<std::endl;
 	    return;
 	}
 	snd_pcm_hw_params_malloc(&hw_params);
 	if(snd_pcm_hw_params_any(pcm, hw_params)<0) {
-	    MSG_ERR("alsa-init: can't get initial parameters: %s\n", snd_strerror(err));
+	    mpxp_err<<"alsa-init: can't get initial parameters: "<<snd_strerror(err)<<std::endl;
 	    return;
 	}
-	MSG_INFO("    AO-INFO: List of access type: ");
+	mpxp_info<<"    AO-INFO: List of access type: ";
 	for(i=0;i<SND_PCM_ACCESS_LAST;i++)
 	    if(!snd_pcm_hw_params_test_access(pcm,hw_params,snd_pcm_access_t(i)))
-		MSG_INFO("%s ",snd_pcm_access_name(snd_pcm_access_t(i)));
-	MSG_INFO("\n");
-	MSG_INFO("    AO-INFO: List of supported formats: ");
+		mpxp_info<<snd_pcm_access_name(snd_pcm_access_t(i))<<" ";
+	mpxp_info<<std::endl;
+	mpxp_info<<"    AO-INFO: List of supported formats: ";
 	for(i=0;i<SND_PCM_FORMAT_LAST;i++)
 	    if(!snd_pcm_hw_params_test_format(pcm,hw_params,snd_pcm_format_t(i)))
-		MSG_INFO("%s ",snd_pcm_format_name(snd_pcm_format_t(i)));
-	MSG_INFO("\n");
-	MSG_INFO("    AO-INFO: List of supported channels: ");
+		mpxp_info<<snd_pcm_format_name(snd_pcm_format_t(i))<<" ";
+	mpxp_info<<std::endl;
+	mpxp_info<<"    AO-INFO: List of supported channels: ";
 	for(i=0;i<64;i++)
 	    if(!snd_pcm_hw_params_test_format(pcm,hw_params,snd_pcm_format_t(i)))
-		MSG_INFO("%u ",i);
-	MSG_INFO("\n");
+		mpxp_info<<i<<" ";
+	mpxp_info<<std::endl;
 	snd_pcm_hw_params_get_rate_min(hw_params,&rmin,&err);
 	snd_pcm_hw_params_get_rate_max(hw_params,&rmax,&err);
-	MSG_INFO("    AO-INFO: Rates range: %u %u\n",rmin,rmax);
+	mpxp_info<<"    AO-INFO: Rates range: "<<rmin<<" "<<rmax<<std::endl;
 	snd_output_stdio_attach(&sout, stderr, 0);
 	snd_pcm_hw_params_dump(hw_params, sout);
 	if(hw_params) snd_pcm_hw_params_free(hw_params);
@@ -351,7 +350,7 @@ MPXP_Rc Alsa_AO_Interface::open(unsigned flags) {
     handler = NULL;
     alsa_device[0]='\0';
 
-    MSG_V("alsa-init: compiled for ALSA-%s\n", SND_LIB_VERSION_STR);
+    mpxp_v<<"alsa-init: compiled for ALSA-"<<SND_LIB_VERSION_STR<<std::endl;
 
     if (!subdevice.empty()) {
 	const char *param;
@@ -370,12 +369,12 @@ MPXP_Rc Alsa_AO_Interface::open(unsigned flags) {
 	    }
 	    if(alsa_port) snprintf(alsa_device,sizeof(alsa_device),"%s:%s",alsa_dev,alsa_port);
 	    else	  strncpy(alsa_device,alsa_dev,sizeof(alsa_device));
-	    MSG_V("alsa-init: soundcard set to %s\n", alsa_device);
+	    mpxp_v<<"alsa-init: soundcard set to "<<alsa_device<<std::endl;
 	} //end parsing ao->subdevice
     }
 
     if ((err = snd_card_next(&cards)) < 0 || cards < 0) {
-	MSG_ERR("alsa-init: no soundcards found: %s\n", snd_strerror(err));
+	mpxp_err<<"alsa-init: no soundcards found: "<<snd_strerror(err)<<std::endl;
 	return MPXP_False;
     }
 
@@ -383,28 +382,28 @@ MPXP_Rc Alsa_AO_Interface::open(unsigned flags) {
 	int tmp_device, tmp_subdevice;
 
 	if ((err = snd_pcm_info_malloc(&alsa_info)) < 0) {
-	    MSG_ERR("alsa-init: memory allocation error: %s\n", snd_strerror(err));
+	    mpxp_err<<"alsa-init: memory allocation error: "<<snd_strerror(err)<<std::endl;
 	    return MPXP_False;
 	}
 
 	if ((tmp_device = snd_pcm_info_get_device(alsa_info)) < 0) {
-	    MSG_ERR("alsa-init: cant get device\n");
+	    mpxp_err<<"alsa-init: cant get device"<<std::endl;
 	    return MPXP_False;
 	}
 
 	if ((tmp_subdevice = snd_pcm_info_get_subdevice(alsa_info)) < 0) {
-	    MSG_ERR("alsa-init: cant get subdevice\n");
+	    mpxp_err<<"alsa-init: cant get subdevice"<<std::endl;
 	    return MPXP_False;
 	}
-	MSG_V("alsa-init: got device=%i, subdevice=%i\n", tmp_device, tmp_subdevice);
+	mpxp_v<<"alsa-init: got device="<<tmp_device<<", subdevice="<<tmp_subdevice<<std::endl;
 
 	if ((err = snprintf(alsa_device, ALSA_DEVICE_SIZE, "hw:%1d,%1d", tmp_device, tmp_subdevice)) <= 0) {
-	    MSG_ERR("alsa-init: cant wrote device-id\n");
+	    mpxp_err<<"alsa-init: cant wrote device-id"<<std::endl;
 	}
 	snd_pcm_info_free(alsa_info);
     }
 
-    MSG_WARN("alsa-init: Testing & bugs are welcome. Found %d cards, use: %s\n",cards+1,alsa_device);
+    mpxp_warn<<"alsa-init: Testing & bugs are welcome. Found "<<(cards+1)<<" cards, use: "<<alsa_device<<std::endl;
     //setting modes for block or nonblock-mode
     int open_mode,block_mode;
     if (priv_conf.noblock) {
@@ -421,9 +420,9 @@ MPXP_Rc Alsa_AO_Interface::open(unsigned flags) {
 	//modes = 0, SND_PCM_NONBLOCK, SND_PCM_ASYNC
 	if ((err = snd_pcm_open(&handler, alsa_device, SND_PCM_STREAM_PLAYBACK, open_mode)) < 0) {
 	    if (priv_conf.noblock) {
-		MSG_ERR("alsa-init: open in nonblock-mode failed, trying to open in block-mode\n");
+		mpxp_err<<"alsa-init: open in nonblock-mode failed, trying to open in block-mode"<<std::endl;
 		if ((err = snd_pcm_open(&handler, alsa_device, SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
-		    MSG_ERR("alsa-init: playback open error: %s\n", snd_strerror(err));
+		    mpxp_err<<"alsa-init: playback open error: "<<snd_strerror(err)<<std::endl;
 		    alsa_device[0]='\0';
 		    return MPXP_False;
 		} else {
@@ -431,26 +430,25 @@ MPXP_Rc Alsa_AO_Interface::open(unsigned flags) {
 		    str_block_mode = "block-mode";
 		}
 	    } else {
-		MSG_ERR("alsa-init: playback open error: %s\n", snd_strerror(err));
+		mpxp_err<<"alsa-init: playback open error: "<<snd_strerror(err)<<std::endl;
 		alsa_device[0]='\0';
 		return MPXP_False;
 	    }
 	}
 	alsa_device[0]='\0';
 	if ((err = snd_pcm_nonblock(handler, block_mode)) < 0) {
-	    MSG_ERR("alsa-init: error set block-mode %s\n", snd_strerror(err));
-	} else MSG_V("alsa-init: pcm opend in %s\n", str_block_mode);
+	    mpxp_err<<"alsa-init: error set block-mode "<<snd_strerror(err)<<std::endl;
+	} else mpxp_v<<"alsa-init: pcm opend in "<<str_block_mode<<std::endl;
 
 	 snd_pcm_hw_params_malloc(&hwparams);
 	 snd_pcm_sw_params_malloc(&swparams);
 
 	// setting hw-parameters
 	if ((err = snd_pcm_hw_params_any(handler, hwparams)) < 0) {
-	    MSG_ERR("alsa-init: unable to get initial parameters: %s\n",
-		 snd_strerror(err));
+	    mpxp_err<<"alsa-init: unable to get initial parameters: "<<snd_strerror(err)<<std::endl;
 	    return MPXP_False;
 	}
-	MSG_DBG2("snd_pcm_hw_params_any()\n");
+	mpxp_dbg2<<"snd_pcm_hw_params_any()"<<std::endl;
 	if (priv_conf.mmap) {
 	    snd_pcm_access_mask_t *mask = (snd_pcm_access_mask_t*)alloca(snd_pcm_access_mask_sizeof());
 	    snd_pcm_access_mask_none(mask);
@@ -458,13 +456,13 @@ MPXP_Rc Alsa_AO_Interface::open(unsigned flags) {
 	    snd_pcm_access_mask_set(mask, SND_PCM_ACCESS_MMAP_NONINTERLEAVED);
 	    snd_pcm_access_mask_set(mask, SND_PCM_ACCESS_MMAP_COMPLEX);
 	    err = snd_pcm_hw_params_set_access_mask(handler, hwparams, mask);
-	    MSG_ERR("alsa-init: mmap set\n");
+	    mpxp_err<<"alsa-init: mmap set"<<std::endl;
 	} else {
 	    err = snd_pcm_hw_params_set_access(handler, hwparams,SND_PCM_ACCESS_RW_INTERLEAVED);
-	    MSG_DBG2("snd_pcm_hw_params_set_access(SND_PCM_ACCESS_RW_INTERLEAVED)\n");
+	    mpxp_dbg2<<"snd_pcm_hw_params_set_access(SND_PCM_ACCESS_RW_INTERLEAVED)"<<std::endl;
 	}
 	if (err < 0) {
-	    MSG_ERR("alsa-init: unable to set access type: %s\n", snd_strerror(err));
+	    mpxp_err<<"alsa-init: unable to set access type: "<<snd_strerror(err)<<std::endl;
 	    return MPXP_False;
 	}
     } // end switch priv->handler (spdif)
@@ -476,8 +474,7 @@ MPXP_Rc Alsa_AO_Interface::configure(unsigned r,unsigned c,unsigned f) {
     size_t chunk_size=0,chunk_bytes,bits_per_sample,bits_per_frame;
     snd_pcm_uframes_t dummy;
 
-    MSG_V("alsa-conf: requested format: %d Hz, %d channels, %s\n", r,
-	c, ao_format_name(f));
+    mpxp_v<<"alsa-conf: requested format: "<<r<<" Hz, "<<c<<" channels, "<<ao_format_name(f)<<std::endl;
 
     _samplerate = r;
     _format = f;
@@ -504,8 +501,7 @@ MPXP_Rc Alsa_AO_Interface::configure(unsigned r,unsigned c,unsigned f) {
       case SND_PCM_FORMAT_U24_BE:
 	break;
       case -1:
-	MSG_ERR("alsa-conf: invalid format (%s) requested - output disabled\n",
-	       ao_format_name(_format));
+	mpxp_err<<"alsa-conf: invalid format ("<<ao_format_name(_format)<<") requested - output disabled"<<std::endl;
 	return MPXP_False;
       default:
 	break;
@@ -514,55 +510,47 @@ MPXP_Rc Alsa_AO_Interface::configure(unsigned r,unsigned c,unsigned f) {
 
     if ((err = snd_pcm_hw_params_set_format(handler, hwparams,
 					      snd_format)) < 0) {
-	MSG_ERR("alsa-conf: unable to set format(%s): %s\n",
-		 snd_pcm_format_name(snd_format),
-		 snd_strerror(err));
-	MSG_HINT("Please try one of: ");
+	mpxp_err<<"alsa-conf: unable to set format("<<snd_pcm_format_name(snd_format)<<"): "<<snd_strerror(err)<<std::endl;
+	mpxp_hint<<"Please try one of: ";
 	for(i=0;i<SND_PCM_FORMAT_LAST;i++)
 	    if (!(snd_pcm_hw_params_test_format(handler, hwparams, snd_pcm_format_t(i))))
-		MSG_HINT("%s ",snd_pcm_format_name(snd_pcm_format_t(i)));
-	MSG_HINT("\n");
+		mpxp_hint<<snd_pcm_format_name(snd_pcm_format_t(i))<<" ";
+	mpxp_hint<<std::endl;
 	return MPXP_False;
     }
-    MSG_DBG2("snd_pcm_hw_params_set_format(%i)\n",snd_format);
+    mpxp_dbg2<<"snd_pcm_hw_params_set_format("<<snd_format<<")"<<std::endl;
 
     if ((err = snd_pcm_hw_params_set_rate_near(handler, hwparams, &_samplerate, 0)) < 0) {
-	MSG_ERR("alsa-conf: unable to set samplerate %u: %s\n",
-		_samplerate,
-		snd_strerror(err));
+	mpxp_err<<"alsa-conf: unable to set samplerate "<<_samplerate<<": "<<snd_strerror(err)<<std::endl;
 	return MPXP_False;
     }
-    MSG_DBG2("snd_pcm_hw_params_set_rate_near(%i)\n",_samplerate);
+    mpxp_dbg2<<"snd_pcm_hw_params_set_rate_near("<<_samplerate<<")"<<std::endl;
 
     if ((err = snd_pcm_hw_params_set_channels(handler, hwparams,
 						_channels)) < 0) {
-	MSG_ERR("alsa-conf: unable to set %u channels: %s\n",
-		_channels,
-		snd_strerror(err));
+	mpxp_err<<"alsa-conf: unable to set "<<_channels<<" channels: "<<snd_strerror(err)<<std::endl;
 	return MPXP_False;
     }
-    MSG_DBG2("snd_pcm_hw_params_set_channels(%i)\n",_channels);
+    mpxp_dbg2<<"snd_pcm_hw_params_set_channels("<<_channels<<")"<<std::endl;
 #ifdef BUFFERTIME
     {
 	int dir;
 	unsigned period_time,alsa_buffer_time = 500000; /* buffer time in us */
 
 	if ((err = snd_pcm_hw_params_set_buffer_time_near(handler, hwparams, &alsa_buffer_time, &dir)) < 0) {
-	    MSG_ERR("alsa-init: unable to set buffer time near: %s\n",
-		snd_strerror(err));
+	    mpxp_err<<"alsa-init: unable to set buffer time near: "<<snd_strerror(err)<<std::endl;
 	    return MPXP_False;
 	}
-	MSG_DBG2("snd_pcm_hw_set_buffer_time_near(%i)\n",alsa_buffer_time);
+	mpxp_dbg2<<"snd_pcm_hw_set_buffer_time_near("<<alsa_buffer_time<<")"<<std::endl;
 
 	period_time = alsa_buffer_time/4;
 	if ((err = snd_pcm_hw_params_set_period_time_near(handler, hwparams, &period_time, &dir)) < 0) {
 	  /* original: alsa_buffer_time/ao->bps */
-	    MSG_ERR("alsa-init: unable to set period time: %s\n",
-		snd_strerror(err));
+	    mpxp_err<<"alsa-init: unable to set period time: "<<snd_strerror(err)<<std::endl;
 	    return MPXP_False;
 	}
-	MSG_DBG2("snd_pcm_hw_set_period_time_near(%i)\n",period_time);
-	MSG_V("alsa-init: buffer_time: %d, period_time :%d\n",alsa_buffer_time, period_time);
+	mpxp_dbg2<<"snd_pcm_hw_set_period_time_near("<<period_time<<")"<<std::endl;
+	mpxp_v<<"alsa-init: buffer_time: "<<alsa_buffer_time<<", period_time :"<<period_time<<std::endl;
     }
 #else
     {
@@ -570,72 +558,70 @@ MPXP_Rc Alsa_AO_Interface::configure(unsigned r,unsigned c,unsigned f) {
 	unsigned period_time=100000; /* period time in us */
 	snd_pcm_uframes_t size;
 	if ((err = snd_pcm_hw_params_set_period_time_near(handler, hwparams, &period_time, &dir)) < 0) {
-	    MSG_ERR("alsa-init: unable to set period_time: %s\n", snd_strerror(err));
+	    mpxp_err<<"alsa-init: unable to set period_time: "<<snd_strerror(err)<<std::endl;
 	    return MPXP_False;
 	}
-	MSG_DBG2("snd_pcm_hw_set_period_time(%i)\n",period_time);
+	mpxp_dbg2<<"snd_pcm_hw_set_period_time("<<period_time<<")"<<std::endl;
 
 	//get chunksize
 	if ((err = snd_pcm_hw_params_get_period_size(hwparams, &size, &dir)) < 0) {
-	    MSG_ERR("alsa-init: unable to get period_size: %s\n", snd_strerror(err));
+	    mpxp_err<<"alsa-init: unable to get period_size: "<<snd_strerror(err)<<std::endl;
 	    return MPXP_False;
 	}
-	MSG_DBG2("snd_pcm_hw_get_period_size(%i)\n",size);
+	mpxp_dbg2<<"snd_pcm_hw_get_period_size("<<size<<")"<<std::endl;
 	chunk_size=size;
     }
 #endif
 	// gets buffersize for control_ao
     if ((err = snd_pcm_hw_params_get_buffer_size(hwparams,&dummy)) < 0) {
-	MSG_ERR("alsa-conf: unable to get buffersize: %s\n", snd_strerror(err));
+	mpxp_err<<"alsa-conf: unable to get buffersize: "<<snd_strerror(err)<<std::endl;
 	return MPXP_False;
     } else {
 	_buffersize = dummy * bytes_per_sample;
-	MSG_V("alsa-conf: got buffersize=%i\n", _buffersize);
+	mpxp_v<<"alsa-conf: got buffersize="<<_buffersize<<std::endl;
     }
-    MSG_DBG2("snd_pcm_hw_params_get_buffer_size(%i)\n",dummy);
+    mpxp_dbg2<<"snd_pcm_hw_params_get_buffer_size("<<dummy<<")"<<std::endl;
     bits_per_sample = snd_pcm_format_physical_width(snd_format);
-    MSG_DBG2("%i=snd_pcm_hw_format_pohysical_width()\n",bits_per_sample);
+    mpxp_dbg2<<bits_per_sample<<"=snd_pcm_hw_format_pohysical_width()"<<std::endl;
     bits_per_frame = bits_per_sample * _channels;
     chunk_bytes = chunk_size * bits_per_frame / 8;
 
-    MSG_V("alsa-conf: bits per sample (bps)=%i, bits per frame (bpf)=%i, chunk_bytes=%i\n",bits_per_sample,bits_per_frame,chunk_bytes);
+    mpxp_v<<"alsa-conf: bits per sample (bps)="<<bits_per_sample<<", bits per frame (bpf)="<<bits_per_frame<<", chunk_bytes="<<chunk_bytes<<std::endl;
 
     /* finally install hardware parameters */
     if ((err = snd_pcm_hw_params(handler, hwparams)) < 0) {
-	MSG_ERR("alsa-conf: unable to set hw-parameters: %s\n",
-		 snd_strerror(err));
+	mpxp_err<<"alsa-conf: unable to set hw-parameters: "<<snd_strerror(err)<<std::endl;
 	return MPXP_False;
     }
-    MSG_DBG2("snd_pcm_hw_params()\n");
+    mpxp_dbg2<<"snd_pcm_hw_params()"<<std::endl;
     // setting sw-params (only avail-min) if noblocking mode was choosed
     if (priv_conf.noblock) {
 	if ((err = snd_pcm_sw_params_current(handler, swparams)) < 0) {
-	    MSG_ERR("alsa-conf: unable to get parameters: %s\n",snd_strerror(err));
+	    mpxp_err<<"alsa-conf: unable to get parameters: "<<snd_strerror(err)<<std::endl;
 	    return MPXP_False;
 	}
 
 	//set min available frames to consider pcm ready (4)
 	//increased for nonblock-mode should be set dynamically later
 	if ((err = snd_pcm_sw_params_set_avail_min(handler, swparams, 4)) < 0) {
-	    MSG_ERR("alsa-conf: unable to set avail_min %s\n",snd_strerror(err));
+	    mpxp_err<<"alsa-conf: unable to set avail_min "<<snd_strerror(err)<<std::endl;
 	    return MPXP_False;
 	}
 
 	if ((err = snd_pcm_sw_params(handler, swparams)) < 0) {
-	    MSG_ERR("alsa-conf: unable to install sw-params\n");
+	    mpxp_err<<"alsa-conf: unable to install sw-params"<<std::endl;
 	    return MPXP_False;
 	}
 
     }//end swparams
 
     if ((err = snd_pcm_prepare(handler)) < 0) {
-	MSG_ERR("alsa-conf: pcm prepare error: %s\n", snd_strerror(err));
+	mpxp_err<<"alsa-conf: pcm prepare error: "<<snd_strerror(err)<<std::endl;
 	return MPXP_False;
     }
     // end setting hw-params
-    MSG_V("alsa-conf: %d Hz/%d channels/%d bpf/%d bytes buffer/%s\n",
-	_samplerate, _channels, bytes_per_sample, _buffersize,
-	snd_pcm_format_description(snd_format));
+    mpxp_v<<"alsa-conf: "<<_samplerate<<" Hz/"<<_channels<<" channels/"
+	<<bytes_per_sample<<" bpf/"<<_buffersize<<" bytes buffer/"<<snd_pcm_format_description(snd_format)<<std::endl;
     return MPXP_Ok;
 } // end config_ao
 
@@ -645,11 +631,11 @@ void Alsa_AO_Interface::pause() {
     if (!priv_conf.noblock) {
 	//drain causes error in nonblock-mode!
 	if ((err = snd_pcm_drain(handler)) < 0) {
-	    MSG_ERR("alsa-pause: pcm drain error: %s\n", snd_strerror(err));
+	    mpxp_err<<"alsa-pause: pcm drain error: "<<snd_strerror(err)<<std::endl;
 	    return;
 	}
     } else {
-	MSG_V("alsa-pause: paused nonblock\n");
+	mpxp_v<<"alsa-pause: paused nonblock"<<std::endl;
 	return;
     }
 }
@@ -658,7 +644,7 @@ void Alsa_AO_Interface::resume() {
     int err;
 
     if ((err = snd_pcm_prepare(handler)) < 0) {
-	MSG_ERR("alsa-resume: pcm prepare error: %s\n", snd_strerror(err));
+	mpxp_err<<"alsa-resume: pcm prepare error: "<<snd_strerror(err)<<std::endl;
 	return;
     }
 }
@@ -668,11 +654,11 @@ void Alsa_AO_Interface::reset() {
     int err;
 
     if ((err = snd_pcm_drop(handler)) < 0) {
-	MSG_ERR("alsa-reset: pcm drop error: %s\n", snd_strerror(err));
+	mpxp_err<<"alsa-reset: pcm drop error: "<<snd_strerror(err)<<std::endl;
 	return;
     }
     if ((err = snd_pcm_prepare(handler)) < 0) {
-	MSG_ERR("alsa-reset: pcm prepare error: %s\n", snd_strerror(err));
+	mpxp_err<<"alsa-reset: pcm prepare error: "<<snd_strerror(err)<<std::endl;
 	return;
     }
     return;
@@ -709,7 +695,7 @@ int Alsa_AO_Interface::xrun(const char *str_mode) const {
     snd_pcm_status_alloca(&status);
 
     if ((err = snd_pcm_status(handler, status))<0) {
-	MSG_ERR("status error: %s", snd_strerror(err));
+	mpxp_err<<"status error: "<<snd_strerror(err)<<std::endl;
 	return 0;
     }
 
@@ -718,13 +704,11 @@ int Alsa_AO_Interface::xrun(const char *str_mode) const {
 	gettimeofday(&now, 0);
 	snd_pcm_status_get_trigger_tstamp(status, &tstamp);
 	_timersub(&now, &tstamp, &diff);
-	MSG_V("alsa-%s: xrun of at least %.3f msecs. resetting stream\n",
-	   str_mode,
-	   diff.tv_sec * 1000 + diff.tv_usec / 1000.0);
+	mpxp_v<<"alsa-"<<str_mode<<": xrun of at least "<<(diff.tv_sec*1000+diff.tv_usec/1000.0)<<" msecs. resetting stream"<<std::endl;
     }
 
     if ((err = snd_pcm_prepare(handler))<0) {
-	MSG_ERR("xrun: prepare error: %s", snd_strerror(err));
+	mpxp_err<<"xrun: prepare error: "<<snd_strerror(err)<<std::endl;
 	return 0;
     }
 
@@ -734,7 +718,7 @@ int Alsa_AO_Interface::xrun(const char *str_mode) const {
 unsigned Alsa_AO_Interface::play(const any_t* data, unsigned len, unsigned flags) {
     unsigned result;
     UNUSED(flags);
-    MSG_DBG2("[ao_alsa] %s playing %i bytes\n",priv_conf.mmap?"mmap":"normal",len);
+    mpxp_dbg2<<"[ao_alsa] "<<(priv_conf.mmap?"mmap":"normal")<<" playing "<<len<<" bytes"<<std::endl;
     if (priv_conf.mmap)	result = play_mmap(data, len);
     else		result = play_normal(data, len);
     return result;
@@ -755,7 +739,7 @@ unsigned Alsa_AO_Interface::play_normal(const any_t* data, unsigned len) {
     //fprintf(stderr,"alsa-play: frames=%i, len=%i\n",num_frames,len);
 
     if (!handler) {
-	MSG_ERR("alsa-play: device configuration error");
+	mpxp_err<<"alsa-play: device configuration error"<<std::endl;
 	return 0;
     }
 
@@ -765,16 +749,16 @@ unsigned Alsa_AO_Interface::play_normal(const any_t* data, unsigned len) {
 	    snd_pcm_wait(handler, 1000);
 	} else if (res == -EPIPE) { /* underrun */
 	    if (xrun("play") <= 0) {
-		MSG_ERR("alsa-play: xrun reset error");
+		mpxp_err<<"alsa-play: xrun reset error"<<std::endl;
 		return 0;
 	    }
 	} else if (res == -ESTRPIPE) { /* suspend */
-	    MSG_WARN("alsa-play: pcm in suspend mode. trying to resume\n");
+	    mpxp_warn<<"alsa-play: pcm in suspend mode. trying to resume"<<std::endl;
 	    while ((res = snd_pcm_resume(handler)) == -EAGAIN) ::sleep(1);
 	} else if (res < 0) {
-	    MSG_ERR("alsa-play: unknown status, trying to reset soundcard\n");
+	    mpxp_err<<"alsa-play: unknown status, trying to reset soundcard"<<std::endl;
 	    if ((res = snd_pcm_prepare(handler)) < 0) {
-		MSG_ERR("alsa-play: snd prepare error");
+		mpxp_err<<"alsa-play: snd prepare error"<<std::endl;
 		return 0;
 		break;
 	    }
@@ -788,7 +772,7 @@ unsigned Alsa_AO_Interface::play_normal(const any_t* data, unsigned len) {
     } //end while
 
     if (res < 0) {
-	MSG_ERR("alsa-play: write error %s", snd_strerror(res));
+	mpxp_err<<"alsa-play: write error "<<snd_strerror(res)<<std::endl;
 	return 0;
     }
     return res < 0 ? 0 : len;
@@ -897,12 +881,12 @@ unsigned Alsa_AO_Interface::get_space() {
     //snd_pcm_sframes_t avail_frames = 0;
 
     if ((ret = snd_pcm_status_malloc(&status)) < 0) {
-	MSG_ERR("alsa-space: memory allocation error: %s\n", snd_strerror(ret));
+	mpxp_err<<"alsa-space: memory allocation error: "<<snd_strerror(ret)<<std::endl;
 	return 0;
     }
 
     if ((ret = snd_pcm_status(handler, status)) < 0) {
-	MSG_ERR("alsa-space: cannot get pcm status: %s\n", snd_strerror(ret));
+	mpxp_err<<"alsa-space: cannot get pcm status: "<<snd_strerror(ret)<<std::endl;
 	return 0;
     }
 
@@ -925,7 +909,7 @@ unsigned Alsa_AO_Interface::get_space() {
 		e_status = GET_SPACE_RUNNING;
 	    break;
 	case SND_PCM_STATE_PAUSED:
-	    MSG_V("alsa-space: paused");
+	    mpxp_v<<"alsa-space: paused"<<std::endl;
 	    e_status = GET_SPACE_PAUSED;
 	    ret = 0;
 	    break;
@@ -944,11 +928,11 @@ unsigned Alsa_AO_Interface::get_space() {
     }
 
     if (e_status!=GET_SPACE_RUNNING)
-	MSG_V("alsa-space: mp_free space = %i, status=%i, %i --\n", ret, st, e_status);
+	mpxp_v<<"alsa-space: mp_free space = "<<ret<<", status="<<st<<", "<<e_status<<" --"<<std::endl;
     snd_pcm_status_free(status);
 
     if (ret < 0) {
-	MSG_ERR("negative value!!\n");
+	mpxp_err<<"negative value!!"<<std::endl;
 	ret = 0;
     }
 
@@ -964,12 +948,12 @@ float Alsa_AO_Interface::get_delay()
 	float ret;
 
 	if ((ret = snd_pcm_status_malloc(&status)) < 0) {
-	    MSG_ERR("alsa-delay: memory allocation error: %s\n", snd_strerror(ret));
+	    mpxp_err<<"alsa-delay: memory allocation error: "<<snd_strerror(ret)<<std::endl;
 	    return 0;
 	}
 
 	if ((ret = snd_pcm_status(handler, status)) < 0) {
-	    MSG_ERR("alsa-delay: cannot get pcm status: %s\n", snd_strerror(ret));
+	    mpxp_err<<"alsa-delay: cannot get pcm status: "<<snd_strerror(ret)<<std::endl;
 	    return 0;
 	}
 

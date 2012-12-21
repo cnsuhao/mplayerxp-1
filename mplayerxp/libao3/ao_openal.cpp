@@ -120,7 +120,7 @@ MPXP_Rc OpenAL_AO_Interface::open(unsigned flags) {
     UNUSED(flags);
     alc_dev = alcOpenDevice(NULL);
     if (!alc_dev) {
-	MSG_ERR("[OpenAL] could not open device\n");
+	mpxp_err<<"[OpenAL] could not open device"<<std::endl;
 	return MPXP_False;
     }
     return MPXP_Ok;
@@ -142,7 +142,7 @@ MPXP_Rc OpenAL_AO_Interface::configure(unsigned r, unsigned c, unsigned f)
     unsigned i;
     _format=f;
     if (c > MAX_CHANS) {
-	MSG_ERR("[OpenAL] Invalid number of channels: %i\n", c);
+	mpxp_err<<"[OpenAL] Invalid number of channels: "<<c<<std::endl;
 	goto err_out;
     }
     ctx = alcCreateContext(alc_dev, attribs);

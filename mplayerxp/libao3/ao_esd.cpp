@@ -200,7 +200,7 @@ MPXP_Rc Esd_AO_Interface::open(unsigned flags) {
     if (fd < 0) {
 	fd = esd_open_sound(subdevice.c_str());
 	if (fd < 0) {
-	    MSG_ERR("ESD: Can't open sound: %s\n", strerror(errno));
+	    mpxp_err<<"ESD: Can't open sound: "<<strerror(errno)<<std::endl;
 	    return MPXP_False;
 	}
     }
@@ -279,13 +279,13 @@ MPXP_Rc Esd_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
 	lag_serv = (latency * 4.0f) / (_bytes_per_sample * _samplerate);
 	lag_seconds = lag_net + lag_serv;
 	audio_delay += lag_seconds;
-	MSG_INFO("ESD: LatencyInfo: %f %f %f\n",lag_serv, lag_net, lag_seconds);
+	mpxp_info<<"ESD: LatencyInfo: "<<lag_serv<<" "<<lag_net<<" "<<lag_seconds<<std::endl;
     }
 
     play_fd = esd_play_stream_fallback(esd_fmt, _samplerate,
 					server.c_str(), ESD_CLIENT_NAME);
     if (play_fd < 0) {
-	MSG_ERR("ESD: Can't open play stream: %s\n", strerror(errno));
+	mpxp_err<<"ESD: Can't open play stream: "<<strerror(errno)<<std::endl;
 	return MPXP_False;
     }
 

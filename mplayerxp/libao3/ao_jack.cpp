@@ -231,7 +231,7 @@ MPXP_Rc Jack_AO_Interface::configure(unsigned r,unsigned c,unsigned f) {
     UNUSED(f);
 
     if (c > MAX_CHANS) {
-	MSG_FATAL("[JACK] Invalid number of channels: %i\n", c);
+	mpxp_fatal<<"[JACK] Invalid number of channels: "<<c<<std::endl;
 	goto err_out;
     }
     if (!client_name) {
@@ -241,7 +241,7 @@ MPXP_Rc Jack_AO_Interface::configure(unsigned r,unsigned c,unsigned f) {
     if (!autostart) open_options = jack_options_t(open_options|JackNoStartServer);
     client = jack_client_open(client_name, open_options, NULL);
     if (!client) {
-	MSG_FATAL("[JACK] cannot open server\n");
+	mpxp_fatal<<"[JACK] cannot open server"<<std::endl;
 	goto err_out;
     }
     buffer = av_fifo_alloc(BUFFSIZE);
@@ -251,7 +251,7 @@ MPXP_Rc Jack_AO_Interface::configure(unsigned r,unsigned c,unsigned f) {
     if (!port_name) port_flags |= JackPortIsPhysical;
     matching_ports = jack_get_ports(client, subdevice.c_str(), NULL, port_flags);
     if (!matching_ports || !matching_ports[0]) {
-	MSG_FATAL("[JACK] no physical priv->ports available\n");
+	mpxp_fatal<<"[JACK] no physical priv->ports available"<<std::endl;
 	goto err_out;
     }
     i = 1;
@@ -265,17 +265,17 @@ MPXP_Rc Jack_AO_Interface::configure(unsigned r,unsigned c,unsigned f) {
 	snprintf(pname, 30, "out_%d", i);
 	ports[i] = jack_port_register(client, pname, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
 	if (!ports[i]) {
-	    MSG_FATAL("[JACK] not enough priv->ports available\n");
+	    mpxp_fatal<<"[JACK] not enough priv->ports available"<<std::endl;
 	    goto err_out;
 	}
     }
     if (jack_activate(client)) {
-	MSG_FATAL("[JACK] activate failed\n");
+	mpxp_fatal<<"[JACK] activate failed"<<std::endl;
 	goto err_out;
     }
     for (i = 0; i < num_ports; i++) {
 	if (jack_connect(client, jack_port_name(ports[i]), matching_ports[i])) {
-	    MSG_FATAL( "[JACK] connecting failed\n");
+	    mpxp_fatal<<"[JACK] connecting failed"<<std::endl;
 	    goto err_out;
 	}
     }

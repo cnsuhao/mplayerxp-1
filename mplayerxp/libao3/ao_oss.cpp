@@ -108,28 +108,28 @@ void Oss_AO_Interface::show_fmts() const
     int rval;
     rval=0;
     if (::ioctl (fd, SNDCTL_DSP_GETFMTS, &rval) != -1) {
-	MSG_INFO("AO-INFO: List of supported formats: ");
-	if(rval & AFMT_MU_LAW) MSG_INFO("AFMT_MU_LAW ");
-	if(rval & AFMT_A_LAW) MSG_INFO("AFMT_A_LAW ");
-	if(rval & AFMT_IMA_ADPCM) MSG_INFO("AFMT_IMA_ADPCM ");
-	if(rval & AFMT_U8) MSG_INFO("AFMT_U8 ");
-	if(rval & AFMT_S16_LE) MSG_INFO("AFMT_S16_LE ");
-	if(rval & AFMT_S16_BE) MSG_INFO("AFMT_S16_BE ");
-	if(rval & AFMT_S8) MSG_INFO("AFMT_S8 ");
-	if(rval & AFMT_U16_LE) MSG_INFO("AFMT_U16_LE ");
+	mpxp_info<<"AO-INFO: List of supported formats: ";
+	if(rval & AFMT_MU_LAW) mpxp_info<<"AFMT_MU_LAW ";
+	if(rval & AFMT_A_LAW) mpxp_info<<"AFMT_A_LAW ";
+	if(rval & AFMT_IMA_ADPCM) mpxp_info<<"AFMT_IMA_ADPCM ";
+	if(rval & AFMT_U8) mpxp_info<<"AFMT_U8 ";
+	if(rval & AFMT_S16_LE) mpxp_info<<"AFMT_S16_LE ";
+	if(rval & AFMT_S16_BE) mpxp_info<<"AFMT_S16_BE ";
+	if(rval & AFMT_S8) mpxp_info<<"AFMT_S8 ";
+	if(rval & AFMT_U16_LE) mpxp_info<<"AFMT_U16_LE ";
 
-	if(rval & AFMT_U16_BE) MSG_INFO("AFMT_U16_BE ");
-	if(rval & AFMT_MPEG) MSG_INFO("AFMT_MPEG ");
-	if(rval & AFMT_AC3) MSG_INFO("AFMT_AC3 ");
-	if(rval & AFMT_S24_LE) MSG_INFO("AFMT_S24_LE ");
-	if(rval & AFMT_S24_BE) MSG_INFO("AFMT_S24_BE ");
-	if(rval & AFMT_U24_LE) MSG_INFO("AFMT_U24_LE ");
-	if(rval & AFMT_U24_BE) MSG_INFO("AFMT_U24_LE ");
-	if(rval & AFMT_S32_LE) MSG_INFO("AFMT_S32_LE ");
-	if(rval & AFMT_S32_BE) MSG_INFO("AFMT_S32_BE ");
-	if(rval & AFMT_U32_LE) MSG_INFO("AFMT_U32_LE ");
-	if(rval & AFMT_U32_BE) MSG_INFO("AFMT_U32_LE ");
-	MSG_INFO("\n");
+	if(rval & AFMT_U16_BE) mpxp_info<<"AFMT_U16_BE ";
+	if(rval & AFMT_MPEG) mpxp_info<<"AFMT_MPEG ";
+	if(rval & AFMT_AC3) mpxp_info<<"AFMT_AC3 ";
+	if(rval & AFMT_S24_LE) mpxp_info<<"AFMT_S24_LE ";
+	if(rval & AFMT_S24_BE) mpxp_info<<"AFMT_S24_BE ";
+	if(rval & AFMT_U24_LE) mpxp_info<<"AFMT_U24_LE ";
+	if(rval & AFMT_U24_BE) mpxp_info<<"AFMT_U24_LE ";
+	if(rval & AFMT_S32_LE) mpxp_info<<"AFMT_S32_LE ";
+	if(rval & AFMT_S32_BE) mpxp_info<<"AFMT_S32_BE ";
+	if(rval & AFMT_U32_LE) mpxp_info<<"AFMT_U32_LE ";
+	if(rval & AFMT_U32_BE) mpxp_info<<"AFMT_U32_LE ";
+	mpxp_info<<std::endl;
     }
 }
 
@@ -142,23 +142,23 @@ void Oss_AO_Interface::show_caps()
     fd=::open(dsp.c_str(), O_WRONLY);
 #endif
     if(fd<0){
-	MSG_ERR("Can't open audio device %s: %s\n",dsp.c_str(), strerror(errno));
+	mpxp_err<<"Can't open audio device "<<dsp<<": "<<strerror(errno)<<std::endl;
 	return;
     }
     show_fmts();
     rval=0;
     if (::ioctl (fd, SNDCTL_DSP_GETCAPS, &rval) != -1) {
-	MSG_INFO("AO-INFO: Capabilities: ");
-	MSG_INFO("rev-%u ",rval & DSP_CAP_REVISION);
-	if(rval & DSP_CAP_DUPLEX) MSG_INFO("duplex ");
-	if(rval & DSP_CAP_REALTIME) MSG_INFO("realtime ");
-	if(rval & DSP_CAP_BATCH) MSG_INFO("batch ");
-	if(rval & DSP_CAP_COPROC) MSG_INFO("coproc ");
-	if(rval & DSP_CAP_TRIGGER) MSG_INFO("trigger ");
-	if(rval & DSP_CAP_MMAP) MSG_INFO("mmap ");
-	if(rval & DSP_CAP_MULTI) MSG_INFO("multiopen ");
-	if(rval & DSP_CAP_BIND) MSG_INFO("bind ");
-	MSG_INFO("\n");
+	mpxp_info<<"AO-INFO: Capabilities: ";
+	mpxp_info<<"rev-"<<(rval & DSP_CAP_REVISION)<<" ";
+	if(rval & DSP_CAP_DUPLEX) mpxp_info<<"duplex ";
+	if(rval & DSP_CAP_REALTIME) mpxp_info<<"realtime ";
+	if(rval & DSP_CAP_BATCH) mpxp_info<<"batch ";
+	if(rval & DSP_CAP_COPROC) mpxp_info<<"coproc ";
+	if(rval & DSP_CAP_TRIGGER) mpxp_info<<"trigger ";
+	if(rval & DSP_CAP_MMAP) mpxp_info<<"mmap ";
+	if(rval & DSP_CAP_MULTI) mpxp_info<<"multiopen ";
+	if(rval & DSP_CAP_BIND) mpxp_info<<"bind ";
+	mpxp_info<<std::endl;
     }
     ::close(fd);
 }
@@ -181,8 +181,8 @@ MPXP_Rc Oss_AO_Interface::open(unsigned flags){
 	    if(p=="-1") { show_caps(); return MPXP_False; }
 	}
     }
-    MSG_V("audio_setup: using '%s' dsp device\n", dsp.c_str());
-    MSG_V("audio_setup: using '%s'(%s) mixer device\n", mixer_device,mixer_channels[mixer_channel]);
+    mpxp_v<<"audio_setup: using '"<<dsp<<"' dsp device"<<std::endl;
+    mpxp_v<<"audio_setup: using '"<<mixer_device<<"'("<<mixer_channels[mixer_channel]<<") mixer device"<<std::endl;
 
 #ifdef __linux__
     fd=::open(dsp.c_str(), O_WRONLY | O_NONBLOCK);
@@ -190,14 +190,14 @@ MPXP_Rc Oss_AO_Interface::open(unsigned flags){
     fd=::open(dsp.c_str(), O_WRONLY);
 #endif
     if(fd<0){
-	MSG_ERR("Can't open audio device %s: %s\n", dsp.c_str(), strerror(errno));
+	mpxp_err<<"Can't open audio device "<<dsp<<": "<<strerror(errno)<<std::endl;
 	return MPXP_False;
     }
 
 #ifdef __linux__
   /* Remove the non-blocking flag */
     if(::fcntl(fd, F_SETFL, 0) < 0) {
-	MSG_ERR("Can't make filedescriptor non-blocking: %s\n", strerror(errno));
+	mpxp_err<<"Can't make filedescriptor non-blocking: "<<strerror(errno)<<std::endl;
 	return MPXP_False;
     }
 #endif
@@ -209,7 +209,7 @@ MPXP_Rc Oss_AO_Interface::open(unsigned flags){
 
 MPXP_Rc Oss_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
 {
-    MSG_V("ao3: %d Hz  %d chans  %s\n",r,c,ao_format_name(f));
+    mpxp_v<<"ao3: "<<r<<" Hz  "<<c<<" chans "<<ao_format_name(f)<<std::endl;
 
     if(f == AFMT_AC3) {
 	_samplerate=r;
@@ -220,7 +220,7 @@ ac3_retry:
     _format=f;
     if( ::ioctl(fd, SNDCTL_DSP_SETFMT, &_format)<0 || _format != f) {
 	if(_format == AFMT_AC3){
-	    MSG_WARN("OSS-CONF: Can't set audio device %s to AC3 output, trying S16...\n", dsp.c_str());
+	    mpxp_warn<<"OSS-CONF: Can't set audio device "<<dsp<<" to AC3 output, trying S16..."<<std::endl;
 #ifdef WORDS_BIGENDIAN
 	    _format=AFMT_S16_BE;
 #else
@@ -228,7 +228,7 @@ ac3_retry:
 #endif
 	    goto ac3_retry;
 	} else {
-	    MSG_ERR("OSS-CONF: Can't config_ao for: %s\n",ao_format_name(_format));
+	    mpxp_err<<"OSS-CONF: Can't config_ao for: "<<ao_format_name(_format)<<std::endl;
 	    show_fmts();
 	    _format=f;
 	    return MPXP_False;
@@ -239,36 +239,35 @@ ac3_retry:
 	// We only use SNDCTL_DSP_CHANNELS for >2 channels, in case some drivers don't have it
 	if (_channels > 2) {
 	    if (::ioctl(fd, SNDCTL_DSP_CHANNELS, &_channels) == -1 || _channels != c ) {
-		MSG_ERR("OSS-CONF: Failed to set audio device to %d channels\n", _channels);
+		mpxp_err<<"OSS-CONF: Failed to set audio device to "<<_channels<<" channels"<<std::endl;
 		return MPXP_False;
 	    }
 	} else {
 	    int _c = _channels-1;
 	    if (::ioctl(fd, SNDCTL_DSP_STEREO, &_c) == -1) {
-		MSG_ERR("OSS-CONF: Failed to set audio device to %d channels\n", _channels);
+		mpxp_err<<"OSS-CONF: Failed to set audio device to "<<_channels<<" channels"<<std::endl;
 		return MPXP_False;
 	    }
 	    _channels=_c+1;
 	}
-	MSG_V("OSS-CONF: using %d channels (requested: %d)\n", _channels, c);
+	mpxp_v<<"OSS-CONF: using "<<_channels<<" channels (requested: "<<c<<")"<<std::endl;
 	// set rate
 	_samplerate=r;
 	::ioctl (fd, SNDCTL_DSP_SPEED, &_samplerate);
-	MSG_V("OSS-CONF: using %d Hz samplerate (requested: %d)\n",_samplerate,r);
+	mpxp_v<<"OSS-CONF: using "<<_samplerate<<" Hz samplerate (requested: "<<r<<")"<<std::endl;
     }
 
     if(::ioctl(fd, SNDCTL_DSP_GETOSPACE, &zz)==-1){
 	int _r=0;
-	MSG_WARN("OSS-CONF: driver doesn't support SNDCTL_DSP_GETOSPACE :-(\n");
+	mpxp_warn<<"OSS-CONF: driver doesn't support SNDCTL_DSP_GETOSPACE"<<std::endl;
 	if(::ioctl(fd, SNDCTL_DSP_GETBLKSIZE, &_r)==-1){
-	    MSG_V("OSS-CONF: %d bytes/frag (mpxp_config.h)\n",_outburst);
+	    mpxp_v<<"OSS-CONF: "<<_outburst<<" bytes/frag (mpxp_config.h)"<<std::endl;
 	} else {
 	    _outburst=r;
-	    MSG_V("OSS-CONF: %d bytes/frag (GETBLKSIZE)\n",_outburst);
+	    mpxp_v<<"OSS-CONF: "<<_outburst<<" bytes/frag (GETBLKSIZE)"<<std::endl;
 	}
     } else {
-	MSG_V("OSS-CONF: frags: %3d/%d  (%d bytes/frag)  mp_free: %6d\n",
-	    zz.fragments, zz.fragstotal, zz.fragsize, zz.bytes);
+	mpxp_v<<"OSS-CONF: frags: "<<zz.fragments<<"/"<<zz.fragstotal<<" ("<<zz.fragsize<<" bytes/frag)  mp_free: "<<zz.bytes<<std::endl;
 	if(_buffersize==0) _buffersize=zz.bytes;
 	_outburst=zz.fragsize;
     }
@@ -290,8 +289,8 @@ ac3_retry:
 	}
 	delete data;
 	if(_buffersize==0){
-	    MSG_ERR("\n   *** OSS-CONF: Your audio driver DOES NOT support select()  ***\n"
-		    "Recompile mplayerxp with #undef HAVE_AUDIO_SELECT in mpxp_config.h !\n\n");
+	    mpxp_err<<std::endl<<"*** OSS-CONF: Your audio driver DOES NOT support select()  ***"<<std::endl;
+	    mpxp_err<<"Recompile mplayerxp with #undef HAVE_AUDIO_SELECT in mpxp_config.h!"<<std::endl;
 	    return MPXP_False;
 	}
 #endif
@@ -307,7 +306,7 @@ void Oss_AO_Interface::reset(){
     ::close(fd);
     fd=::open(dsp.c_str(), O_WRONLY);
     if(fd < 0){
-	MSG_FATAL("\nFatal error: *** CANNOT RE-OPEN / RESET AUDIO DEVICE *** %s\n", strerror(errno));
+	mpxp_fatal<<std::endl<<"Fatal error: *** CANNOT RE-OPEN / RESET AUDIO DEVICE *** "<<strerror(errno)<<std::endl;
 	return;
     }
 
