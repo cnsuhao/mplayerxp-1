@@ -305,7 +305,7 @@ MPXP_Rc Networking::autodetectProtocol(network_protocol_t& networking, Tcp& tcp)
 			if( next_url!=NULL ) {
 			    url.redirect(next_url);
 			    if (url.protocol2lower()=="mms") goto err_out;
-			    if (url.protocol2lower()=="http") {
+			    if (url.protocol2lower()!="http") {
 				mpxp_warn<<"Unsupported http "<<http_hdr->get_status()<<" redirect to "<<url.protocol()<<" protocol"<<std::endl;
 				goto err_out;
 			    }
