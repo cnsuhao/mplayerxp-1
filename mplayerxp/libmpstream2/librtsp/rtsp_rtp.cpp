@@ -241,7 +241,7 @@ int Rtp_Rtsp_Session::rtp_connect (const char *hostname, int port) const {
     /* Increase the socket rx buffer size to maximum -- this is UDP */
     rxsockbufsz = 240 * 1024;
     if (::setsockopt (s, SOL_SOCKET, SO_RCVBUF, &rxsockbufsz, sizeof (rxsockbufsz)))
-	MSG_ERR("Couldn't set receive socket buffer size\n");
+	mpxp_err<<"Couldn't set receive socket buffer size"<<std::endl;
 
     /* if multicast address, add membership */
     if ((::ntohl (sin.sin_addr.s_addr) >> 28) == 0xe) {
@@ -250,7 +250,7 @@ int Rtp_Rtsp_Session::rtp_connect (const char *hostname, int port) const {
 	mcast.imr_interface.s_addr = 0;
 
 	if (::setsockopt (s, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mcast, sizeof (mcast))) {
-	    MSG_ERR("IP_ADD_MEMBERSHIP failed\n");
+	    mpxp_err<<"IP_ADD_MEMBERSHIP failed"<<std::endl;
 	    ::close (s);
 	    return -1;
 	}
@@ -264,7 +264,7 @@ int Rtp_Rtsp_Session::rtp_connect (const char *hostname, int port) const {
 	if (WSAGetLastError() != WSAEINPROGRESS)
 #endif
 	{
-	    MSG_ERR("bind: %s\n", strerror (errno));
+	    mpxp_err<<"bind: "<<strerror(errno)<<std::endl;
 	    ::close (s);
 	    return -1;
 	}
@@ -278,11 +278,11 @@ int Rtp_Rtsp_Session::rtp_connect (const char *hostname, int port) const {
 
     err = ::select (s + 1, &set, NULL, NULL, &tv);
     if (err < 0) {
-	MSG_ERR("Select failed: %s\n", strerror (errno));
+	mpxp_err<<"Select failed: "<<strerror (errno)<<std::endl;
 	::close (s);
 	return -1;
     } else if (err == 0) {
-	MSG_ERR("Timeout! No data from host %s\n", hostname);
+	mpxp_err<<"Timeout! No data from host "<<hostname<<std::endl;
 	::close (s);
 	return -1;
     }
@@ -290,7 +290,7 @@ int Rtp_Rtsp_Session::rtp_connect (const char *hostname, int port) const {
     err_len = sizeof (err);
     ::getsockopt (s, SOL_SOCKET, SO_ERROR, &err, (socklen_t *) &err_len);
     if (err) {
-	MSG_ERR("Socket error: %d\n", err);
+	mpxp_err<<"Socket error: "<<err<<std::endl;
 	::close (s);
 	return -1;
     }
@@ -369,12 +369,12 @@ Rtp_Rtsp_Session* Rtp_Rtsp_Session::setup_and_play (Rtsp& rtsp) {
 	fsdp_description_delete (dsc);
 	return NULL;
     }
-    MSG_V("SDP:\n%s\n", sdp);
+    mpxp_v<<"SDP: "<<sdp<<std::endl;
     delete sdp;
 
     /* 4. check for number of media streams: only one is supported */
     if (fsdp_get_media_count (dsc) != 1) {
-	MSG_ERR("A single media stream only is supported atm.\n");
+	mpxp_err<<"A single media stream only is supported atm"<<std::endl;
 	fsdp_description_delete (dsc);
 	return NULL;
     }
@@ -429,8 +429,8 @@ Rtp_Rtsp_Session* Rtp_Rtsp_Session::setup_and_play (Rtsp& rtsp) {
     /* RTCP port generally is RTP port + 1 */
     client_rtcp_port = client_rtp_port + 1;
 
-    MSG_V("RTP Port from SDP appears to be: %d\n", client_rtp_port);
-    MSG_V("RTCP Port from SDP appears to be: %d\n", client_rtcp_port);
+    mpxp_v<<"RTP Port from SDP appears to be: "<<client_rtp_port<<std::endl;
+    mpxp_v<<"RTCP Port from SDP appears to be: "<<client_rtcp_port<<std::endl;
 
     /* 7. parse the `c=<network type> <addr type> <connection address>' line */
     /* check for a valid media network type (inet) */
@@ -491,7 +491,7 @@ Rtp_Rtsp_Session* Rtp_Rtsp_Session::setup_and_play (Rtsp& rtsp) {
 	    is_multicast ? RTSP_TRANSPORT_MULTICAST : RTSP_TRANSPORT_UNICAST,
 	    is_multicast ? RTSP_MULTICAST_PORT : RTSP_UNICAST_CLIENT_PORT,
 	    client_rtp_port, client_rtcp_port);
-    MSG_V("RTSP Transport: %s\n", temp_buf);
+    mpxp_v<<"RTSP Transport: "<<temp_buf<<std::endl;
 
     rtsp.unschedule_field (RTSP_SESSION);
     rtsp.schedule_field (temp_buf);
@@ -537,16 +537,11 @@ Rtp_Rtsp_Session* Rtp_Rtsp_Session::setup_and_play (Rtsp& rtsp) {
     if (!destination)		destination = mp_strdup (server_addr);
     delete server_addr;
 
-    MSG_V("RTSP Destination: %s\n"
-	"Client RTP port : %d\n"
-	"Client RTCP port : %d\n"
-	"Server RTP port : %d\n"
-	"Server RTCP port : %d\n"
-	, destination
-	, client_rtp_port
-	, client_rtcp_port
-	, server_rtp_port
-	, server_rtcp_port);
+    mpxp_v<<"RTSP Destination: "<<destination<<std::endl;
+    mpxp_v<<"Client RTP port : "<<client_rtp_port<<std::endl;
+    mpxp_v<<"Client RTCP port : "<<client_rtcp_port<<std::endl;
+    mpxp_v<<"Server RTP port : "<<server_rtp_port<<std::endl;
+    mpxp_v<<"Server RTCP port : "<<server_rtcp_port<<std::endl;
 
     /* 12. performs RTSP PLAY request */
     rtsp.schedule_field (npt);
@@ -563,7 +558,7 @@ Rtp_Rtsp_Session* Rtp_Rtsp_Session::setup_and_play (Rtsp& rtsp) {
     rtp_session->set_fd (rtp_sock, rtcp_sock);
     delete destination;
 
-    MSG_V("RTP Sock : %d\nRTCP Sock : %d\n",rtp_session->rtp_socket, rtp_session->rtcp_socket);
+    mpxp_v<<"RTP Sock : "<<rtp_session->rtp_socket<<" RTCP Sock : "<<rtp_session->rtcp_socket<<std::endl;
 
     if (rtp_session->rtp_socket == -1) {
 	delete rtp_session;

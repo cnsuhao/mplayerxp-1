@@ -165,7 +165,7 @@ return;
 /* handler creator - entry point ! */
 tvi_handle_t *tvi_init_bsdbt848(const char *device)
 {
-    return(new_handle());
+    return new_handle();
 }
 
 static int control(struct priv_s *priv, int cmd, any_t*arg)
@@ -177,88 +177,79 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 
     case TVI_CONTROL_IS_TUNER:
 	if(priv->tunerready == FALSE) return TVI_CONTROL_FALSE;
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 
-    case TVI_CONTROL_TUN_GET_FREQ:
-	{
-	if(ioctl(priv->tunerfd, TVTUNER_GETFREQ, &priv->tunerfreq) < 0)
-	    {
-	    MSG_ERR("GETFREQ:ioctl");
-	    return(TVI_CONTROL_FALSE);
-	    }
+    case TVI_CONTROL_TUN_GET_FREQ: {
+	if(ioctl(priv->tunerfd, TVTUNER_GETFREQ, &priv->tunerfreq) < 0) {
+	    mpxp_err<<"GETFREQ:ioctl"<<std::endl;
+	    return TVI_CONTROL_FALSE;
+	}
 
 	(int)*(any_t**)arg = priv->tunerfreq;
-	return(TVI_CONTROL_TRUE);
-	}
+	return TVI_CONTROL_TRUE;
+    }
 
-    case TVI_CONTROL_TUN_SET_FREQ:
-	{
+    case TVI_CONTROL_TUN_SET_FREQ: {
 	priv->tunerfreq = (int)*(any_t**)arg;
 
-	if(ioctl(priv->tunerfd, TVTUNER_SETFREQ, &priv->tunerfreq) < 0)
-	    {
-	    MSG_ERR("SETFREQ:ioctl");
-	    return(0);
-	    }
-
-	return(TVI_CONTROL_TRUE);
+	if(ioctl(priv->tunerfd, TVTUNER_SETFREQ, &priv->tunerfreq) < 0) {
+	    mpxp_err<<"SETFREQ:ioctl"<<std::endl;
+	    return 0;
 	}
+
+	return TVI_CONTROL_TRUE;
+    }
 
     case TVI_CONTROL_TUN_GET_TUNER:
     case TVI_CONTROL_TUN_SET_TUNER:
 
 /* Inputs */
 
-    case TVI_CONTROL_SPC_GET_INPUT:
-	{
-	if(ioctl(priv->btfd, METEORGINPUT, &priv->input) < 0)
-	    {
-	    MSG_ERR("GINPUT:ioctl");
-	    return(TVI_CONTROL_FALSE);
-	    }
+    case TVI_CONTROL_SPC_GET_INPUT: {
+	if(ioctl(priv->btfd, METEORGINPUT, &priv->input) < 0) {
+	    mpxp_err<<"GINPUT:ioctl"<<std::endl;
+	    return TVI_CONTROL_FALSE;
+	}
 
 	(int)*(any_t**)arg = priv->input;
-	return(TVI_CONTROL_TRUE);
-	}
+	return TVI_CONTROL_TRUE;
+    }
 
-    case TVI_CONTROL_SPC_SET_INPUT:
-	{
+    case TVI_CONTROL_SPC_SET_INPUT: {
 	priv->input = getinput((int)*(any_t**)arg);
 
-	if(ioctl(priv->btfd, METEORSINPUT, &priv->input) < 0)
-	    {
-	    MSG_ERR("tunerfreq:ioctl");
-	    return(0);
-	    }
-
-	return(TVI_CONTROL_TRUE);
+	if(ioctl(priv->btfd, METEORSINPUT, &priv->input) < 0) {
+	    mpxp_err<<"tunerfreq:ioctl"<<std::endl;
+	    return 0;
 	}
+
+	return TVI_CONTROL_TRUE;
+    }
 
 /* Audio Controls */
 
     case TVI_CONTROL_IS_AUDIO:
 	if(priv->dspready == FALSE) return TVI_CONTROL_FALSE;
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 
     case TVI_CONTROL_AUD_GET_FORMAT:
 	{
 	(int)*(any_t**)arg = AFMT_S16_LE;
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 	}
     case TVI_CONTROL_AUD_GET_CHANNELS:
 	{
 	(int)*(any_t**)arg = 2;
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 	}
     case TVI_CONTROL_AUD_SET_SAMPLERATE:
 	{
 	int dspspeed = (int)*(any_t**)arg;
 
-	   if(ioctl(priv->dspfd, SNDCTL_DSP_SPEED, &dspspeed) == -1)
-	    {
-	    MSG_ERR("invalidaudiorate");
-	    return(TVI_CONTROL_FALSE);
-	    }
+	if(ioctl(priv->dspfd, SNDCTL_DSP_SPEED, &dspspeed) == -1) {
+	    mpxp_err<<"invalidaudiorate"<<std::endl;
+	    return TVI_CONTROL_FALSE;
+	}
 
 	priv->dspspeed = dspspeed;
 
@@ -267,24 +258,24 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	priv->dsprate = priv->dspspeed * priv->dspsamplesize/8*
 				(priv->dspstereo+1);
 
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 	}
     case TVI_CONTROL_AUD_GET_SAMPLERATE:
 	{
 	(int)*(any_t**)arg = priv->dspspeed;
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 	}
     case TVI_CONTROL_AUD_GET_SAMPLESIZE:
 	{
 	(int)*(any_t**)arg = priv->dspsamplesize/8;
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 	}
 
 /* Video Controls */
 
     case TVI_CONTROL_IS_VIDEO:
 	if(priv->videoready == FALSE) return TVI_CONTROL_FALSE;
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 
     case TVI_CONTROL_TUN_SET_NORM:
 	{
@@ -302,19 +293,16 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 
 	    if(priv->fps > priv->maxfps) priv->fps = priv->maxfps;
 
-	    if(priv->geom.rows > priv->maxheight)
-		{
+	    if(priv->geom.rows > priv->maxheight) {
 		priv->geom.rows = priv->maxheight;
-		}
-
-	    if(priv->geom.columns > priv->maxwidth)
-		{
-		priv->geom.columns = priv->maxwidth;
-		}
 	    }
 
-	if(req_mode == TV_NORM_NTSC)
-	    {
+	    if(priv->geom.columns > priv->maxwidth) {
+		priv->geom.columns = priv->maxwidth;
+	    }
+	}
+
+	if(req_mode == TV_NORM_NTSC) {
 	    priv->iformat = METEOR_FMT_NTSC;
 	    priv->maxheight = NTSC_HEIGHT;
 	    priv->maxwidth = NTSC_WIDTH;
@@ -328,126 +316,100 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 
 	    if(priv->fps > priv->maxfps) priv->fps = priv->maxfps;
 
-	    if(priv->geom.rows > priv->maxheight)
-		{
+	    if(priv->geom.rows > priv->maxheight) {
 		priv->geom.rows = priv->maxheight;
-		}
-
-	    if(priv->geom.columns > priv->maxwidth)
-		{
-		priv->geom.columns = priv->maxwidth;
-		}
 	    }
+
+	    if(priv->geom.columns > priv->maxwidth) {
+		priv->geom.columns = priv->maxwidth;
+	    }
+	}
 
 	if(req_mode == TV_NORM_SECAM) priv->iformat = METEOR_FMT_SECAM;
 
-	if(ioctl(priv->btfd, METEORSFMT, &priv->iformat) < 0)
-	    {
-	    MSG_ERR("wtag:ioctl");
-	    return(TVI_CONTROL_FALSE);
-	    }
+	if(ioctl(priv->btfd, METEORSFMT, &priv->iformat) < 0) {
+	    mpxp_err<<"wtag:ioctl"<<std::endl;
+	    return TVI_CONTROL_FALSE;
+	}
 
-	if(ioctl(priv->btfd, METEORSETGEO, &priv->geom) < 0)
-	    {
-	    MSG_ERR("geo:ioctl");
-	    return(0);
-	    }
+	if(ioctl(priv->btfd, METEORSETGEO, &priv->geom) < 0) {
+	    mpxp_err<<"geo:ioctl"<<std::endl;
+	    return 0;
+	}
 
-	if(ioctl(priv->btfd, METEORSFPS, &priv->fps) < 0)
-	    {
-	    MSG_ERR("fps:ioctl");
-	    return(0);
-	    }
+	if(ioctl(priv->btfd, METEORSFPS, &priv->fps) < 0) {
+	    mpxp_err<<"fps:ioctl"<<std::endl;
+	    return 0;
+	}
 
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 	}
 
     case TVI_CONTROL_VID_GET_FORMAT:
 	(int)*(any_t**)arg = IMGFMT_UYVY;
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 
-    case TVI_CONTROL_VID_SET_FORMAT:
-	{
+    case TVI_CONTROL_VID_SET_FORMAT: {
 	int req_fmt = (int)*(any_t**)arg;
 
-	if(req_fmt != IMGFMT_UYVY) return(TVI_CONTROL_FALSE);
+	if(req_fmt != IMGFMT_UYVY) return TVI_CONTROL_FALSE;
 
-	return(TVI_CONTROL_TRUE);
-	}
+	return TVI_CONTROL_TRUE;
+    }
     case TVI_CONTROL_VID_SET_WIDTH:
 	priv->geom.columns = (int)*(any_t**)arg;
 
-	if(priv->geom.columns > priv->maxwidth)
-	    {
+	if(priv->geom.columns > priv->maxwidth) {
 	    priv->geom.columns = priv->maxwidth;
-	    }
+	}
 
-	if(ioctl(priv->btfd, METEORSETGEO, &priv->geom) < 0)
-	    {
-	    MSG_ERR("width:ioctl");
-	    return(0);
-	    }
+	if(ioctl(priv->btfd, METEORSETGEO, &priv->geom) < 0) {
+	    mpxp_err<<"width:ioctl"<<std::endl;
+	    return 0;
+	}
 
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 
     case TVI_CONTROL_VID_GET_WIDTH:
 	(int)*(any_t**)arg = priv->geom.columns;
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 
     case TVI_CONTROL_VID_SET_HEIGHT:
 	priv->geom.rows = (int)*(any_t**)arg;
 
-	if(priv->geom.rows > priv->maxheight)
-	    {
+	if(priv->geom.rows > priv->maxheight) {
 	    priv->geom.rows = priv->maxheight;
-	    }
+	}
 
-	if(priv->geom.rows <= priv->maxheight / 2)
-	    {
+	if(priv->geom.rows <= priv->maxheight / 2) {
 	    priv->geom.oformat |= METEOR_GEO_EVEN_ONLY;
-	    }
+	}
 
-	if(ioctl(priv->btfd, METEORSETGEO, &priv->geom) < 0)
-	    {
-	    MSG_ERR("height:ioctl");
-	    return(0);
-	    }
+	if(ioctl(priv->btfd, METEORSETGEO, &priv->geom) < 0) {
+	    mpxp_err<<"height:ioctl"<<std::endl;
+	    return 0;
+	}
 
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 
     case TVI_CONTROL_VID_GET_HEIGHT:
 	(int)*(any_t**)arg = priv->geom.rows;
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 
     case TVI_CONTROL_VID_GET_FPS:
 	(int)*(any_t**)arg = (int)priv->fps;
-	return(TVI_CONTROL_TRUE);
-
-/*
-    case TVI_CONTROL_VID_SET_FPS:
-	priv->fps = (int)*(any_t**)arg;
-
-	if(priv->fps > priv->maxfps) priv->fps = priv->maxfps;
-
-	if(ioctl(priv->btfd, METEORSFPS, &priv->fps) < 0)
-	    {
-	    MSG_ERR("fps:ioctl");
-	    return(0);
-	    }
-
-	return(TVI_CONTROL_TRUE);
-*/
+	return TVI_CONTROL_TRUE;
 
     case TVI_CONTROL_VID_CHK_WIDTH:
     case TVI_CONTROL_VID_CHK_HEIGHT:
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
 
     case TVI_CONTROL_IMMEDIATE:
 	priv->immediatemode = TRUE;
-	return(TVI_CONTROL_TRUE);
+	return TVI_CONTROL_TRUE;
     }
 
-    return(TVI_CONTROL_UNKNOWN);
+    return TVI_CONTROL_UNKNOWN;
 }
 
 static int init(struct priv_s *priv)
@@ -480,34 +442,33 @@ priv->geom.oformat = METEOR_GEO_YUV_PACKED;
 
 priv->btfd = open(priv->btdev, O_RDONLY);
 
-if(priv->btfd < 0)
-    {
-    MSG_ERR("bktr open");
+if(priv->btfd < 0) {
+    mpxp_err<<"bktr open"<<std::endl;
     priv->videoready = FALSE;
-    }
+}
 
 if(priv->videoready == TRUE &&
    ioctl(priv->btfd, METEORSFMT, &priv->iformat) < 0)
-    {
-    MSG_ERR("FMT:ioctl");
-    }
+{
+    mpxp_err<<"FMT:ioctl"<<std::endl;
+}
 
 if(priv->videoready == TRUE &&
    ioctl(priv->btfd, METEORSINPUT, &priv->source) < 0)
     {
-    MSG_ERR("SINPUT:ioctl");
+    mpxp_err<<"SINPUT:ioctl"<<std::endl;
     }
 
 if(priv->videoready == TRUE &&
    ioctl(priv->btfd, METEORSFPS, &priv->fps) < 0)
     {
-    MSG_ERR("SFPS:ioctl");
+    mpxp_err<<"SFPS:ioctl"<<std::endl;
     }
 
 if(priv->videoready == TRUE &&
    ioctl(priv->btfd, METEORSETGEO, &priv->geom) < 0)
     {
-    MSG_ERR("SGEO:ioctl");
+    mpxp_err<<"SGEO:ioctl"<<std::endl;
     }
 
 if(priv->videoready == TRUE)
@@ -517,22 +478,19 @@ if(priv->videoready == TRUE)
     priv->livebuf = (u_char *)mmap((caddr_t)0, priv->framebufsize, PROT_READ,
 				MAP_SHARED, priv->btfd, (off_t)0);
 
-    if(priv->livebuf == (u_char *) MAP_FAILED)
-	{
-	MSG_ERR("mmap");
+    if(priv->livebuf == (u_char *) MAP_FAILED) 
+	mpxp_err<<"mmap"<<std::endl;
 	priv->videoready = FALSE;
-	}
+    }
 
-    for(count=0;count<RINGSIZE;count++)
-	{
+    for(count=0;count<RINGSIZE;count++) {
 	priv->framebuf[count].buf = mp_malloc(priv->framebufsize);
 
 	if(priv->framebuf[count].buf == NULL)
-	    {
-	    MSG_ERR("framebufmalloc");
+	    mpxp_err<<"framebufmalloc"<<std::endl;
 	    priv->videoready = FALSE;
 	    break;
-	    }
+	}
 
 	priv->framebuf[count].dirty = TRUE;
 	priv->framebuf[count].timestamp = 0;
@@ -546,11 +504,10 @@ priv->tunerready = TRUE;
 
 priv->tunerfd = open(priv->tunerdev, O_RDONLY);
 
-if(priv->tunerfd < 0)
-    {
-    MSG_ERR("tune open");
+if(priv->tunerfd < 0) {
+    mpxp_err<<"tune open"<<std::endl;
     priv->tunerready = FALSE;
-    }
+}
 
 /* Audio Configuration */
 
@@ -567,7 +524,7 @@ priv->dspframesize = priv->dspspeed*priv->dspsamplesize/8/priv->fps *
 
 if((priv->dspfd = open ("/dev/dsp", O_RDONLY, 0)) < 0)
     {
-    MSG_ERR("/dev/dsp open");
+    mpxp_err<<"/dev/dsp open"<<std::endl;
     priv->dspready = FALSE;
     }
 
@@ -575,7 +532,7 @@ marg = (256 << 16) | 12;
 
 if (ioctl(priv->dspfd, SNDCTL_DSP_SETFRAGMENT, &marg ) < 0 )
     {
-    MSG_ERR("setfrag");
+    mpxp_err<<"setfrag"<<std::endl;
     priv->dspready = FALSE;
     }
 
@@ -585,12 +542,12 @@ if((priv->dspready == TRUE) &&
    (ioctl(priv->dspfd, SNDCTL_DSP_SPEED, &priv->dspspeed) == -1) ||
    (ioctl(priv->dspfd, SNDCTL_DSP_SETFMT, &priv->dspfmt) == -1)))
     {
-    MSG_ERR ("configuration of /dev/dsp failed");
+    mpxp_err<<"configuration of /dev/dsp failed"<<std::endl;
     close(priv->dspfd);
     priv->dspready = FALSE;
     }
 
-return(1);
+return 1;
 }
 
 /* that's the real start, we'got the format parameters (checked with control) */
@@ -600,8 +557,8 @@ int tmp;
 struct timeval curtime;
 int marg;
 
-MSG_V("START\n");
-if(priv->videoready == FALSE) return(0);
+mpxp_v<<"START"<<std::endl;
+if(priv->videoready == FALSE) return 0;
 
 signal(SIGUSR1, processframe);
 signal(SIGALRM, processframe);
@@ -610,8 +567,8 @@ marg = SIGUSR1;
 
 if(ioctl(priv->btfd, METEORSSIGNAL, &marg) < 0)
     {
-    MSG_ERR("METEORSSIGNAL failed");
-    return(0);
+    mpxp_err<<"METEORSSIGNAL failed"<<std::endl;
+    return 0;
     }
 
 read(priv->dspfd, &tmp, 2);
@@ -624,33 +581,33 @@ marg = METEOR_CAP_CONTINOUS;
 
 if(ioctl(priv->btfd, METEORCAPTUR, &marg) < 0)
     {
-    MSG_ERR("METEORCAPTUR failed");
-    return(0);
+    mpxp_err<<"METEORCAPTUR failed"<<std::endl;
+    return 0;
     }
 
-return(1);
+return 1;
 }
 
 static int uninit(struct priv_s *priv)
 {
 int marg;
 
-if(priv->videoready == FALSE) return(0);
+if(priv->videoready == FALSE) return 0;
 
 marg = METEOR_SIG_MODE_MASK;
 
 if(ioctl( priv->btfd, METEORSSIGNAL, &marg) < 0 )
     {
-    MSG_ERR("METEORSSIGNAL");
-    return(0);
+    mpxp_err<<"METEORSSIGNAL"<<std::endl;
+    return 0;
     }
 
 marg = METEOR_CAP_STOP_CONT;
 
 if(ioctl(priv->btfd, METEORCAPTUR, &marg) < 0 )
     {
-    MSG_ERR("METEORCAPTUR STOP");
-    return(0);
+    mpxp_err<<"METEORCAPTUR STOP"<<std::endl;
+    return 0;
     }
 
 close(priv->btfd);
@@ -661,7 +618,7 @@ priv->btfd = -1;
 
 priv->dspready = priv->videoready = FALSE;
 
-return(1);
+return 1;
 }
 
 
@@ -670,7 +627,7 @@ static double grabimmediate_video_frame(struct priv_s *priv,const char *buffer, 
 struct timeval curtime;
 sigset_t sa_mask;
 
-if(priv->videoready == FALSE) return(0);
+if(priv->videoready == FALSE) return 0;
 
 alarm(1);
 sigfillset(&sa_mask);
@@ -685,7 +642,7 @@ memcpy(buffer, priv->livebuf, len);
 /* PTS = 0, show the frame NOW, this routine is only used in playback mode
     without audio capture .. */
 
-return(0);
+return 0;
 }
 
 static double grab_video_frame(struct priv_s *priv,const char *buffer, int len)
@@ -694,7 +651,7 @@ struct timeval curtime;
 double timestamp=0;
 sigset_t sa_mask;
 
-if(priv->videoready == FALSE) return(0);
+if(priv->videoready == FALSE) return 0;
 
 if(priv->immediatemode == TRUE)
     {
@@ -716,12 +673,12 @@ priv->framebuf[priv->curbufframe].dirty = TRUE;
 priv->curbufframe++;
 if(priv->curbufframe >= RINGSIZE) priv->curbufframe = 0;
 
-return(timestamp-priv->starttime);
+return timestamp-priv->starttime;
 }
 
 static int get_video_framesize(struct priv_s *priv)
 {
-return(priv->geom.columns*priv->geom.rows*16/8);
+return priv->geom.columns*priv->geom.rows*16/8;
 }
 
 static double grab_audio_frame(struct priv_s *priv,const char *buffer, int len)
@@ -747,7 +704,7 @@ while(bytesread < len)
 
     if(ret == -1)
 	{
-	MSG_ERR("Audio read failed!");
+	mpxp_err<<"Audio read failed!"<<std::endl;
 	return 0;
 	}
 
@@ -772,7 +729,7 @@ else
 	}
     }
 
-return(priv->dspbytesread * 1.0 / priv->dsprate);
+return priv->dspbytesread * 1.0 / priv->dsprate;
 }
 
 static int get_audio_framesize(struct priv_s *priv)
@@ -783,8 +740,8 @@ if(priv->dspready == FALSE) return 0;
 
 if(ioctl(priv->dspfd, FIONREAD, &bytesavail) < 0)
     {
-    MSG_ERR("FIONREAD");
-    return(TVI_CONTROL_FALSE);
+    mpxp_err<<"FIONREAD"<<std::endl;
+    return TVI_CONTROL_FALSE;
     }
 
 /* When mencoder wants audio data, it wants data..
@@ -792,7 +749,7 @@ if(ioctl(priv->dspfd, FIONREAD, &bytesavail) < 0)
 
 if(bytesavail == 0) return FRAGSIZE;
 
-return(bytesavail);
+return bytesavail;
 }
 
 static int getinput(int innumber)

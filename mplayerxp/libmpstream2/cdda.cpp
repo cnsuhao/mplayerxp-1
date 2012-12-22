@@ -85,39 +85,39 @@ MPXP_Rc CDD_Interface::open_cdda(const std::string& dev,const std::string& arg) 
     cd = cdio_cddap_identify(dev.c_str(),mp_conf.verbose?1:0,NULL);
 
     if(!cd) {
-	MSG_ERR("Can't open cdda device: %s\n",dev.c_str());
+	mpxp_err<<"Can't open cdda device: "<<dev<<std::endl;
 	return MPXP_False;
     }
 
     cdio_cddap_verbose_set(cd, mp_conf.verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT, mp_conf.verbose?CDDA_MESSAGE_PRINTIT:CDDA_MESSAGE_FORGETIT);
 
     if(cdio_cddap_open(cd) != 0) {
-	MSG_ERR("Can't open disc\n");
+	mpxp_err<<"Can't open disc"<<std::endl;
 	cdda_close(cd);
 	return MPXP_False;
     }
 
     cd_tracks=cdio_cddap_tracks(cd);
-    MSG_V("Found %d tracks on disc\n",cd_tracks);
+    mpxp_v<<"Found "<<cd_tracks<<" tracks on disc"<<std::endl;
     if(!arg[0])
 	for(i=1;i<=cd_tracks;i++) tracks[i-1].play=1;
     cdda_parse_tracks(arr,sizeof(arr)/sizeof(unsigned),arg);
     for(i=1;i<=256;i++) if (arr[i]) tracks[i-1].play=1;
 
     st_inited=0;
-    MSG_V("[CDDA] Queued tracks:");
+    mpxp_v<<"[CDDA] Queued tracks:";
     for(i=0;i<cd_tracks;i++) {
 	if(tracks[i].play) {
 	    tracks[i].start_sector=cdio_cddap_track_firstsector(cd,i+1);
 	    tracks[i].end_sector=cdio_cddap_track_lastsector(cd,i+1);
-	    MSG_V(" %d[%d-%d]",i+1,tracks[i].start_sector,tracks[i].end_sector);
+	    mpxp_v<<" "<<i+1<<"["<<tracks[i].start_sector<<"-"<<tracks[i].end_sector<<"]";
 	    if(!st_inited) { start_sector=tracks[i].start_sector; st_inited=1; }
 	    end_sector=tracks[i].end_sector;
 	    audiolen +=tracks[i].end_sector-tracks[i].start_sector+1;
 	}
     }
     for(;i<256;i++) tracks[i].play=0;
-    MSG_V("\n");
+    mpxp_v<<std::endl;
     min  = (unsigned int)(audiolen/(60*75));
     sec  = (unsigned int)((audiolen/75)%60);
     msec = (unsigned int)(audiolen%75);
@@ -138,12 +138,12 @@ lsn_t CDD_Interface::map_sector(lsn_t _sector,track_t *tr)
     for(i=0;i<256;i++){
 	if(tracks[i].play && tracks[i].end_sector==_sector) {
 	    cd_track=0;
-	    MSG_V("Found track changing. old track=%u Sector=%u",i,_sector);
+	    mpxp_v<<"Found track changing. old track="<<i<<" Sector="<<_sector<<std::endl;
 	    for(j=i+1;j<256;j++) {
 		if(tracks[j].play && tracks[j].start_sector==_sector+1) {
 		    cd_track=tracks[j].start_sector;
 		    if(tr) *tr=j;
-		    MSG_V("new track=%u Sector=%u",j,cd_track);
+		    mpxp_v<<"new track="<<j<<" Sector="<<cd_track<<std::endl;
 		}
 	    }
 	}
@@ -170,12 +170,12 @@ int CDD_Interface::read(char *buf,track_t *tr) {
     track_t i=255;
 
     if(cdio_cddap_read(cd, buf, sector, 1)==0) {
-	MSG_ERR("[CD-DA]: read error occured\n");
+	mpxp_err<<"[CD-DA]: read error occured"<<std::endl;
 	return -1; /* EOF */
     }
     sector++;
     if(sector == end_sector) {
-	MSG_DBG2("EOF was reached\n");
+	mpxp_dbg2<<"EOF was reached"<<std::endl;
 	return -1; /* EOF */
     }
 
@@ -183,8 +183,8 @@ int CDD_Interface::read(char *buf,track_t *tr) {
     if(!sector) return -1;
     if(i!=255) {
 	*tr=i+1;
-	MSG_V("Track %d, sector=%d\n", *tr, sector);
-    } else MSG_DBG2("Track %d, sector=%d\n", *tr, sector);
+	mpxp_v<<"Track "<<*tr<<", sector="<<sector<<std::endl;
+    } else mpxp_dbg2<<"Track "<<*tr<<", sector="<<sector<<std::endl;
     return CDIO_CD_FRAMESIZE_RAW;
 }
 
@@ -194,7 +194,7 @@ void CDD_Interface::seek(off_t pos,track_t *tr) {
     track_t j=255;
 
     _sec = pos/CDIO_CD_FRAMESIZE_RAW;
-    MSG_DBG2("[CDDA] prepare seek to %ld\n",_sec);
+    mpxp_dbg2<<"[CDDA] prepare seek to "<<_sec<<std::endl;
     seeked_track=_sec;
     *tr=255;
     if( sector!=seeked_track ) {

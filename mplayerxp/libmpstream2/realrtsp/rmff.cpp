@@ -44,31 +44,16 @@ static void hexdump (const char *buf, int length) {
 
   int i;
 
-  printf ("rmff: ascii>");
+  mpxp_info<<"rmff: ascii>";
   for (i = 0; i < length; i++) {
     unsigned char c = buf[i];
 
     if ((c >= 32) && (c <= 128))
-      printf ("%c", c);
+      mpxp_info<<c;
     else
-      printf (".");
+      mpxp_info<<'<'<<std::hex<<(unsigned)c<<'>';
   }
-  printf ("\n");
-
-  printf ("rmff: hexdump> ");
-  for (i = 0; i < length; i++) {
-    unsigned char c = buf[i];
-
-    printf ("%02x", c);
-
-    if ((i % 16) == 15)
-      printf ("\nrmff:         ");
-
-    if ((i % 2) == 1)
-      printf (" ");
-
-  }
-  printf ("\n");
+  mpxp_info<<std::endl;
 }
 
 /*
@@ -238,7 +223,7 @@ int rmff_dump_header(rmff_header_t *h, char *buffer, int max) {
   return written;
 
 buftoosmall:
-  MSG_ERR("rmff_dumpheader: buffer too small, aborting. Please report\n");
+  mpxp_err<<"rmff_dumpheader: buffer too small, aborting. Please report"<<std::endl;
   return -1;
 }
 
@@ -265,11 +250,7 @@ static rmff_fileheader_t *rmff_scan_fileheader(const char *data) {
   fileheader->object_id=AV_RB32(data);
   fileheader->size=AV_RB32(&data[4]);
   fileheader->object_version=AV_RB16(&data[8]);
-  if (fileheader->object_version != 0)
-  {
-    MSG_WARN("warning: unknown object version in .RMF: 0x%04x\n",
-      fileheader->object_version);
-  }
+  if (fileheader->object_version != 0) mpxp_warn<<"warning: unknown object version in .RMF: 0x"<<std::hex<<fileheader->object_version<<std::endl;
   fileheader->file_version=AV_RB32(&data[10]);
   fileheader->num_headers=AV_RB32(&data[14]);
 
@@ -283,11 +264,7 @@ static rmff_prop_t *rmff_scan_prop(const char *data) {
   prop->object_id=AV_RB32(data);
   prop->size=AV_RB32(&data[4]);
   prop->object_version=AV_RB16(&data[8]);
-  if (prop->object_version != 0)
-  {
-    MSG_WARN("warning: unknown object version in PROP: 0x%04x\n",
-      prop->object_version);
-  }
+  if (prop->object_version != 0) mpxp_warn<<"warning: unknown object version in PROP: 0x"<<std::hex<<prop->object_version<<std::endl;
   prop->max_bit_rate=AV_RB32(&data[10]);
   prop->avg_bit_rate=AV_RB32(&data[14]);
   prop->max_packet_size=AV_RB32(&data[18]);
@@ -310,11 +287,7 @@ static rmff_mdpr_t *rmff_scan_mdpr(const char *data) {
   mdpr->object_id=AV_RB32(data);
   mdpr->size=AV_RB32(&data[4]);
   mdpr->object_version=AV_RB16(&data[8]);
-  if (mdpr->object_version != 0)
-  {
-    MSG_WARN("warning: unknown object version in MDPR: 0x%04x\n",
-      mdpr->object_version);
-  }
+  if (mdpr->object_version != 0) mpxp_warn<<"warning: unknown object version in MDPR: 0x"<<std::hex<<mdpr->object_version<<std::endl;
   mdpr->stream_number=AV_RB16(&data[10]);
   mdpr->max_bit_rate=AV_RB32(&data[12]);
   mdpr->avg_bit_rate=AV_RB32(&data[16]);
@@ -350,11 +323,7 @@ static rmff_cont_t *rmff_scan_cont(const char *data) {
   cont->object_id=AV_RB32(data);
   cont->size=AV_RB32(&data[4]);
   cont->object_version=AV_RB16(&data[8]);
-  if (cont->object_version != 0)
-  {
-    MSG_WARN("warning: unknown object version in CONT: 0x%04x\n",
-      cont->object_version);
-  }
+  if (cont->object_version != 0) mpxp_warn<<"warning: unknown object version in CONT: 0x"<<std::hex<<cont->object_version<<std::endl;
   cont->title_len=AV_RB16(&data[10]);
   cont->title=new char [cont->title_len+1];
   memcpy(cont->title, &data[12], cont->title_len);
@@ -385,11 +354,7 @@ static rmff_data_t *rmff_scan_dataheader(const char *data) {
   dh->object_id=AV_RB32(data);
   dh->size=AV_RB32(&data[4]);
   dh->object_version=AV_RB16(&data[8]);
-  if (dh->object_version != 0)
-  {
-    MSG_WARN("warning: unknown object version in DATA: 0x%04x\n",
-      dh->object_version);
-  }
+  if (dh->object_version != 0) mpxp_warn<<"warning: unknown object version in DATA: 0x"<<std::hex<<dh->object_version<<std::endl;
   dh->num_packets=AV_RB32(&data[10]);
   dh->next_data_header=AV_RB32(&data[14]);
 
@@ -411,9 +376,8 @@ rmff_header_t *rmff_scan_header(const char *data) {
 	header->data=NULL;
 
   chunk_type = AV_RB32(ptr);
-  if (chunk_type != RMF_TAG)
-  {
-    MSG_ERR("rmff: not an real media file header (.RMF tag not found).\n");
+  if (chunk_type != RMF_TAG){
+    mpxp_err<<"rmff: not an real media file header (.RMF tag not found)"<<std::endl;
     delete header;
     return NULL;
   }
@@ -428,9 +392,8 @@ rmff_header_t *rmff_scan_header(const char *data) {
   for (i=1; i<header->fileheader->num_headers; i++) {
     chunk_type = AV_RB32(ptr);
 
-    if (ptr[0] == 0)
-    {
-      MSG_WARN("rmff: warning: only %d of %d header found.\n", i, header->fileheader->num_headers);
+    if (ptr[0] == 0) {
+      mpxp_warn<<"rmff: warning: only "<<i<<" of "<<header->fileheader->num_headers<<" header found"<<std::endl;
       break;
     }
 
@@ -454,7 +417,7 @@ rmff_header_t *rmff_scan_header(const char *data) {
       chunk_size=34;     /* hard coded header size */
       break;
     default:
-      MSG_WARN("unknown chunk\n");
+      mpxp_warn<<"unknown chunk"<<std::endl;
       hexdump(ptr,10);
       chunk_size=1;
       break;
@@ -491,7 +454,7 @@ rmff_header_t *rmff_scan_header_stream(int fd) {
 	index+=(chunk_size-8);
 	break;
       default:
-	MSG_WARN("rmff_scan_header_stream: unknown chunk");
+	mpxp_warn<<"rmff_scan_header_stream: unknown chunk"<<std::endl;
 	hexdump(buf+index-8, 8);
 	chunk_type=DATA_TAG;
     }
@@ -664,63 +627,63 @@ void rmff_print_header(rmff_header_t *h) {
   rmff_mdpr_t **stream;
 
   if(!h) {
-    printf("rmff_print_header: NULL given\n");
+    mpxp_warn<<"rmff_print_header: NULL given"<<std::endl;
     return;
   }
   if(h->fileheader)
   {
-    printf("\nFILE:\n");
-    printf("file version      : %d\n", h->fileheader->file_version);
-    printf("number of headers : %d\n", h->fileheader->num_headers);
+    mpxp_info<<"FILE:"<<std::endl;
+    mpxp_info<<"file version      : "<<h->fileheader->file_version<<std::endl;
+    mpxp_info<<"number of headers : "<<h->fileheader->num_headers<<std::endl;
   }
   if(h->cont)
   {
-    printf("\nCONTENT:\n");
-    printf("title     : %s\n", h->cont->title);
-    printf("author    : %s\n", h->cont->author);
-    printf("copyright : %s\n", h->cont->copyright);
-    printf("comment   : %s\n", h->cont->comment);
+    mpxp_info<<"CONTENT:"<<std::endl;
+    mpxp_info<<"title     : "<<h->cont->title<<std::endl;
+    mpxp_info<<"author    : "<<h->cont->author<<std::endl;
+    mpxp_info<<"copyright : "<<h->cont->copyright<<std::endl;
+    mpxp_info<<"comment   : "<<h->cont->comment<<std::endl;
   }
   if(h->prop)
   {
-    printf("\nSTREAM PROPERTIES:\n");
-    printf("bit rate (max/avg)    : %i/%i\n", h->prop->max_bit_rate, h->prop->avg_bit_rate);
-    printf("packet size (max/avg) : %i/%i bytes\n", h->prop->max_packet_size, h->prop->avg_packet_size);
-    printf("packets       : %i\n", h->prop->num_packets);
-    printf("duration      : %i ms\n", h->prop->duration);
-    printf("pre-buffer    : %i ms\n", h->prop->preroll);
-    printf("index offset  : %i bytes\n", h->prop->index_offset);
-    printf("data offset   : %i bytes\n", h->prop->data_offset);
-    printf("media streams : %i\n", h->prop->num_streams);
-    printf("flags         : ");
-    if (h->prop->flags & PN_SAVE_ENABLED) printf("save_enabled ");
-    if (h->prop->flags & PN_PERFECT_PLAY_ENABLED) printf("perfect_play_enabled ");
-    if (h->prop->flags & PN_LIVE_BROADCAST) printf("live_broadcast ");
-    printf("\n");
+    mpxp_info<<"STREAM PROPERTIES:"<<std::endl;
+    mpxp_info<<"bit rate (max/avg)    : "<<h->prop->max_bit_rate<<"/"<<h->prop->avg_bit_rate<<std::endl;
+    mpxp_info<<"packet size (max/avg) : "<<h->prop->max_packet_size<<"/"<<h->prop->avg_packet_size<<" bytes"<<std::endl;
+    mpxp_info<<"packets       : "<<h->prop->num_packets<<std::endl;
+    mpxp_info<<"duration      : "<<h->prop->duration<<" ms"<<std::endl;
+    mpxp_info<<"pre-buffer    : "<<h->prop->preroll<<" ms"<<std::endl;
+    mpxp_info<<"index offset  : "<<h->prop->index_offset<<" bytes"<<std::endl;
+    mpxp_info<<"data offset   : "<<h->prop->data_offset<<" bytes"<<std::endl;
+    mpxp_info<<"media streams : "<<h->prop->num_streams<<std::endl;
+    mpxp_info<<"flags         : ";
+    if (h->prop->flags & PN_SAVE_ENABLED) mpxp_info<<"save_enabled ";
+    if (h->prop->flags & PN_PERFECT_PLAY_ENABLED) mpxp_info<<"perfect_play_enabled ";
+    if (h->prop->flags & PN_LIVE_BROADCAST) mpxp_info<<"live_broadcast ";
+    mpxp_info<<std::endl;
   }
   stream=h->streams;
   if(stream)
   {
     while (*stream)
     {
-      printf("\nSTREAM %i:\n", (*stream)->stream_number);
-      printf("stream name [mime type] : %s [%s]\n", (*stream)->stream_name, (*stream)->mime_type);
-      printf("bit rate (max/avg)      : %i/%i\n", (*stream)->max_bit_rate, (*stream)->avg_bit_rate);
-      printf("packet size (max/avg)   : %i/%i bytes\n", (*stream)->max_packet_size, (*stream)->avg_packet_size);
-      printf("start time : %i\n", (*stream)->start_time);
-      printf("pre-buffer : %i ms\n", (*stream)->preroll);
-      printf("duration   : %i ms\n", (*stream)->duration);
-      printf("type specific data:\n");
+      mpxp_info<<"STREAM: "<<(*stream)->stream_number<<std::endl;
+      mpxp_info<<"stream name [mime type] : "<<(*stream)->stream_name<<"["<<((*stream)->mime_type)<<"]"<<std::endl;
+      mpxp_info<<"bit rate (max/avg)      : "<<(*stream)->max_bit_rate<<"/"<<((*stream)->avg_bit_rate)<<std::endl;
+      mpxp_info<<"packet size (max/avg)   : "<<(*stream)->max_packet_size<<"/"<<((*stream)->avg_packet_size)<<" bytes"<<std::endl;
+      mpxp_info<<"start time : "<<(*stream)->start_time<<std::endl;
+      mpxp_info<<"pre-buffer : "<<(*stream)->preroll<<" ms"<<std::endl;
+      mpxp_info<<"duration   : "<<(*stream)->duration<<" ms"<<std::endl;
+      mpxp_info<<"type specific data:"<<std::endl;
       hexdump((*stream)->type_specific_data, (*stream)->type_specific_len);
       stream++;
     }
   }
   if(h->data)
   {
-    printf("\nDATA:\n");
-    printf("size      : %i\n", h->data->size);
-    printf("packets   : %i\n", h->data->num_packets);
-    printf("next DATA : 0x%08x\n", h->data->next_data_header);
+    mpxp_info<<"DATA:"<<std::endl;
+    mpxp_info<<"size      : "<<h->data->size<<std::endl;
+    mpxp_info<<"packets   : "<<h->data->num_packets<<std::endl;
+    mpxp_info<<"next DATA : 0x"<<std::hex<<h->data->next_data_header<<std::endl;
   }
 }
 
@@ -732,14 +695,12 @@ void rmff_fix_header(rmff_header_t *h) {
   int num_streams=0;
 
   if (!h) {
-    MSG_ERR("rmff_fix_header: fatal: no header given.\n");
+    mpxp_err<<"rmff_fix_header: fatal: no header given"<<std::endl;
     return;
   }
 
-  if (!h->streams) {
-    MSG_WARN("rmff_fix_header: warning: no MDPR chunks\n");
-  } else
-  {
+  if (!h->streams) mpxp_warn<<"rmff_fix_header: warning: no MDPR chunks"<<std::endl;
+  else {
     streams=h->streams;
     while (*streams)
     {
@@ -754,31 +715,31 @@ void rmff_fix_header(rmff_header_t *h) {
     if (h->prop->size != 50)
     {
 #ifdef LOG
-      printf("rmff_fix_header: correcting prop.size from %i to %i\n", h->prop->size, 50);
+      mpxp_info<<"rmff_fix_header: correcting prop.size from "<<h->prop->size<<" to 50"<<std::endl;
 #endif
       h->prop->size=50;
     }
     if (h->prop->num_streams != num_streams)
     {
 #ifdef LOG
-      printf("rmff_fix_header: correcting prop.num_streams from %i to %i\n", h->prop->num_streams, num_streams);
+      mpxp_info<<"rmff_fix_header: correcting prop.num_streams from "<<h->prop->num_streams<<" to"<<num_streams<<std::endl;
 #endif
       h->prop->num_streams=num_streams;
     }
     num_headers++;
     header_size+=50;
   } else
-    MSG_WARN("rmff_fix_header: warning: no PROP chunk.\n");
+    mpxp_warn<<"rmff_fix_header: warning: no PROP chunk"<<std::endl;
 
   if (h->cont) {
     num_headers++;
     header_size+=h->cont->size;
   } else
-    MSG_WARN("rmff_fix_header: warning: no CONT chunk.\n");
+    mpxp_warn<<"rmff_fix_header: warning: no CONT chunk"<<std::endl;
 
   if (!h->data) {
 #ifdef LOG
-    printf("rmff_fix_header: no DATA chunk, creating one\n");
+    mpxp_info<<"rmff_fix_header: no DATA chunk, creating one"<<std::endl;
 #endif
     h->data=new rmff_data_t;
     h->data->object_id=DATA_TAG;
@@ -792,7 +753,7 @@ void rmff_fix_header(rmff_header_t *h) {
 
   if (!h->fileheader) {
 #ifdef LOG
-    printf("rmff_fix_header: no fileheader, creating one");
+    mpxp_info<<"rmff_fix_header: no fileheader, creating one");
 #endif
     h->fileheader=new rmff_fileheader_t;
     h->fileheader->object_id=RMF_TAG;
@@ -806,7 +767,7 @@ void rmff_fix_header(rmff_header_t *h) {
 
   if(h->fileheader->num_headers != num_headers) {
 #ifdef LOG
-    printf("rmff_fix_header: setting num_headers from %i to %i\n", h->fileheader->num_headers, num_headers);
+    mpxp_info<<"rmff_fix_header: setting num_headers from "<<h->fileheader->num_headers<<" to"<<num_headers<<std::endl;
 #endif
     h->fileheader->num_headers=num_headers;
   }
@@ -814,26 +775,26 @@ void rmff_fix_header(rmff_header_t *h) {
   if(h->prop) {
     if (h->prop->data_offset != header_size) {
 #ifdef LOG
-      printf("rmff_fix_header: setting prop.data_offset from %i to %i\n", h->prop->data_offset, header_size);
+      mpxp_info<<"rmff_fix_header: setting prop.data_offset from "<<h->prop->data_offset<<" to"<<header_size<<std::endl;
 #endif
       h->prop->data_offset=header_size;
     }
     if (h->prop->num_packets == 0) {
       int p=(int)(h->prop->avg_bit_rate/8.0*(h->prop->duration/1000.0)/h->prop->avg_packet_size);
 #ifdef LOG
-      printf("rmff_fix_header: assuming prop.num_packets=%i\n", p);
+      mpxp_info<<"rmff_fix_header: assuming prop.num_packets="<<p<<std::endl;
 #endif
       h->prop->num_packets=p;
     }
     if (h->data->num_packets == 0) {
 #ifdef LOG
-      printf("rmff_fix_header: assuming data.num_packets=%i\n", h->prop->num_packets);
+      mpxp_info<<"rmff_fix_header: assuming data.num_packets="<<h->prop->num_packets<<std::endl;
 #endif
       h->data->num_packets=h->prop->num_packets;
     }
 
 #ifdef LOG
-    printf("rmff_fix_header: assuming data.size=%i\n", h->prop->num_packets*h->prop->avg_packet_size);
+    mpxp_info<<"rmff_fix_header: assuming data.size="<<h->prop->num_packets*h->prop->avg_packet_size<<std::endl;
 #endif
     h->data->size=h->prop->num_packets*h->prop->avg_packet_size;
   }

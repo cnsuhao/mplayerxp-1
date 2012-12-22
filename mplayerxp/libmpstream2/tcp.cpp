@@ -74,7 +74,7 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
 #endif
 
     buf[0]=0;
-    MSG_V("[tcp%s] Trying to resolv host '%s'\n", af2String(af), _url.host().c_str());
+    mpxp_v<<"[tcp"<<af2String(af)<<"] Trying to resolv host: "<<_url.host()<<std::endl;
     _fd = ::socket(af==Tcp::IP4?AF_INET:AF_INET6, SOCK_STREAM, 0);
 
     if( _fd==-1 ) {
@@ -98,14 +98,14 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
 	case Tcp::IP4: our_s_addr = (any_t*) &server_address.four.sin_addr; break;
 	case Tcp::IP6: our_s_addr = (any_t*) &server_address.six.sin6_addr; break;
 	default:
-	    MSG_ERR("[tcp%s] UnknownAF: %i\n", af2String(af), af);
+	    mpxp_err<<"[tcp"<<af2String(af)<<"] UnknownAF: "<<af<<std::endl;
 	    _error=Tcp::Err_Fatal;
 	    return;
     }
 
     memset(&server_address, 0, sizeof(server_address));
 
-    MSG_V("[tcp%s] PreResolving Host '%s'\n",af2String(af), _url.host().c_str());
+    mpxp_v<<"[tcp"<<af2String(af)<<"] PreResolving Host "<<_url.host()<<std::endl;
 #ifndef HAVE_WINSOCK2
 #ifdef USE_ATON
     if (::inet_aton(_url.host().c_str(), our_s_addr)!=1)
@@ -116,7 +116,7 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
     if (::inet_addr(_url.host().c_str())==INADDR_NONE )
 #endif
     {
-	MSG_V("[tcp%s] Resolving Host '%s'\n",af2String(af), _url.host().c_str());
+	mpxp_v<<"[tcp"<<af2String(af)<<"] Resolving Host: "<<_url.host()<<std::endl;
 
 #ifdef HAVE_GETHOSTBYNAME2
 	hp=(struct hostent*)::gethostbyname2( _url.host().c_str(), af==Tcp::IP4?AF_INET:AF_INET6 );
@@ -124,7 +124,7 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
 	hp=(struct hostent*)::gethostbyname( _url.host().c_str() );
 #endif
 	if( hp==NULL ) {
-	    MSG_V("[tcp%s] Can't resolv: %s\n",af2String(af), _url.host().c_str());
+	    mpxp_v<<"[tcp"<<af2String(af)<<"] Can't resolv: "<<_url.host()<<std::endl;
 	    _error=Tcp::Err_Fatal;
 	    return;
 	}
@@ -150,7 +150,7 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
 	    server_address_size = sizeof(server_address.six);
 	    break;
 	default:
-	    MSG_ERR("[tcp%s] UnknownAF: %i\n",af2String(af), af);
+	    mpxp_err<<"[tcp"<<af2String(af)<<"] UnknownAF: "<<af<<std::endl;
 	    _error = Tcp::Err_Fatal;
 	    return;
     }
@@ -160,7 +160,7 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
 #else
     ::inet_ntop(af==Tcp::IP4?AF_INET:AF_INET6, our_s_addr, buf, 255);
 #endif
-    MSG_INFO("[tcp%s] Connecting to server: %s (%s:%i)\n",af2String(af),_url.host().c_str(),buf,_url.port());
+    mpxp_info<<"[tcp"<<af2String(af)<<"] Connecting to server: "<<_url.host()<<" ("<<(const char*)buf<<":"<<_url.port()<<")"<<std::endl;
 
     // Turn the socket as non blocking so we can timeout on the connection
 #ifndef HAVE_WINSOCK2
@@ -175,7 +175,7 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
 #else
 	if( (WSAGetLastError() != WSAEINPROGRESS) && (WSAGetLastError() != WSAEWOULDBLOCK) ) {
 #endif
-	    MSG_V("[tcp%s] Can't connect to server: %s\n",af2String(af),_url.host().c_str());
+	    mpxp_v<<"[tcp"<<af2String(af)<<"] Can't connect to server: "<<_url.host()<<std::endl;
 	    ::closesocket(_fd);
 	    _fd=-1;
 	    _error=Tcp::Err_Port;
@@ -190,9 +190,9 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
     while((ret = ::select(FD_SETSIZE, NULL, &set, NULL, &tv)) == 0) {
 	if(count > 30 || mp_input_check_interrupt(libinput,500)==MPXP_Ok) {
 	    if(count > 30)
-		MSG_ERR("[tcp%s] Connecting timeout\n",af2String(af));
+		mpxp_err<<"[tcp"<<af2String(af)<<"] Connecting timeout"<<std::endl;
 	    else
-		MSG_V("[tcp%s] Connection interrupted by user\n",af2String(af));
+		mpxp_v<<"[tcp"<<af2String(af)<<"] Connection interrupted by user"<<std::endl;
 	    _error=Tcp::Err_Timeout;
 	    return;
 	}
@@ -202,7 +202,7 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
 	tv.tv_sec = 0;
 	tv.tv_usec = 500000;
     }
-    if (ret < 0) MSG_ERR("[tcp%s] Select failed\n",af2String(af));
+    if (ret < 0) mpxp_err<<"[tcp"<<af2String(af)<<"] Select failed"<<std::endl;
 
     // Turn back the socket as blocking
 #ifndef HAVE_WINSOCK2
@@ -215,12 +215,12 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
     err_len = sizeof(int);
     ret = ::getsockopt(_fd,SOL_SOCKET,SO_ERROR,&_error,&err_len);
     if(ret < 0) {
-	MSG_ERR("[tcp%s] Get socket option failed: %s\n",af2String(af),strerror(errno));
+	mpxp_err<<"[tcp"<<af2String(af)<<"] Get socket option failed: "<<strerror(errno)<<std::endl;
 	_error=Tcp::Err_Fatal;
 	return;
     }
     if(_error > 0) {
-	MSG_ERR("[tcp%s] Connection error: %s\n",af2String(af),strerror(_error));
+	mpxp_err<<"[tcp"<<af2String(af)<<"] Connection error: "<<strerror(_error)<<std::endl;
 	_error=Tcp::Err_Port;
 	return;
     }

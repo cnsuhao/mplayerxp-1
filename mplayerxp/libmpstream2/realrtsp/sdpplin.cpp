@@ -75,7 +75,7 @@ static char *b64_decode(const char *in, char *out, int *size)
       int c = in[i+j];
 
       if (dtable[c] & 0x80) {
-	printf("Illegal character '%c' in input.\n", c);
+	mpxp_info<<"Illegal character '"<<c<<"' in input"<<std::endl;
 //        exit(1);
 	return NULL;
       }
@@ -139,7 +139,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
     desc->id = mp_strdup(buf);
   } else
   {
-    printf("sdpplin: no m= found.\n");
+    mpxp_info<<"sdpplin: no m= found"<<std::endl;
     delete desc;
     xbuffer_free(buf);
     return NULL;
@@ -154,7 +154,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
       int len=strchr(*data,'\n')-(*data);
       buf = xbuffer_copyin(buf, 0, *data, len+1);
       buf[len]=0;
-      printf("libreal: sdpplin_stream: '%s'\n", buf);
+      mpxp_info<<"libreal: sdpplin_stream: "<<buf<<std::endl;
     }
 #endif
 
@@ -222,7 +222,7 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
       handled=1;
       *data=nl(*data);
 #ifdef LOG
-      printf("mlti_data_size: %i\n", desc->mlti_data_size);
+      mpxp_info<<"mlti_data_size: "<<desc->mlti_data_size<<std::endl;
 #endif
     }
 
@@ -237,18 +237,18 @@ static sdpplin_stream_t *sdpplin_parse_stream(char **data) {
       int len=strchr(*data,'\n')-(*data);
       buf = xbuffer_copyin(buf, 0, *data, len+1);
       buf[len]=0;
-      printf("libreal: sdpplin_stream: not handled: '%s'\n", buf);
+      mpxp_info<<"libreal: sdpplin_stream: not handled: "<<buf<<std::endl;
 #endif
       *data=nl(*data);
     }
   }
 
   if (!got_mimetype) {
-    MSG_V("libreal: sdpplin_stream: no mimetype\n");
+    mpxp_v<<"libreal: sdpplin_stream: no mimetype"<<std::endl;
     desc->mime_type = mp_strdup("audio/x-pn-realaudio");
     desc->mime_type_size = strlen(desc->mime_type);
     if (desc->stream_id)
-      MSG_WARN("libreal: sdpplin_stream: implicit mimetype for stream_id != 0, weird.\n");
+      mpxp_warn<<"libreal: sdpplin_stream: implicit mimetype for stream_id != 0, weird"<<std::endl;
   }
 
   xbuffer_free(buf);
@@ -271,7 +271,7 @@ sdpplin_t *sdpplin_parse(char *data) {
       int len=strchr(data,'\n')-(data);
       buf = xbuffer_copyin(buf, 0, data, len+1);
       buf[len]=0;
-      printf("libreal: sdpplin: '%s'\n", buf);
+      mpxp_info<<"libreal: sdpplin: "<<buf<<std::endl;
     }
 #endif
 
@@ -280,23 +280,21 @@ sdpplin_t *sdpplin_parse(char *data) {
     if (filter(data, "m=", &buf)) {
       sdpplin_stream_t *stream=sdpplin_parse_stream(&data);
 #ifdef LOG
-      printf("got data for stream id %u\n", stream->stream_id);
+      mpxp_info<<"got data for stream id "<<stream->stream_id<<std::endl;
 #endif
       if (desc->stream && (stream->stream_id >= 0) && (stream->stream_id < desc->stream_count))
       desc->stream[stream->stream_id]=stream;
-      else if (desc->stream)
-      {
-      MSG_ERR("sdpplin: bad stream_id %d (must be >= 0, < %d). Broken sdp?\n",
-	stream->stream_id, desc->stream_count);
+      else if (desc->stream) {
+      mpxp_err<<"sdpplin: bad stream_id "<<stream->stream_id<<" (must be >= 0, < "<<desc->stream_count<<"), Broken sdp?"<<std::endl;
       delete stream;
       } else {
-	MSG_V("sdpplin: got 'm=', but 'a=StreamCount' is still unknown.\n");
+	mpxp_v<<"sdpplin: got 'm=', but 'a=StreamCount' is still unknown"<<std::endl;
 	if (stream->stream_id == 0) {
 	  desc->stream_count=1;
 	  desc->stream=new sdpplin_stream_t*;
 	  desc->stream[0]=stream;
 	} else {
-	  MSG_ERR("sdpplin: got 'm=', but 'a=StreamCount' is still unknown and stream_id != 0. Broken sdp?\n");
+	  mpxp_err<<"sdpplin: got 'm=', but 'a=StreamCount' is still unknown and stream_id != 0. Broken sdp?"<<std::endl;
 	  delete stream;
 	}
       }
@@ -349,7 +347,7 @@ sdpplin_t *sdpplin_parse(char *data) {
       int len=strchr(data,'\n')-data;
       buf = xbuffer_copyin(buf, 0, data, len+1);
       buf[len]=0;
-      printf("libreal: sdpplin: not handled: '%s'\n", buf);
+      mpxp_info<<"libreal: sdpplin: not handled: "<<buf<<std::endl;
 #endif
       data=nl(data);
     }

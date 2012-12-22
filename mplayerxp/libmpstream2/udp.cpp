@@ -57,11 +57,11 @@ void Udp::open(const URL& url,int reuse_socket)
     struct hostent *hp;
     int reuse=reuse_socket;
 
-    MSG_V("[udp] Listening for traffic on %s:%d ...\n", url.host().c_str(), url.port());
+    mpxp_v<<"[udp] Listening for traffic on "<<url.host()<<":"<<url.port()<<std::endl;
 
     _fd = ::socket (AF_INET, SOCK_DGRAM, 0);
     if (socket_server_fd == -1) {
-	MSG_ERR("[udp] Failed to create socket\n");
+	mpxp_err<<"[udp] Failed to create socket"<<std::endl;
 	return;
     }
 
@@ -69,7 +69,7 @@ void Udp::open(const URL& url,int reuse_socket)
 #ifndef HAVE_WINSOCK2
 	hp = (struct hostent *) ::gethostbyname (url.host().c_str());
 	if (!hp) {
-	    MSG_ERR("[udp] Counldn't resolve name: %s\n", url.host().c_str());
+	    mpxp_err<<"[udp] Counldn't resolve name: "<<url.host()<<std::endl;
 	    ::closesocket (_fd);
 	    _fd = -1;
 	    return;
@@ -94,7 +94,7 @@ void Udp::open(const URL& url,int reuse_socket)
     server_address.sin_port = htons (url.port());
 
     if(reuse_socket && ::setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)))
-	MSG_ERR("[udp] SO_REUSEADDR failed! ignore.\n");
+	mpxp_err<<"[udp] SO_REUSEADDR failed! ignore"<<std::endl;
 
     if (::bind (_fd, (struct sockaddr *) &server_address,
 		sizeof (server_address)) == -1)  {
@@ -103,7 +103,7 @@ void Udp::open(const URL& url,int reuse_socket)
 #else
 	if (WSAGetLastError () != WSAEINPROGRESS) {
 #endif /* HAVE_WINSOCK2 */
-	    MSG_ERR("[udp] Failed to connect to server\n");
+	    mpxp_err<<"[udp] Failed to connect to server"<<std::endl;
 	    ::closesocket (_fd);
 	    _fd = -1;
 	    return;
@@ -114,7 +114,7 @@ void Udp::open(const URL& url,int reuse_socket)
     if (::isalpha (url.host()[0])) {
 	hp = (struct hostent *) ::gethostbyname (url.host().c_str());
 	if (!hp) {
-	    MSG_ERR("[udp] Could not resolve name: %s\n", url.host().c_str());
+	    mpxp_err<<"[udp] Could not resolve name: "<<url.host()<<std::endl;
 	    ::closesocket (_fd);
 	    _fd = -1;
 	    return;
@@ -130,7 +130,7 @@ void Udp::open(const URL& url,int reuse_socket)
     rxsockbufsz = 240 * 1024;
     if (setsockopt (socket_server_fd, SOL_SOCKET, SO_RCVBUF,
 		  &rxsockbufsz, sizeof (rxsockbufsz))) {
-	MSG_ERR("[udp] Couldn't set receive socket buffer size\n");
+	mpxp_err<<"[udp] Couldn't set receive socket buffer size"<<std::endl;
     }
     if ((ntohl (server_address.sin_addr.s_addr) >> 28) == 0xe) {
 	mcast.imr_multiaddr.s_addr = server_address.sin_addr.s_addr;
@@ -138,7 +138,7 @@ void Udp::open(const URL& url,int reuse_socket)
 
 	if (::setsockopt (_fd, IPPROTO_IP,
 			IP_ADD_MEMBERSHIP, &mcast, sizeof (mcast))) {
-	    MSG_ERR("[udp] IP_ADD_MEMBERSHIP failed (do you have multicasting enabled in your kernel?)\n");
+	    mpxp_err<<"[udp] IP_ADD_MEMBERSHIP failed (do you have multicasting enabled in your kernel?)"<<std::endl;
 	    ::closesocket (_fd);
 	    _fd = -1;
 	    return;
@@ -153,14 +153,14 @@ void Udp::open(const URL& url,int reuse_socket)
 
     err = ::select (_fd + 1, &set, NULL, NULL, &tv);
     if (err < 0) {
-	MSG_FATAL("[udp] Select failed: %s\n", strerror (errno));
+	mpxp_fatal<<"[udp] Select failed: "<<strerror (errno)<<std::endl;
 	::closesocket (_fd);
 	_fd = -1;
 	return;
     }
 
     if (err == 0) {
-	MSG_ERR("[udp] Timeout! No data from host %s\n", url.host().c_str());
+	mpxp_err<<"[udp] Timeout! No data from host "<<url.host()<<std::endl;
 	::closesocket (_fd);
 	_fd = -1;
 	return;
@@ -169,7 +169,7 @@ void Udp::open(const URL& url,int reuse_socket)
     err_len = sizeof (err);
     ::getsockopt (_fd, SOL_SOCKET, SO_ERROR, &err, &err_len);
     if (err) {
-	MSG_DBG2("[udp] Socket error: %d\n", err);
+	mpxp_dbg2<<"[udp] Socket error: "<<err<<std::endl;
 	::closesocket (_fd);
 	_fd = -1;
 	return;

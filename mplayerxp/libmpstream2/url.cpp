@@ -47,7 +47,7 @@ MPXP_Rc URL::_build() {
     string2url(escfilename,_url);
     // Copy the url in the URL container
     _url = escfilename;
-    MSG_V("Filename for url is now %s\n",escfilename);
+    mpxp_v<<"Filename for url is now "<<escfilename<<std::endl;
 
     // extract the protocol
     pos1 = _url.find("://");
@@ -57,7 +57,7 @@ MPXP_Rc URL::_build() {
 	    pos1 = 3; // points to ':'
 	    jumpSize = 1;
 	} else {
-	    MSG_V("Not an URL!\n");
+	    mpxp_v<<"Not an URL!"<<std::endl;
 	    goto err_out;
 	}
     }
@@ -165,7 +165,7 @@ std::string URL::protocol2lower() const {
 
 MPXP_Rc URL::check4proxies() {
     if( protocol2lower()=="http_proxy") {
-	MSG_V("Using HTTP proxy: http://%s:%d\n", _host.c_str(), _port);
+	mpxp_v<<"Using HTTP proxy: http://"<<_host<<":"<<_port<<std::endl;
 	return MPXP_Ok;
     }
     // Check if the http_proxy environment variable is set.
@@ -177,14 +177,14 @@ MPXP_Rc URL::check4proxies() {
 	    URL proxy_url(new_url);
 #ifdef HAVE_AF_INET6
 	    if (net_conf.ipv4_only_proxy && (::gethostbyname(_host.c_str())==NULL)) {
-		MSG_WARN("Could not find resolve remote hostname for AF_INET. Trying without proxy.\n");
+		mpxp_warn<<"Could not find resolve remote hostname for AF_INET. Trying without proxy"<<std::endl;
 		return MPXP_Ok;
 	    }
 #endif
-	    MSG_V("Using HTTP proxy: %s\n", new_url.c_str());
+	    mpxp_v<<"Using HTTP proxy: "<<new_url<<std::endl;
 	    new_url=std::string("http_proxy://")+proxy_url.host()+":"+proxy_url.port2str()+"/"+_url;
 	    if(proxy_url.redirect(new_url)!=MPXP_Ok) {
-		MSG_WARN("Invalid proxy setting...Trying without proxy.\n");
+		mpxp_warn<<"Invalid proxy setting... Trying without proxy"<<std::endl;
 		return MPXP_Ok;
 	    }
 	    *this=proxy_url;
@@ -245,7 +245,7 @@ url_escape_string_part(char *outbuf, const char *inbuf) {
 			    *outbuf++=c;                      // already
 
 							      // dont escape again
-			    MSG_ERR("URL String already escaped: %c %c %c\n",c,c1,c2);
+			    mpxp_err<<"URL String already escaped: "<<c<<" "<<c1<<" "<<c2<<std::endl;
 							      // error as this should not happen against RFC 2396
 							      // to escape a string twice
 		} else {
@@ -329,12 +329,12 @@ string2url(char *outbuf, const std::string& _inbuf) {
 }
 
 void URL::debug() const {
-    MSG_V("url=%s\n", _url.c_str() );
-    MSG_V("protocol=%s\n", _protocol.c_str() );
-    MSG_V("hostname=%s\n", _host.c_str() );
-    MSG_V("port=%d\n", _port );
-    MSG_V("file=%s\n", _file.c_str() );
-    MSG_V("username=%s\n", _user.c_str() );
-    MSG_V("password=%s\n", _password.c_str() );
+    mpxp_v<<"url="<<_url<<std::endl;
+    mpxp_v<<"protocol="<<_protocol<<std::endl;
+    mpxp_v<<"hostname="<<_host<<std::endl;
+    mpxp_v<<"port="<<_port<<std::endl;
+    mpxp_v<<"file="<<_file<<std::endl;
+    mpxp_v<<"username="<<_user<<std::endl;
+    mpxp_v<<"password="<<_password<<std::endl;
 }
 } // namespace mpxp

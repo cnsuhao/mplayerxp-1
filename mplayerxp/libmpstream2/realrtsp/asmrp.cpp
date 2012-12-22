@@ -50,31 +50,31 @@ using namespace mpxp;
 /*
 #define LOG
 */
+enum {
+    ASMRP_SYM_NONE=0,
+    ASMRP_SYM_EOF,
+    ASMRP_SYM_NUM,
+    ASMRP_SYM_ID,
+    ASMRP_SYM_STRING,
 
-#define ASMRP_SYM_NONE         0
-#define ASMRP_SYM_EOF          1
+    ASMRP_SYM_HASH=10,
+    ASMRP_SYM_SEMICOLON,
+    ASMRP_SYM_COMMA,
+    ASMRP_SYM_EQUALS,
+    ASMRP_SYM_AND,
+    ASMRP_SYM_OR,
+    ASMRP_SYM_LESS,
+    ASMRP_SYM_LEQ,
+    ASMRP_SYM_GEQ,
+    ASMRP_SYM_GREATER,
+    ASMRP_SYM_DOLLAR,
+    ASMRP_SYM_LPAREN,
+    ASMRP_SYM_RPAREN,
 
-#define ASMRP_SYM_NUM          2
-#define ASMRP_SYM_ID           3
-#define ASMRP_SYM_STRING       4
+    ASMRP_MAX_ID=1024,
 
-#define ASMRP_SYM_HASH         10
-#define ASMRP_SYM_SEMICOLON    11
-#define ASMRP_SYM_COMMA        12
-#define ASMRP_SYM_EQUALS       13
-#define ASMRP_SYM_AND          14
-#define ASMRP_SYM_OR           15
-#define ASMRP_SYM_LESS         16
-#define ASMRP_SYM_LEQ          17
-#define ASMRP_SYM_GEQ          18
-#define ASMRP_SYM_GREATER      19
-#define ASMRP_SYM_DOLLAR       20
-#define ASMRP_SYM_LPAREN       21
-#define ASMRP_SYM_RPAREN       22
-
-#define ASMRP_MAX_ID         1024
-
-#define ASMRP_MAX_SYMTAB       10
+    ASMRP_MAX_SYMTAB=10
+};
 
 typedef struct {
   char *id;
@@ -128,7 +128,7 @@ static void asmrp_getch (asmrp_t *p) {
   p->pos++;
 
 #ifdef LOG
-  printf ("%c\n", p->ch);
+  mpxp_info<<p->ch<<std::endl;
 #endif
 
 }
@@ -168,7 +168,7 @@ static void asmrp_string (asmrp_t *p) {
     if(l < ASMRP_MAX_ID - 1)
       p->str[l++] = p->ch;
     else
-      MSG_ERR("error: string too long, ignoring char %c.\n", p->ch);
+      mpxp_err<<"error: string too long, ignoring char: "<<p->ch<<std::endl;
 
     asmrp_getch (p);
   }
@@ -192,7 +192,7 @@ static void asmrp_identifier (asmrp_t *p) {
     if(l < ASMRP_MAX_ID - 1)
       p->str[l++] = p->ch;
     else
-      MSG_ERR("error: identifier too long, ignoring char %c.\n", p->ch);
+      mpxp_err<<"error: identifier too long, ignoring char: "<<p->ch<<std::endl;
 
     asmrp_getch (p);
   }
@@ -204,73 +204,73 @@ static void asmrp_identifier (asmrp_t *p) {
 #ifdef LOG
 static void asmrp_print_sym (asmrp_t *p) {
 
-  printf ("symbol: ");
+  mpxp_info<<"symbol: ";
 
   switch (p->sym) {
 
   case ASMRP_SYM_NONE:
-    printf ("NONE\n");
+    mpxp_info<<"NONE"<<std::endl;
     break;
 
   case ASMRP_SYM_EOF:
-    printf ("EOF\n");
+    mpxp_info<<"EOF"<<std::endl;
     break;
 
   case ASMRP_SYM_NUM:
-    printf ("NUM %d\n", p->num);
+    mpxp_info<<"NUM "<<p->num<<std::endl;
     break;
 
   case ASMRP_SYM_ID:
-    printf ("ID '%s'\n", p->str);
+    mpxp_info<<"ID "<<p->str<<std::endl;
     break;
 
   case ASMRP_SYM_STRING:
-    printf ("STRING \"%s\"\n", p->str);
+    mpxp_info<<"STRING \""<<p->str<<"\""<<std::endl;
     break;
 
   case ASMRP_SYM_HASH:
-    printf ("#\n");
+    mpxp_info<<"#"<<std::endl;
     break;
 
   case ASMRP_SYM_SEMICOLON:
-    printf (";\n");
+    mpxp_info<<";"<<std::endl;
     break;
   case ASMRP_SYM_COMMA:
-    printf (",\n");
+    mpxp_info<<","<<std::endl;
     break;
   case ASMRP_SYM_EQUALS:
-    printf ("==\n");
+    mpxp_info<<"=="<<std::endl;
     break;
   case ASMRP_SYM_AND:
-    printf ("&&\n");
+    mpxp_info<<"&&"<<std::endl;
     break;
   case ASMRP_SYM_OR:
-    printf ("||\n");
+    mpxp_info<<"||"<<std::endl;
     break;
   case ASMRP_SYM_LESS:
-    printf ("<\n");
+    mpxp_info<<"<"<<std::endl;
     break;
   case ASMRP_SYM_LEQ:
-    printf ("<=\n");
+    mpxp_info<<"<="<<std::endl;
     break;
   case ASMRP_SYM_GEQ:
-    printf (">=\n");
+    mpxp_info<<">="<<std::endl;
     break;
   case ASMRP_SYM_GREATER:
-    printf (">\n");
+    mpxp_info<<">"<<std::endl;
     break;
   case ASMRP_SYM_DOLLAR:
-    printf ("$\n");
+    mpxp_info<<"$"<<std::endl;
     break;
   case ASMRP_SYM_LPAREN:
-    printf ("(\n");
+    mpxp_info<<"("<<std::endl;
     break;
   case ASMRP_SYM_RPAREN:
-    printf (")\n");
+    mpxp_info<<")"<<std::endl;
     break;
 
   default:
-    printf ("unknown symbol %d\n", p->sym);
+    mpxp_info<<"unknown symbol "<<std::hex<<p->sym<<std::endl;
   }
 }
 #endif
@@ -390,7 +390,7 @@ static int asmrp_set_id (asmrp_t *p,const char *s, int v) {
 
   if (i<0) {
     if (p->sym_tab_num == ASMRP_MAX_SYMTAB - 1) {
-      MSG_ERR("sym_tab overflow, ignoring identifier %s\n", s);
+      mpxp_err<<"sym_tab overflow, ignoring identifier "<<s<<std::endl;
       return 0;
     }
     i = p->sym_tab_num;
@@ -398,7 +398,7 @@ static int asmrp_set_id (asmrp_t *p,const char *s, int v) {
     p->sym_tab[i].id = mp_strdup (s);
 
 #ifdef LOG
-    printf ("new symbol '%s'\n", s);
+    mpxp_info<<"new symbol "<<s<<std::endl;
 #endif
 
   }
@@ -406,7 +406,7 @@ static int asmrp_set_id (asmrp_t *p,const char *s, int v) {
   p->sym_tab[i].v = v;
 
 #ifdef LOG
-  printf ("symbol '%s' assigned %d\n", s, v);
+  mpxp_info<<"symbol '"<<s<<"' assigned "<<v<<std::endl;
 #endif
 
   return i;
@@ -419,7 +419,7 @@ static int asmrp_operand (asmrp_t *p) {
   int i, ret;
 
 #ifdef LOG
-  printf ("operand\n");
+  mpxp_info<<"operand"<<std::endl;
 #endif
 
   ret = 0;
@@ -431,15 +431,13 @@ static int asmrp_operand (asmrp_t *p) {
     asmrp_get_sym (p);
 
     if (p->sym != ASMRP_SYM_ID) {
-      MSG_ERR("error: identifier expected.\n");
+      mpxp_err<<"error: identifier expected"<<std::endl;
       break;
     }
 
     i = asmrp_find_id (p, p->str);
-    if (i<0) {
-      MSG_ERR("error: unknown identifier %s\n", p->str);
-    } else
-    ret = p->sym_tab[i].v;
+    if (i<0)  mpxp_err<<"error: unknown identifier "<<p->str<<std::endl;
+    else  ret = p->sym_tab[i].v;
 
     asmrp_get_sym (p);
     break;
@@ -456,7 +454,7 @@ static int asmrp_operand (asmrp_t *p) {
     ret = asmrp_condition (p);
 
     if (p->sym != ASMRP_SYM_RPAREN) {
-      MSG_ERR("error: ) expected.\n");
+      mpxp_err<<"error: ) expected"<<std::endl;
       break;
     }
 
@@ -464,11 +462,11 @@ static int asmrp_operand (asmrp_t *p) {
     break;
 
   default:
-    MSG_ERR("syntax error, $ number or ( expected\n");
+    mpxp_err<<"syntax error, $ number or ( expected"<<std::endl;
   }
 
 #ifdef LOG
-  printf ("operand done, =%d\n", ret);
+  mpxp_info<<"operand done, ="<<ret<<std::endl;
 #endif
 
   return ret;
@@ -480,7 +478,7 @@ static int asmrp_comp_expression (asmrp_t *p) {
   int a;
 
 #ifdef LOG
-  printf ("comp_expression\n");
+  mpxp_info<<"comp_expression"<<std::endl;
 #endif
 
   a = asmrp_operand (p);
@@ -518,7 +516,7 @@ static int asmrp_comp_expression (asmrp_t *p) {
   }
 
 #ifdef LOG
-  printf ("comp_expression done = %d\n", a);
+  mpxp_info<<"comp_expression done = "<<a<<std::endl;
 #endif
   return a;
 }
@@ -528,7 +526,7 @@ static int asmrp_condition (asmrp_t *p) {
   int a;
 
 #ifdef LOG
-  printf ("condition\n");
+  mpxp_info<<"condition"<<std::endl;
 #endif
 
   a = asmrp_comp_expression (p);
@@ -553,7 +551,7 @@ static int asmrp_condition (asmrp_t *p) {
   }
 
 #ifdef LOG
-  printf ("condition done = %d\n", a);
+  mpxp_info<<"condition done = "<<a<<std::endl;
 #endif
   return a;
 }
@@ -561,37 +559,37 @@ static int asmrp_condition (asmrp_t *p) {
 static void asmrp_assignment (asmrp_t *p) {
 
 #ifdef LOG
-  printf ("assignment\n");
+  mpxp_info<<"assignment"<<std::endl;
 #endif
 
   if (p->sym == ASMRP_SYM_COMMA || p->sym == ASMRP_SYM_SEMICOLON) {
 #ifdef LOG
-    printf ("empty assignment\n");
+    mpxp_info<<"empty assignment"<<std::endl;
 #endif
     return;
   }
 
   if (p->sym != ASMRP_SYM_ID) {
-    MSG_ERR("error: identifier expected\n");
+    mpxp_err<<"error: identifier expected"<<std::endl;
     return;
   }
   asmrp_get_sym (p);
 
   if (p->sym != ASMRP_SYM_EQUALS) {
-    MSG_ERR("error: = expected\n");
+    mpxp_err<<"error: = expected"<<std::endl;
     return;
   }
   asmrp_get_sym (p);
 
   if ( (p->sym != ASMRP_SYM_NUM) && (p->sym != ASMRP_SYM_STRING)
        && (p->sym != ASMRP_SYM_ID)) {
-    MSG_ERR("error: number or string expected\n");
+    mpxp_err<<"error: number or string expected"<<std::endl;
     return;
   }
   asmrp_get_sym (p);
 
 #ifdef LOG
-  printf ("assignment done\n");
+  mpxp_info<<"assignment done"<<std::endl;
 #endif
 }
 
@@ -600,7 +598,7 @@ static int asmrp_rule (asmrp_t *p) {
   int ret;
 
 #ifdef LOG
-  printf ("rule\n");
+  mpxp_info<<"rule"<<std::endl;
 #endif
 
   ret = 1;
@@ -629,11 +627,11 @@ static int asmrp_rule (asmrp_t *p) {
   }
 
 #ifdef LOG
-  printf ("rule done = %d\n", ret);
+  mpxp_info<<"rule done = "<<ret<<std::endl;
 #endif
 
   if (p->sym != ASMRP_SYM_SEMICOLON) {
-    MSG_ERR("semicolon expected.\n");
+    mpxp_err<<"semicolon expected"<<std::endl;
     return ret;
   }
 
@@ -647,7 +645,7 @@ static int asmrp_eval (asmrp_t *p, int *matches) {
   int rule_num, num_matches;
 
 #ifdef LOG
-  printf ("eval\n");
+  mpxp_info<<"eval"<<std::endl;
 #endif
 
   asmrp_get_sym (p);
@@ -657,12 +655,12 @@ static int asmrp_eval (asmrp_t *p, int *matches) {
 
     if (asmrp_rule (p)) {
 #ifdef LOG
-      printf ("rule #%d is true\n", rule_num);
+      mpxp_info<<"rule #"<<rule_num<<" is true"<<std::endl;
 #endif
       if(num_matches < MAX_RULEMATCHES - 1)
 	matches[num_matches++] = rule_num;
       else
-	MSG_ERR("Ignoring matched asm rule %d, too many matched rules.\n", rule_num);
+	mpxp_err<<"Ignoring matched asm rule "<<rule_num<<", too many matched rules"<<std::endl;
     }
 
     rule_num++;

@@ -65,20 +65,20 @@ static void hexdump (const char *buf, int length) {
 
   int i;
 
-  printf (" hexdump> ");
+  mpxp_info<<" hexdump> ";
   for (i = 0; i < length; i++) {
     unsigned char c = buf[i];
 
-    printf ("%02x", c);
+    mpxp_info<<c;
 
     if ((i % 16) == 15)
-      printf ("\n         ");
+      mpxp_info<<std::endl<<"         ";
 
     if ((i % 2) == 1)
-      printf (" ");
+      mpxp_info<<" ");
 
   }
-  printf ("\n");
+  mpxp_info<<std::endl;
 }
 #endif
 
@@ -151,7 +151,7 @@ static int select_mlti_data(const char *mlti_chunk, int mlti_size, int selection
       ||(mlti_chunk[3] != 'I'))
   {
 #ifdef LOG
-    printf("libreal: MLTI tag not detected, copying data\n");
+    mpxp_info<<"libreal: MLTI tag not detected, copying data"<<std::endl;
 #endif
     *out = (char *)xbuffer_copyin(*out, 0, mlti_chunk, mlti_size);
     return mlti_size;
@@ -177,8 +177,7 @@ static int select_mlti_data(const char *mlti_chunk, int mlti_size, int selection
   numrules=AV_RB16(mlti_chunk);
 
   if (codec >= numrules) {
-    MSG_WARN("realrtsp: codec index >= number of codecs. %i %i\n",
-      codec, numrules);
+    mpxp_warn<<"realrtsp: codec index >= number of codecs "<<codec<<" "<<numrules<<std::endl;
     return 0;
   }
 
@@ -234,7 +233,7 @@ static rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t b
   header->data=rmff_new_dataheader(0,0);
   header->streams=new(zeromem) rmff_mdpr_t*[desc->stream_count+1];
 #ifdef LOG
-    printf("number of streams: %u\n", desc->stream_count);
+    mpxp_info<<"number of streams: "<<desc->stream_count<<std::endl;
 #endif
 
   for (i=0; i<desc->stream_count; i++) {
@@ -245,12 +244,12 @@ static rmff_header_t *real_parse_sdp(char *data, char **stream_rules, uint32_t b
     int rulematches[MAX_RULEMATCHES];
 
 #ifdef LOG
-    printf("calling asmrp_match with:\n%s\n%u\n", desc->stream[i]->asm_rule_book, bandwidth);
+    mpxp_info<<"calling asmrp_match with: "<<desc->stream[i]->asm_rule_book<<" "<<bandwidth<<std::endl;
 #endif
     n=asmrp_match(desc->stream[i]->asm_rule_book, bandwidth, rulematches);
     for (j=0; j<n; j++) {
 #ifdef LOG
-      printf("asmrp rule match: %u for stream %u\n", rulematches[j], desc->stream[i]->stream_id);
+      mpxp_info<<"asmrp rule match: "<<rulematches[j]<<" for stream "<<desc->stream[i]->stream_id<<std::endl;
 #endif
       sprintf(b,"stream=%u;rule=%u,", desc->stream[i]->stream_id, rulematches[j]);
       *stream_rules = (char *)xbuffer_strcat(*stream_rules, b);
@@ -325,8 +324,7 @@ int real_get_rdt_chunk(Rtsp& rtsp, char **buffer, int rdt_rawdata) {
   if (n<8) return 0;
   if (header[0] != 0x24)
   {
-    MSG_WARN("realrtsp: rdt chunk not recognized: got 0x%02x\n",
-      header[0]);
+    mpxp_warn<<"realrtsp: rdt chunk not recognized: got 0x"<<std::hex<<header[0]<<std::endl;
     return 0;
   }
   /* header[1] is channel, normally 0, ignored */
@@ -335,7 +333,7 @@ int real_get_rdt_chunk(Rtsp& rtsp, char **buffer, int rdt_rawdata) {
   if ((flags1 & 0xc0) != 0x40)
   {
 #ifdef LOG
-    printf("got flags1: 0x%02x\n",flags1);
+    mpxp_info<<"got flags1: 0x"<<std::hex<<flags1<<std::endl;
 #endif
     if(header[6] == 0x06) { // eof packet
       rtsp.read_data((char *)header, 7); // Skip the rest of the eof packet
@@ -346,7 +344,7 @@ int real_get_rdt_chunk(Rtsp& rtsp, char **buffer, int rdt_rawdata) {
        */
       if(flags1 & 0x7c) // ignore eof for streams with id != 0
 	return 0;
-      MSG_INFO("realrtsp: Stream EOF detected\n");
+      mpxp_info<<"realrtsp: Stream EOF detected"<<std::endl;
       return -1;
     }
     header[0]=header[5];
@@ -355,7 +353,7 @@ int real_get_rdt_chunk(Rtsp& rtsp, char **buffer, int rdt_rawdata) {
     n=rtsp.read_data((char *)(header+3), 5);
     if (n<5) return 0;
 #ifdef LOG
-    printf("ignoring bytes:\n");
+    mpxp_info<<"ignoring bytes:"<<std::endl;
     hexdump(header, 8);
 #endif
     n=rtsp.read_data((char *)(header+4), 4);
@@ -371,8 +369,9 @@ int real_get_rdt_chunk(Rtsp& rtsp, char **buffer, int rdt_rawdata) {
   ts=AV_RB32(header);
 
 #ifdef LOG
-  printf("ts: %u, size: %u, flags: 0x%02x, unknown values: 0x%06x 0x%02x 0x%02x\n",
-	  ts, size, flags1, unknown1, header[4], header[5]);
+  mpxp_info<<"ts: "<<ts<<", size: "<<size<<", flags: 0x"<<std::hex<<flags1
+	<<", unknown values: 0x"<<std::hex<<unknown1<<" 0x"<<std::hex
+	<<header[4]<<" 0x"<<std::hex<<header[5]<<std::endl;
 #endif
   size+=2;
 
@@ -448,7 +447,7 @@ rmff_header_t *real_setup_and_get_header(Rtsp& rtsp, uint32_t bandwidth,
   /* get challenge */
   challenge1=mp_strdup(rtsp.search_answers("RealChallenge1"));
 #ifdef LOG
-  printf("real: Challenge1: %s\n", challenge1);
+  mpxp_info<<"real: Challenge1: "<<challenge1<<std::endl;
 #endif
 
   /* set a reasonable default to get the best stream, unless bandwidth given */
@@ -476,19 +475,19 @@ rtsp_send_describe:
     char* authstr = NULL;
 
     if (authfield) {
-      MSG_ERR("realrtsp: authorization failed, check your credentials\n");
+      mpxp_err<<"realrtsp: authorization failed, check your credentials"<<std::endl;
       goto autherr;
     }
     if (!(authreq = rtsp.search_answers("WWW-Authenticate"))) {
-      MSG_ERR("realrtsp: 401 but no auth request, aborting\n");
+      mpxp_err<<"realrtsp: 401 but no auth request, aborting"<<std::endl;
       goto autherr;
     }
     if (!username) {
-      MSG_ERR("realrtsp: auth required but no username supplied\n");
+      mpxp_err<<"realrtsp: auth required but no username supplied"<<std::endl;
       goto autherr;
     }
     if (!strstr(authreq, "Basic")) {
-      MSG_ERR("realrtsp: authenticator not supported (%s)\n", authreq);
+      mpxp_err<<"realrtsp: authenticator not supported: "<<authreq<<std::endl;
       goto autherr;
     }
     authlen = strlen(username) + (password ? strlen(password) : 0) + 2;
@@ -499,7 +498,7 @@ rtsp_send_describe:
     b64_authlen = base64_encode(authstr, authlen, authfield+21, authlen*2);
     delete authstr;
     if (b64_authlen < 0) {
-      MSG_ERR("realrtsp: base64 output overflow, this should never happen\n");
+      mpxp_err<<"realrtsp: base64 output overflow, this should never happen"<<std::endl;
       goto autherr;
     }
     authfield[b64_authlen+21] = 0;
@@ -513,8 +512,7 @@ autherr:
   {
     char *alert=rtsp.search_answers("Alert");
     if (alert) {
-      MSG_WARN("realrtsp: got message from server:\n%s\n",
-	alert);
+      mpxp_warn<<"realrtsp: got message from server: "<<alert<<std::endl;
     }
     rtsp.send_ok();
     buf = (char *)xbuffer_free(buf);
@@ -524,25 +522,24 @@ autherr:
   /* receive description */
   size=0;
   if (!rtsp.search_answers("Content-length"))
-    MSG_WARN("real: got no Content-length!\n");
+    mpxp_warn<<"real: got no Content-length!"<<std::endl;
   else
     size=atoi(rtsp.search_answers("Content-length"));
 
   // as size is unsigned this also catches the case (size < 0)
   if (size > MAX_DESC_BUF) {
-    MSG_ERR("realrtsp: Content-length for description too big (> %uMB)!\n",
-	    MAX_DESC_BUF/(1024*1024) );
+    mpxp_err<<"realrtsp: Content-length for description too big (> "<<(MAX_DESC_BUF/(1024*1024))<<"MB)!"<<std::endl;
     xbuffer_free(buf);
     return NULL;
   }
 
   if (!rtsp.search_answers("ETag"))
-    MSG_WARN("realrtsp: got no ETag!\n");
+    mpxp_warn<<"realrtsp: got no ETag!"<<std::endl;
   else
     session_id=mp_strdup(rtsp.search_answers("ETag"));
 
 #ifdef LOG
-  printf("real: Stream description size: %u\n", size);
+  mpxp_info<<"real: Stream description size: "<<size<<std::endl;
 #endif
 
   description=new char [size+1];
@@ -565,8 +562,10 @@ autherr:
   rmff_fix_header(h);
 
 #ifdef LOG
-  printf("Title: %s\nCopyright: %s\nAuthor: %s\nStreams: %i\n",
-    h->cont->title, h->cont->copyright, h->cont->author, h->prop->num_streams);
+  mpxp_info<<"Title: "<<h->cont->title<<std::endl;
+  mpxp_info<<"Copyright: "<<h->cont->copyright<<std::endl;
+  mpxp_info<<"Author: "<<h->cont->author<<std::endl;
+  mpxp_info<<"Streams: "<<h->prop->num_streams<<std::endl;
 #endif
 
   /* setup our streams */

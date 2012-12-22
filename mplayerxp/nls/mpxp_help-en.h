@@ -430,7 +430,7 @@ NULL
 #define MSGTR_ShMemAllocFail "Cannot allocate shared memory\n"
 #endif
 #ifndef MSGTR_OutOfMemory
-#define MSGTR_OutOfMemory "Out of memory\n"
+#define MSGTR_OutOfMemory "Out of memory"
 #endif
 #ifndef MSGTR_CantAllocAudioBuf
 #define MSGTR_CantAllocAudioBuf "Cannot allocate audio out buffer\n"

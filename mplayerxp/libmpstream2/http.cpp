@@ -30,12 +30,12 @@ int HTTP_Header::response_append(const uint8_t* response, size_t length ) {
     if( response==NULL) return -1;
 
     if( (unsigned)length > std::numeric_limits<size_t>::max() - buffer_size - 1) {
-	MSG_FATAL("Bad size in memory (re)allocation\n");
+	mpxp_fatal<<"Bad size in memory (re)allocation"<<std::endl;
 	return -1;
     }
     buffer = (uint8_t*)mp_realloc( buffer, buffer_size+length+1 );
     if(buffer ==NULL ) {
-	MSG_FATAL("Memory allocation failed\n");
+	mpxp_fatal<<"Memory allocation failed"<<std::endl;
 	return -1;
     }
     memcpy( buffer+buffer_size, response, length );
@@ -62,7 +62,7 @@ int HTTP_Header::response_parse( ) {
     // Get the protocol
     hdr_ptr = strstr( (char*)buffer, " " );
     if( hdr_ptr==NULL ) {
-	MSG_FATAL("Malformed answer. No space separator found.\n");
+	mpxp_fatal<<"Malformed answer. No space separator found"<<std::endl;
 	return -1;
     }
     len = hdr_ptr-(char*)buffer;
@@ -71,14 +71,14 @@ int HTTP_Header::response_parse( ) {
     std::transform(sstr.begin(), sstr.end(),sstr.begin(), ::toupper);
     if(sstr=="HTTP") {
 	if( sscanf( &protocol.c_str()[5],"1.%d", &(http_minor_version) )!=1 ) {
-	    MSG_FATAL("Malformed answer. Unable to get HTTP minor version.\n");
+	    mpxp_fatal<<"Malformed answer. Unable to get HTTP minor version"<<std::endl;
 	    return -1;
 	}
     }
 
     // Get the status code
     if( sscanf( ++hdr_ptr, "%d", &status_code )!=1 ) {
-	MSG_FATAL("Malformed answer. Unable to get status code.\n");
+	mpxp_fatal<<"Malformed answer. Unable to get status code"<<std::endl;
 	return -1;
     }
     hdr_ptr += 4;
@@ -86,7 +86,7 @@ int HTTP_Header::response_parse( ) {
     // Get the reason phrase
     ptr = strstr( hdr_ptr, "\n" );
     if( hdr_ptr==NULL ) {
-	MSG_FATAL("Malformed answer. Unable to get the reason phrase.\n");
+	mpxp_fatal<<"Malformed answer. Unable to get the reason phrase"<<std::endl;
 	return -1;
     }
     len = ptr-hdr_ptr;
@@ -103,7 +103,7 @@ int HTTP_Header::response_parse( ) {
     if( ptr==NULL ) {
 	ptr = strstr( (char*)buffer, "\n\n" );
 	if( ptr==NULL ) {
-	    MSG_ERR("Header may be incomplete. No CRLF CRLF found.\n");
+	    mpxp_err<<"Header may be incomplete. No CRLF CRLF found"<<std::endl;
 	    return -1;
 	}
 	hdr_sep_len = 2;
@@ -119,7 +119,7 @@ int HTTP_Header::response_parse( ) {
 	if( len==0 ) break;
 	field = (char*)mp_realloc(field, len+1);
 	if( field==NULL ) {
-	    MSG_FATAL("Memory allocation failed\n");
+	    mpxp_fatal<<"Memory allocation failed"<<std::endl;
 	    return -1;
 	}
 	strncpy( field, hdr_ptr, len );
@@ -165,7 +165,7 @@ const char* HTTP_Header::build_request() {
     }
     buffer = new uint8_t [len+1];
     if( buffer==NULL ) {
-	MSG_FATAL("Memory allocation failed\n");
+	mpxp_fatal<<"Memory allocation failed"<<std::endl;
 	return NULL;
     }
     buffer_size = len;
@@ -234,7 +234,7 @@ int HTTP_Header::add_basic_authentication( const std::string& username, const st
 
     usr_pass = new char [username.length()+pass_len+2];
     if( usr_pass==NULL ) {
-	MSG_FATAL("Memory allocation failed\n");
+	mpxp_fatal<<"Memory allocation failed"<<std::endl;
 	goto out;
     }
 
@@ -244,13 +244,13 @@ int HTTP_Header::add_basic_authentication( const std::string& username, const st
     encoded_len = strlen(usr_pass)*2;
     b64_usr_pass = new char [encoded_len];
     if( b64_usr_pass==NULL ) {
-	MSG_FATAL("Memory allocation failed\n");
+	mpxp_fatal<<"Memory allocation failed"<<std::endl;
 	goto out;
     }
 
     out_len = base64_encode( usr_pass, strlen(usr_pass), b64_usr_pass, encoded_len);
     if( out_len<0 ) {
-	MSG_FATAL("Base64 out overflow\n");
+	mpxp_fatal<<"Base64 out overflow"<<std::endl;
 	goto out;
     }
 
@@ -258,7 +258,7 @@ int HTTP_Header::add_basic_authentication( const std::string& username, const st
 
     auth = new char [encoded_len+22];
     if( auth==NULL ) {
-	MSG_FATAL("Memory allocation failed\n");
+	mpxp_fatal<<"Memory allocation failed"<<std::endl;
 	goto out;
     }
 
@@ -280,26 +280,19 @@ void HTTP_Header::erase_body() {
 void HTTP_Header::debug_hdr( ) {
     unsigned i = 0;
 
-    MSG_V(	"--- HTTP DEBUG HEADER --- START ---\n"
-		"protocol:           [%s]\n"
-		"http minor version: [%d]\n"
-		"uri:                [%s]\n"
-		"method:             [%s]\n"
-		"status code:        [%d]\n"
-		"reason phrase:      [%s]\n"
-		"body size:          [%d]\n"
-		,protocol.c_str()
-		,http_minor_version
-		,uri.c_str()
-		,method.c_str()
-		,status_code
-		,reason_phrase.c_str()
-		,body.length() );
+    mpxp_v<<"--- HTTP DEBUG HEADER --- START ---"<<std::endl;
+    mpxp_v<<"protocol:           ["<<protocol<<"]"<<std::endl;
+    mpxp_v<<"http minor version: ["<<http_minor_version<<"]"<<std::endl;
+    mpxp_v<<"uri:                ["<<uri<<"]"<<std::endl;
+    mpxp_v<<"method:             ["<<method<<"]"<<std::endl;
+    mpxp_v<<"status code:        ["<<status_code<<"]"<<std::endl;
+    mpxp_v<<"reason phrase:      ["<<reason_phrase<<"]"<<std::endl;
+    mpxp_v<<"body size:          ["<<body.length()<<"]"<<std::endl;
 
-    MSG_V("Fields:\n");
+    mpxp_v<<"Fields:"<<std::endl;
     std::vector<std::string>::size_type sz = fields.size();
-    for(i=0;i<sz;i++) MSG_V(" %d - %s\n", i, fields[i].c_str());
-    MSG_V("--- HTTP DEBUG HEADER --- END ---\n");
+    for(i=0;i<sz;i++) mpxp_v<<" "<<i<<" - "<<fields[i]<<std::endl;
+    mpxp_v<<"--- HTTP DEBUG HEADER --- END ---"<<std::endl;
 }
 
 int HTTP_Header::authenticate(URL& url, int *auth_retry) {
@@ -316,15 +309,15 @@ int HTTP_Header::authenticate(URL& url, int *auth_retry) {
 	const char *aut_space;
 	aut_space = strstr(aut, "realm=");
 	if( aut_space!=NULL ) aut_space += 6;
-	MSG_INFO("Authentication required for %s\n", aut_space);
+	mpxp_info<<"Authentication required for "<<aut_space<<std::endl;
     } else {
-	MSG_INFO("Authentication required\n");
+	mpxp_info<<"Authentication required"<<std::endl;
     }
     if( !net_conf.username ) {
 	mpxp_err<<MSGTR_ConnAuthFailed<<std::endl;
 	return -1;
     }
-    if( !net_conf.password ) MSG_INFO("No password provided, trying blank password\n");
+    if( !net_conf.password ) mpxp_info<<"No password provided, trying blank password"<<std::endl;
     url.set_login(net_conf.username,net_conf.password?net_conf.password:"");
     (*auth_retry)++;
     return 0;

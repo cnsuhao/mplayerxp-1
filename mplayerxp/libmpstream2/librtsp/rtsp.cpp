@@ -179,7 +179,7 @@ char* Rtsp::get() const {
     }
 
     if (n>=BUF_SIZE) {
-	MSG_FATAL("librtsp: buffer overflow in rtsp_get\n");
+	mpxp_fatal<<"librtsp: buffer overflow in rtsp_get"<<std::endl;
 	exit(1);
     }
     string=new char [n];
@@ -187,7 +187,7 @@ char* Rtsp::get() const {
     string[n-1]=0;
 
 #ifdef LOG
-    MSG_INFO("librtsp: << '%s'\n", string);
+    mpxp_info<<"librtsp: << "<<string<<std::endl;
 #endif
 
     delete buffer;
@@ -203,7 +203,7 @@ void Rtsp::put(const char *string) const {
     char *buf=new char [len+2];
 
 #ifdef LOG
-    MSG_INFO("librtsp: >> '%s'", string);
+    mpxp_info<<"librtsp: >> "<<string<<std::endl;
 #endif
 
     memcpy(buf,string,len);
@@ -213,7 +213,7 @@ void Rtsp::put(const char *string) const {
     write_stream(buf, len+2);
 
 #ifdef LOG
-    MSG_INFO(" done.\n");
+    mpxp_info>>" done"<<std::endl;
 #endif
     delete buf;
 }
@@ -233,7 +233,7 @@ int Rtsp::get_code(const char *string) const {
     } else if (!strncmp(string, RTSP_METHOD_SET_PARAMETER,8)) {
 	return RTSP_STATUS_SET_PARAMETER;
     }
-    if(code != RTSP_STATUS_OK) MSG_INFO("librtsp: server responds: '%s'\n",string);
+    if(code != RTSP_STATUS_OK) mpxp_info<<"librtsp: server responds: "<<string<<std::endl;
     return code;
 }
 
@@ -303,7 +303,7 @@ int Rtsp::get_answers() {
 	    sscanf(answer,"%*s %u",&answer_seq);
 	    if (cseq != answer_seq) {
 #ifdef LOG
-		MSG_WARN("librtsp: warning: CSeq mismatch. got %u, assumed %u", answer_seq, s->cseq);
+		mpxp_warn<<"librtsp: warning: CSeq mismatch. got "<<answer_seq<<", assumed "<<s->cseq<<std::endl;
 #endif
 	    cseq=answer_seq;
 	    }
@@ -320,13 +320,13 @@ int Rtsp::get_answers() {
 	    sscanf(answer,"%*s %s",buf);
 	    if (session) {
 		if (strcmp(buf, session)) {
-		    MSG_WARN("rtsp: warning: setting NEW session: %s\n", buf);
+		    mpxp_warn<<"rtsp: warning: setting NEW session: "<<buf<<std::endl;
 		    delete session;
 		    session=mp_strdup(buf);
 		}
 	    } else {
 #ifdef LOG
-		MSG_INFO("rtsp: setting session id to: %s\n", buf);
+		mpxp_info<<"rtsp: setting session id to: "<<buf<<std::endl;
 #endif
 		session=mp_strdup(buf);
 	    }
@@ -473,7 +473,7 @@ int Rtsp::read_data(char *buffer, unsigned int size) const {
 	    delete rest;
 	    if (seq<0) {
 #ifdef LOG
-		MSG_WARN("rtsp: warning: CSeq not recognized!\n");
+		mpxp_warn<<"rtsp: warning: CSeq not recognized!"<<std::endl;
 #endif
 		seq=1;
 	    }
@@ -491,7 +491,7 @@ int Rtsp::read_data(char *buffer, unsigned int size) const {
 	}
     } else i=read_stream(buffer, size);
 #ifdef LOG
-    MSG_INFO("librtsp: << %d of %d bytes\n", i, size);
+    mpxp_info<<"librtsp: << "<<i<<" of "<<size<<" bytes"<<std::endl;
 #endif
     return i;
 }
@@ -533,7 +533,7 @@ Rtsp* Rtsp::connect(Tcp& tcp, char* mrl,const char *path,const  char *host, int 
     s.param++;
 
   if (!tcp.established()) {
-    MSG_ERR("rtsp: failed to connect to '%s'\n", s.host);
+    mpxp_err<<"rtsp: failed to connect to "<<s.host<<std::endl;
     s.close();
     delete &s;
     return NULL;

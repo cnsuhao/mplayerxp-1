@@ -21,7 +21,7 @@ static const char* help_text[]={
 " -ao <drv[:dev]> выбор драйвера и устройства аудио вывода (список см. с '-ao help')",
 " -play.ss <время>переместиться на заданную (секунды или ЧЧ:ММ:СС) позицию,",
 " -audio.off      без звука",
-" -video.fs       опции полноэкранного проигрывания (fullscr,vidmode chg,softw.scale)",
+" -video.fs       опции полноэкранного воспроизведения (fullscr,vidmode chg,softw.scale)",
 " -sub.file <file>указать файл субтитров",
 " -play.list<file> указать playlist",
 " -sync.framedrop разрешить потерю кадров (для медленных машин)",
@@ -68,7 +68,7 @@ NULL
 // mplayer.c:
 
 #define MSGTR_Exiting "Выходим"
-#define MSGTR_Exit_frames "Запрошенное количество кадров проиграно"
+#define MSGTR_Exit_frames "Запрошенное количество кадров воспроизведено"
 #define MSGTR_Exit_quit "Выход"
 #define MSGTR_Exit_eof "Конец файла"
 #define MSGTR_Fatal_error "Фатальная ошибка"
@@ -151,7 +151,7 @@ NULL
 #define MSGTR_SubStreamRedefined   "Предупреждение! Заголовок потока субтитров переопределён"
 #define MSGTR_TooManyAudioInBuffer "Слишком много аудио пакетов в буфере"
 #define MSGTR_TooManyVideoInBuffer "Слишком много видео пакетов в буфере"
-#define MSGTR_MaybeNI "возможно Вы проигрываете нечередованный поток/файл или неудачный кодек"
+#define MSGTR_MaybeNI "возможно Вы воспроизводите нечередованный поток/файл или неудачный кодек"
 #define MSGTR_FormatNotRecognized "========= Извините, формат этого файла не распознан/не поддерживается ==========="
 #define MSGTR_MissingVideoStream "Видео поток не найден!\n"
 #define MSGTR_MissingAudioStream "Аудио поток не найден...  ->без звука\n"
@@ -197,7 +197,7 @@ NULL
 #define MSGTR_BadMpegSequHdrEx "MPEG: Плохое расширение последовательности заголовков!\n"
 
 #define MSGTR_ShMemAllocFail "Не могу захватить общую память\n"
-#define MSGTR_OutOfMemory "Нехватает памяти\n"
+#define MSGTR_OutOfMemory "Нехватает памяти"
 #define MSGTR_CantAllocAudioBuf "Не могу захватить выходной буффер аудио\n"
 #define MSGTR_NoMemForDecodedImage "Не достаточно памяти для буффера декодирования картинки (%ld байт)\n"
 

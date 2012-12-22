@@ -49,6 +49,7 @@ using namespace mpxp;
 
 #include "tcp.h"
 #include "pnm.h"
+#include "stream_msg.h"
 
 namespace mpxp {
 #define FOURCC_TAG( ch0, ch1, ch2, ch3 ) \
@@ -214,7 +215,7 @@ static ssize_t rm_read(Tcp& tcp, any_t*buf, size_t count) {
     ret=tcp.read (((uint8_t*)buf)+total, count-total);
 
     if (ret<=0) {
-      printf ("input_pnm: read error.\n");
+      mpxp_info<<"input_pnm: read error"<<std::endl;
       return ret;
     } else
       total += ret;
@@ -231,31 +232,16 @@ static void hexdump (char *buf, int length) {
 
   int i;
 
-  printf ("input_pnm: ascii>");
+  mpxp_info<<"input_pnm: ascii>";
   for (i = 0; i < length; i++) {
     unsigned char c = buf[i];
 
     if ((c >= 32) && (c <= 128))
-      printf ("%c", c);
+      mpxp_info<<c;
     else
-      printf (".");
+      mpxp_info<<".";
   }
-  printf ("\n");
-
-  printf ("input_pnm: hexdump> ");
-  for (i = 0; i < length; i++) {
-    unsigned char c = buf[i];
-
-    printf ("%02x", c);
-
-    if ((i % 16) == 15)
-      printf ("\npnm:         ");
-
-    if ((i % 2) == 1)
-      printf (" ");
-
-  }
-  printf ("\n");
+  mpxp_info<<std::endl;
 }
 
 /*
@@ -304,7 +290,7 @@ unsigned int Pnm::get_chunk(unsigned int max,
 	max -= 2;
 	if (*ptr == 'X') /* checking for server message */
 	{
-	  printf("input_pnm: got a message from server:\n");
+	  mpxp_info<<"input_pnm: got a message from server:"<<std::endl;
 	  if (max < 1)
 	    return -1;
 	  rm_read (tcp, ptr+2, 1);
@@ -315,13 +301,13 @@ unsigned int Pnm::get_chunk(unsigned int max,
 	  rm_read (tcp, ptr+3, n);
 	  max -= n;
 	  ptr[3+n]=0;
-	  printf("%s\n",ptr+3);
+	  mpxp_info<<(ptr+3)<<std::endl;
 	  return -1;
 	}
 
 	if (*ptr == 'F') /* checking for server error */
 	{
-	  printf("input_pnm: server error.\n");
+	  mpxp_info<<"input_pnm: server error"<<std::endl;
 	  return -1;
 	}
 	if (*ptr == 'i')
@@ -351,7 +337,7 @@ unsigned int Pnm::get_chunk(unsigned int max,
     case MDPR_TAG:
     case CONT_TAG:
       if (chunk_size > max || chunk_size < PREAMBLE_SIZE) {
-	printf("error: max chunk size exeeded (max was 0x%04x)\n", max);
+	mpxp_info<<"error: max chunk size exeeded (max was 0x"<<std::hex<<max<<")"<<std::endl;
 #ifdef LOG
 	n=rm_read (tcp, &data[PREAMBLE_SIZE], 0x100 - PREAMBLE_SIZE);
 	hexdump(data,n+PREAMBLE_SIZE);
@@ -485,7 +471,7 @@ int Pnm::get_headers(int *need_response) {
   while(1) {
     if (Pnm::HEADER_SIZE-size<=0)
     {
-      printf("input_pnm: header buffer overflow. exiting\n");
+      mpxp_info<<"input_pnm: header buffer overflow. exiting"<<std::endl;
       return 0;
     }
     chunk_size=get_chunk(Pnm::HEADER_SIZE-size,&chunk_type,ptr,&nr);
@@ -508,7 +494,7 @@ int Pnm::get_headers(int *need_response) {
   }
 
   if (!prop_hdr) {
-    printf("input_pnm: error while parsing headers.\n");
+    mpxp_info<<"input_pnm: error while parsing headers"<<std::endl;
     return 0;
   }
 
@@ -593,14 +579,14 @@ int Pnm::calc_stream() {
 	return 1;
       /* does not help, we guess type 0     */
 #ifdef LOG
-      printf("guessing stream# 0\n");
+      mpxp_info<<"guessing stream# 0"<<std::endl;
 #endif
       seq_num[0]=seq_current[0]+1;
       seq_num[1]=seq_current[1]+1;
       return 0;
       break;
   }
-  printf("input_pnm: wow, something very nasty happened in pnm_calc_stream\n");
+  mpxp_info<<"input_pnm: wow, something very nasty happened in pnm_calc_stream"<<std::endl;
   return 2;
 }
 
@@ -636,7 +622,7 @@ int Pnm::get_stream_chunk() {
     n = rm_read (tcp, buffer, 8);
     if (n<8) return 0;
 #ifdef LOG
-    printf("input_pnm: had to seek 8 bytes on 0x62\n");
+    mpxp_info<<"input_pnm: had to seek 8 bytes on 0x62"<<std::endl;
 #endif
   }
 
@@ -647,12 +633,12 @@ int Pnm::get_stream_chunk() {
 
     rm_read (tcp, &buffer[8], size-5);
     buffer[size+3]=0;
-    printf("input_pnm: got message from server while reading stream:\n%s\n", &buffer[3]);
+    mpxp_info<<"input_pnm: got message from server while reading stream:"<<&buffer[3]<<std::endl;
     return 0;
   }
   if (buffer[0] == 'F')
   {
-    printf("input_pnm: server error.\n");
+    mpxp_info<<"input_pnm: server error"<<std::endl;
     return 0;
   }
 
@@ -671,13 +657,13 @@ int Pnm::get_stream_chunk() {
   }
 
 #ifdef LOG
-  if (n) printf("input_pnm: had to seek %i bytes to next chunk\n", n);
+  if (n) mpxp_info<<"input_pnm: had to seek "<<n<<" bytes to next chunk"<<std::endl;
 #endif
 
   /* check for 'Z's */
   if ((buffer[0] != 0x5a)||(buffer[7] != 0x5a))
   {
-    printf("input_pnm: bad boundaries\n");
+    mpxp_info<<"input_pnm: bad boundaries"<<std::endl;
     hexdump(buffer, 8);
     return 0;
   }
@@ -687,7 +673,7 @@ int Pnm::get_stream_chunk() {
   fof2=BE_16((uint8_t*)(&buffer[3]));
   if (fof1 != fof2)
   {
-    printf("input_pnm: frame offsets are different: 0x%04x 0x%04x\n",fof1,fof2);
+    mpxp_info<<"input_pnm: frame offsets are different: 0x"<<std::hex<<fof1<<" 0x"<<std::hex<<fof2<<std::endl;
     return 0;
   }
 
@@ -741,7 +727,7 @@ MPXP_Rc Pnm::connect(const std::string& _path) {
 
   send_request(pnm_available_bandwidths[10]);
   if (!get_headers(&need_response)) {
-    printf ("input_pnm: failed to set up stream\n");
+    mpxp_info<<"input_pnm: failed to set up stream"<<std::endl;
     return MPXP_False;
   }
   if (need_response) send_response(pnm_response);
@@ -774,7 +760,7 @@ int Pnm::read (char *data, int len) {
 
 	if (!get_stream_chunk ()) {
 #ifdef LOG
-	    printf ("input_pnm: %d of %d bytes provided\n", len-to_copy, len);
+	    mpxp_info<<"input_pnm: "<<(len-to_copy)<<" of "<<len<<" bytes provided"<<std::endl;
 #endif
 	    return len-to_copy;
 	}
@@ -784,7 +770,7 @@ int Pnm::read (char *data, int len) {
     memcpy(dest, source, to_copy);
     recv_read += to_copy;
 #ifdef LOG
-    printf ("input_pnm: %d bytes provided\n", len);
+    mpxp_info<<"input_pnm: "<<len<<" bytes provided"<<std::endl;
 #endif
     return len;
 }

@@ -86,7 +86,7 @@ const char *mrl_parse_line(const std::string& _line,char **user,char **pass,char
 static void mrl_store_args(const std::string& arg,char *value, const mrl_config_t * args)
 {
 #ifdef TEST_MRL
-    printf("arg='%s' value='%s'\n",arg,value);
+    mpxp_info<<"arg='"<<arg<<"' value='"<<value<<std::endl;
     return;
 #endif
     unsigned i;
@@ -97,7 +97,7 @@ static void mrl_store_args(const std::string& arg,char *value, const mrl_config_
 	    done=1;
 	    switch(args[i].type) {
 		case MRL_TYPE_PRINT:
-			MSG_INFO("%s", (char *)args[i].value);
+			mpxp_info<<(char *)args[i].value<<std::endl;
 		default:
 			delete value;
 			break;
@@ -136,7 +136,7 @@ static void mrl_store_args(const std::string& arg,char *value, const mrl_config_
 	}
 	i++;
     }
-    if(!done) MSG_WARN(" Can't handle argument: '%s'",arg.c_str());
+    if(!done) mpxp_warn<<" Can't handle argument: "<<arg<<std::endl;
 }
 
 #define MRL_ARG_SEP ','

@@ -114,12 +114,12 @@ MPXP_Rc http_send_request(Tcp& tcp, URL& url, off_t pos ) {
 	server_url.assign_port(80);
 	tcp.open(server_url, Tcp::IP4);
     }
-    if(!tcp.established()) { MSG_ERR("Cannot establish connection\n"); goto err_out; }
-    MSG_DBG2("Request: [%s]\n", http_hdr.get_buffer() );
+    if(!tcp.established()) { mpxp_err<<"Cannot establish connection"<<std::endl; goto err_out; }
+    mpxp_dbg2<<"Request: ["<<http_hdr.get_buffer()<<"]"<<std::endl;
 
     ret = tcp.write((uint8_t*)(http_hdr.get_buffer()), http_hdr.get_buffer_size());
     if( ret!=(int)http_hdr.get_buffer_size() ) {
-	MSG_ERR("Error while sending HTTP request: didn't sent all the request\n");
+	mpxp_err<<"Error while sending HTTP request: didn't sent all the request"<<std::endl;
 	goto err_out;
     }
 
@@ -131,28 +131,28 @@ err_out:
 }
 
 HTTP_Header* http_read_response( Tcp& tcp ) {
-	HTTP_Header* http_hdr = new(zeromem) HTTP_Header;
-	uint8_t response[BUFFER_SIZE];
-	int i;
+    HTTP_Header* http_hdr = new(zeromem) HTTP_Header;
+    uint8_t response[BUFFER_SIZE];
+    int i;
 
-	if( http_hdr==NULL ) return NULL;
+    if( http_hdr==NULL ) return NULL;
 
-	do {
-		i = tcp.read(response, BUFFER_SIZE);
-		if( i<0 ) {
-			MSG_ERR("Read failed\n");
-			delete http_hdr;
-			return NULL;
-		}
-		if( i==0 ) {
-			MSG_ERR("http_read_response read 0 -ie- EOF\n");
-			delete http_hdr;
-			return NULL;
-		}
-		http_hdr->response_append(response,i);
-	} while( !http_hdr->is_header_entire() );
-	http_hdr->response_parse();
-	return http_hdr;
+    do {
+	i = tcp.read(response, BUFFER_SIZE);
+	if( i<0 ) {
+	    mpxp_err<<"Read failed"<<std::endl;
+	    delete http_hdr;
+	    return NULL;
+	}
+	if( i==0 ) {
+	    mpxp_err<<"http_read_response read 0 -ie- EOF"<<std::endl;
+	    delete http_hdr;
+	    return NULL;
+	}
+	http_hdr->response_append(response,i);
+    } while( !http_hdr->is_header_entire() );
+    http_hdr->response_parse();
+    return http_hdr;
 }
 
 off_t http_seek(Tcp& tcp, Networking& networking, off_t pos ) {
@@ -168,8 +168,8 @@ off_t http_seek(Tcp& tcp, Networking& networking, off_t pos ) {
     switch( http_hdr->get_status() ) {
 	case 200:
 	case 206: // OK
-	    MSG_V("Content-Type: [%s]\n", http_hdr->get_field("Content-Type") );
-	    MSG_V("Content-Length: [%s]\n", http_hdr->get_field("Content-Length") );
+	    mpxp_v<<"Content-Type: ["<<http_hdr->get_field("Content-Type")<<"]"<<std::endl;
+	    mpxp_v<<"Content-Length: ["<<http_hdr->get_field("Content-Length")<<"]"<<std::endl;
 	    if( http_hdr->get_body_size()>0 ) {
 		if( networking.bufferize((unsigned char *)http_hdr->get_body(), http_hdr->get_body_size() )<0 ) {
 		    delete http_hdr;
@@ -178,7 +178,7 @@ off_t http_seek(Tcp& tcp, Networking& networking, off_t pos ) {
 	    }
 	    break;
 	default:
-	    MSG_ERR("Server return %d: %s\n", http_hdr->get_status(), http_hdr->get_reason_phrase());
+	    mpxp_err<<"Server return "<<http_hdr->get_status()<<": "<<http_hdr->get_reason_phrase()<<std::endl;
 	    tcp.close();
     }
 
@@ -221,7 +221,7 @@ MPXP_Rc Networking::autodetectProtocol(network_protocol_t& networking, Tcp& tcp)
 	// Checking for RTP
 	if( url.protocol2lower()=="rtp") {
 	    if( url.port()==0 ) {
-		MSG_ERR("You must enter a port number for RTP streams!\n");
+		mpxp_err<<"You must enter a port number for RTP streams!"<<std::endl;
 		goto err_out;
 	    }
 	    return MPXP_Ok;
@@ -251,34 +251,34 @@ MPXP_Rc Networking::autodetectProtocol(network_protocol_t& networking, Tcp& tcp)
 			// note: I skip icy-notice1 and 2, as they contain html <BR>
 			// and are IMHO useless info ::atmos
 			if( (field_data = http_hdr->get_field("icy-name")) != NULL )
-			    MSG_INFO("Name   : %s\n", field_data); field_data = NULL;
+			    mpxp_info<<"Name   : "<<field_data<<std::endl; field_data = NULL;
 			if( (field_data = http_hdr->get_field("icy-genre")) != NULL )
-			    MSG_INFO("Genre  : %s\n", field_data); field_data = NULL;
+			    mpxp_info<<"Genre  : "<<field_data<<std::endl; field_data = NULL;
 			if( (field_data = http_hdr->get_field("icy-url")) != NULL )
-			    MSG_INFO("Website: %s\n", field_data); field_data = NULL;
+			    mpxp_info<<"Website: "<<field_data<<std::endl; field_data = NULL;
 			// XXX: does this really mean public server? ::atmos
 			if( (field_data = http_hdr->get_field("icy-pub")) != NULL )
-			    MSG_INFO("Public : %s\n", atoi(field_data)?"yes":"no"); field_data = NULL;
+			    mpxp_info<<"Public : "<<(atoi(field_data)?"yes":"no")<<std::endl; field_data = NULL;
 			if( (field_data = http_hdr->get_field("icy-br")) != NULL )
-			    MSG_INFO("Bitrate: %skbit/s\n", field_data); field_data = NULL;
+			    mpxp_info<<"Bitrate: "<<field_data<<"kbit/s"<<std::endl; field_data = NULL;
 			if ( (field_data = http_hdr->get_field("content-type")) != NULL )
 			    networking.mime = field_data;
 			return MPXP_Ok;
 		    }
 		    case 400: // Server Full
-			MSG_ERR("Error: ICY-Server is full, skipping!\n");
+			mpxp_err<<"Error: ICY-Server is full, skipping!"<<std::endl;
 			goto err_out;
 		    case 401: // Service Unavailable
-			MSG_ERR("Error: ICY-Server return service unavailable, skipping!\n");
+			mpxp_err<<"Error: ICY-Server return service unavailable, skipping!"<<std::endl;
 			goto err_out;
 		    case 403: // Service Forbidden
-			MSG_ERR("Error: ICY-Server return 'Service Forbidden'\n");
+			mpxp_err<<"Error: ICY-Server return 'Service Forbidden'"<<std::endl;
 			goto err_out;
 		    case 404: // Resource Not Found
-			MSG_ERR("Error: ICY-Server couldn't find requested stream, skipping!\n");
+			mpxp_err<<"Error: ICY-Server couldn't find requested stream, skipping!"<<std::endl;
 			goto err_out;
 		    default:
-			MSG_ERR("Error: unhandled ICY-Errorcode, contact MPlayer developers!\n");
+			mpxp_err<<"Error: unhandled ICY-Errorcode, contact MPlayer developers!"<<std::endl;
 			goto err_out;
 		}
 	    }
@@ -290,9 +290,9 @@ MPXP_Rc Networking::autodetectProtocol(network_protocol_t& networking, Tcp& tcp)
 		    content_type = http_hdr->get_field("Content-Type" );
 		    if( content_type!=NULL ) {
 			const char *content_length = NULL;
-			MSG_V("Content-Type: [%s]\n", content_type );
+			mpxp_v<<"Content-Type: ["<<content_type<<"]"<<std::endl;
 			if( (content_length = http_hdr->get_field("Content-Length")) != NULL)
-			    MSG_V("Content-Length: [%s]\n", http_hdr->get_field("Content-Length"));
+			    mpxp_v<<"Content-Length: ["<<http_hdr->get_field("Content-Length")<<"]"<<std::endl;
 		    }
 		    // Not found in the mime type table, don't fail,
 		    // we should try raw HTTP
@@ -306,7 +306,7 @@ MPXP_Rc Networking::autodetectProtocol(network_protocol_t& networking, Tcp& tcp)
 			    url.redirect(next_url);
 			    if (url.protocol2lower()=="mms") goto err_out;
 			    if (url.protocol2lower()=="http") {
-				MSG_WARN("Unsupported http %d redirect to %s protocol\n", http_hdr->get_status(), url.protocol().c_str());
+				mpxp_warn<<"Unsupported http "<<http_hdr->get_status()<<" redirect to "<<url.protocol()<<" protocol"<<std::endl;
 				goto err_out;
 			    }
 			    redirect = 1;
@@ -317,11 +317,11 @@ MPXP_Rc Networking::autodetectProtocol(network_protocol_t& networking, Tcp& tcp)
 			redirect = 1;
 			break;
 		    default:
-			MSG_ERR("Server returned %d: %s\n", http_hdr->get_status(), http_hdr->get_reason_phrase());
+			mpxp_err<<"Server returned "<<http_hdr->get_status()<<": "<<http_hdr->get_reason_phrase()<<std::endl;
 			goto err_out;
 	    }
 	} else {
-	    MSG_ERR("Unknown protocol '%s'\n", url.protocol().c_str());
+	    mpxp_err<<"Unknown protocol: "<<url.protocol()<<std::endl;
 	    goto err_out;
 	}
     } while( redirect );
@@ -332,10 +332,9 @@ err_out:
 }
 
 int Networking::bufferize(unsigned char *_buffer, int size) {
-//printf("networking_bufferize\n");
     buffer = new char [size];
     if( buffer==NULL ) {
-	MSG_FATAL(MSGTR_OutOfMemory);
+	mpxp_fatal<<MSGTR_OutOfMemory<<std::endl;
 	return -1;
     }
     memcpy( buffer, _buffer, size );
@@ -351,7 +350,7 @@ void Networking::fixup_cache() {
       mp_conf.s_cache_size = (prebuffer_size/1024)*5;
       if( mp_conf.s_cache_size<64 ) mp_conf.s_cache_size = 64;	// 16KBytes min buffer
     }
-    MSG_INFO("[network] cache size set to: %i\n", mp_conf.s_cache_size);
+    mpxp_info<<"[network] cache size set to: "<<mp_conf.s_cache_size<<std::endl;
   }
 }
 
@@ -373,18 +372,18 @@ Networking* Networking::start(Tcp& tcp, const URL& _url) {
 	tcp.close();
 	rc = Pnm_Networking::start(tcp, net_protocol);
 	if (!rc) {
-	    MSG_INFO("Can't connect with pnm, retrying with http.\n");
+	    mpxp_info<<"Can't connect with pnm, retrying with http"<<std::endl;
 	    return NULL;
 	}
     } else if( url.protocol2lower()=="rtsp") {
 	if ((rc = RealRtsp_Networking::start( tcp, net_protocol )) == NULL) {
-	    MSG_INFO("Not a Realmedia rtsp url. Trying standard rtsp protocol.\n");
+	    mpxp_info<<"Not a Realmedia rtsp url. Trying standard rtsp protocol"<<std::endl;
 #ifdef STREAMING_LIVE_DOT_COM
 	    rc = Rtsp_Networking::start( tcp, net_protocol );
-	    if(!rc) MSG_ERR("rtsp_networking_start failed\n");
+	    if(!rc) mpxp_err<<"rtsp_networking_start failed"<<std::endl;
 	    return rc;
 #else
-	    MSG_ERR("RTSP support requires the \"LIVE.COM Streaming Media\" libraries!\n");
+	    mpxp_err<<"RTSP support requires the \"LIVE.COM Streaming Media\" libraries!"<<std::endl;
 	    return NULL;
 #endif
 	}
@@ -392,7 +391,7 @@ Networking* Networking::start(Tcp& tcp, const URL& _url) {
 	tcp.close();
 	rc = Rtp_Networking::start(tcp, net_protocol, 1);
 	if(!rc) {
-	    MSG_ERR("rtp_networking_start(udp) failed\n");
+	    mpxp_err<<"rtp_networking_start(udp) failed"<<std::endl;
 	    return NULL;
 	}
     } else if(url.protocol2lower()=="mms" ||
@@ -400,7 +399,7 @@ Networking* Networking::start(Tcp& tcp, const URL& _url) {
 	      url.protocol2lower()=="mmsu") {
 	rc=Asf_Mmst_Networking::start(tcp,net_protocol);
 	if(!rc) {
-	    MSG_ERR("asf_mmst_networking_start() failed\n");
+	    mpxp_err<<"asf_mmst_networking_start() failed"<<std::endl;
 	    return NULL;
 	}
     } else {
@@ -414,14 +413,14 @@ Networking* Networking::start(Tcp& tcp, const URL& _url) {
 	    //sometimes a file is just on a webserver and it is not streamed.
 	    //try loading them default method as last resort for http protocol
 	    if (url.protocol2lower()=="http") {
-		MSG_STATUS("Trying default networking for http protocol\n ");
+		mpxp_status<<"Trying default networking for http protocol"<<std::endl;
 		//reset stream
 		tcp.close();
 		rc=Nop_Networking::start(tcp,net_protocol);
 	    }
 	    if (!rc) {
-		MSG_ERR("asf_networking_start failed\n");
-		MSG_STATUS("Check if this is a playlist which requires -playlist option\nExample: mplayer -playlist <url>\n");
+		mpxp_err<<"asf_networking_start failed"<<std::endl;
+		mpxp_status<<"Check if this is a playlist which requires -playlist option"<<std::endl<<"Example: mplayer -playlist <url>"<<std::endl;
 	    }
 	}
     }

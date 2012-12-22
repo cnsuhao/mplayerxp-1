@@ -101,24 +101,24 @@ static char *load_file(const char *filename, off_t * length)
     int fd;
     char *buffer;
 
-    MSG_V("Loading cookie file: %s\n", filename);
+    mpxp_v<<"Loading cookie file: "<<filename<<std::endl;
 
     fd = open(filename, O_RDONLY);
     if (fd < 0) {
-	MSG_V("Could not open");
+	mpxp_v<<"Could not open"<<std::endl;
 	return NULL;
     }
 
     *length = lseek(fd, 0, SEEK_END);
 
     if (*length < 0) {
-	MSG_V("Could not find EOF");
+	mpxp_v<<"Could not find EOF"<<std::endl;
 	close(fd);
 	return NULL;
     }
 
     if (unsigned(*length) > std::numeric_limits<size_t>::max() - 1) {
-	MSG_V("File too big, could not mp_malloc.");
+	mpxp_v<<"File too big, could not mp_malloc"<<std::endl;
 	close(fd);
 	return NULL;
     }
@@ -126,14 +126,14 @@ static char *load_file(const char *filename, off_t * length)
     lseek(fd, SEEK_SET, 0);
 
     if (!(buffer = new char [*length + 1])) {
-	MSG_V("Could not mp_malloc.");
+	mpxp_v<<"Could not mp_malloc"<<std::endl;
 	close(fd);
 	return NULL;
     }
 
     if (read(fd, buffer, *length) != *length) {
 	delete buffer;
-	MSG_V("Read is behaving funny.");
+	mpxp_v<<"Read is behaving funny"<<std::endl;
 	close(fd);
 	return NULL;
     }
@@ -151,7 +151,7 @@ static struct cookie_list_type *load_cookies_from(const char *filename,
     char *ptr;
     off_t length;
 
-    MSG_V("Loading cookie file: %s\n", filename);
+    mpxp_v<<"Loading cookie file: "<<filename<<std::endl;
 
     ptr = load_file(filename, &length);
     if (!ptr)

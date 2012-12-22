@@ -150,21 +150,21 @@ static int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parse
     if( reply_parser==NULL || command==NULL || cddb_data==NULL ) return -1;
 
     sprintf( request, "http://%s/~cddb/cddb.cgi?cmd=%s%s&proto=%d", cddb_data->freedb_server, command, cddb_data->cddb_hello.c_str(), cddb_data->freedb_proto_level );
-    MSG_V("Request[%s]\n", request );
+    mpxp_v<<"Request["<<request<<"]"<<std::endl;
 
     if(url.redirect(request)!=MPXP_Ok) {
-	MSG_ERR("Not valid URL: '%s'\n",request);
+	mpxp_err<<"Not valid URL: "<<request<<std::endl;
 	return -1;
     }
 
     if(http_send_request(tcp,url,0)!=MPXP_Ok) {
-	MSG_ERR("failed to send the http request\n");
+	mpxp_err<<"failed to send the http request"<<std::endl;
 	return -1;
     }
 
     HTTP_Header* http_hdr = http_read_response( tcp );
     if( http_hdr==NULL ) {
-	MSG_ERR("Failed to read the http response\n");
+	mpxp_err<<"Failed to read the http response"<<std::endl;
 	return -1;
     }
 
@@ -175,10 +175,10 @@ static int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parse
 	    ret = reply_parser(*http_hdr, cddb_data);
 	    break;
 	case 400:
-	    MSG_V("Not Found\n");
+	    mpxp_v<<"Not Found"<<std::endl;
 	    break;
 	default:
-	    MSG_V("Unknown Error code\n");
+	    mpxp_v<<"Unknown Error code"<<std::endl;
     }
 
     delete http_hdr;
@@ -188,78 +188,74 @@ static int __FASTCALL__ cddb_http_request(const char *command, int (*reply_parse
 }
 
 static int __FASTCALL__ cddb_read_cache(cddb_data_t *cddb_data) {
-	char file_name[100];
-	struct stat stats;
-	int file_fd, ret;
-	size_t file_size;
+    char file_name[100];
+    struct stat stats;
+    int file_fd, ret;
+    size_t file_size;
 
-	if( cddb_data==NULL || cddb_data->cache_dir==NULL ) return -1;
+    if( cddb_data==NULL || cddb_data->cache_dir==NULL ) return -1;
 
-	sprintf( file_name, "%s%08lx", cddb_data->cache_dir, cddb_data->disc_id);
+    sprintf( file_name, "%s%08lx", cddb_data->cache_dir, cddb_data->disc_id);
 
-	file_fd = open(file_name, O_RDONLY);
-	if( file_fd<0 ) {
-		MSG_ERR("No cache found\n");
-		return -1;
-	}
+    file_fd = ::open(file_name, O_RDONLY);
+    if( file_fd<0 ) {
+	mpxp_err<<"No cache found"<<std::endl;
+	return -1;
+    }
 
-	ret = fstat( file_fd, &stats );
-	if( ret<0 ) {
-		perror("fstat");
-		file_size = 4096;
-	} else {
-		file_size = stats.st_size;
-	}
+    ret = fstat( file_fd, &stats );
+    if( ret<0 ) {
+	::perror("fstat");
+	file_size = 4096;
+    } else {
+	file_size = stats.st_size;
+    }
 
-	cddb_data->xmcd_file = new char [file_size];
-	if( cddb_data->xmcd_file==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		close(file_fd);
-		return -1;
-	}
-	cddb_data->xmcd_file_size = read(file_fd, cddb_data->xmcd_file, file_size);
-	if( cddb_data->xmcd_file_size!=file_size ) {
-		MSG_FATAL("Not all the xmcd file has been read\n");
-		close(file_fd);
-		return -1;
-	}
-
-	close(file_fd);
-
-	return 0;
+    cddb_data->xmcd_file = new char [file_size];
+    if( cddb_data->xmcd_file==NULL ) {
+	mpxp_fatal<<"Memory allocation failed"<<std::endl;
+	::close(file_fd);
+	return -1;
+    }
+    cddb_data->xmcd_file_size = ::read(file_fd, cddb_data->xmcd_file, file_size);
+    if( cddb_data->xmcd_file_size!=file_size ) {
+	mpxp_fatal<<"Not all the xmcd file has been read"<<std::endl;
+	::close(file_fd);
+	return -1;
+    }
+    ::close(file_fd);
+    return 0;
 }
 
 static int __FASTCALL__ cddb_write_cache(cddb_data_t *cddb_data) {
-	// We have the file, save it for cache.
-	char file_name[100];
-	int file_fd;
-	int wrote=0;
+    // We have the file, save it for cache.
+    char file_name[100];
+    int file_fd;
+    int wrote=0;
 
-	if( cddb_data==NULL || cddb_data->cache_dir==NULL ) return -1;
+    if( cddb_data==NULL || cddb_data->cache_dir==NULL ) return -1;
 
-	sprintf( file_name, "%s%08lx", cddb_data->cache_dir, cddb_data->disc_id);
+    sprintf( file_name, "%s%08lx", cddb_data->cache_dir, cddb_data->disc_id);
 
-	file_fd = creat(file_name, S_IREAD|S_IWRITE);
-	if( file_fd<0 ) {
-		perror("open");
-		return -1;
-	}
+    file_fd = ::creat(file_name, S_IREAD|S_IWRITE);
+    if( file_fd<0 ) {
+	::perror("open");
+	return -1;
+    }
 
-	wrote = write(file_fd, cddb_data->xmcd_file, cddb_data->xmcd_file_size);
-	if( wrote<0 ) {
-		MSG_ERR("write: %s",strerror(errno));
-		close(file_fd);
-		return -1;
-	}
-	if( (unsigned)wrote!=cddb_data->xmcd_file_size ) {
-		MSG_FATAL("Not all the xmcd file has been written\n");
-		close(file_fd);
-		return -1;
-	}
-
-	close(file_fd);
-
-	return 0;
+    wrote = ::write(file_fd, cddb_data->xmcd_file, cddb_data->xmcd_file_size);
+    if( wrote<0 ) {
+	mpxp_err<<"write: "<<strerror(errno)<<std::endl;
+	::close(file_fd);
+	return -1;
+    }
+    if( (unsigned)wrote!=cddb_data->xmcd_file_size ) {
+	mpxp_fatal<<"Not all the xmcd file has been written"<<std::endl;
+	::close(file_fd);
+	return -1;
+    }
+    ::close(file_fd);
+    return 0;
 }
 
 static int cddb_read_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
@@ -272,7 +268,7 @@ static int cddb_read_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
 
     ret = sscanf(http_hdr.get_body(), "%d ", &status);
     if( ret!=1 ) {
-	MSG_ERR("Parse error\n");
+	mpxp_err<<"Parse error"<<std::endl;
 	return -1;
     }
 
@@ -280,13 +276,13 @@ static int cddb_read_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
 	case 210:
 	    ret = sscanf(http_hdr.get_body(), "%d %s %08lx", &status, category, &disc_id);
 	    if( ret!=3 ) {
-		MSG_ERR("Parse error\n");
+		mpxp_err<<"Parse error"<<std::endl;
 		return -1;
 	    }
 	    // Check if it's a xmcd database file
 	    ptr = strstr(const_cast<char*>(http_hdr.get_body()), "# xmcd");
 	    if( ptr==NULL ) {
-		MSG_ERR("Invalid xmcd database file returned\n");
+		mpxp_err<<"Invalid xmcd database file returned"<<std::endl;
 		return -1;
 	    }
 	    // Ok found the beginning of the file
@@ -295,14 +291,14 @@ static int cddb_read_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
 	    if( ptr2==NULL ) {
 		ptr2 = strstr(ptr, "\n.\n");
 		if( ptr2==NULL ) {
-		    MSG_ERR("Unable to find '.'\n");
+		    mpxp_err<<"Unable to find '.'"<<std::endl;
 		    return -1;
 		}
 	    }
 	    // Ok found the end
 	    // do a sanity check
 	    if( http_hdr.get_body_size()<(unsigned long)(ptr2-ptr) ) {
-		MSG_ERR("Unexpected fix me\n");
+		mpxp_err<<"Unexpected fix me"<<std::endl;
 		return -1;
 	    }
 	    cddb_data->xmcd_file = ptr;
@@ -312,7 +308,7 @@ static int cddb_read_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
 	    http_hdr.erase_body();
 	    return cddb_write_cache(cddb_data);
 	default:
-	    MSG_ERR("Unhandled code\n");
+	    mpxp_err<<"Unhandled code"<<std::endl;
     }
     return 0;
 }
@@ -330,7 +326,7 @@ static int cddb_query_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
 
     ret = sscanf(http_hdr.get_body(), "%d ", &status);
     if( ret!=1 ) {
-	MSG_ERR("Parse error\n");
+	mpxp_err<<"Parse error"<<std::endl;
 	return -1;
     }
 
@@ -339,7 +335,7 @@ static int cddb_query_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
 	    // Found exact match
 	    ret = sscanf(http_hdr.get_body(), "%d %s %08lx %s", &status, cddb_data->category.c_str(), &(cddb_data->disc_id), album_title);
 	    if( ret!=4 ) {
-		MSG_ERR("Parse error\n");
+		mpxp_err<<"Parse error"<<std::endl;
 		return -1;
 	    }
 	    ptr = strstr(const_cast<char*>(http_hdr.get_body()), album_title);
@@ -355,17 +351,17 @@ static int cddb_query_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
 		strncpy(album_title, ptr, len);
 		album_title[len-2]='\0';
 	    }
-	    MSG_V("Parse OK, found: %s\n", album_title);
+	    mpxp_v<<"Parse OK, found: "<<album_title<<std::endl;
 	    return cddb_request_titles(cddb_data);
 	case 202:
 	    // No match found
-	    MSG_ERR("Album not found\n");
+	    mpxp_err<<"Album not found"<<std::endl;
 	    break;
 	case 210:
 	    // Found exact matches, list follows
 	    ptr = strstr(const_cast<char*>(http_hdr.get_body()), "\n");
 	    if( ptr==NULL ) {
-		MSG_ERR("Unable to find end of line\n");
+		mpxp_err<<"Unable to find end of line"<<std::endl;
 		return -1;
 	    }
 	    ptr++;
@@ -373,7 +369,7 @@ static int cddb_query_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
 	    // we use? So let's take the first one.
 	    ret = sscanf(ptr, "%s %08lx %s", cddb_data->category.c_str(), &(cddb_data->disc_id), album_title);
 	    if( ret!=3 ) {
-		MSG_ERR("Parse error\n");
+		mpxp_err<<"Parse error"<<std::endl;
 		return -1;
 	    }
 	    ptr = strstr(const_cast<char*>(http_hdr.get_body()), album_title);
@@ -389,7 +385,7 @@ static int cddb_query_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data) {
 		strncpy(album_title, ptr, len);
 		album_title[len-2]='\0';
 	    }
-	    MSG_V("Parse OK, found: %s\n", album_title);
+	    mpxp_v<<"Parse OK, found: "<<album_title<<std::endl;
 	    return cddb_request_titles(cddb_data);
 /*
 body=[210 Found exact matches, list follows (until terminating `.')
@@ -400,10 +396,10 @@ blues c711930d Santana / Supernatural
 */
 	case 211:
 	    // Found inexact matches, list follows
-	    MSG_WARN("No exact matches found, list follows\n");
+	    mpxp_warn<<"No exact matches found, list follows"<<std::endl;
 	    break;
 	default:
-	    MSG_ERR("Unhandled code\n");
+	    mpxp_err<<"Unhandled code"<<std::endl;
     }
     return -1;
 }
@@ -415,7 +411,7 @@ static int cddb_proto_level_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data)
 
     ret = sscanf(http_hdr.get_body(), "%d ", &status);
     if( ret!=1 ) {
-	MSG_ERR("Parse error\n");
+	mpxp_err<<"Parse error"<<std::endl;
 	return -1;
     }
 
@@ -423,18 +419,18 @@ static int cddb_proto_level_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data)
 	case 210:
 	    ptr = strstr(const_cast<char*>(http_hdr.get_body()), "max proto:");
 	    if( ptr==NULL ) {
-		MSG_ERR("Parse error\n");
+		mpxp_err<<"Parse error"<<std::endl;
 		return -1;
 	    }
 	    ret = sscanf(ptr, "max proto: %d", &max);
 	    if( ret!=1 ) {
-		MSG_ERR("Parse error\n");
+		mpxp_err<<"Parse error"<<std::endl;
 		return -1;
 	    }
 	    cddb_data->freedb_proto_level = max;
 	    return 0;
 	default:
-	    MSG_ERR("Unhandled code\n");
+	    mpxp_err<<"Unhandled code"<<std::endl;
     }
     return -1;
 }
@@ -448,7 +444,7 @@ static int cddb_freedb_sites_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data
     UNUSED(cddb_data);
     ret = sscanf((const char*)http_hdr.get_body(), "%d ", &status);
     if( ret!=1 ) {
-	MSG_ERR("Parse error\n");
+	mpxp_err<<"Parse error"<<std::endl;
 	return -1;
     }
 
@@ -457,10 +453,10 @@ static int cddb_freedb_sites_parse(HTTP_Header& http_hdr, cddb_data_t *cddb_data
 	    // Parse the sites
 	    return 0;
 	case 401:
-	    MSG_ERR("No sites information available\n");
+	    mpxp_err<<"No sites information available"<<std::endl;
 	    break;
 	default:
-	    MSG_ERR("Unhandled code\n");
+	    mpxp_err<<"Unhandled code"<<std::endl;
     }
     return -1;
 }
@@ -508,7 +504,7 @@ static int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {
 
 	cddb_create_hello(cddb_data);
 	if( cddb_get_proto_level(cddb_data)<0 ) {
-		MSG_ERR("Failed to get the protocol level\n");
+		mpxp_err<<"Failed to get the protocol level"<<std::endl;
 		return -1;
 	}
 
@@ -539,7 +535,7 @@ static MPXP_Rc __FASTCALL__ cddb_resolve(libinput_t&libinput,char **xmcd_file) {
     } else {
 	cddb_data.cache_dir = (char*)mp_malloc(strlen(home_dir)+strlen(cddb_cache_dir)+1);
 	if( cddb_data.cache_dir==NULL ) {
-	    MSG_FATAL("Memory allocation failed\n");
+	    mpxp_fatal<<"Memory allocation failed"<<std::endl;
 	    return MPXP_False;
 	}
 	sprintf(cddb_data.cache_dir, "%s%s", home_dir, cddb_cache_dir );
@@ -553,7 +549,6 @@ static MPXP_Rc __FASTCALL__ cddb_resolve(libinput_t&libinput,char **xmcd_file) {
     }
 
     if( cddb_data.xmcd_file!=NULL ) {
-//	printf("%s\n", cddb_data.xmcd_file );
 	*xmcd_file = cddb_data.xmcd_file;
 	return MPXP_Ok;
     }
@@ -590,8 +585,8 @@ cd_track_t* CD_Info::add_track(const std::string& track_name,
 
     cd_track = new(zeromem) cd_track_t;
     if( cd_track==NULL ) {
-		MSG_FATAL("Memory allocation failed\n");
-		return NULL;
+	mpxp_fatal<<"Memory allocation failed"<<std::endl;
+	return NULL;
     }
     cd_track->name=track_name;
     cd_track->track_nb = track_nb;
@@ -627,23 +622,23 @@ cd_track_t* CD_Info::get_track(unsigned int track_nb) const {
 
 void CD_Info::print() const {
     cd_track_t *current_track;
-    MSG_INFO("================ CD INFO === start =========\n");
-    MSG_INFO(" artist=[%s]\n"
-	" album=[%s]\n"
-	" genre=[%s]\n"
-	" nb_tracks=%d\n"
-	" length= %2d:%02d.%02d\n"
-	, artist.c_str()
-	, album.c_str()
-	, genre.c_str()
-	, nb_tracks
-	, min, sec, msec);
+    mpxp_info<<"================ CD INFO === start ========="<<std::endl;
+    mpxp_info<<" artist=["<<artist<<"]"<<std::endl;
+    mpxp_info<<" album=["<<album<<"]"<<std::endl;
+    mpxp_info<<" genre=["<<genre<<"]"<<std::endl;
+    mpxp_info<<" nb_tracks="<<nb_tracks<<std::endl;
+    mpxp_info<<" length= "<<min<<":"<<sec<<"."<<msec<<std::endl;
     current_track = first;
     while( current_track!=NULL ) {
-	MSG_V("  #%2d %2d:%02d.%02d @ %7ld\t[%s] \n", current_track->track_nb, current_track->min, current_track->sec, current_track->msec, current_track->frame_begin, current_track->name.c_str());
+	mpxp_v<<"  #"<<current_track->track_nb
+	    <<" "<<current_track->min
+	    <<":"<<current_track->sec
+	    <<"."<<current_track->msec
+	    <<" @ "<<current_track->frame_begin<<"\t["
+	    <<current_track->name<<"]"<<std::endl;
 	current_track = current_track->next;
     }
-    MSG_INFO("================ CD INFO ===  end  =========\n");
+    mpxp_info<<"================ CD INFO ===  end  ========="<<std::endl;
 }
 
 static char* __FASTCALL__ xmcd_parse_dtitle(CD_Info& cd_info,char *line) {

@@ -84,7 +84,7 @@ inline void COREDUMP() { __asm __volatile(".short 0xffff":::"memory"); }
 inline void COREDUMP() {}
 #endif
 
-inline void C2_ASSERT(int cond) { if(cond) MSG_FATAL("internal error at cache2.c: (%i)\n",cond); }
+inline void C2_ASSERT(int cond) { if(cond) mpxp_fatal<<"internal error at cache2.c: "<<cond<<std::endl; }
 
 static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
   int len,in_cache,legacy_eof,seek_eof;
@@ -99,16 +99,17 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
   seek_eof=0;
   if(!in_cache && c->stream->type()&Stream::Type_Seekable) {
 	/* seeking... */
-	MSG_DBG2("Out of boundaries... seeking to %lli {in_cache(%i) %lli<%lli>%lli} \n"
-	,new_start,in_cache,START_FILEPOS(*c),readpos,END_FILEPOS(*c));
+	mpxp_dbg2<<"Out of boundaries... seeking to "<<new_start
+	    <<" {in_cache("<<in_cache<<") "
+	    <<START_FILEPOS(*c)<<"<"<<readpos<<">"<<END_FILEPOS(*c)<<"}"<<std::endl;
 	if(c->stream->eof() || c->eof) c->stream->reset();
 	c->stream->seek(new_start);
-	if(errno) { MSG_WARN("c2_seek(drv:%s) error: %s\n",c->stream->driver_info->mrl,strerror(errno)); errno=0; }
+	if(errno) { mpxp_warn<<"c2_seek(drv:"<<c->stream->driver_info->mrl<<") error: "<<strerror(errno)<<std::endl; errno=0; }
 	if((c->packets[c->first].filepos=c->stream->tell())<0) seek_eof=1;
 	c->last=c->first;
 	if(c->packets[c->first].filepos < new_start-(off_t)c->stream->sector_size())
-	    MSG_WARN("CACHE2: found wrong offset after seeking %lli (wanted: %lli)\n",c->packets[c->first].filepos,new_start);
-	MSG_DBG2("Seek done. new pos: %lli\n",START_FILEPOS(*c));
+	    mpxp_warn<<"CACHE2: found wrong offset after seeking "<<c->packets[c->first].filepos<<" (wanted: "<<new_start<<")"<<std::endl;
+	mpxp_dbg2<<"Seek done. new pos: "<<START_FILEPOS(*c)<<std::endl;
   } else {
     /* find new start of buffer according on readpos */
     cidx=c->first;
@@ -117,12 +118,12 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
 	   && !c->packets[cidx].sp.type) break;
 	cidx=CP_NEXT(*c,cidx);
     }while(cidx!=c->first);
-    MSG_DBG2("CACHE2: Assigning first as %p for %lli\n",c->first,START_FILEPOS(*c));
+    mpxp_dbg2<<"CACHE2: Assigning first as "<<reinterpret_cast<any_t*>(c->first)<<" for "<<START_FILEPOS(*c)<<std::endl;
     c->first=cidx;
   }
   CACHE2_TUNLOCK(*c);
   if(CP_NEXT(*c,c->last) == c->first || c->eof) {
-    MSG_DBG2("CACHE2: cache full\n");
+    mpxp_dbg2<<"CACHE2: cache full"<<std::endl;
     return 0; /* cache full */
   }
   len=0;
@@ -136,24 +137,24 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
     c->packets[cidx].sp.len=c->sector_size;
     c->packets[cidx].filepos = c->stream->tell();
     c->stream->read(c->packets[cidx].sp.buf,c->packets[cidx].sp.len);
-    MSG_DBG2("CACHE2: read_packet at %lli (wanted %u got %u type %i)",c->packets[cidx].filepos,c->sector_size,c->packets[cidx].sp.len,c->packets[cidx].sp.type);
+    mpxp_dbg2<<"CACHE2: read_packet at "<<c->packets[cidx].filepos<<" (wanted "<<c->sector_size<<" got "<<c->packets[cidx].sp.len<<" type "<<c->packets[cidx].sp.type<<")";
     if(mp_conf.verbose>1)
 	if(c->packets[cidx].sp.len>8) {
 	    int i;
 	    for(i=0;i<8;i++)
-		MSG_DBG2("%02X ",(int)(unsigned char)c->packets[cidx].sp.buf[i]);
+		mpxp_dbg2<<std::hex<<(unsigned)(unsigned char)c->packets[cidx].sp.buf[i]<<" ";
 	}
-    MSG_DBG2("\n");
+    mpxp_dbg2<<std::endl;
     if(c->stream->ctrl(SCTRL_EOF,NULL)==MPXP_Ok) legacy_eof=1;
     else	legacy_eof=0;
     if(c->packets[cidx].sp.len < 0 || (c->packets[cidx].sp.len == 0 && c->packets[cidx].sp.type == 0) || legacy_eof || seek_eof) {
 	/* EOF */
-	MSG_DBG2("CACHE2: guess EOF: %lli %lli\n",START_FILEPOS(*c),END_FILEPOS(*c));
+	mpxp_dbg2<<"CACHE2: guess EOF: "<<START_FILEPOS(*c)<<" "<<END_FILEPOS(*c)<<std::endl;
 	c->packets[cidx].state|=CPF_EOF;
 	c->eof=1;
 	c->packets[cidx].state&=~CPF_EMPTY;
 	c->packets[cidx].state&=~CPF_DONE;
-	if(errno) { MSG_WARN("c2_fill_buffer(drv:%s) error: %s\n",c->stream->driver_info->mrl,strerror(errno)); errno=0; }
+	if(errno) { mpxp_warn<<"c2_fill_buffer(drv:"<<c->stream->driver_info->mrl<<") error: "<<strerror(errno)<<std::endl; errno=0; }
 	CACHE2_PACKET_TUNLOCK(c->packets[cidx]);
 	break;
     }
@@ -163,15 +164,15 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
     c->packets[cidx].state&=~CPF_DONE;
     CACHE2_PACKET_TUNLOCK(c->packets[cidx]);
     cidx=CP_NEXT(*c,cidx);
-    MSG_DBG2("CACHE2: start=%lli end_filepos = %lli\n",START_FILEPOS(*c),END_FILEPOS(*c));
+    mpxp_dbg2<<"CACHE2: start="<<START_FILEPOS(*c)<<" end_filepos = "<<END_FILEPOS(*c)<<std::endl;
     if(cidx==c->first) {
-	MSG_DBG2("CACHE2: end of queue is reached: %p\n",c->first);
+	mpxp_dbg2<<"CACHE2: end of queue is reached: "<<reinterpret_cast<any_t*>(c->first)<<std::endl;
 	break;
     }
     CACHE2_TUNLOCK(*c);
   }
   c->in_fill=0;
-  MSG_DBG2("CACHE2: totally got %u bytes\n",len);
+  mpxp_dbg2<<"CACHE2: totally got "<<len<<" bytes"<<std::endl;
   return len;
 }
 
@@ -187,12 +188,12 @@ static cache_vars_t* __FASTCALL__  c2_cache_init(int size,int sector){
   c->mem=new char [num*sector];
   if(!c->packets || !c->mem)
   {
-    MSG_ERR(MSGTR_OutOfMemory);
+    mpxp_err<<MSGTR_OutOfMemory<<std::endl;
     delete c;
     return 0;
   }
   pmem = c->mem;
-  MSG_DBG2("For cache navigation was allocated %u bytes as %u packets (%u/%u)\n",i,num,size,sector);
+  mpxp_dbg2<<"For cache navigation was allocated "<<i<<" bytes as "<<num<<" packets ("<<size<<"/"<<sector<<")"<<std::endl;
   c->first=c->last=0;
   for(i=0;i<num;i++)
   {
@@ -203,7 +204,7 @@ static cache_vars_t* __FASTCALL__  c2_cache_init(int size,int sector){
   }
   if(mp_conf.verbose>1)
   for(i=0;i<num;i++) {
-    MSG_DBG2("sizeof(c)=%u c=%i c->sp.buf=%p\n",sizeof(cache_packet_t),i,c->packets[i].sp.buf);
+    mpxp_dbg2<<"sizeof(c)="<<sizeof(cache_packet_t)<<" c="<<i<<" c->sp.buf="<<reinterpret_cast<any_t*>(c->packets[i].sp.buf)<<std::endl;
   }
   c->buffer_size=num*sector;
   c->sector_size=sector;
@@ -215,7 +216,7 @@ static cache_vars_t* __FASTCALL__  c2_cache_init(int size,int sector){
 
 static void sig_cache2( void )
 {
-    MSG_V("cache2 segfault\n");
+    mpxp_v<<"cache2 segfault"<<std::endl;
     mpxp_print_flush();
     xmp_killall_threads(pthread_self());
     __exit_sighandler();
@@ -259,13 +260,13 @@ static any_t*cache2_routine(any_t*arg)
 
 static int __FASTCALL__ c2_stream_fill_buffer(cache_vars_t* c)
 {
-  MSG_DBG2( "c2_stream_fill_buffer\n");
+  mpxp_dbg2<<"c2_stream_fill_buffer"<<std::endl;
   if(c->eof) return 0;
   while(c->read_filepos>=END_FILEPOS(*c) || c->read_filepos<START_FILEPOS(*c))
   {
 	if(c->eof) break;
 	usleep(READ_USLEEP_TIME); // 10ms
-	MSG_DBG2("Waiting for %lli in %lli %lli\n",c->read_filepos,START_FILEPOS(*c),END_FILEPOS(*c));
+	mpxp_dbg2<<"Waiting for "<<c->read_filepos<<" in "<<START_FILEPOS(*c)<<" "<<END_FILEPOS(*c)<<std::endl;
 	continue; // try again...
   }
   return c->eof?0:1;
@@ -275,7 +276,7 @@ static void __FASTCALL__ c2_stream_reset(cache_vars_t* c)
 {
     unsigned cidx;
     int was_eof;
-    MSG_DBG2("c2_stream_reset\n");
+    mpxp_dbg2<<"c2_stream_reset"<<std::endl;
     c->stream->reset();
     cidx=c->first;
     was_eof=0;
@@ -293,7 +294,7 @@ static void __FASTCALL__ c2_stream_reset(cache_vars_t* c)
 
 static int __FASTCALL__ c2_stream_seek_long(cache_vars_t* c,off_t pos){
 
-  MSG_DBG2("CACHE2_SEEK: %lli,%lli,%lli <> %lli\n",START_FILEPOS(*c),c->read_filepos,END_FILEPOS(*c),pos);
+  mpxp_dbg2<<"CACHE2_SEEK: "<<START_FILEPOS(*c)<<","<<c->read_filepos<<","<<END_FILEPOS(*c)<<" <> "<<pos<<std::endl;
   if(pos<0/* || pos>END_FILEPOS(*c)*/) { c->eof=1; return 0; }
   while(c->in_fill) yield_timeslice();
   CACHE2_LOCK(*c);
@@ -325,7 +326,7 @@ static unsigned __FASTCALL__ c2_find_packet(cache_vars_t* c,off_t pos)
 	retval=CP_NEXT(*c,retval);
 	if(retval==c->first)
 	{
-	    MSG_DBG2("Can't find packet for offset %lli\n",pos);
+	    mpxp_dbg2<<"Can't find packet for offset "<<pos<<std::endl;
 	    CACHE2_UNLOCK(*c);
 	    return UINT_MAX;
 	}
@@ -374,7 +375,7 @@ static unsigned __FASTCALL__ c2_wait_packet(cache_vars_t* c,off_t pos,int *len,u
 
 static unsigned c2_next_packet(cache_vars_t* c,unsigned cidx,int *len,unsigned *npackets)
 {
-    MSG_DBG2("next_packet: start=%p cur=%i\n",c->first,cidx);
+    mpxp_dbg2<<"next_packet: start="<<reinterpret_cast<any_t*>(c->first)<<" cur="<<cidx<<std::endl;
     while(1)
     {
 	CACHE2_LOCK(*c);
@@ -393,7 +394,7 @@ static unsigned c2_next_packet(cache_vars_t* c,unsigned cidx,int *len,unsigned *
 	CACHE2_PACKET_UNLOCK(c->packets[cidx]);
     }
     c2_get_continious_mem(c,cidx,len,npackets);
-    MSG_DBG2("next_packet: rp: %lli fp: %lli len %lu type %i\n",c->read_filepos,c->packets[cidx].filepos,c->packets[cidx].sp.len,c->packets[cidx].sp.type);
+    mpxp_dbg2<<"next_packet: rp: "<<c->read_filepos<<" fp: "<<c->packets[cidx].filepos<<" len "<<c->packets[cidx].sp.len<<" type "<<c->packets[cidx].sp.type<<std::endl;
     return cidx;
 }
 
@@ -405,7 +406,7 @@ static int __FASTCALL__ c2_stream_read(cache_vars_t* c,char* _mem,int total){
   cur=c2_wait_packet(c,c->read_filepos,&mlen,&npackets);
   eof = cur!=UINT_MAX?((int)(c->packets[cur].state&CPF_EOF)):c->eof;
   if(cur==UINT_MAX||eof) { if(cur!=UINT_MAX) CACHE2_PACKET_UNLOCK(c->packets[cur]); return 0; }
-  MSG_DBG2( "c2_stream_read  %i bytes from %lli\n",total,c->read_filepos);
+  mpxp_dbg2<<"c2_stream_read "<<total<<" bytes from "<<c->read_filepos<<std::endl;
   while(len){
     int x;
     if(c->read_filepos>=c->packets[cur].filepos+mlen){
@@ -423,7 +424,7 @@ static int __FASTCALL__ c2_stream_read(cache_vars_t* c,char* _mem,int total){
     x=mlen-buf_pos;
     C2_ASSERT(buf_pos>=(unsigned)mlen);
     if(x>len) x=len;
-    if(!x) MSG_WARN( "c2_read: dead-lock\n");
+    if(!x) mpxp_warn<<"c2_read: dead-lock"<<std::endl;
     memcpy(mem,&c->packets[cur].sp.buf[buf_pos],x);
     buf_pos+=x;
     mem+=x; len-=x;
@@ -432,9 +433,9 @@ static int __FASTCALL__ c2_stream_read(cache_vars_t* c,char* _mem,int total){
   CACHE2_PACKET_UNLOCK(c->packets[cur]);
   if(mp_conf.verbose>2)
   {
-    MSG_DBG2( "c2_stream_read  got %u bytes ",total);
-    for(i=0;i<std::min(8,total);i++) MSG_DBG2("%02X ",(int)((unsigned char)_mem[i]));
-    MSG_DBG2("\n");
+    mpxp_dbg2<<"c2_stream_read  got "<<total<<" bytes ";
+    for(i=0;i<std::min(8,total);i++) mpxp_dbg2<<std::hex<<(unsigned)((unsigned char)_mem[i]);
+    mpxp_dbg2<<std::endl;
   }
   return total;
 }
@@ -446,7 +447,7 @@ inline static off_t c2_stream_tell(cache_vars_t* c){
 
 static int __FASTCALL__ c2_stream_seek(cache_vars_t* c,off_t pos)
 {
-  MSG_DBG2( "c2_seek to %lli (%lli %lli) %i\n",(long long)pos,(long long)START_FILEPOS(*c),(long long)END_FILEPOS(*c),c->first);
+  mpxp_dbg2<<"c2_seek to "<<pos<<" ("<<START_FILEPOS(*c)<<" "<<END_FILEPOS(*c)<<") "<<c->first<<std::endl;
   if(pos>=START_FILEPOS(*c) && pos < END_FILEPOS(*c))
   {
 	c->read_filepos=pos;
@@ -467,7 +468,7 @@ static int __FASTCALL__ c2_stream_eof(cache_vars_t*c)
     cur = c2_find_packet(c,c->read_filepos);
     if(cur!=UINT_MAX) CACHE2_PACKET_UNLOCK(c->packets[cur]);
     retval = cur!=UINT_MAX?((int)(c->packets[cur].state&CPF_EOF)):c->eof;
-    MSG_DBG2("stream_eof: %i\n",retval);
+    mpxp_dbg2<<"stream_eof: "<<retval<<std::endl;
     return retval;
 }
 
@@ -482,7 +483,7 @@ static void __FASTCALL__ c2_stream_set_eof(cache_vars_t*c,int eof)
 	CACHE2_PACKET_UNLOCK(c->packets[cur]);
     }
     c->eof=eof;
-    MSG_DBG2("stream_set_eof: %i\n",eof);
+    mpxp_dbg2<<"stream_set_eof: "<<eof<<std::endl;
 }
 
 /*
@@ -496,7 +497,7 @@ Cached_Stream::Cached_Stream(libinput_t& libinput,int size,int _min,int prefill,
 
     if (!(type()&Stream::Type_Seekable)) {
 	// The stream has no 'fd' behind it, so is non-cacheable
-	MSG_WARN("\rThis stream is non-cacheable\n");
+	mpxp_warn<<"\rThis stream is non-cacheable"<<std::endl;
 	return;
     }
 
@@ -512,23 +513,18 @@ Cached_Stream::Cached_Stream(libinput_t& libinput,int size,int _min,int prefill,
     if((rc=xmp_register_thread(NULL,sig_cache2,cache2_routine,"cache2"))==UINT_MAX) return;
     c->pth=mpxp_context().engine().xp_core->mpxp_threads[rc];
     // wait until cache is filled at least prefill_init %
-    MSG_V("CACHE_PRE_INIT: %lld [%lld] %lld  pre:%d  eof:%d SS=%u \n",
-	START_FILEPOS(*c),c->read_filepos,END_FILEPOS(*c),_min,c->eof,ss);
+    mpxp_v<<"CACHE_PRE_INIT: "<<START_FILEPOS(*c)<<" ["<<c->read_filepos<<"] "<<END_FILEPOS(*c)<<" pre:"<<_min<<" eof:"<<c->eof<<" SS="<<ss<<std::endl;
     while((c->read_filepos<START_FILEPOS(*c) || END_FILEPOS(*c)-c->read_filepos<_min)
 	&& !c->eof && CP_NEXT(*c,c->last)!=c->first){
 	if(!(type()&Stream::Type_Seekable))
-	MSG_STATUS("\rCache fill: %5.2f%% (%d bytes)    ",
-	    100.0*(float)(END_FILEPOS(*c)-c->read_filepos)/(float)(c->buffer_size),
-	    END_FILEPOS(*c)-c->read_filepos);
+	mpxp_status<<"\rCache fill: "<<(100.0*(float)(END_FILEPOS(*c)-c->read_filepos)/(float)(c->buffer_size))<<"% ("<<(END_FILEPOS(*c)-c->read_filepos)<<" bytes)    ";
 	else
-	MSG_V("\rCache fill: %5.2f%% (%d bytes)    ",
-	    100.0*(float)(END_FILEPOS(*c)-c->read_filepos)/(float)(c->buffer_size),
-	    END_FILEPOS(*c)-c->read_filepos);
+	mpxp_v<<"\rCache fill: "<<(100.0*(float)(END_FILEPOS(*c)-c->read_filepos)/(float)(c->buffer_size))<<"% ("<<(END_FILEPOS(*c)-c->read_filepos)<<" bytes)    ";
 	if(c->eof) break; // file is smaller than prefill size
 	if(mpdemux_check_interrupt(libinput,PREFILL_SLEEP_TIME))
 	  return;
     }
-    MSG_STATUS("cache info: size=%u min=%u prefill=%u\n",size,_min,prefill);
+    mpxp_status<<"cache info: size="<<size<<" min="<<_min<<" prefill="<<prefill<<std::endl;
     return; // parent exits
 }
 

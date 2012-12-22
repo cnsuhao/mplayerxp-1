@@ -12,31 +12,25 @@ using namespace mpxp;
 namespace mpxp {
 int Nop_Networking::read(Tcp& tcp, char *_buffer, int size) {
     int len=0;
-//printf("nop_networking_read\n");
     if( buffer_size!=0 ) {
 	int buffer_len = buffer_size-buffer_pos;
-//printf("%d bytes in buffer\n", stream_ctrl.buffer_size);
 	len = (size<buffer_len)?size:buffer_len;
 	memcpy( _buffer, buffer+buffer_pos, len );
 	buffer_pos += len;
-//printf("buffer_pos = %d\n", stream_ctrl.buffer_pos );
 	if( buffer_pos>=buffer_size ) {
 	    delete buffer ;
 	    buffer = NULL;
 	    buffer_size = 0;
 	    buffer_pos = 0;
-//printf("buffer cleaned\n");
 	}
-//printf("read %d bytes from buffer\n", len );
     }
     if( len<size ) {
 	int ret;
 	ret = tcp.read((uint8_t*)(_buffer+len), size-len);
 	if( ret<0 ) {
-	    MSG_ERR("nop_networking_read error : %s\n",strerror(errno));
+	    mpxp_err<<"nop_networking_read error : "<<strerror(errno)<<std::endl;
 	}
 	len += ret;
-//printf("read %d bytes from network\n", len );
     }
     return len;
 }
@@ -67,8 +61,8 @@ Networking* Nop_Networking::start(Tcp& tcp,network_protocol_t& protocol) {
 
 	switch( http_hdr->get_status() ) {
 	    case 200: // OK
-		MSG_V("Content-Type: [%s]\n", http_hdr->get_field("Content-Type") );
-		MSG_V("Content-Length: [%s]\n", http_hdr->get_field("Content-Length") );
+		mpxp_v<<"Content-Type: ["<<http_hdr->get_field("Content-Type")<<"]"<<std::endl;
+		mpxp_v<<"Content-Length: ["<<http_hdr->get_field("Content-Length")<<"]"<<std::endl;
 		if( http_hdr->get_body_size()>0 ) {
 		    if( rv->bufferize((unsigned char *)http_hdr->get_body(), http_hdr->get_body_size() )<0 ) {
 			delete http_hdr;
@@ -83,12 +77,12 @@ Networking* Nop_Networking::start(Tcp& tcp,network_protocol_t& protocol) {
 		next_url = http_hdr->get_field("Location" );
 
 		if (next_url != NULL && rd_url.redirect(next_url)==MPXP_Ok) {
-		    MSG_STATUS("Redirected: Using this url instead %s\n",next_url);
+		    mpxp_status<<"Redirected: Using this url instead "<<next_url<<std::endl;
 		    rd_url.check4proxies();
 		    delete rv;
 		    rv=static_cast<Nop_Networking*>(Nop_Networking::start(tcp,protocol)); //recursively get networking started
 		} else {
-		    MSG_ERR("Redirection failed\n");
+		    mpxp_err<<"Redirection failed"<<std::endl;
 		    tcp.close();
 		}
 		return rv;
@@ -98,7 +92,7 @@ Networking* Nop_Networking::start(Tcp& tcp,network_protocol_t& protocol) {
 	    case 404: //Not found
 	    case 500: //Server Error
 	    default:
-		MSG_ERR("Server return %d: %s\n", http_hdr->get_status(), http_hdr->get_reason_phrase());
+		mpxp_err<<"Server return "<<http_hdr->get_status()<<": "<<http_hdr->get_reason_phrase()<<std::endl;
 		tcp.close();
 		delete rv;
 		return NULL;

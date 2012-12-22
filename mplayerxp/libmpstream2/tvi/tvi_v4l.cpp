@@ -189,12 +189,10 @@ static int init(struct priv_s *priv)
     int i;
 
     priv->video_fd = open(priv->video_device, O_RDWR);
-    MSG_DBG2( "Video fd: %d, %x\n", priv->video_fd,
-	priv->video_device);
+    mpxp_dbg2<<"Video fd: "<<priv->video_fd<<", %x"<<std::hex<<priv->video_device<<std::endl;
     if (priv->video_fd == -1)
     {
-	MSG_ERR( "unable to open '%s': %s\n",
-	    priv->video_device, strerror(errno));
+	mpxp_err<<"unable to open '"<<priv->video_device<<"': "<<strerror(errno)<<std::endl;
 	goto err;
     }
 
@@ -203,25 +201,23 @@ static int init(struct priv_s *priv)
     /* get capabilities (priv->capability is needed!) */
     if (ioctl(priv->video_fd, VIDIOCGCAP, &priv->capability) == -1)
     {
-	MSG_ERR( "ioctl get capabilites failed: %s\n", strerror(errno));
+	mpxp_err<<"ioctl get capabilites failed: "<<strerror(errno)<<std::endl;
 	goto err;
     }
 
     fcntl(priv->video_fd, F_SETFD, FD_CLOEXEC);
 
-    MSG_V( "Selected device: %s\n", priv->capability.name);
-    MSG_V( " Capabilites: ");
+    mpxp_v<<"Selected device: "<<priv->capability.name<<std::endl;
+    mpxp_v<<" Capabilites: ";
     for (i = 0; device_cap2name[i] != NULL; i++)
 	if (priv->capability.type & (1 << i))
-	    MSG_V( "%s ", device_cap2name[i]);
-    MSG_V( "\n");
-    MSG_V( " Device type: %d\n", priv->capability.type);
-    MSG_V( " Supported sizes: %dx%d => %dx%d\n",
-	priv->capability.minwidth, priv->capability.minheight,
-	priv->capability.maxwidth, priv->capability.maxheight);
+	    mpxp_v<<device_cap2name[i]<<" ";
+    mpxp_v<<std::endl;
+    mpxp_v<<" Device type: "<<priv->capability.type<<std::endl;
+    mpxp_v<<" Supported sizes: "<<priv->capability.minwidth<<"x"<<priv->capability.minheight<<" => "<<priv->capability.maxwidth<<"x"<<priv->capability.maxheight<<std::endl;
     priv->width = priv->capability.minwidth;
     priv->height = priv->capability.minheight;
-    MSG_V( " Inputs: %d\n", priv->capability.channels);
+    mpxp_v<<" Inputs: "<<priv->capability.channels<<std::endl;
 
     priv->channels = (struct video_channel *)mp_mallocz(sizeof(struct video_channel)*priv->capability.channels);
     if (!priv->channels)
@@ -231,38 +227,32 @@ static int init(struct priv_s *priv)
 	priv->channels[i].channel = i;
 	if (ioctl(priv->video_fd, VIDIOCGCHAN, &priv->channels[i]) == -1)
 	{
-	    MSG_ERR( "ioctl get channel failed: %s\n", strerror(errno));
+	    mpxp_err<<"ioctl get channel failed: "<<strerror(errno)<<std::endl;
 	    break;
 	}
-	MSG_V( "  %d: %s: %s%s%s%s (tuner:%d, norm:%d)\n", i,
-	    priv->channels[i].name,
-	    (priv->channels[i].flags & VIDEO_VC_TUNER) ? "tuner " : "",
-	    (priv->channels[i].flags & VIDEO_VC_AUDIO) ? "audio " : "",
-	    (priv->channels[i].flags & VIDEO_TYPE_TV) ? "tv " : "",
-	    (priv->channels[i].flags & VIDEO_TYPE_CAMERA) ? "camera " : "",
-	    priv->channels[i].tuners,
-	    priv->channels[i].norm);
+	mpxp_v<<"  "<<priv->channels[i].name
+		<<": "<<((priv->channels[i].flags & VIDEO_VC_TUNER) ? "tuner " : "")
+		<<": "<<((priv->channels[i].flags & VIDEO_VC_AUDIO) ? "audio " : "")
+		<<((priv->channels[i].flags & VIDEO_TYPE_TV) ? "tv " : "")
+		<<((priv->channels[i].flags & VIDEO_TYPE_CAMERA) ? "camera " : "")
+		<<" (tuner:"<<priv->channels[i].tuners
+		<<", norm:"<<priv->channels[i].norm<<")"<<std::endl;
     }
 
     /* audio chanlist */
-    if (priv->capability.audios)
-    {
-	MSG_V( " Audio devices: %d\n", priv->capability.audios);
+    if (priv->capability.audios) {
+	mpxp_v<<" Audio devices: "<<priv->capability.audios<<std::endl;
 
-	for (i = 0; i < priv->capability.audios; i++)
-	{
-	    if (i >= MAX_AUDIO_CHANNELS)
-	    {
-		MSG_ERR( "no space for more audio channels (incrase in source!) (%d > %d)\n",
-		    i, MAX_AUDIO_CHANNELS);
+	for (i = 0; i < priv->capability.audios; i++) {
+	    if (i >= MAX_AUDIO_CHANNELS) {
+		mpxp_err<<"no space for more audio channels (incrase in source!) ("<<i<<" > "<<MAX_AUDIO_CHANNELS<<")"<<std::endl;
 		i = priv->capability.audios;
 		break;
 	    }
 
 	    priv->audio[i].audio = i;
-	    if (ioctl(priv->video_fd, VIDIOCGAUDIO, &priv->audio[i]) == -1)
-	    {
-		MSG_ERR( "ioctl get audio failed: %s\n", strerror(errno));
+	    if (ioctl(priv->video_fd, VIDIOCGAUDIO, &priv->audio[i]) == -1) {
+		mpxp_err<<"ioctl get audio failed: "<<strerror(errno)<<std::endl;
 		break;
 	    }
 
@@ -290,43 +280,32 @@ static int init(struct priv_s *priv)
 		priv->audio_channels[i];
 
 	    /* display stuff */
-	    MSG_V( "  %d: %s: ", priv->audio[i].audio,
-		priv->audio[i].name);
+	    mpxp_v<<"  "<<priv->audio[i].audio<<": "<<priv->audio[i].name<<":";
 	    if (priv->audio[i].flags & VIDEO_AUDIO_MUTABLE)
-		MSG_V( "muted=%s ",
-		    (priv->audio[i].flags & VIDEO_AUDIO_MUTE) ? "yes" : "no");
-	    MSG_V( "volume=%d bass=%d treble=%d balance=%d mode=%s\n",
-		priv->audio[i].volume, priv->audio[i].bass, priv->audio[i].treble,
-		priv->audio[i].balance, audio_mode2name[priv->audio[i].mode]);
-	    MSG_V( " channels: %d, samplerate: %d, samplesize: %d, format: %s\n",
-		priv->audio_channels[i], priv->audio_samplerate[i], priv->audio_samplesize[i],
-		ao_format_name(priv->audio_format[i]));
+		mpxp_v<<"muted="<<((priv->audio[i].flags & VIDEO_AUDIO_MUTE)?"yes":"no"));
+	    mpxp_v<<"volume="<<priv->audio[i].volume<<" bass="<<priv->audio[i].bass<<" treble="<<priv->audio[i].treble<<" balance="<<priv->audio[i].balance<<" mode="<<audio_mode2name[priv->audio[i].mode]<<std::endl;
+	    mpxp_v<<" channels: "<<priv->audio_channels[i]<<", samplerate: "<<priv->audio_samplerate[i]<<", samplesize: "<<priv->audio_samplesize[i]<<", format: "<<ao_format_name(priv->audio_format[i])<<std::endl;
 	}
     }
 
-    if (!(priv->capability.type & VID_TYPE_CAPTURE))
-    {
-	MSG_ERR( "Only grabbing supported (for overlay use another program)\n");
+    if (!(priv->capability.type & VID_TYPE_CAPTURE)) {
+	mpxp_err<<"Only grabbing supported (for overlay use another program)"<<std::endl;
 	goto err;
     }
 
     /* map grab buffer */
     if (ioctl(priv->video_fd, VIDIOCGMBUF, &priv->mbuf) == -1)
     {
-	MSG_ERR( "ioctl get mbuf failed: %s\n", strerror(errno));
+	mpxp_err<<"ioctl get mbuf failed: "<<strerror(errno)<<std::endl;
 	goto err;
     }
 
-    MSG_V( "mbuf: size=%d, frames=%d\n",
-	priv->mbuf.size, priv->mbuf.frames);
-    priv->mmap = mmap(0, priv->mbuf.size, PROT_READ|PROT_WRITE,
-		MAP_SHARED, priv->video_fd, 0);
-    if (priv->mmap == (unsigned char *)-1)
-    {
-	MSG_ERR( "Unable to map memory for buffers: %s\n", strerror(errno));
+    mpxp_v<<"mbuf: size="<<priv->mbuf.size<<", frames="<<priv->mbuf.frames<<std::endl;
+    priv->mmap = mmap(0, priv->mbuf.size, PROT_READ|PROT_WRITE,MAP_SHARED, priv->video_fd, 0);
+    if (priv->mmap == (unsigned char *)-1) {
+	mpxp_err<<"Unable to map memory for buffers: "<<strerror(errno)<<std::endl;
 	goto err;
     }
-    MSG_DBG2( "our buffer: %p\n", priv->mmap);
 
     /* num of buffers */
     priv->nbuf = priv->mbuf.frames;
@@ -338,61 +317,43 @@ static int init(struct priv_s *priv)
     /* audio init */
 #if 1
     priv->audio_fd = open(priv->audio_device, O_RDONLY);
-    if (priv->audio_fd < 0)
-    {
-	MSG_ERR( "unable to open '%s': %s\n",
-	    priv->audio_device, strerror(errno));
-    }
-    else
-    {
+    if (priv->audio_fd < 0) mpxp_err<<"unable to open '"<<priv->audio_device<<"': "<<strerror(errno)<<std::endl;
+    else {
 	int ioctl_param;
 
 	fcntl(priv->audio_fd, F_SETFL, O_NONBLOCK);
 
 	ioctl_param = 0 ;
-	MSG_V("ioctl dsp getfmt: %d\n",
-	    ioctl(priv->audio_fd, SNDCTL_DSP_GETFMTS, &ioctl_param));
+	mpxp_v<<"ioctl dsp getfmt: "<<ioctl(priv->audio_fd, SNDCTL_DSP_GETFMTS, &ioctl_param)<<std::endl;
 
-	MSG_V("Supported formats: %x\n", ioctl_param);
+	mpxp_v<<"Supported formats: %"<<std::hex<<ioctl_param<<std::endl;
 	if (!(ioctl_param & priv->audio_format[priv->audio_id]))
-	    MSG_WARN("notsupported format\n");
+	    mpxp_warn<<"notsupported format"<<std::endl;
 
 	ioctl_param = priv->audio_format[priv->audio_id];
-	MSG_V("ioctl dsp setfmt: %d\n",
-	    ioctl(priv->audio_fd, SNDCTL_DSP_SETFMT, &ioctl_param));
+	mpxp_v<<"ioctl dsp setfmt: "<<ioctl(priv->audio_fd, SNDCTL_DSP_SETFMT, &ioctl_param)<<std::endl;
 
-	if (priv->audio_channels[priv->audio_id] > 2)
-	{
+	if (priv->audio_channels[priv->audio_id] > 2) {
 	    ioctl_param = priv->audio_channels[priv->audio_id];
-	    MSG_V("ioctl dsp channels: %d\n",
-		ioctl(priv->audio_fd, SNDCTL_DSP_CHANNELS, &ioctl_param));
-	}
-	else
-	{
+	    mpxp_v<<"ioctl dsp channels: "<<ioctl(priv->audio_fd, SNDCTL_DSP_CHANNELS, &ioctl_param)<<std::endl;
+	} else {
 	    ioctl_param = (priv->audio_channels[priv->audio_id] == 2);
-	    MSG_V("ioctl dsp stereo: %d (req: %d)\n",
-		ioctl(priv->audio_fd, SNDCTL_DSP_STEREO, &ioctl_param),
-		ioctl_param);
+	    mpxp_v<<"ioctl dsp stereo: "<<ioctl(priv->audio_fd, SNDCTL_DSP_STEREO, &ioctl_param)<<" (req:"<<ioctl_param<<")"<<std::endl;
 	}
 
 	ioctl_param = priv->audio_samplerate[priv->audio_id];
-	MSG_V("ioctl dsp speed: %d\n",
-	    ioctl(priv->audio_fd, SNDCTL_DSP_SPEED, &ioctl_param));
+	mpxp_v<<"ioctl dsp speed: "<<ioctl(priv->audio_fd, SNDCTL_DSP_SPEED, &ioctl_param)<<std::endl;
 
-
-	MSG_V("ioctl dsp trigger: %d\n",
-	    ioctl(priv->audio_fd, SNDCTL_DSP_GETTRIGGER, &ioctl_param));
-	MSG_V("trigger: %x\n", ioctl_param);
+	mpxp_v<<"ioctl dsp trigger: "<<ioctl(priv->audio_fd, SNDCTL_DSP_GETTRIGGER, &ioctl_param)<<std::endl;
+	mpxp_v<<"trigger: "<<std::hex<<ioctl_param;
 	ioctl_param = PCM_ENABLE_INPUT;
-	MSG_V("ioctl dsp trigger: %d\n",
-	    ioctl(priv->audio_fd, SNDCTL_DSP_SETTRIGGER, &ioctl_param));
+	mpxp_v<<"ioctl dsp trigger: "<<ioctl(priv->audio_fd, SNDCTL_DSP_SETTRIGGER, &ioctl_param)<<std::endl;
 
-	MSG_V("ioctl dsp getblocksize: %d\n",
-	    ioctl(priv->audio_fd, SNDCTL_DSP_GETBLKSIZE, &priv->audio_blocksize));
-	MSG_V("blocksize: %d\n", priv->audio_blocksize);
+	mpxp_v<<"ioctl dsp getblocksize: "<<ioctl(priv->audio_fd, SNDCTL_DSP_GETBLKSIZE, &priv->audio_blocksize)<<std::endl;
+	mpxp_v<<"blocksize: "<<priv->audio_blocksize<<std::endl;
     }
 #endif
-    return(1);
+    return 1;
 
 
 malloc_failed:
@@ -403,7 +364,7 @@ malloc_failed:
 err:
     if (priv->video_fd != -1)
 	close(priv->video_fd);
-    return(0);
+    return 0;
 }
 
 static int uninit(struct priv_s *priv)
@@ -415,7 +376,7 @@ static int uninit(struct priv_s *priv)
     ioctl(priv->video_fd, VIDIOCSAUDIO, &priv->audio[priv->audio_id]);
     close(priv->audio_fd);
 
-    return(1);
+    return 1;
 }
 
 static int start(struct priv_s *priv)
@@ -423,99 +384,46 @@ static int start(struct priv_s *priv)
     int i;
 
 
-    if (ioctl(priv->video_fd, VIDIOCGPICT, &priv->picture) == -1)
-    {
-	MSG_ERR( "ioctl get picture failed: %s\n", strerror(errno));
-	return(0);
+    if (ioctl(priv->video_fd, VIDIOCGPICT, &priv->picture) == -1) {
+	mpxp_err<<"ioctl get picture failed: "<<strerror(errno)<<std::endl;
+	return 0;
     }
 
     priv->picture.palette = format2palette(priv->wtag);
     priv->picture.depth = palette2depth(priv->picture.palette);
     priv->bytesperline = priv->width * priv->picture.depth / 8;
 
-    MSG_V("palette: %d, depth: %d, bytesperline: %d\n",
-	priv->picture.palette, priv->picture.depth, priv->bytesperline);
+    mpxp_v<<"palette: "<<priv->picture.palette<<", depth: "<<priv->picture.depth<<", bytesperline: "<<priv->bytesperline<<std::endl;
 
-    MSG_V( "Picture values:\n");
-    MSG_V( " Depth: %d, Palette: %d (Format: %s)\n", priv->picture.depth,
-	priv->picture.palette, vo_format_name(priv->wtag));
-    MSG_V( " Brightness: %d, Hue: %d, Colour: %d, Contrast: %d\n",
-	priv->picture.brightness, priv->picture.hue,
-	priv->picture.colour, priv->picture.contrast);
+    mpxp_v<<"Picture values:"<<std::endl;
+    mpxp_v<<" Depth: "<<priv->picture.depth<<", Palette: "<<priv->picture.palette<<" (Format: "<<vo_format_name(priv->wtag)<<")"<<std::endl;
+    mpxp_v<<" Brightness: "<<priv->picture.brightness<<", Hue: "<<priv->picture.hue<<", Colour: "<<priv->picture.colour<<", Contrast: "<<priv->picture.contrast<<std::endl;
 
-
-    if (ioctl(priv->video_fd, VIDIOCSPICT, &priv->picture) == -1)
-    {
-	MSG_ERR( "ioctl set picture failed: %s\n", strerror(errno));
-	return(0);
+    if (ioctl(priv->video_fd, VIDIOCSPICT, &priv->picture) == -1) {
+	mpxp_err<<"ioctl set picture failed: "<<strerror(errno)<<std::endl;
+	return 0;
     }
 
     priv->nbuf = priv->mbuf.frames;
-    for (i=0; i < priv->nbuf; i++)
-    {
+    for (i=0; i < priv->nbuf; i++) {
 	priv->buf[i].wtag = priv->picture.palette;
 	priv->buf[i].frame = i;
 	priv->buf[i].width = priv->width;
 	priv->buf[i].height = priv->height;
-	MSG_DBG2( "buffer: %d => %p\n", i, &priv->buf[i]);
     }
 
-#if 0
-    {
-	struct video_play_mode pmode;
-
-	pmode.mode = VID_PLAY_NORMAL;
-	pmode.p1 = 1;
-	pmode.p2 = 0;
-	if (ioctl(priv->video_fd, VIDIOCSPLAYMODE, &pmode) == -1)
-	{
-	    MSG_ERR( "ioctl set play mode failed: %s\n", strerror(errno));
-//	    return(0);
-	}
-    }
-#endif
-
-#if 0
-    {
-	struct video_window win;
-
-	win.x = 0;
-	win.y = 0;
-	win.width = priv->width;
-	win.height = priv->height;
-	win.chromakey = -1;
-	win.flags = 0;
-	//win.clipcount = 0;
-
-	ioctl(priv->video_fd, VIDIOCSWIN, &win);
-    }
-
-    /* start capture */
-    if (ioctl(priv->video_fd, VIDIOCCAPTURE, &one) == -1)
-    {
-	MSG_ERR( "ioctl capture failed: %s\n", strerror(errno));
-	return(0);
-    }
-#endif
-
-    {
       struct timeval curtime;
       gettimeofday(&curtime, NULL);
       priv->starttime=curtime.tv_sec + curtime.tv_usec*.000001;
-    }
 
-    return(1);
+    return 1;
 }
 
 static int control(struct priv_s *priv, int cmd, any_t*arg)
 {
-    MSG_DBG2( "debug: control(priv=%p, cmd=%d, arg=%p)\n",
-	priv, cmd, arg);
-    switch(cmd)
-    {
+    switch(cmd) {
 	/* ========== GENERIC controls =========== */
-	case TVI_CONTROL_IS_VIDEO:
-	{
+	case TVI_CONTROL_IS_VIDEO: {
 	    if (priv->capability.type & VID_TYPE_CAPTURE)
 		return(TVI_CONTROL_TRUE);
 	    return(TVI_CONTROL_FALSE);
@@ -541,7 +449,7 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 
 	    output_fmt = priv->wtag;
 	    *(int *)arg = output_fmt;
-	    MSG_V( "Output format: %s\n", vo_format_name(output_fmt));
+	    mpxp_v<<"Output format: "<<vo_format_name(output_fmt)<<std::endl;
 	    return(TVI_CONTROL_TRUE);
 	}
 	case TVI_CONTROL_VID_SET_FORMAT:
@@ -560,7 +468,7 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	{
 	    int req_width = *(int *)arg;
 
-	    MSG_V( "Requested width: %d\n", req_width);
+	    mpxp_v<<"Requested width: "<<req_width<<std::endl;
 	    if ((req_width >= priv->capability.minwidth) &&
 		(req_width <= priv->capability.maxwidth))
 		return(TVI_CONTROL_TRUE);
@@ -576,7 +484,7 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	{
 	    int req_height = *(int *)arg;
 
-	    MSG_V( "Requested height: %d\n", req_height);
+	    mpxp_v<<"Requested height: "<<req_height<<std::endl;
 	    if ((req_height >= priv->capability.minheight) &&
 		(req_height <= priv->capability.maxheight))
 		return(TVI_CONTROL_TRUE);
@@ -588,14 +496,14 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	case TVI_CONTROL_VID_GET_PICTURE:
 	    if (ioctl(priv->video_fd, VIDIOCGPICT, &priv->picture) == -1)
 	    {
-		MSG_ERR( "ioctl get picture failed: %s\n", strerror(errno));
+		mpxp_err<<"ioctl get picture failed: "<<strerror(errno)<<std::endl;
 		return(TVI_CONTROL_FALSE);
 	    }
 	    return(TVI_CONTROL_TRUE);
 	case TVI_CONTROL_VID_SET_PICTURE:
 	    if (ioctl(priv->video_fd, VIDIOCSPICT, &priv->picture) == -1)
 	    {
-		MSG_ERR( "ioctl get picture failed: %s\n", strerror(errno));
+		mpxp_err<<"ioctl get picture failed: "<<strerror(errno)<<std::endl;
 		return(TVI_CONTROL_FALSE);
 	    }
 	    return(TVI_CONTROL_TRUE);
@@ -626,7 +534,7 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 
 	    if (ioctl(priv->video_fd, VIDIOCGFREQ, &freq) == -1)
 	    {
-		MSG_ERR( "ioctl get freq failed: %s\n", strerror(errno));
+		mpxp_err<<"ioctl get freq failed: "<<strerror(errno)<<std::endl;
 		return(TVI_CONTROL_FALSE);
 	    }
 
@@ -641,15 +549,14 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	    /* argument is in MHz ! */
 	    unsigned long freq = (unsigned long)*(any_t**)arg;
 
-	    MSG_V( "requested frequency: %.3f\n", (float)freq/16);
+	    mpxp_v<<"requested frequency: "<<((float)freq/16)<<std::endl;
 
 	    /* tuner uses khz not mhz ! */
 //	    if (priv->tuner.flags & VIDEO_TUNER_LOW)
 //	        freq *= 1000;
-//	    MSG_V( " requesting from driver: freq=%.3f\n", (float)freq/16);
 	    if (ioctl(priv->video_fd, VIDIOCSFREQ, &freq) == -1)
 	    {
-		MSG_ERR( "ioctl set freq failed: %s\n", strerror(errno));
+		mpxp_err<<"ioctl set freq failed: "<<strerror(errno)<<std::endl;
 		return(TVI_CONTROL_FALSE);
 	    }
 	    return(TVI_CONTROL_TRUE);
@@ -658,19 +565,18 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	{
 	    if (ioctl(priv->video_fd, VIDIOCGTUNER, &priv->tuner) == -1)
 	    {
-		MSG_ERR( "ioctl get tuner failed: %s\n", strerror(errno));
+		mpxp_err<<"ioctl get tuner failed: "<<strerror(errno)<<std::endl;
 		return(TVI_CONTROL_FALSE);
 	    }
 
-	    MSG_V( "Tuner (%s) range: %lu -> %lu\n", priv->tuner.name,
-		priv->tuner.rangelow, priv->tuner.rangehigh);
+	    mpxp_v<<"Tuner ("<<priv->tuner.name<<") range: "<<priv->tuner.rangelow<<" ->"<<priv->tuner.rangehigh<<std::endl;
 	    return(TVI_CONTROL_TRUE);
 	}
 	case TVI_CONTROL_TUN_SET_TUNER:
 	{
 	    if (ioctl(priv->video_fd, VIDIOCSTUNER, &priv->tuner) == -1)
 	    {
-		MSG_ERR( "ioctl get tuner failed: %s\n", strerror(errno));
+		mpxp_err<<"ioctl get tuner failed: "<<strerror(errno)<<std::endl;
 		return(TVI_CONTROL_FALSE);
 	    }
 	    return(TVI_CONTROL_TRUE);
@@ -684,7 +590,7 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 		((req_mode == VIDEO_MODE_NTSC) && !(priv->tuner.flags & VIDEO_TUNER_NTSC)) ||
 		((req_mode == VIDEO_MODE_SECAM) && !(priv->tuner.flags & VIDEO_TUNER_SECAM)))
 	    {
-		MSG_ERR( "Tuner isn't capable to set norm!\n");
+		mpxp_err<<"Tuner isn't capable to set norm!"<<std::endl;
 		return(TVI_CONTROL_FALSE);
 	    }
 
@@ -749,7 +655,7 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 
 	    if (ioctl(priv->video_fd, VIDIOCGCHAN, &priv->channels[i]) == -1)
 	    {
-		MSG_ERR( "ioctl get channel failed: %s\n", strerror(errno));
+		mpxp_err<<"ioctl get channel failed: "<<strerror(errno)<<std::endl;
 		return(TVI_CONTROL_FALSE);
 	    }
 	    return(TVI_CONTROL_TRUE);
@@ -763,8 +669,7 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 
 	    if (req_chan >= priv->capability.channels)
 	    {
-		MSG_ERR( "Invalid input requested: %d, valid: 0-%d\n",
-		    req_chan, priv->capability.channels);
+		mpxp_err<<"Invalid input requested: "<<req_chan<<", valid: 0-"<<priv->capability.channels<<std::endl;
 		return(TVI_CONTROL_FALSE);
 	    }
 
@@ -776,10 +681,10 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 
 	    if (ioctl(priv->video_fd, VIDIOCSCHAN, &chan) == -1)
 	    {
-		MSG_ERR( "ioctl set chan failed: %s\n", strerror(errno));
+		mpxp_err<<"ioctl set chan failed: "<<strerror(errno)<<std::endl;
 		return(TVI_CONTROL_FALSE);
 	    }
-	    MSG_V( "Using input '%s'\n", chan.name);
+	    mpxp_v<<"Using input: "<<chan.name<<std::endl;
 
 	    priv->act_channel = i;
 
@@ -804,28 +709,19 @@ static double grab_video_frame(struct priv_s *priv,unsigned char *buffer, int le
     int frame = priv->queue % priv->nbuf;
     int nextframe = (priv->queue+1) % priv->nbuf;
 
-    MSG_DBG2( "grab_video_frame(priv=%p, buffer=%p, len=%d)\n",
-	priv, buffer, len);
-
-    MSG_DBG3( "buf: %p + frame: %d => %p\n",
-	priv->buf, nextframe, &priv->buf[nextframe]);
     if (ioctl(priv->video_fd, VIDIOCMCAPTURE, &priv->buf[nextframe]) == -1)
     {
-	MSG_ERR( "ioctl mcapture failed: %s\n", strerror(errno));
+	mpxp_err<<"ioctl mcapture failed: "<<strerror(errno)<<std::endl;
 	return(0);
     }
 
     while (ioctl(priv->video_fd, VIDIOCSYNC, &priv->buf[frame].frame) < 0 &&
 	(errno == EAGAIN || errno == EINTR));
-	MSG_DBG3( "picture sync failed\n");
+	mpxp_dbg3<<"picture sync failed"<<std::endl;
 
     priv->queue++;
     gettimeofday(&curtime, NULL);
     timestamp=curtime.tv_sec + curtime.tv_usec*.000001;
-
-    MSG_DBG3( "mmap: %p + offset: %d => %p\n",
-	priv->mmap, priv->mbuf.offsets[frame],
-	priv->mmap+priv->mbuf.offsets[frame]);
 
     /* XXX also directrendering would be nicer! */
     /* 3 times copying the same picture to other buffer :( */
@@ -845,9 +741,6 @@ static double grab_audio_frame(struct priv_s *priv,unsigned char *buffer, int le
 {
     int in_len = 0;
     int max_tries = 2;
-
-    MSG_DBG2( "grab_audio_frame(priv=%p, buffer=%p, len=%d)\n",
-	priv, buffer, len);
 
     while (--max_tries > 0)
     {

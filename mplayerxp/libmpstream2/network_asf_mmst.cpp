@@ -118,7 +118,7 @@ static void send_command (Tcp& tcp, int command, uint32_t switches,
     memset(&cmd.buf[48 + length], 0, 8 - (length & 7));
 
   if (tcp.write (cmd.buf, len8*8+48) != (len8*8+48)) {
-    MSG_ERR ("write error\n");
+    mpxp_err<<"write error"<<std::endl;
   }
 }
 
@@ -167,7 +167,7 @@ static void get_answer (Tcp& tcp)
 
     len = tcp.read(data, BUF_SIZE);
     if (!len) {
-      MSG_ERR ("\nalert! eof\n");
+      mpxp_err<<std::endl<<"alert! eof"<<std::endl;
       return;
     }
 
@@ -188,14 +188,13 @@ static int get_data (Tcp& tcp,unsigned char *buf, size_t count)
     len = tcp.read(&buf[total], count-total);
 
     if (len<=0) {
-      MSG_ERR ("read error:");
+      mpxp_err<<"read error:"<<std::endl;
       return 0;
     }
 
     total += len;
 
     if (len != 0) {
-//      printf ("[%d/%d]", total, count);
       fflush (stdout);
     }
 
@@ -214,7 +213,7 @@ int Asf_Mmst_Networking::get_header (Tcp& tcp, uint8_t *header)
 
   while (1) {
     if (!get_data (tcp, pre_header, 8)) {
-      MSG_ERR ("pre-header read failed\n");
+      mpxp_err<<"pre-header read failed"<<std::endl;
       return 0;
     }
     if (pre_header[4] == 0x02) {
@@ -223,26 +222,22 @@ int Asf_Mmst_Networking::get_header (Tcp& tcp, uint8_t *header)
 
       packet_len = (pre_header[7] << 8 | pre_header[6]) - 8;
 
-//      printf ("asf header packet detected, len=%d\n", packet_len);
-
       if (packet_len < 0 || packet_len > HDR_BUF_SIZE - header_len) {
-	MSG_FATAL("Invalid header size, giving up\n");
+	mpxp_fatal<<"Invalid header size, giving up"<<std::endl;
 	return 0;
       }
 
       if (!get_data (tcp, &header[header_len], packet_len)) {
-	MSG_ERR("header data read failed\n");
+	mpxp_err<<"header data read failed"<<std::endl;
 	return 0;
       }
 
       header_len += packet_len;
 
-      if ( (header[header_len-1] == 1) && (header[header_len-2]==1)) {
+    if ( (header[header_len-1] == 1) && (header[header_len-2]==1)) {
 
 
-     if( bufferize(header, header_len )<0 ) return -1;
-
-     //	printf ("get header packet finished\n");
+    if( bufferize(header, header_len )<0 ) return -1;
 
     return header_len;
 
@@ -255,34 +250,29 @@ int Asf_Mmst_Networking::get_header (Tcp& tcp, uint8_t *header)
       unsigned char _data[BUF_SIZE];
 
       if (!get_data (tcp, (unsigned char*)&packet_len, 4)) {
-	MSG_ERR ("packet_len read failed\n");
+	mpxp_err<<"packet_len read failed"<<std::endl;
 	return 0;
       }
 
       packet_len = get_32 ((unsigned char*)&packet_len, 0) + 4;
 
-//      printf ("command packet detected, len=%d\n", packet_len);
-
       if (packet_len < 0 || packet_len > BUF_SIZE) {
-	MSG_FATAL("Invalid rtsp packet size, giving up\n");
+	mpxp_fatal<<"Invalid rtsp packet size, giving up"<<std::endl;
 	return 0;
       }
 
       if (!get_data (tcp, _data, packet_len)) {
-	MSG_ERR ("command data read failed\n");
+	mpxp_err<<"command data read failed"<<std::endl;
 	return 0;
       }
 
       command = get_32 (_data, 24) & 0xFFFF;
-
-//      printf ("command: %02x\n", command);
 
       if (command == 0x1b)
 	send_command (tcp, 0x1b, 0, 0, 0, _data);
 
     }
 
-//    printf ("get header packet succ\n");
   }
 }
 
@@ -312,8 +302,6 @@ static int interp_header (uint8_t *header, int header_len)
       | ((uint64_t)header[i+6]<<48) | ((uint64_t)header[i+7]<<56);
     i += 8;
 
-//    printf ("guid found: %016llx%016llx\n", guid_1, guid_2);
-
     length = (uint64_t)header[i] | ((uint64_t)header[i+1]<<8)
       | ((uint64_t)header[i+2]<<16) | ((uint64_t)header[i+3]<<24)
       | ((uint64_t)header[i+4]<<32) | ((uint64_t)header[i+5]<<40)
@@ -322,42 +310,29 @@ static int interp_header (uint8_t *header, int header_len)
     i += 8;
 
     if ( (guid_1 == 0x6cce6200aa00d9a6ULL) && (guid_2 == 0x11cf668e75b22630ULL) ) {
-      MSG_V ("header object\n");
+      mpxp_v<<"header object"<<std::endl;
     } else if ((guid_1 == 0x6cce6200aa00d9a6ULL) && (guid_2 == 0x11cf668e75b22636ULL)) {
-      MSG_V ("data object\n");
+      mpxp_v<<"data object"<<std::endl;
     } else if ((guid_1 == 0x6553200cc000e48eULL) && (guid_2 == 0x11cfa9478cabdca1ULL)) {
 
       packet_length = get_32(header, i+92-24);
 
-      MSG_V ("file object, packet length = %d (%d)\n",
-	      packet_length, get_32(header, i+96-24));
-
+      mpxp_v<<"file object, packet length = "<<packet_length<<" ("<<get_32(header, i+96-24)<<")"<<std::endl;
 
     } else if ((guid_1 == 0x6553200cc000e68eULL) && (guid_2 == 0x11cfa9b7b7dc0791ULL)) {
 
       int stream_id = header[i+48] | header[i+49] << 8;
 
-      MSG_V ("stream object, stream id: %d\n", stream_id);
+      mpxp_v<<"stream object, stream id: "<<stream_id<<std::endl;
 
       if (num_stream_ids < MAX_STREAMS) {
 	stream_ids[num_stream_ids] = stream_id;
 	num_stream_ids++;
-      } else {
-	MSG_ERR("asf_mmst: too many id, stream skipped");
-      }
-
-    } else {
-      MSG_V ("unknown object\n");
-    }
-
-//    printf ("length    : %lld\n", length);
-
+      } else mpxp_err<<"asf_mmst: too many id, stream skipped"<<std::endl;
+    } else mpxp_v<<"unknown object"<<std::endl;
     i += length-24;
-
   }
-
   return packet_length;
-
 }
 
 int Asf_Mmst_Networking::get_media_packet (Tcp& tcp, int padding) {
@@ -365,13 +340,9 @@ int Asf_Mmst_Networking::get_media_packet (Tcp& tcp, int padding) {
   unsigned char  _data[BUF_SIZE];
 
   if (!get_data (tcp, pre_header, 8)) {
-    MSG_ERR ("pre-header read failed\n");
+    mpxp_err<<"pre-header read failed"<<std::endl;
     return 0;
   }
-
-//  for (i=0; i<8; i++)
-//    printf ("pre_header[%d] = %02x (%d)\n",
-//	    i, pre_header[i], pre_header[i]);
 
   if (pre_header[4] == 0x04) {
 
@@ -379,15 +350,13 @@ int Asf_Mmst_Networking::get_media_packet (Tcp& tcp, int padding) {
 
     packet_len = (pre_header[7] << 8 | pre_header[6]) - 8;
 
-//    printf ("asf media packet detected, len=%d\n", packet_len);
-
     if (packet_len < 0 || packet_len > BUF_SIZE) {
-      MSG_FATAL("Invalid rtsp packet size, giving up\n");
+      mpxp_fatal<<"Invalid rtsp packet size, giving up"<<std::endl;
       return 0;
     }
 
     if (!get_data (tcp, _data, packet_len)) {
-      MSG_ERR ("media data read failed\n");
+      mpxp_err<<"media data read failed"<<std::endl;
       return 0;
     }
 
@@ -399,37 +368,35 @@ int Asf_Mmst_Networking::get_media_packet (Tcp& tcp, int padding) {
     int command;
 
     if (!get_data (tcp, (unsigned char*)&packet_len, 4)) {
-      MSG_ERR ("packet_len read failed\n");
+      mpxp_err<<"packet_len read failed"<<std::endl;
       return 0;
     }
 
     packet_len = get_32 ((unsigned char*)&packet_len, 0) + 4;
 
     if (packet_len < 0 || packet_len > BUF_SIZE) {
-	MSG_FATAL("Invalid rtsp packet size, giving up\n");
+	mpxp_fatal<<"Invalid rtsp packet size, giving up"<<std::endl;
 	return 0;
     }
 
     if (!get_data (tcp, _data, packet_len)) {
-      MSG_ERR ("command data read failed\n");
+      mpxp_err<<"command data read failed"<<std::endl;
       return 0;
     }
 
     if ( (pre_header[7] != 0xb0) || (pre_header[6] != 0x0b)
 	 || (pre_header[5] != 0xfa) || (pre_header[4] != 0xce) ) {
 
-      MSG_ERR ("missing signature\n");
+      mpxp_err<<"missing signature"<<std::endl;
       return -1;
     }
 
     command = get_32 (_data, 24) & 0xFFFF;
 
-//    printf ("\ncommand packet detected, len=%d  cmd=0x%X\n", packet_len, command);
-
     if (command == 0x1b)
       send_command (tcp, 0x1b, 0, 0, 0, _data);
     else if (command == 0x1e) {
-      MSG_OK ("everything done. Thank you for downloading a media file containing proprietary and patentend technology.\n");
+      mpxp_ok<<"everything done. Thank you for downloading a media file containing proprietary and patentend technology"<<std::endl;
       return 0;
     }
     else if (command == 0x21 ) {
@@ -438,12 +405,10 @@ int Asf_Mmst_Networking::get_media_packet (Tcp& tcp, int padding) {
 	return 0;
     }
     else if (command != 0x05) {
-      MSG_ERR ("unknown command %02x\n", command);
+      mpxp_err<<"unknown command "<<std::hex<<command<<std::endl;
       return -1;
     }
   }
-
-//  printf ("get media packet succ\n");
 
   return 1;
 }
@@ -459,7 +424,7 @@ int Asf_Mmst_Networking::read(Tcp& tcp, char *_buffer, int size)
 	// buffer is empty - fill it!
 	int ret = get_media_packet(tcp, packet_length1);
 	if( ret<0 ) {
-	    MSG_ERR("get_media_packet error : %s\n",strerror(errno));
+	    mpxp_err<<"get_media_packet error: "<<strerror(errno)<<std::endl;
 	    return -1;
 	} else if (ret==0) return ret; // EOF?
     }
@@ -498,16 +463,16 @@ Networking* Asf_Mmst_Networking::start(Tcp& tcp, network_protocol_t& protocol)
     if (!(protocol.url.protocol2lower()=="mmst" ||
 	 protocol.url.protocol2lower()=="mmsu" ||
 	 protocol.url.protocol2lower()=="mms")) {
-	MSG_ERR("Unknown protocol: %s\n", protocol.url.protocol().c_str() );
+	mpxp_err<<"Unknown protocol: "<<protocol.url.protocol()<<std::endl;
 	return NULL;
     }
 
     // Is protocol mms or mmsu?
     if (protocol.url.protocol2lower()=="mmsu" || protocol.url.protocol2lower()=="mms") {
-	MSG_V("Trying ASF/UDP...\n");
+	mpxp_v<<"Trying ASF/UDP..."<<std::endl;
 	//fd = asf_mmsu_networking_start( stream );
 	//mmsu support is not implemented yet - using this code
-	MSG_V("  ===> ASF/UDP failed\n");
+	mpxp_v<<"  ===> ASF/UDP failed"<<std::endl;
 	return NULL;
     }
 
@@ -521,7 +486,7 @@ Networking* Asf_Mmst_Networking::start(Tcp& tcp, network_protocol_t& protocol)
     */
     unescpath=new char [strlen(path)+1];
     if (!unescpath) {
-	MSG_FATAL("Memory allocation failed!\n");
+	mpxp_fatal<<"Memory allocation failed!"<<std::endl;
 	return NULL;
     }
     url2string(unescpath,path);
@@ -533,7 +498,7 @@ Networking* Asf_Mmst_Networking::start(Tcp& tcp, network_protocol_t& protocol)
 	delete path;
 	return NULL;
     }
-    MSG_INFO ("connected\n");
+    mpxp_info<<"connected"<<std::endl;
 
     seq_num=0;
 
@@ -598,7 +563,6 @@ Networking* Asf_Mmst_Networking::start(Tcp& tcp, network_protocol_t& protocol)
 
     Asf_Mmst_Networking* rv = new(zeromem) Asf_Mmst_Networking;
     asf_header_len = rv->get_header (tcp, asf_header);
-//  printf("---------------------------------- asf_header %d\n",asf_header);
     if (asf_header_len==0) { //error reading header
 	tcp.close();
 	delete rv;
@@ -652,7 +616,7 @@ Networking* Asf_Mmst_Networking::start(Tcp& tcp, network_protocol_t& protocol)
     rv->status = networking_playing_e;
 
     packet_length1 = packet_length;
-    MSG_V("mmst packet_length = %d\n",packet_length);
+    mpxp_v<<"mmst packet_length = "<<packet_length<<std::endl;
 
 #ifdef USE_ICONV
     if (url_conv != (iconv_t)(-1)) iconv_close(url_conv);

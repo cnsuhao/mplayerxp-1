@@ -91,7 +91,7 @@ Rtsp_Session *Rtsp_Session::start(Tcp& tcp, char **mrl, const std::string& path,
   rtsp_session->s=Rtsp::connect(tcp,*mrl,path.c_str(),host.c_str(),port,NULL);
   if (!rtsp_session->s)
   {
-    MSG_ERR("rtsp_session: failed to connect to server %s\n", path.c_str());
+    mpxp_err<<"rtsp_session: failed to connect to server "<<path<<std::endl;
     delete rtsp_session;
     return NULL;
   }
@@ -116,7 +116,7 @@ Rtsp_Session *Rtsp_Session::start(Tcp& tcp, char **mrl, const std::string& path,
       {
 	delete mrl_line;
 	mrl_line=mp_strdup(rtsp_session->s->search_answers(RTSP_OPTIONS_LOCATION));
-	MSG_INFO("rtsp_session: redirected to %s\n", mrl_line);
+	mpxp_info<<"rtsp_session: redirected to "<<mrl_line<<std::endl;
 	rtsp_session->s->close();
 	delete server;
 	delete *mrl;
@@ -128,7 +128,7 @@ Rtsp_Session *Rtsp_Session::start(Tcp& tcp, char **mrl, const std::string& path,
 //	goto connect; /* *shudder* i made a design mistake somewhere */
       } else
       {
-	MSG_ERR("rtsp_session: session can not be established.\n");
+	mpxp_err<<"rtsp_session: session can not be established"<<std::endl;
 	rtsp_session->s->close();
 	delete server;
 	delete rtsp_session;
@@ -142,13 +142,13 @@ Rtsp_Session *Rtsp_Session::start(Tcp& tcp, char **mrl, const std::string& path,
       rtsp_session->real_session->header_len = 0;
       rtsp_session->real_session->recv_size = 0;
       rtsp_session->real_session->rdt_rawdata = 1;
-      MSG_V("smil-over-realrtsp playlist, switching to raw rdt mode\n");
+      mpxp_v<<"smil-over-realrtsp playlist, switching to raw rdt mode"<<std::endl;
     } else {
     rtsp_session->real_session->header_len =
       rmff_dump_header (h, (char *) rtsp_session->real_session->header, HEADER_SIZE);
 
       if (rtsp_session->real_session->header_len < 0) {
-	MSG_ERR("rtsp_session: error while dumping RMFF headers, session can not be established.\n");
+	mpxp_err<<"rtsp_session: error while dumping RMFF headers, session can not be established"<<std::endl;
 	free_real_rtsp_session(rtsp_session->real_session);
 	rtsp_session->s->close();
 	delete server;
@@ -186,7 +186,7 @@ Rtsp_Session *Rtsp_Session::start(Tcp& tcp, char **mrl, const std::string& path,
 	|| !strstr (publics, RTSP_METHOD_PLAY)
 	|| !strstr (publics, RTSP_METHOD_TEARDOWN))
     {
-      MSG_ERR("Remote server does not meet minimal RTSP 1.0 compliance.\n");
+      mpxp_err<<"Remote server does not meet minimal RTSP 1.0 compliance"<<std::endl;
       rtsp_session->s->close ();
       delete server;
       delete mrl_line;
@@ -201,7 +201,7 @@ Rtsp_Session *Rtsp_Session::start(Tcp& tcp, char **mrl, const std::string& path,
     /* neither a Real or an RTP server */
     if (!rtsp_session->rtp_session)
     {
-      MSG_ERR("rtsp_session: unsupported RTSP server. Server type is '%s'.\n", server);
+      mpxp_err<<"rtsp_session: unsupported RTSP server. Server type is "<<server<<std::endl;
       rtsp_session->s->close ();
       delete server;
       delete mrl_line;
@@ -241,7 +241,7 @@ int Rtsp_Session::read(char *data, int len) {
 	    fill = real_session->recv_size;
 	    if (real_session->recv_size == 0) {
 #ifdef LOG
-		MSG_INFO("librtsp: %d of %d bytes provided\n", len-to_copy, len);
+		mpxp_info<<"librtsp: "<<(len-to_copy)<<" of "<<len<<" bytes provided"<<std::endl;
 #endif
 		return len-to_copy;
 	    }
@@ -249,7 +249,7 @@ int Rtsp_Session::read(char *data, int len) {
 	memcpy(dest, source, to_copy);
 	real_session->recv_read += to_copy;
 #ifdef LOG
-	MSG_INFO("librtsp: %d bytes provided\n", len);
+	mpxp_info<<"librtsp: "<<len<<" bytes provided"<<std::endl;
 #endif
 	return len;
     } else if (rtp_session) {
