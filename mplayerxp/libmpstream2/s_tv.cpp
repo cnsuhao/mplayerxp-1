@@ -411,7 +411,7 @@ tvi_handle_t * __FASTCALL__ tv_begin(void)
 #endif
 
     mpxp_err<< "No such driver: "<<tv_param.driver<<std::endl;
-    return(NULL);
+    return NULL;
 }
 
 int __FASTCALL__ tv_init(tvi_handle_t *tvh)
@@ -509,7 +509,7 @@ int __FASTCALL__ tv_set_color_options(tvi_handle_t *tvh, int opt, int value)
 	    mpxp_warn<<"Unknown color option ("<<opt<<") specified!"<<std::endl;
     }
 
-    return(1);
+    return 1;
 }
 
 int __FASTCALL__ tv_set_freq(tvi_handle_t *tvh, unsigned long freq)

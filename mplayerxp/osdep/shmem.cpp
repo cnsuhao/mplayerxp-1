@@ -45,7 +45,7 @@ while(1){
   switch(shmem_type){
   case 0:  // ========= MAP_ANON|MAP_SHARED ==========
 #ifdef MAP_ANON
-    p=mmap(0,size,PROT_READ|PROT_WRITE,MAP_ANON|MAP_SHARED,-1,0);
+    p=::mmap(0,size,PROT_READ|PROT_WRITE,MAP_ANON|MAP_SHARED,-1,0);
     if(p==MAP_FAILED) break; // failed
     mpxp_dbg2<<"shmem: "<<size<<" bytes allocated using mmap anon"<<std::endl;
     return p;
@@ -55,8 +55,8 @@ while(1){
 #endif
     break;
   case 1:  // ========= MAP_SHARED + /dev/zero ==========
-    if (devzero == -1 && (devzero = open("/dev/zero", O_RDWR, 0)) == -1) break;
-    p=mmap(0,size,PROT_READ|PROT_WRITE,MAP_SHARED,devzero,0);
+    if (devzero == -1 && (devzero = ::open("/dev/zero", O_RDWR, 0)) == -1) break;
+    p=::mmap(0,size,PROT_READ|PROT_WRITE,MAP_SHARED,devzero,0);
     if(p==MAP_FAILED) break; // failed
     mpxp_dbg2<<"shmem: "<<size<<" bytes allocated using mmap /dev/zero"<<std::endl;
     return p;
@@ -64,22 +64,22 @@ while(1){
 #ifdef HAVE_SHM
     struct shmid_ds shmemds;
     int shmemid;
-    if ((shmemid = shmget(IPC_PRIVATE, size, IPC_CREAT | 0600)) == -1) break;
-    if ((p = shmat(shmemid, 0, 0)) == (any_t*)-1){
+    if ((shmemid = ::shmget(IPC_PRIVATE, size, IPC_CREAT | 0600)) == -1) break;
+    if ((p = ::shmat(shmemid, 0, 0)) == (any_t*)-1){
       mpxp_err<<"shmem: shmat() failed: "<<strerror(errno)<<std::endl;
-      shmctl (shmemid, IPC_RMID, &shmemds);
+      ::shmctl (shmemid, IPC_RMID, &shmemds);
       break;
     }
-    if (shmctl(shmemid, IPC_RMID, &shmemds) == -1) {
+    if (::shmctl(shmemid, IPC_RMID, &shmemds) == -1) {
       mpxp_err<<"shmem: shmctl() failed: "<<strerror(errno)<<std::endl;
-      if (shmdt(p) == -1) perror ("shmdt()");
+      if (::shmdt(p) == -1) perror ("shmdt()");
       break;
     }
     mpxp_dbg2<<"shmem: "<<size<<" bytes allocated using SHM"<<std::endl;
     return p;
 #else
     mpxp_fatal<<"shmem: no SHM support was compiled in!"<<std::endl;
-    return(NULL);
+    return NULL;
 #endif
     }
   default:
@@ -94,7 +94,7 @@ void shmem_free(any_t* p){
   switch(shmem_type){
     case 2:
 #ifdef HAVE_SHM
-	if (shmdt(p) == -1)
+	if (::shmdt(p) == -1)
 	    mpxp_err<<"shmfree: shmdt() failed: "<<strerror(errno)<<std::endl;
 #else
 	mpxp_err<<"shmfree: no SHM support was compiled in!"<<std::endl;

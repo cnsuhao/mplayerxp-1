@@ -121,7 +121,7 @@ int load_termcap(const char *termtype){
 static void get_screen_size(){
 #ifdef USE_IOCTL
   struct winsize ws;
-  if (ioctl(0, TIOCGWINSZ, &ws) < 0 || !ws.ws_row || !ws.ws_col) return;
+  if (::ioctl(0, TIOCGWINSZ, &ws) < 0 || !ws.ws_row || !ws.ws_col) return;
   screen_width=ws.ws_col;
   screen_height=ws.ws_row;
 #endif
@@ -141,10 +141,10 @@ int getch2(int _time){
     FD_ZERO(&rfds); FD_SET(0,&rfds);
     /* Wait up to 'time' microseconds. */
     tv.tv_sec=_time/1000; tv.tv_usec = (_time%1000)*1000;
-    retval=select(1, &rfds, NULL, NULL, &tv);
+    retval=::select(1, &rfds, NULL, NULL, &tv);
     if(retval<=0) return -1;
     /* Data is available now. */
-    retval=read(0,&getch2_buf[getch2_len],BUF_LEN-getch2_len);
+    retval=::read(0,&getch2_buf[getch2_len],BUF_LEN-getch2_len);
     if(retval<1) return -1;
     getch2_len+=retval;
   }
@@ -220,22 +220,22 @@ void getch2_enable(){
 #ifdef HAVE_TERMIOS
 struct termios tio_new;
 #if defined(__NetBSD__) || defined(__svr4__) || defined(__CYGWIN__)
-    tcgetattr(0,&tio_orig);
+    ::tcgetattr(0,&tio_orig);
 #elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__bsdi__) || defined(__APPLE__)
-    ioctl(0,TIOCGETA,&tio_orig);
+    ::ioctl(0,TIOCGETA,&tio_orig);
 #else
-    ioctl(0,TCGETS,&tio_orig);
+    ::ioctl(0,TCGETS,&tio_orig);
 #endif
     tio_new=tio_orig;
     tio_new.c_lflag &= ~(ICANON|ECHO); /* Clear ICANON and ECHO. */
     tio_new.c_cc[VMIN] = 1;
     tio_new.c_cc[VTIME] = 0;
 #if defined(__NetBSD__) || defined(__svr4__) || defined(__CYGWIN__) || defined(__OS2__)
-    tcsetattr(0,TCSANOW,&tio_new);
+    ::tcsetattr(0,TCSANOW,&tio_new);
 #elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__bsdi__) || defined(__APPLE__)
-    ioctl(0,TIOCSETA,&tio_new);
+    ::ioctl(0,TIOCSETA,&tio_new);
 #else
-    ioctl(0,TCSETS,&tio_new);
+    ::ioctl(0,TCSETS,&tio_new);
 #endif
 #endif
     getch2_status=1;
@@ -245,11 +245,11 @@ void getch2_disable(){
     if(!getch2_status) return; // already disabled / never enabled
 #ifdef HAVE_TERMIOS
 #if defined(__NetBSD__) || defined(__svr4__) || defined(__CYGWIN__) || defined(__OS2__)
-    tcsetattr(0,TCSANOW,&tio_orig);
+    ::tcsetattr(0,TCSANOW,&tio_orig);
 #elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__bsdi__) || defined(__APPLE__)
-    ioctl(0,TIOCSETA,&tio_orig);
+    ::ioctl(0,TIOCSETA,&tio_orig);
 #else
-    ioctl(0,TCSETS,&tio_orig);
+    ::ioctl(0,TCSETS,&tio_orig);
 #endif
 #endif
     getch2_status=0;

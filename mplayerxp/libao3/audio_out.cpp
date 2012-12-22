@@ -86,51 +86,51 @@ const char * __FASTCALL__ ao_format_name(int format)
     switch (format)
     {
 	case AFMT_MU_LAW:
-	    return("Mu-Law");
+	    return "Mu-Law";
 	case AFMT_A_LAW:
-	    return("A-Law");
+	    return "A-Law";
 	case AFMT_IMA_ADPCM:
-	    return("Ima-ADPCM");
+	    return "Ima-ADPCM";
 	case AFMT_S8:
-	    return("Signed 8-bit");
+	    return "Signed 8-bit";
 	case AFMT_U8:
-	    return("Unsigned 8-bit");
+	    return "Unsigned 8-bit";
 	case AFMT_U16_LE:
-	    return("Unsigned 16-bit (Little-Endian)");
+	    return "Unsigned 16-bit (Little-Endian)";
 	case AFMT_U16_BE:
-	    return("Unsigned 16-bit (Big-Endian)");
+	    return "Unsigned 16-bit (Big-Endian)";
 	case AFMT_S16_LE:
-	    return("Signed 16-bit (Little-Endian)");
+	    return "Signed 16-bit (Little-Endian)";
 	case AFMT_S16_BE:
-	    return("Signed 16-bit (Big-Endian)");
+	    return "Signed 16-bit (Big-Endian)";
 	case AFMT_U24_LE:
-	    return("Unsigned 24-bit (Little-Endian)");
+	    return "Unsigned 24-bit (Little-Endian)";
 	case AFMT_U24_BE:
-	    return("Unsigned 24-bit (Big-Endian)");
+	    return "Unsigned 24-bit (Big-Endian)";
 	case AFMT_S24_LE:
-	    return("Signed 24-bit (Little-Endian)");
+	    return "Signed 24-bit (Little-Endian)";
 	case AFMT_S24_BE:
-	    return("Signed 24-bit (Big-Endian)");
+	    return "Signed 24-bit (Big-Endian)";
 	case AFMT_U32_LE:
-	    return("Unsigned 32-bit (Little-Endian)");
+	    return "Unsigned 32-bit (Little-Endian)";
 	case AFMT_U32_BE:
-	    return("Unsigned 32-bit (Big-Endian)");
+	    return "Unsigned 32-bit (Big-Endian)";
 	case AFMT_S32_LE:
-	    return("Signed 32-bit (Little-Endian)");
+	    return "Signed 32-bit (Little-Endian)";
 	case AFMT_S32_BE:
-	    return("Signed 32-bit (Big-Endian)");
+	    return "Signed 32-bit (Big-Endian)";
 	case AFMT_MPEG:
-	    return("MPEG (2) audio");
+	    return "MPEG (2) audio";
 	case AFMT_AC3:
-	    return("AC3");
+	    return "AC3";
 	case AFMT_FLOAT32:
-	    return("Float32");
+	    return "Float32";
 /*
   the following two formats are not available with old linux kernel
   headers (e.g. in 2.2.16)
 */
     }
-    return("Unknown");
+    return "Unknown";
 }
 
 // return number of bits for 1 sample in one channel, or 8 bits for compressed

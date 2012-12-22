@@ -596,7 +596,7 @@ _ftype_t __FASTCALL__ besselizero(_ftype_t x)
     sum += u;
     n++;
   } while (u >= BIZ_EPSILON * sum);
-  return(sum);
+  return sum;
 }
 
 /*

@@ -310,10 +310,10 @@ static float stats2aspect(xvid_dec_stats_t *stats)
 		dar  = ((float)stats->data.vol.width*wpar);
 		dar /= ((float)stats->data.vol.height*hpar);
 
-		return(dar);
+		return dar;
 	}
 
-	return(0.0f);
+	return 0.0f;
 }
 #endif
 

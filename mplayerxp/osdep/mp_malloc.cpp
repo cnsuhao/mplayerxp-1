@@ -91,7 +91,7 @@ static mp_slot_t*	prot_append_slot(mp_slot_container_t* c,any_t*ptr,size_t size)
 	}
     }
     c->slots=s;
-    memset(&c->slots[c->nslots],0,sizeof(mp_slot_t));
+    ::memset(&c->slots[c->nslots],0,sizeof(mp_slot_t));
     c->slots[c->nslots].page_ptr=ptr;
     c->slots[c->nslots].size=size;
     c->nslots++;
@@ -101,7 +101,7 @@ static mp_slot_t*	prot_append_slot(mp_slot_container_t* c,any_t*ptr,size_t size)
 static void	prot_free_slot(mp_slot_container_t* c,any_t* ptr) {
     size_t idx=prot_find_slot_idx(c,ptr);
     if(idx!=UINT_MAX) {
-	memmove(&c->slots[idx],&c->slots[idx+1],sizeof(mp_slot_t)*(c->nslots-(idx+1)));
+	::memmove(&c->slots[idx],&c->slots[idx+1],sizeof(mp_slot_t)*(c->nslots-(idx+1)));
 	c->nslots--;
 	if(c->nslots<c->size-16) {
 	    c->size-=16;
@@ -115,11 +115,11 @@ static void	prot_free_slot(mp_slot_container_t* c,any_t* ptr) {
 static any_t* __prot_malloc_append(size_t size) {
     any_t* rp;
     size_t fullsize=app_fullsize(size);
-    rp=memalign(__VM_PAGE_SIZE__,fullsize);
+    rp=::memalign(__VM_PAGE_SIZE__,fullsize);
     if(rp) {
 	prot_append_slot(&priv->mallocs,rp,size);
 	// protect last page here
-	mprotect(prot_last_page(rp,fullsize),__VM_PAGE_SIZE__,MP_DENY_ALL);
+	::mprotect(prot_last_page(rp,fullsize),__VM_PAGE_SIZE__,MP_DENY_ALL);
 	rp=reinterpret_cast<any_t*>(reinterpret_cast<long>(rp)+fullsize-__VM_PAGE_SIZE__-size);
     }
     return rp;
@@ -143,8 +143,8 @@ static bt_cache_t*	init_bt_cache(void) { return (bt_cache_t*)calloc(1,sizeof(bt_
 static void		uninit_bt_cache(bt_cache_t* cache) {
     unsigned i;
     for(i=0;i<cache->num_entries;i++) free(cache->entry[i].str);
-    free(cache->entry);
-    free(cache);
+    ::free(cache->entry);
+    ::free(cache);
 }
 
 static char* bt_find_cache(bt_cache_t* cache,any_t* ptr) {
@@ -165,19 +165,19 @@ static bt_cache_entry_t* bt_append_cache(bt_cache_t* cache,any_t* ptr,const char
 static char* exec_addr2line(any_t*ptr, char* result,unsigned len) {
     unsigned i;
     char ch,cmd[4096];
-    sprintf(cmd,"addr2line -s -e %s %p\n",priv->argv0,ptr);
-    FILE* in=popen(cmd,"r");
+    ::sprintf(cmd,"addr2line -s -e %s %p\n",priv->argv0,ptr);
+    FILE* in=::popen(cmd,"r");
     if(!in) return NULL;
     i=0;
     while(1) {
-	ch=fgetc(in);
-	if(feof(in)) break;
+	ch=::fgetc(in);
+	if(::feof(in)) break;
 	if(ch=='\n') break;
 	result[i++]=ch;
 	if(i>=len-1) break;
     }
     result[i]='\0';
-    pclose(in);
+    ::pclose(in);
     return result;
 }
 
@@ -199,7 +199,7 @@ static __always_inline void __print_backtrace(unsigned num) {
     bt_cache_t* cache=init_bt_cache();
     any_t*	calls[num];
     unsigned	i,ncalls;
-    ncalls=backtrace(calls,num);
+    ncalls=::backtrace(calls,num);
     mpxp_info<<"*** Backtrace for suspect call ***"<<std::endl;
     for(i=0;i<ncalls;i++) {
 	mpxp_info<<"    "<<calls[i]<<" -> "<<addr2line(cache,calls[i])<<std::endl;
@@ -220,14 +220,14 @@ static void __prot_free_append(any_t*ptr) {
     any_t *page_ptr=prot_page_align(ptr);
     mp_slot_t* slot=prot_find_slot(&priv->mallocs,page_ptr);
     if(!slot) {
-	printf("[__prot_free_append] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
+	::printf("[__prot_free_append] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
 	__prot_print_slots(&priv->mallocs);
 	__print_backtrace(Max_BackTraces);
-	kill(getpid(), SIGILL);
+	::kill(::getpid(), SIGILL);
     }
     size_t fullsize=app_fullsize(slot->size);
-    mprotect(prot_last_page(page_ptr,fullsize),__VM_PAGE_SIZE__,MP_PROT_READ|MP_PROT_WRITE);
-    free(page_ptr);
+    ::mprotect(prot_last_page(page_ptr,fullsize),__VM_PAGE_SIZE__,MP_PROT_READ|MP_PROT_WRITE);
+    ::free(page_ptr);
     prot_free_slot(&priv->mallocs,page_ptr);
 }
 
@@ -236,12 +236,12 @@ static any_t* __prot_realloc_append(any_t*ptr,size_t size) {
     if((rp=__prot_malloc_append(size))!=NULL && ptr) {
 	mp_slot_t* slot=prot_find_slot(&priv->mallocs,prot_page_align(ptr));
 	if(!slot) {
-	    printf("[__prot_realloc_append] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,prot_page_align(ptr));
+	    ::printf("[__prot_realloc_append] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,prot_page_align(ptr));
 	    __prot_print_slots(&priv->mallocs);
 	    __print_backtrace(Max_BackTraces);
-	    kill(getpid(), SIGILL);
+	    ::kill(::getpid(), SIGILL);
 	}
-	memcpy(rp,ptr,std::min(slot->size,size));
+	::memcpy(rp,ptr,std::min(slot->size,size));
 	__prot_free_append(ptr);
     }
     return rp;
@@ -254,11 +254,11 @@ static size_t pre_fullsize(size_t size) { return size+__VM_PAGE_SIZE__; }
 static any_t* __prot_malloc_prepend(size_t size) {
     any_t* rp;
     size_t fullsize=pre_fullsize(size);
-    rp=memalign(__VM_PAGE_SIZE__,fullsize);
+    rp=::memalign(__VM_PAGE_SIZE__,fullsize);
     if(rp) {
 	prot_append_slot(&priv->mallocs,rp,size);
 	// protect last page here
-	mprotect(rp,__VM_PAGE_SIZE__,MP_DENY_ALL);
+	::mprotect(rp,__VM_PAGE_SIZE__,MP_DENY_ALL);
 	rp=reinterpret_cast<any_t*>(reinterpret_cast<long>(rp)+__VM_PAGE_SIZE__);
     }
     return rp;
@@ -270,13 +270,13 @@ static void __prot_free_prepend(any_t*ptr) {
     any_t *page_ptr=pre_page_align(ptr);
     mp_slot_t* slot=prot_find_slot(&priv->mallocs,page_ptr);
     if(!slot) {
-	printf("[__prot_free_prepend] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
+	::printf("[__prot_free_prepend] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
 	__prot_print_slots(&priv->mallocs);
 	__print_backtrace(Max_BackTraces);
-	kill(getpid(), SIGILL);
+	::kill(::getpid(), SIGILL);
     }
-    mprotect(page_ptr,__VM_PAGE_SIZE__,MP_PROT_READ|MP_PROT_WRITE);
-    free(page_ptr);
+    ::mprotect(page_ptr,__VM_PAGE_SIZE__,MP_PROT_READ|MP_PROT_WRITE);
+    ::free(page_ptr);
     prot_free_slot(&priv->mallocs,page_ptr);
 }
 
@@ -285,12 +285,12 @@ static any_t* __prot_realloc_prepend(any_t*ptr,size_t size) {
     if((rp=__prot_malloc_prepend(size))!=NULL && ptr) {
 	mp_slot_t* slot=prot_find_slot(&priv->mallocs,pre_page_align(ptr));
 	if(!slot) {
-	    printf("[__prot_realloc_prepend] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,pre_page_align(ptr));
+	    ::printf("[__prot_realloc_prepend] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,pre_page_align(ptr));
 	    __prot_print_slots(&priv->mallocs);
 	    __print_backtrace(Max_BackTraces);
-	    kill(getpid(), SIGILL);
+	    ::kill(getpid(), SIGILL);
 	}
-	memcpy(rp,ptr,std::min(slot->size,size));
+	::memcpy(rp,ptr,std::min(slot->size,size));
 	__prot_free_prepend(ptr);
     }
     return rp;
@@ -325,21 +325,21 @@ static void prot_free(any_t*ptr) {
 static __always_inline any_t* bt_malloc(size_t size) {
     any_t*rp;
     mp_slot_t* slot;
-    rp=malloc(size);
+    rp=::malloc(size);
     if(rp) {
 	slot=prot_append_slot(&priv->mallocs,rp,size);
-	slot->ncalls=backtrace(slot->calls,Max_BackTraces);
+	slot->ncalls=::backtrace(slot->calls,Max_BackTraces);
     }
     return rp;
 }
 
 static __always_inline any_t* bt_memalign(size_t boundary,size_t size) {
     any_t*rp;
-    rp=memalign(boundary,size);
+    rp=::memalign(boundary,size);
     if(rp) {
 	mp_slot_t* slot;
 	slot=prot_append_slot(&priv->mallocs,rp,size);
-	slot->ncalls=backtrace(slot->calls,Max_BackTraces);
+	slot->ncalls=::backtrace(slot->calls,Max_BackTraces);
     }
     return rp;
 }
@@ -348,14 +348,14 @@ static __always_inline any_t* bt_realloc(any_t*ptr,size_t size) {
     any_t* rp;
     mp_slot_t* slot;
     if(!ptr) return bt_malloc(size);
-    rp=realloc(ptr,size);
+    rp=::realloc(ptr,size);
     if(rp) {
 	slot=prot_find_slot(&priv->mallocs,ptr);
 	if(!slot) {
 	    mpxp_warn<<"[bt_realloc] suspect call found! Can't find slot for address: "<<ptr<<std::endl;
 	    mp_slot_t* _slot;
 	    _slot=prot_append_slot(&priv->reallocs,ptr,size);
-	    _slot->ncalls=backtrace(_slot->calls,Max_BackTraces);
+	    _slot->ncalls=::backtrace(_slot->calls,Max_BackTraces);
 	} else {
 	    slot->page_ptr=rp; // update address after realloc
 	    slot->size=size;
@@ -370,11 +370,11 @@ static __always_inline void bt_free(any_t*ptr) {
 	mpxp_warn<<"[bt_free] suspect call found! Can't find slot for address: "<<ptr<<std::endl;
 	mp_slot_t* _slot;
 	_slot=prot_append_slot(&priv->frees,ptr,0);
-	_slot->ncalls=backtrace(_slot->calls,Max_BackTraces);
+	_slot->ncalls=::backtrace(_slot->calls,Max_BackTraces);
 	return;
     }
     prot_free_slot(&priv->mallocs,ptr);
-    free(ptr);
+    ::free(ptr);
 }
 
 /*======== STATISTICS =======*/
@@ -387,7 +387,7 @@ static void bt_print_slots(bt_cache_t* cache,mp_slot_container_t* c) {
 	mpxp_info<<"address: "<<c->slots[i].page_ptr<<" size: "<<c->slots[i].size<<" dump: ";
 	s=reinterpret_cast<char *>(c->slots[i].page_ptr);
 	for(j=0;j<std::min(c->slots[i].size,size_t(20));j++) {
-	    if(!isprint(s[j])) {
+	    if(!::isprint(s[j])) {
 		printable=0;
 		break;
 	    }
@@ -405,9 +405,9 @@ static void bt_print_slots(bt_cache_t* cache,mp_slot_container_t* c) {
 /* ================== HEAD FUNCTIONS  ======================= */
 void	mp_init_malloc(const char *argv0,unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags)
 {
-    srand(time(0));
-    if(!priv) priv=(priv_t*)malloc(sizeof(priv_t));
-    memset(priv,0,sizeof(priv_t));
+    ::srand(::time(0));
+    if(!priv) priv=(priv_t*)::malloc(sizeof(priv_t));
+    ::memset(priv,0,sizeof(priv_t));
     priv->argv0=argv0;
     priv->rnd_limit=rnd_limit;
     priv->every_nth_call=every_nth_call;
@@ -450,7 +450,7 @@ void	mp_uninit_malloc(int verbose)
     }
     if(done) mpxp_hint<<std::endl<<"For source lines you may also print in (gdb): list *0xADDRESS"<<std::endl;
     uninit_bt_cache(cache);
-    free(priv);
+    ::free(priv);
     priv=NULL;
 }
 
@@ -460,13 +460,13 @@ any_t* mp_malloc(size_t __size)
     if(!priv) mp_init_malloc(NULL,1000,10,MPA_FLG_RANDOMIZER);
     if(priv->every_nth_call && priv->rnd_limit && !priv->flags) {
 	if(priv->total_calls%priv->every_nth_call==0) {
-	    rnd_buff=malloc(rand()%priv->rnd_limit);
+	    rnd_buff=::malloc(::rand()%priv->rnd_limit);
 	}
     }
     if(priv->flags&(MPA_FLG_BOUNDS_CHECK|MPA_FLG_BEFORE_CHECK)) rb=prot_malloc(__size);
     else if(priv->flags&MPA_FLG_BACKTRACE)			rb=bt_malloc(__size);
     else							rb=malloc(__size);
-    if(rnd_buff) free(rnd_buff);
+    if(rnd_buff) ::free(rnd_buff);
     priv->total_calls++;
     return rb;
 }
@@ -499,7 +499,7 @@ void	mp_free(any_t*__ptr)
 	else if(priv->flags&MPA_FLG_BACKTRACE)
 	    bt_free(__ptr);
 	else
-	    free(__ptr);
+	    ::free(__ptr);
     }
 }
 
@@ -508,7 +508,7 @@ void	mp_free(any_t*__ptr)
 any_t*	mp_mallocz (size_t __size) {
     any_t* rp;
     rp=mp_malloc(__size);
-    if(rp) memset(rp,0,__size);
+    if(rp) ::memset(rp,0,__size);
     return rp;
 }
 
@@ -524,7 +524,7 @@ char *	mp_strdup(const char *src) {
 
 int __FASTCALL__ mp_mprotect(any_t* addr,size_t len,enum mp_prot_e flags)
 {
-    return mprotect(addr,len,flags);
+    return ::mprotect(addr,len,flags);
 }
 
 } // namespace mpxp

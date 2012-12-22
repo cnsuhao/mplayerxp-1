@@ -116,16 +116,16 @@ static int close_acm_audio_codec(ad_private_t *priv)
 	case ACMERR_CANCELED:
 	    MSG_DBG2( "ACM_Decoder: stream busy, waiting..\n");
 	    sleep(100);
-	    return(close_acm_audio_codec(priv));
+	    return close_acm_audio_codec(priv);
 	case ACMERR_UNPREPARED:
 	case ACMERR_NOTPOSSIBLE:
-	    return(0);
+	    return 0;
 	default:
 	    MSG_WARN( "ACM_Decoder: unknown error occured: %d\n", ret);
-	    return(0);
+	    return 0;
     }
 /*    MSACM_UnregisterAllDrivers();*/
-    return(1);
+    return 1;
 }
 
 MPXP_Rc init(ad_private_t *priv)

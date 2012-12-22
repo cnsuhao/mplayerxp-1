@@ -386,7 +386,7 @@ static int bread(char	*data,    /* Output: Output data array */
 		*pts=FIX_APTS(sh,priv->pts,priv->ptr);
 		iptr = priv->ptr;           /* current file data buffer pointer */
 		if ( iptr >= priv->nbuf )   /* If data file is empty then return */
-			return(retval);
+			return retval;
 		ibufadr = iptr/BYTE_BIT;      /* current file data buffer address */
 		ibufbit = iptr%BYTE_BIT;      /* current file data buffer bit */
 		/*	tmpdat = stream->buf[ibufadr] >> (BYTE_BIT-ibufbit-1); */
@@ -405,7 +405,7 @@ static int bread(char	*data,    /* Output: Output data array */
 		}
 		++retval;
     }
-    return(retval);
+    return retval;
 }
 
 #define	BITS_INT	(sizeof(int)*8)
@@ -437,7 +437,7 @@ static int get_bstm(int	*data,          /* Input: input data */
 		mask >>= 1;
     }
     *data = work;
-    return(retval);
+    return retval;
 }
 
 static int GetVqInfo( tvqConfInfoSubBlock *cfg,

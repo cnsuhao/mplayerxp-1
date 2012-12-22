@@ -38,7 +38,7 @@ unsigned int GetTimer(){
 //  float s;
     ::gettimeofday(&tv,NULL);
 //  s=tv.tv_usec;s*=0.000001;s+=tv.tv_sec;
-    return (tv.tv_sec*1000000ULL+tv.tv_usec);
+    return tv.tv_sec*1000000ULL+tv.tv_usec;
 }
 
 // Returns current time in milliseconds
@@ -48,7 +48,7 @@ unsigned int GetTimerMS(){
 //  float s;
     ::gettimeofday(&tv,NULL);
 //  s=tv.tv_usec;s*=0.000001;s+=tv.tv_sec;
-    return (tv.tv_sec*1000+tv.tv_usec/1000);
+    return tv.tv_sec*1000+tv.tv_usec/1000;
 }
 
 static unsigned int RelativeTime=0;
@@ -67,7 +67,7 @@ int InitTimer(void){
     int rtc_fd=-1;
     GetRelativeTime();
 #ifdef HAVE_RTC
-    if ((rtc_fd = ::open("/dev/rtc", O_RDONLY)) < 0) perror ("Linux RTC init: open");
+    if ((rtc_fd = ::open("/dev/rtc", O_RDONLY)) < 0) ::perror ("Linux RTC init: open");
     else {
 	unsigned long irqp;
 

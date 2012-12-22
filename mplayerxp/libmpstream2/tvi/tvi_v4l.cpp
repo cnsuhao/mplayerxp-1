@@ -108,18 +108,18 @@ static int palette2depth(int palette)
     {
 	/* component */
 	case VIDEO_PALETTE_RGB555:
-	    return(15);
+	    return 15;
 	case VIDEO_PALETTE_RGB565:
-	    return(16);
+	    return 16;
 	case VIDEO_PALETTE_RGB24:
-	    return(24);
+	    return 24;
 	case VIDEO_PALETTE_RGB32:
-	    return(32);
+	    return 32;
 	/* planar */
 	case VIDEO_PALETTE_YUV411P:
 	case VIDEO_PALETTE_YUV420P:
 	case VIDEO_PALETTE_YUV410P:
-	    return(12);
+	    return 12;
 	/* packed */
 	case VIDEO_PALETTE_YUV422P:
 	case VIDEO_PALETTE_YUV422:
@@ -127,9 +127,9 @@ static int palette2depth(int palette)
 	case VIDEO_PALETTE_UYVY:
 	case VIDEO_PALETTE_YUV420:
 	case VIDEO_PALETTE_YUV411:
-	    return(16);
+	    return 16;
     }
-    return(-1);
+    return -1;
 }
 
 static int format2palette(int format)
@@ -137,22 +137,22 @@ static int format2palette(int format)
     switch(format)
     {
 	case IMGFMT_RGB15:
-	    return(VIDEO_PALETTE_RGB555);
+	    return VIDEO_PALETTE_RGB555;
 	case IMGFMT_RGB16:
-	    return(VIDEO_PALETTE_RGB565);
+	    return VIDEO_PALETTE_RGB565;
 	case IMGFMT_RGB24:
-	    return(VIDEO_PALETTE_RGB24);
+	    return VIDEO_PALETTE_RGB24;
 	case IMGFMT_RGB32:
-	    return(VIDEO_PALETTE_RGB32);
+	    return VIDEO_PALETTE_RGB32;
 	case IMGFMT_YV12:
 	case IMGFMT_I420:
-	    return(VIDEO_PALETTE_YUV420P);
+	    return VIDEO_PALETTE_YUV420P;
 	case IMGFMT_UYVY:
-	    return(VIDEO_PALETTE_YUV422);
+	    return VIDEO_PALETTE_YUV422;
 	case IMGFMT_YUY2:
-	    return(VIDEO_PALETTE_YUYV);
+	    return VIDEO_PALETTE_YUYV;
     }
-    return(-1);
+    return -1;
 }
 
 tvi_handle_t *tvi_init_v4l(const char *device)
@@ -162,7 +162,7 @@ tvi_handle_t *tvi_init_v4l(const char *device)
 
     h = new_handle();
     if (!h)
-	return(NULL);
+	return NULL;
 
     priv = h->priv;
 
@@ -175,13 +175,13 @@ tvi_handle_t *tvi_init_v4l(const char *device)
     /* allocation failed */
     if (!priv->video_device) {
 	free_handle(h);
-	return(NULL);
+	return NULL;
     }
 
     /* set audio device name */
     priv->audio_device = mp_strdup("/dev/dsp");
 
-    return(h);
+    return h;
 }
 
 static int init(struct priv_s *priv)
@@ -425,21 +425,21 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	/* ========== GENERIC controls =========== */
 	case TVI_CONTROL_IS_VIDEO: {
 	    if (priv->capability.type & VID_TYPE_CAPTURE)
-		return(TVI_CONTROL_TRUE);
-	    return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_TRUE;
+	    return TVI_CONTROL_FALSE;
 	}
 	case TVI_CONTROL_IS_AUDIO:
 	    if (priv->channels[priv->act_channel].flags & VIDEO_VC_AUDIO)
 	    {
-		return(TVI_CONTROL_TRUE);
+		return TVI_CONTROL_TRUE;
 	    }
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_IS_TUNER:
 	{
 //	    if (priv->capability.type & VID_TYPE_TUNER)
 	    if (priv->channels[priv->act_channel].flags & VIDEO_VC_TUNER)
-		return(TVI_CONTROL_TRUE);
-	    return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_TRUE;
+	    return TVI_CONTROL_FALSE;
 	}
 
 	/* ========== VIDEO controls =========== */
@@ -450,20 +450,20 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	    output_fmt = priv->wtag;
 	    *(int *)arg = output_fmt;
 	    mpxp_v<<"Output format: "<<vo_format_name(output_fmt)<<std::endl;
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	}
 	case TVI_CONTROL_VID_SET_FORMAT:
 	    priv->wtag = (int)*(any_t**)arg;
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_VID_GET_PLANES:
 	    *(int *)arg = 1; /* FIXME, also not needed at this time */
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_VID_GET_BITS:
 	    *(int *)arg = palette2depth(format2palette(priv->wtag));
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_VID_GET_WIDTH:
 	    *(int *)arg = priv->width;
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_VID_CHK_WIDTH:
 	{
 	    int req_width = *(int *)arg;
@@ -471,15 +471,15 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	    mpxp_v<<"Requested width: "<<req_width<<std::endl;
 	    if ((req_width >= priv->capability.minwidth) &&
 		(req_width <= priv->capability.maxwidth))
-		return(TVI_CONTROL_TRUE);
-	    return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_TRUE;
+	    return TVI_CONTROL_FALSE;
 	}
 	case TVI_CONTROL_VID_SET_WIDTH:
 	    priv->width = *(int *)arg;
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_VID_GET_HEIGHT:
 	    *(int *)arg = priv->height;
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_VID_CHK_HEIGHT:
 	{
 	    int req_height = *(int *)arg;
@@ -487,45 +487,45 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	    mpxp_v<<"Requested height: "<<req_height<<std::endl;
 	    if ((req_height >= priv->capability.minheight) &&
 		(req_height <= priv->capability.maxheight))
-		return(TVI_CONTROL_TRUE);
-	    return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_TRUE;
+	    return TVI_CONTROL_FALSE;
 	}
 	case TVI_CONTROL_VID_SET_HEIGHT:
 	    priv->height = *(int *)arg;
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_VID_GET_PICTURE:
 	    if (ioctl(priv->video_fd, VIDIOCGPICT, &priv->picture) == -1)
 	    {
 		mpxp_err<<"ioctl get picture failed: "<<strerror(errno)<<std::endl;
-		return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_FALSE;
 	    }
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_VID_SET_PICTURE:
 	    if (ioctl(priv->video_fd, VIDIOCSPICT, &priv->picture) == -1)
 	    {
 		mpxp_err<<"ioctl get picture failed: "<<strerror(errno)<<std::endl;
-		return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_FALSE;
 	    }
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_VID_SET_BRIGHTNESS:
 	    priv->picture.brightness = *(int *)arg;
 	    control(priv, TVI_CONTROL_VID_SET_PICTURE, 0);
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_VID_SET_HUE:
 	    priv->picture.hue = *(int *)arg;
 	    control(priv, TVI_CONTROL_VID_SET_PICTURE, 0);
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_VID_SET_SATURATION:
 	    priv->picture.colour = *(int *)arg;
 	    control(priv, TVI_CONTROL_VID_SET_PICTURE, 0);
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_VID_SET_CONTRAST:
 	    priv->picture.contrast = *(int *)arg;
 	    control(priv, TVI_CONTROL_VID_SET_PICTURE, 0);
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	case TVI_CONTROL_VID_GET_FPS:
 	    *(int *)arg=priv->fps;
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 
 	/* ========== TUNER controls =========== */
 	case TVI_CONTROL_TUN_GET_FREQ:
@@ -535,14 +535,14 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	    if (ioctl(priv->video_fd, VIDIOCGFREQ, &freq) == -1)
 	    {
 		mpxp_err<<"ioctl get freq failed: "<<strerror(errno)<<std::endl;
-		return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_FALSE;
 	    }
 
 	    /* tuner uses khz not mhz ! */
 //	    if (priv->tuner.flags & VIDEO_TUNER_LOW)
 //	        freq /= 1000;
 	    *(unsigned long *)arg = freq;
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	}
 	case TVI_CONTROL_TUN_SET_FREQ:
 	{
@@ -557,29 +557,29 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	    if (ioctl(priv->video_fd, VIDIOCSFREQ, &freq) == -1)
 	    {
 		mpxp_err<<"ioctl set freq failed: "<<strerror(errno)<<std::endl;
-		return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_FALSE;
 	    }
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	}
 	case TVI_CONTROL_TUN_GET_TUNER:
 	{
 	    if (ioctl(priv->video_fd, VIDIOCGTUNER, &priv->tuner) == -1)
 	    {
 		mpxp_err<<"ioctl get tuner failed: "<<strerror(errno)<<std::endl;
-		return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_FALSE;
 	    }
 
 	    mpxp_v<<"Tuner ("<<priv->tuner.name<<") range: "<<priv->tuner.rangelow<<" ->"<<priv->tuner.rangehigh<<std::endl;
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	}
 	case TVI_CONTROL_TUN_SET_TUNER:
 	{
 	    if (ioctl(priv->video_fd, VIDIOCSTUNER, &priv->tuner) == -1)
 	    {
 		mpxp_err<<"ioctl get tuner failed: "<<strerror(errno)<<std::endl;
-		return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_FALSE;
 	    }
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	}
 	case TVI_CONTROL_TUN_SET_NORM:
 	{
@@ -591,53 +591,53 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 		((req_mode == VIDEO_MODE_SECAM) && !(priv->tuner.flags & VIDEO_TUNER_SECAM)))
 	    {
 		mpxp_err<<"Tuner isn't capable to set norm!"<<std::endl;
-		return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_FALSE;
 	    }
 
 	    priv->tuner.mode = req_mode;
 
 	    if (control(priv, TVI_CONTROL_TUN_SET_TUNER, &priv->tuner) != TVI_CONTROL_TRUE)
-		return(TVI_CONTROL_FALSE);
-	    return(TVI_CONTROL_TRUE);
+		return TVI_CONTROL_FALSE;
+	    return TVI_CONTROL_TRUE;
 	}
 	case TVI_CONTROL_TUN_GET_NORM:
 	{
 	    *(int *)arg = priv->tuner.mode;
 
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	}
 
 	/* ========== AUDIO controls =========== */
 	case TVI_CONTROL_AUD_GET_FORMAT:
 	{
 	    *(int *)arg = priv->audio_format[priv->audio_id];
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	}
 	case TVI_CONTROL_AUD_GET_CHANNELS:
 	{
 	    *(int *)arg = priv->audio_channels[priv->audio_id];
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	}
 	case TVI_CONTROL_AUD_GET_SAMPLERATE:
 	{
 	    *(int *)arg = priv->audio_samplerate[priv->audio_id];
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	}
 	case TVI_CONTROL_AUD_GET_SAMPLESIZE:
 	{
 	    *(int *)arg = priv->audio_samplesize[priv->audio_id]/8;
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	}
 	case TVI_CONTROL_AUD_SET_SAMPLERATE:
 	{
 	    int tmp = priv->audio_samplerate[priv->audio_id] = *(int *)arg;
 
 	    if (ioctl(priv->audio_fd, SNDCTL_DSP_SPEED, &tmp) == -1)
-		return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_FALSE;
 	    priv->audio_samplesize[priv->audio_id] =
 		priv->audio_samplerate[priv->audio_id]/8/priv->fps*
 		priv->audio_channels[priv->audio_id];
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	}
 	/* ========== SPECIFIC controls =========== */
 	case TVI_CONTROL_SPC_GET_INPUT:
@@ -656,9 +656,9 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	    if (ioctl(priv->video_fd, VIDIOCGCHAN, &priv->channels[i]) == -1)
 	    {
 		mpxp_err<<"ioctl get channel failed: "<<strerror(errno)<<std::endl;
-		return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_FALSE;
 	    }
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	}
 
 	case TVI_CONTROL_SPC_SET_INPUT:
@@ -670,7 +670,7 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	    if (req_chan >= priv->capability.channels)
 	    {
 		mpxp_err<<"Invalid input requested: "<<req_chan<<", valid: 0-"<<priv->capability.channels<<std::endl;
-		return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_FALSE;
 	    }
 
 	    for (i = 0; i < priv->capability.channels; i++)
@@ -682,7 +682,7 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 	    if (ioctl(priv->video_fd, VIDIOCSCHAN, &chan) == -1)
 	    {
 		mpxp_err<<"ioctl set chan failed: "<<strerror(errno)<<std::endl;
-		return(TVI_CONTROL_FALSE);
+		return TVI_CONTROL_FALSE;
 	    }
 	    mpxp_v<<"Using input: "<<chan.name<<std::endl;
 
@@ -695,11 +695,11 @@ static int control(struct priv_s *priv, int cmd, any_t*arg)
 
 	    /* update local channel list */
 	    control(priv, TVI_CONTROL_SPC_GET_INPUT, &req_chan);
-	    return(TVI_CONTROL_TRUE);
+	    return TVI_CONTROL_TRUE;
 	}
     }
 
-    return(TVI_CONTROL_UNKNOWN);
+    return TVI_CONTROL_UNKNOWN;
 }
 
 static double grab_video_frame(struct priv_s *priv,unsigned char *buffer, int len)
@@ -712,7 +712,7 @@ static double grab_video_frame(struct priv_s *priv,unsigned char *buffer, int le
     if (ioctl(priv->video_fd, VIDIOCMCAPTURE, &priv->buf[nextframe]) == -1)
     {
 	mpxp_err<<"ioctl mcapture failed: "<<strerror(errno)<<std::endl;
-	return(0);
+	return 0;
     }
 
     while (ioctl(priv->video_fd, VIDIOCSYNC, &priv->buf[frame].frame) < 0 &&
@@ -729,12 +729,12 @@ static double grab_video_frame(struct priv_s *priv,unsigned char *buffer, int le
     /* copy the actual frame */
     memcpy(buffer, priv->mmap+priv->mbuf.offsets[frame], len);
 
-    return(timestamp-priv->starttime);
+    return timestamp-priv->starttime;
 }
 
 static int get_video_framesize(struct priv_s *priv)
 {
-    return(priv->bytesperline * priv->height);
+    return priv->bytesperline * priv->height;
 }
 
 static double grab_audio_frame(struct priv_s *priv,unsigned char *buffer, int len)
@@ -759,8 +759,8 @@ static double grab_audio_frame(struct priv_s *priv,unsigned char *buffer, int le
 
 static int get_audio_framesize(struct priv_s *priv)
 {
-    return(priv->audio_blocksize);
-//    return(priv->audio_samplesize[priv->audio_id]);
+    return priv->audio_blocksize;
+//    return priv->audio_samplesize[priv->audio_id];
 }
 
 #endif /* USE_TV */

@@ -193,7 +193,7 @@ int Rtp_Cache::read_from_server(char *buffer, int length) {
     while ((length = get_next(buffer, length)) == 0) {
 	mpxp_err<<"Got empty packet from RTP cache!?"<<std::endl;
     }
-    return(length);
+    return length;
 }
 
 int Rtp_Cache::getrtp2(struct rtpheader *rh, char** data, int* lengthData) const {
