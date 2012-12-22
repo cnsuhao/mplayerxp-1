@@ -76,7 +76,7 @@ NULL
 #define MSGTR_Playing "Воспроизведение"
 
 #define MSGTR_IntBySignal "\nMPlayerXP прерван сигналом %d в модуле: %s \n"
-#define MSGTR_GetpathProblem "проблемы в get_path(\"config\")\n"
+#define MSGTR_GetpathProblem "проблемы в get_path(\"config\")"
 #define MSGTR_CreatingCfgFile "Создание файла конфигурации"
 #define MSGTR_InvalidVOdriver "Недопустимое имя драйвера видео вывода"
 #define MSGTR_InvalidAOdriver "Недопустимое имя драйвера аудио вывода"

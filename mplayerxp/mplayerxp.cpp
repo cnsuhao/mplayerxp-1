@@ -426,26 +426,23 @@ static const char* default_config=
 
 void parse_cfgfiles( m_config_t& conf )
 {
-    char *conffile;
+    std::string conffile;
     int conffile_fd;
-    if ((conffile = get_path("")) == NULL) {
-	mpxp_warn<<MSGTR_NoHomeDir<<std::endl;
-    } else {
-	mkdir(conffile, 0777);
-	delete conffile;
-	if ((conffile = get_path("config")) == NULL) {
+    conffile = get_path();
+    if (conffile.empty()) mpxp_warn<<MSGTR_NoHomeDir<<std::endl;
+    else {
+	::mkdir(conffile.c_str(), 0777);
+	conffile = get_path("config");
+	if (conffile.empty()) {
 	    mpxp_err<<MSGTR_GetpathProblem<<std::endl;
-	    conffile=(char*)mp_malloc(strlen("config")+1);
-	    if(conffile)
-		strcpy(conffile,"config");
+	    conffile="config";
 	}
-	if ((conffile_fd = open(conffile, O_CREAT | O_EXCL | O_WRONLY, 0666)) != -1) {
+	if ((conffile_fd = ::open(conffile.c_str(), O_CREAT | O_EXCL | O_WRONLY, 0666)) != -1) {
 	    mpxp_info<<MSGTR_CreatingCfgFile<<": "<<conffile<<std::endl;
 	    ::write(conffile_fd, default_config, strlen(default_config));
 	    ::close(conffile_fd);
 	}
-	if (m_config_parse_config_file(conf, conffile) != MPXP_Ok) exit(1);
-	delete conffile;
+	if (m_config_parse_config_file(conf, conffile.c_str()) != MPXP_Ok) exit(1);
     }
 }
 
@@ -568,7 +565,7 @@ static void init_player( void )
 
 #ifdef ENABLE_WIN32LOADER
     /* check codec.conf*/
-    if(!parse_codec_cfg(get_path("win32codecs.conf"))) {
+    if(!parse_codec_cfg(get_path("win32codecs.conf").c_str())) {
       if(!parse_codec_cfg(CONFDIR"/win32codecs.conf")) {
 	mpxp_hint<<MSGTR_CopyCodecsConf<<std::endl;
 	mpxp_uninit_structs();
@@ -614,7 +611,7 @@ void show_long_help(void) {
     afm_help();
 #ifdef ENABLE_WIN32LOADER
     /* check codec.conf*/
-    if(!parse_codec_cfg(get_path("win32codecs.conf"))){
+    if(!parse_codec_cfg(get_path("win32codecs.conf").c_str())){
       if(!parse_codec_cfg(CONFDIR"/win32codecs.conf")){
 	mpxp_hint<<MSGTR_CopyCodecsConf<<std::endl;
 	mpxp_uninit_structs();
@@ -842,20 +839,20 @@ static void mpxp_init_osd(void) {
 	    mpxp_err<<MSGTR_CantLoadFont<<": "<<mp_conf.font_name<<std::endl;
     } else {
 	// try default:
-	mpxp_context().video().output->font=read_font_desc(get_path("font/font.desc"),mp_conf.font_factor,mp_conf.verbose>1);
+	mpxp_context().video().output->font=read_font_desc(get_path("font/font.desc").c_str(),mp_conf.font_factor,mp_conf.verbose>1);
 	if(!mpxp_context().video().output->font)
 	    mpxp_context().video().output->font=read_font_desc(DATADIR"/font/font.desc",mp_conf.font_factor,mp_conf.verbose>1);
     }
 #endif
     /* Configure menu here */
     {
-	const char *menu_cfg;
+	std::string menu_cfg;
 	menu_cfg = get_path("menu.conf");
-	if(menu_init(NULL, menu_cfg))
+	if(menu_init(NULL, menu_cfg.c_str()))
 	    mpxp_info<<"Menu initialized: "<<menu_cfg<<std::endl;
 	else {
 	    menu_cfg="/etc/menu.conf";
-	    if(menu_init(NULL, menu_cfg))
+	    if(menu_init(NULL, menu_cfg.c_str()))
 		mpxp_info<<"Menu initialized: "<<menu_cfg<<std::endl;
 	    else
 		mpxp_warn<<"Menu init failed"<<std::endl;
@@ -1074,7 +1071,7 @@ void MPXPSystem::read_subtitles(const char *filename,int forced_subs_only,int st
 	mpxp_context().subtitles=sub_read_file(mp_conf.sub_name, sh_video->fps);
 	if(!mpxp_context().subtitles) mpxp_err<<MSGTR_CantLoadSub<<": "<<mp_conf.sub_name<<std::endl;
     } else if(mp_conf.sub_auto) { // auto load sub file ...
-	mpxp_context().subtitles=sub_read_file( filename ? sub_filename( get_path("sub/"), filename )
+	mpxp_context().subtitles=sub_read_file( filename ? sub_filename(get_path("sub/").c_str(), filename )
 				      : "default.sub", sh_video->fps );
     }
     if(mpxp_context().subtitles) {

@@ -10,7 +10,6 @@ using namespace mpxp;
 #include <unistd.h>
 #include "font_load.h"
 #include "sub.h"
-#include "osdep/get_path.h"
 #include "vo_msg.h"
 
 raw_file* load_raw(const char *name,int verbose){
@@ -72,9 +71,6 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 
     desc->fpath = dn; // search in the same dir as fonts.desc
 
-    // desc->fpath=get_path("font/");
-    // if (stat(desc->fpath, &fstate)!=0) desc->fpath=DATADIR"/font";
-    // set up some defaults, and erase table
     desc->charspace=2;
     desc->spacewidth=12;
     desc->height=0;

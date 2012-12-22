@@ -8,26 +8,15 @@ using namespace mpxp;
 #include <string.h>
 #include "osdep_msg.h"
 namespace mpxp {
-char *get_path(const char *filename){
-	char *homedir;
-	char *buff;
-	static const char *config_dir = "/."PROGNAME;
-	int len;
+std::string get_path(const std::string& filename){
+    char *homedir;
+    std::string rs;
+    std::string config_dir = std::string("/.")+PROGNAME;
 
-	if ((homedir = getenv("HOME")) == NULL)
-		return NULL;
-	len = strlen(homedir) + strlen(config_dir) + 1;
-	if (filename == NULL) {
-		if ((buff = (char *) mp_malloc(len)) == NULL)
-			return NULL;
-		sprintf(buff, "%s%s", homedir, config_dir);
-	} else {
-		len += strlen(filename) + 1;
-		if ((buff = (char *) mp_malloc(len)) == NULL)
-			return NULL;
-		sprintf(buff, "%s%s/%s", homedir, config_dir, filename);
-	}
-	MSG_V("get_path('%s') -> '%s'\n",filename,buff);
-	return buff;
+    if ((homedir = ::getenv("HOME")) == NULL) return "";
+    rs=std::string(homedir)+config_dir;
+    if (!filename.empty()) rs+="/"+filename;
+    mpxp_v<<"get_path('"<<filename<<"') -> "<<rs<<std::endl;
+    return rs;
 }
 }// namespace mpxp

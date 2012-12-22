@@ -100,7 +100,7 @@ NULL
 #define MSGTR_IntBySignal "\nMPlayerXP interrupted by signal %d in module: %s \n"
 #endif
 #ifndef MSGTR_GetpathProblem
-#define MSGTR_GetpathProblem "get_path(\"config\") problem\n"
+#define MSGTR_GetpathProblem "get_path(\"config\") problem"
 #endif
 #ifndef MSGTR_CreatingCfgFile
 #define MSGTR_CreatingCfgFile "Creating config file"

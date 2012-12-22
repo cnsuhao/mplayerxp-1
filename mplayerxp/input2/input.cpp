@@ -1127,7 +1127,7 @@ static void mp_input_free_binds(mp_cmd_bind_t* binds) {
 #define BS_MAX 256
 #define SPACE_CHAR " \n\r\t"
 
-static int mp_input_parse_config(libinput_t& priv,const char *file) {
+static int mp_input_parse_config(libinput_t& priv,const std::string& file) {
     int fd;
     int bs = 0,r,eof = 0,comments = 0;
     char *iter,*end;
@@ -1135,7 +1135,7 @@ static int mp_input_parse_config(libinput_t& priv,const char *file) {
     int n_binds = 0, keys[MP_MAX_KEY_DOWN+1] = { 0 };
     mp_cmd_bind_t* binds = NULL;
 
-    fd = open(file,O_RDONLY);
+    fd = ::open(file.c_str(),O_RDONLY);
 
     if(fd < 0) {
 	mpxp_err<<"Can't open input config file "<<file<<" : "<<strerror(errno)<<std::endl;
@@ -1266,14 +1266,14 @@ static int mp_input_parse_config(libinput_t& priv,const char *file) {
 }
 
 static void mp_input_init(libinput_t& priv) {
-    const char* file;
+    std::string file;
 
     file = config_file[0] != '/' ? get_path(config_file) : config_file;
-    if(!file) return;
+    if(file.empty()) return;
 
     if(! mp_input_parse_config(priv,file)) {
 	// Try global conf dir
-	file = CONFDIR "/input.conf";
+	file = std::string(CONFDIR)+"/input.conf";
 	if(! mp_input_parse_config(priv,file)) mpxp_warn<<"Falling back on default (hardcoded) input config"<<std::endl;
     }
 #ifdef HAVE_JOYSTICK

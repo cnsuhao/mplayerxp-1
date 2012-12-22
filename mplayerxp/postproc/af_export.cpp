@@ -26,8 +26,8 @@ using namespace mpxp;
 #include "af.h"
 #include "af_internal.h"
 #include "mpxp_help.h"
-#include "osdep/get_path.h"
 #include "osdep/fastmemcpy.h"
+#include "osdep/get_path.h"
 #include "pp_msg.h"
 
 #define DEF_SZ 512 // default buffer size (in samples)
@@ -41,11 +41,11 @@ struct af_export_t
 {
   unsigned long long  count; // Used for sync
   uint8_t* buf[AF_NCH]; 	// Buffers for storing the data before it is exported
-  int 	sz;	      	// Size of buffer in samples
-  int 	wi;  		// Write index
-  int	fd;           	// File descriptor to shared memory area
-  char* filename;      	// File to export data
-  any_t* mmap_area;     	// MMap shared area
+  int 	sz;		// Size of buffer in samples
+  int 	wi;		// Write index
+  int	fd;	// File descriptor to shared memory area
+  std::string filename;	// File to export data
+  any_t* mmap_area;	// MMap shared area
 };
 
 /* Initialization and runtime control_af
@@ -81,17 +81,15 @@ static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af, const af_conf_t* arg)
 
     // Allocate new buffers (as one continuous block)
     s->buf[0] = new(zeromem) uint8_t[s->sz*af->conf.nch*af->conf.format&MPAF_BPS_MASK];
-    if(NULL == s->buf[0])
-      MSG_FATAL(MSGTR_OutOfMemory);
+    if(NULL == s->buf[0]) mpxp_fatal<<MSGTR_OutOfMemory<<std::endl;
     for(i = 1; i < af->conf.nch; i++)
       s->buf[i] = s->buf[0] + i*s->sz*(af->conf.format&MPAF_BPS_MASK);
 
     // Init memory mapping
-    s->fd = open(s->filename, O_RDWR | O_CREAT | O_TRUNC, 0640);
-    MSG_INFO( "[export] Exporting to file: %s\n", s->filename);
+    s->fd = open(s->filename.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0640);
+    mpxp_info<<"[export] Exporting to file: "<<s->filename<<std::endl;
     if(s->fd < 0)
-      MSG_FATAL( "[export] Could not open/create file: %s\n",
-	     s->filename);
+      mpxp_fatal<<"[export] Could not open/create file: "<<s->filename<<std::endl;
 
     // header + buffer
     mapsize = (SIZE_HEADER + ((af->conf.format&MPAF_BPS_MASK) * s->sz * af->conf.nch));
@@ -105,9 +103,8 @@ static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af, const af_conf_t* arg)
     // mmap size
     s->mmap_area = mmap(0, mapsize, PROT_READ|PROT_WRITE,MAP_SHARED, s->fd, 0);
     if(s->mmap_area == NULL)
-      MSG_FATAL( "[export] Could not mmap file %s\n", s->filename);
-    MSG_INFO( "[export] Memory mapped to file: %s (%p)\n",
-	   s->filename, s->mmap_area);
+      mpxp_fatal<<"[export] Could not mmap file "<<s->filename<<std::endl;
+    mpxp_info<<"[export] Memory mapped to file: "<<s->filename<<std::endl;
 
     // Initialize header
     *((int*)s->mmap_area) = af->conf.nch;
@@ -127,9 +124,6 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
     char *str = reinterpret_cast<char*>(arg);
 
     if (!str){
-      if(s->filename)
-	delete s->filename;
-
       s->filename = get_path(SHARED_FILE);
       return MPXP_Ok;
     }
@@ -137,13 +131,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
     while((str[i]) && (str[i] != ':'))
       i++;
 
-    if(s->filename)
-      delete s->filename;
-
-    s->filename = new(zeromem) char[i + 1];
-    memcpy(s->filename, str, i);
-    s->filename[i] = 0;
-
+    s->filename.assign(str, i);
     sscanf(str + i + 1, "%d", &(s->sz));
 
     return af->control_af(af, AF_CONTROL_EXPORT_SZ | AF_CONTROL_SET, &s->sz);
@@ -151,8 +139,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
   case AF_CONTROL_EXPORT_SZ | AF_CONTROL_SET:
     s->sz = * (int *) arg;
     if((s->sz <= 0) || (s->sz > 2048))
-      MSG_ERR( "[export] Buffer size must be between"
-	      " 1 and 2048\n" );
+      mpxp_err<<"[export] Buffer size must be between 1 and 2048"<<std::endl;
 
     return MPXP_Ok;
   case AF_CONTROL_EXPORT_SZ | AF_CONTROL_GET:
@@ -179,9 +166,6 @@ static void __FASTCALL__ uninit( af_instance_t* af )
 
     if(s->fd > -1)
       close(s->fd);
-
-    if(s->filename)
-	delete s->filename;
 
     delete s;
     af->setup = NULL;

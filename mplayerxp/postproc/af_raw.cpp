@@ -20,7 +20,6 @@ using namespace mpxp;
 #include "af.h"
 #include "af_internal.h"
 #include "mpxp_help.h"
-#include "osdep/get_path.h"
 #include "pp_msg.h"
 
 #define WAV_ID_RIFF 0x46464952 /* "RIFF" */

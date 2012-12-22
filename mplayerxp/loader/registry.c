@@ -23,8 +23,27 @@
 //#undef TRACE
 //#define TRACE printf
 
-extern char *get_path ( char * );
+static char *get_path(const char *filename){
+	char *homedir;
+	char *buff;
+	static const char *config_dir = "/."PROGNAME;
+	int len;
 
+	if ((homedir = getenv("HOME")) == NULL)
+		return NULL;
+	len = strlen(homedir) + strlen(config_dir) + 1;
+	if (filename == NULL) {
+		if ((buff = (char *) mp_malloc(len)) == NULL)
+			return NULL;
+		sprintf(buff, "%s%s", homedir, config_dir);
+	} else {
+		len += strlen(filename) + 1;
+		if ((buff = (char *) mp_malloc(len)) == NULL)
+			return NULL;
+		sprintf(buff, "%s%s/%s", homedir, config_dir, filename);
+	}
+	return buff;
+}
 // ...can be set before init_registry() call
 char* regpathname = NULL;
 
