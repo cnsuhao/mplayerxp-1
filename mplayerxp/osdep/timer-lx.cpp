@@ -24,31 +24,31 @@ int usec_sleep(int usec_delay)
     struct timespec ts;
     ts.tv_sec  =  usec_delay / 1000000;
     ts.tv_nsec = (usec_delay % 1000000) * 1000;
-    return nanosleep(&ts, NULL);
+    return ::nanosleep(&ts, NULL);
 #else
-    return usleep(usec_delay);
+    return ::usleep(usec_delay);
 #endif
 }
 
 
 // Returns current time in microseconds
 unsigned int GetTimer(){
-  struct timeval tv;
-  struct timezone tz;
+    struct timeval tv;
+    struct timezone tz;
 //  float s;
-  gettimeofday(&tv,NULL);
+    ::gettimeofday(&tv,NULL);
 //  s=tv.tv_usec;s*=0.000001;s+=tv.tv_sec;
-  return (tv.tv_sec*1000000ULL+tv.tv_usec);
+    return (tv.tv_sec*1000000ULL+tv.tv_usec);
 }
 
 // Returns current time in milliseconds
 unsigned int GetTimerMS(){
-  struct timeval tv;
-  struct timezone tz;
+    struct timeval tv;
+    struct timezone tz;
 //  float s;
-  gettimeofday(&tv,NULL);
+    ::gettimeofday(&tv,NULL);
 //  s=tv.tv_usec;s*=0.000001;s+=tv.tv_sec;
-  return (tv.tv_sec*1000+tv.tv_usec/1000);
+    return (tv.tv_sec*1000+tv.tv_usec/1000);
 }
 
 static unsigned int RelativeTime=0;
@@ -56,33 +56,33 @@ static unsigned int RelativeTime=0;
 // Returns time spent between now and last call in seconds
 float GetRelativeTime(){
 unsigned int t,r;
-  t=GetTimer();
-  r=t-RelativeTime;
-  RelativeTime=t;
-  return (float)r * 0.000001F;
+    t=GetTimer();
+    r=t-RelativeTime;
+    RelativeTime=t;
+    return (float)r * 0.000001F;
 }
 
 // Initialize timer, must be called at least once at start
 int InitTimer(void){
-  int rtc_fd=-1;
-  GetRelativeTime();
+    int rtc_fd=-1;
+    GetRelativeTime();
 #ifdef HAVE_RTC
-  if ((rtc_fd = open("/dev/rtc", O_RDONLY)) < 0) perror ("Linux RTC init: open");
-  else {
+    if ((rtc_fd = ::open("/dev/rtc", O_RDONLY)) < 0) perror ("Linux RTC init: open");
+    else {
 	unsigned long irqp;
 
 	/* if (ioctl(rtc_fd, RTC_IRQP_SET, _) < 0) */
-	if (ioctl(rtc_fd, RTC_IRQP_READ, &irqp) < 0) {
-		perror ("Linux RTC init: ioctl (rtc_irqp_read)");
-		close (rtc_fd);
-		rtc_fd = -1;
-	} else if (ioctl(rtc_fd, RTC_PIE_ON, 0) < 0) {
-		/* variable only by the root */
-		perror ("Linux RTC init: ioctl (rtc_pie_on)");
-		close (rtc_fd);
-		rtc_fd = -1;
+	if (::ioctl(rtc_fd, RTC_IRQP_READ, &irqp) < 0) {
+	    ::perror ("Linux RTC init: ioctl (rtc_irqp_read)");
+	    ::close (rtc_fd);
+	    rtc_fd = -1;
+	} else if (::ioctl(rtc_fd, RTC_PIE_ON, 0) < 0) {
+	    /* variable only by the root */
+	    ::perror ("Linux RTC init: ioctl (rtc_pie_on)");
+	    ::close (rtc_fd);
+	    rtc_fd = -1;
 	} else
-		MSG_V("Using Linux's hardware RTC timing (%ldHz)\n", irqp);
+	    mpxp_v<<"Using Linux's hardware RTC timing ("<<irqp<<"Hz)"<<std::endl;
   }
 #endif
   return rtc_fd;
@@ -95,8 +95,8 @@ float SleepTime(int rtc_fd,int softsleep,float time_frame)
 	// -------- RTC -----------
 	while (time_frame > 0.000) {
 	    unsigned long rtc_ts;
-	    if (read (rtc_fd, &rtc_ts, sizeof(rtc_ts)) <= 0)
-		    MSG_ERR( "Linux RTC read error: %s\n", strerror(errno));
+	    if (::read (rtc_fd, &rtc_ts, sizeof(rtc_ts)) <= 0)
+		mpxp_err<<"Linux RTC read error: "<<strerror(errno)<<std::endl;
 	    time_frame-=GetRelativeTime();
 	}
     } else
@@ -112,7 +112,7 @@ float SleepTime(int rtc_fd,int softsleep,float time_frame)
 	  time_frame-=GetRelativeTime();
 	}
 	if(softsleep){
-	    if(time_frame<0) MSG_WARN( "Warning! Softsleep underflow!\n");
+	    if(time_frame<0) mpxp_warn<<"Warning! Softsleep underflow!"<<std::endl;
 	    while(time_frame>0) time_frame-=GetRelativeTime(); // burn the CPU
 	}
     }

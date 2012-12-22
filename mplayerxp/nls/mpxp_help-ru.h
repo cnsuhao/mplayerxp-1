@@ -196,7 +196,7 @@ NULL
 #define MSGTR_BadMpegSequHdr "MPEG: Плохая последовательность заголовков!\n"
 #define MSGTR_BadMpegSequHdrEx "MPEG: Плохое расширение последовательности заголовков!\n"
 
-#define MSGTR_ShMemAllocFail "Не могу захватить общую память\n"
+#define MSGTR_ShMemAllocFail "Не могу захватить разделяемую память"
 #define MSGTR_OutOfMemory "Нехватает памяти"
 #define MSGTR_CantAllocAudioBuf "Не могу захватить выходной буффер аудио\n"
 #define MSGTR_NoMemForDecodedImage "Не достаточно памяти для буффера декодирования картинки (%ld байт)\n"

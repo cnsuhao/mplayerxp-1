@@ -65,14 +65,25 @@ static inline int VERW(const any_t*p)
 
 static void __dump_regs(struct LRMI_regs *r)
 {
- MSG_DBG2("vbelib:    eax=%08lXh ebx=%08lXh ecx=%08lXh edx=%08lXh\n"
-	 "vbelib:    edi=%08lXh esi=%08lXh ebp=%08lXh esp=%08lXh\n"
-	 "vbelib:    ds=%04Xh es=%04Xh ss=%04Xh cs:ip=%04X:%04X\n"
-	 "vbelib:    fs=%04Xh gs=%04Xh ss:sp=%04X:%04X flags=%04X\n"
-	 ,(unsigned long)r->eax,(unsigned long)r->ebx,(unsigned long)r->ecx,(unsigned long)r->edx
-	 ,(unsigned long)r->edi,(unsigned long)r->esi,(unsigned long)r->ebp,(unsigned long)r->reserved
-	 ,r->ds,r->es,r->ss,r->cs,r->ip
-	 ,r->fs,r->gs,r->ss,r->sp,r->flags);
+    mpxp_dbg2<<"vbelib:"
+	<<"eax="<<std::hex<<(unsigned long)r->eax
+	<<"ebx="<<std::hex<<(unsigned long)r->ebx
+	<<"ecx="<<std::hex<<(unsigned long)r->ecx
+	<<"edx="<<std::hex<<(unsigned long)r->edx<<std::endl;
+    mpxp_dbg2<<"vbelib:"
+	<<"edi="<<std::hex<<(unsigned long)r->edi
+	<<"esi="<<std::hex<<(unsigned long)r->esi
+	<<"ebp="<<std::hex<<(unsigned long)r->ebp
+	<<"esp="<<std::hex<<(unsigned long)r->reserved<<std::endl;
+    mpxp_dbg2<<"vbelib:"
+	<<"ds="<<r->ds
+	<<"es="<<r->es
+	<<"ss="<<r->ss
+	<<"fs="<<r->fs
+	<<"gs="<<r->gs
+	<<"cs="<<r->cs<<":ip="<<r->ip
+	<<"ss="<<r->ss<<":sp="<<r->sp
+	<<"flags="<<r->flags<<std::endl;
 }
 
 static inline int VBE_LRMI_int(int int_no, struct LRMI_regs *r)
@@ -80,16 +91,14 @@ static inline int VBE_LRMI_int(int int_no, struct LRMI_regs *r)
   int retval;
   if(mp_conf.verbose > 1)
   {
-    MSG_DBG2("vbelib: registers before int %02X\n",int_no);
+    mpxp_dbg2<<"vbelib: registers before int "<<std::hex<<int_no<<std::endl;
     __dump_regs(r);
   }
   retval = LRMI_int(int_no,r);
   if(mp_conf.verbose > 1)
   {
-    MSG_DBG2("vbelib: Interrupt handler returns: %X\n"
-	     "vbelib: registers after int %02X\n"
-	     ,retval
-	     ,int_no);
+    mpxp_dbg2<<"vbelib: Interrupt handler returns: "<<std::hex<<retval<<std::endl;
+    mpxp_dbg2<<"vbelib: registers after int "<<std::hex<<int_no<<std::endl;
     __dump_regs(r);
   }
   return retval;
@@ -223,20 +232,19 @@ static void print_str(const char *str)
 {
   size_t i;
   fflush(stdout);
-  MSG_V("vbelib:    ");
-  for(i = 0;i < 256;i++) { MSG_V("%02X(%c) ",str[i],isprint(str[i])?str[i]:'.'); if(!str[i]) break; }
-  MSG_V("\n");
-  fflush(stdout);
+  mpxp_v<<"vbelib:    ";
+  for(i = 0;i < 256;i++) { mpxp_v<<std::hex<<str[i]<<"("<<str[i]<<")"; if(!str[i]) break; }
+  mpxp_v<<std::endl;
+  mpxp_v.flush();
 }
 
 static void print_wrd(unsigned short *str)
 {
   size_t i;
-  fflush(stdout);
-  MSG_V("vbelib:    ");
-  for(i = 0;i < 256;i++) { MSG_V("%04X ",str[i]); if(str[i] == 0xffff) break; }
-  MSG_V("\n");
-  fflush(stdout);
+  mpxp_v<<"vbelib:    ";
+  for(i = 0;i < 256;i++) { mpxp_v<<std::hex<<str[i]; if(str[i] == 0xffff) break; }
+  mpxp_v<<std::endl;
+  mpxp_v.flush();
 }
 
 int vbeGetControllerInfo(struct VbeInfoBlock *data)
@@ -262,7 +270,7 @@ int vbeGetControllerInfo(struct VbeInfoBlock *data)
 #ifdef HAVE_VERBOSE_VAR
     if(mp_conf.verbose > 1)
     {
-      MSG_DBG2("vbelib:  OemStringPtr=%04X:%04X => %p\n",fpdata.seg,fpdata.off,data->OemStringPtr);
+      mpxp_dbg2<<"vbelib:  OemStringPtr="<<std::hex<<fpdata.seg<<":"<<std::hex<<fpdata.off<<" => "<<data->OemStringPtr<<std::endl;
       if(data->OemStringPtr) print_str(data->OemStringPtr);
       fflush(stdout);
     }
@@ -278,7 +286,7 @@ int vbeGetControllerInfo(struct VbeInfoBlock *data)
 #ifdef HAVE_VERBOSE_VAR
     if(mp_conf.verbose > 1)
     {
-      MSG_DBG2("vbelib:  VideoModePtr=%04X:%04X => %p\n",fpdata.seg,fpdata.off,data->VideoModePtr);
+      mpxp_dbg2<<"vbelib:  VideoModePtr="<<std::hex<<fpdata.seg<<":"<<std::hex<<fpdata.off<<" => "<<data->VideoModePtr<<std::endl;
       if(data->VideoModePtr) print_wrd(data->VideoModePtr);
       fflush(stdout);
     }
@@ -290,7 +298,7 @@ int vbeGetControllerInfo(struct VbeInfoBlock *data)
 #ifdef HAVE_VERBOSE_VAR
     if(mp_conf.verbose > 1)
     {
-      MSG_DBG2("vbelib:  OemVendorNamePtr=%04X:%04X => %p\n",fpdata.seg,fpdata.off,data->OemVendorNamePtr);
+      mpxp_dbg2<<"vbelib:  OemVendorNamePtr="<<std::hex<<fpdata.seg<<":"<<std::hex<<fpdata.off<<" => "<<data->OemVendorNamePtr<<std::endl;
       if(data->OemVendorNamePtr) print_str(data->OemVendorNamePtr);
       fflush(stdout);
     }
@@ -302,7 +310,7 @@ int vbeGetControllerInfo(struct VbeInfoBlock *data)
 #ifdef HAVE_VERBOSE_VAR
     if(mp_conf.verbose > 1)
     {
-      MSG_DBG2("vbelib:  OemProductNamePtr=%04X:%04X => %p\n",fpdata.seg,fpdata.off,data->OemProductNamePtr);
+      mpxp_dbg2<<"vbelib:  OemProductNamePtr="<<std::hex<<fpdata.seg<<":"<<std::hex<<fpdata.off<<" => "<<data->OemProductNamePtr<<std::endl;
       if(data->OemVendorNamePtr) print_str(data->OemProductNamePtr);
       fflush(stdout);
     }
@@ -314,7 +322,7 @@ int vbeGetControllerInfo(struct VbeInfoBlock *data)
 #ifdef HAVE_VERBOSE_VAR
     if(mp_conf.verbose > 1)
     {
-      MSG_DBG2("vbelib:  OemProductRevPtr=%04X:%04X => %p\n",fpdata.seg,fpdata.off,data->OemProductRevPtr);
+      mpxp_dbg2<<"vbelib:  OemProductRevPtr="<<std::hex<<fpdata.seg<<":"<<std::hex<<fpdata.off<<" => "<<data->OemProductRevPtr<<std::endl;
       if(data->OemProductRevPtr) print_str(data->OemProductRevPtr);
       fflush(stdout);
     }
@@ -656,17 +664,17 @@ int vbeGetProtModeInfo(struct VesaProtModeInterface *pm_info)
     pm_info->SetWindowCall   = (void (*)())PhysToVirtSO(r.es,info_offset+rm_info->SetWindowCall);
     if(!is_addr_valid(reinterpret_cast<any_t*>(pm_info->SetWindowCall))) retval = VBE_BROKEN_BIOS;
 #ifdef HAVE_VERBOSE_VAR
-    MSG_DBG2("vbelib:  SetWindowCall=%04X:%04X => %p\n",r.es,info_offset+rm_info->SetWindowCall,pm_info->SetWindowCall);
+    mpxp_dbg2<<"vbelib:  SetWindowCall="<<std::hex<<r.es<<":"<<std::hex<<(info_offset+rm_info->SetWindowCall)<<" => "<<pm_info->SetWindowCall<<std::endl;
 #endif
     pm_info->SetDisplayStart = (void(*)())PhysToVirtSO(r.es,info_offset+rm_info->SetDisplayStart);
     if(!is_addr_valid(reinterpret_cast<any_t*>(pm_info->SetDisplayStart))) retval = VBE_BROKEN_BIOS;
 #ifdef HAVE_VERBOSE_VAR
-    MSG_DBG2("vbelib:  SetDisplayStart=%04X:%04X => %p\n",r.es,info_offset+rm_info->SetDisplayStart,pm_info->SetDisplayStart);
+    mpxp_dbg2<<"vbelib:  SetDisplayStart="<<std::hex<<r.es<<":"<<std::hex<<(info_offset+rm_info->SetDisplayStart)<<" => "<<pm_info->SetDisplayStart<<std::endl;
 #endif
     pm_info->SetPaletteData  = (void(*)())PhysToVirtSO(r.es,info_offset+rm_info->SetPaletteData);
     if(!is_addr_valid(reinterpret_cast<any_t*>(pm_info->SetPaletteData))) retval = VBE_BROKEN_BIOS;
 #ifdef HAVE_VERBOSE_VAR
-    MSG_DBG2("vbelib:  SetPaletteData=%04X:%04X => %p\n",r.es,info_offset+rm_info->SetPaletteData,pm_info->SetPaletteData);
+    mpxp_dbg2<<"vbelib:  SetPaletteData="<<std::hex<<r.es<<":"<<std::hex<<(info_offset+rm_info->SetPaletteData)<<" => "<<pm_info->SetPaletteData<<std::endl;
 #endif
     pm_info->iopl_ports  = (unsigned short*)PhysToVirtSO(r.es,info_offset+rm_info->iopl_ports);
     if(!rm_info->iopl_ports) pm_info->iopl_ports = NULL;
@@ -679,7 +687,7 @@ int vbeGetProtModeInfo(struct VesaProtModeInterface *pm_info)
 #ifdef HAVE_VERBOSE_VAR
     if(mp_conf.verbose > 1)
     {
-      MSG_DBG2("vbelib:  iopl_ports=%04X:%04X => %p\n",r.es,info_offset+rm_info->iopl_ports,pm_info->iopl_ports);
+      mpxp_dbg2<<"vbelib:  iopl_ports="<<std::hex<<r.es<<":"<<std::hex<<(info_offset+rm_info->iopl_ports)<<" => "<<pm_info->iopl_ports<<std::endl;
       if(pm_info->iopl_ports) print_wrd(pm_info->iopl_ports);
       fflush(stdout);
     }
@@ -714,7 +722,7 @@ any_t* vbeMapVideoBuffer(unsigned long phys_addr,unsigned long size)
 {
   any_t*lfb;
   if(fd_mem == -1) return NULL;
-  MSG_DBG2("vbelib: vbeMapVideoBuffer(%08lX,%08lX)\n",phys_addr,size);
+  mpxp_dbg2<<"vbelib: vbeMapVideoBuffer("<<std::hex<<phys_addr<<","<<std::hex<<size<<")"<<std::endl;
   /* Here we don't need with MAP_FIXED and prefered address (first argument) */
   lfb = mmap((any_t*)0,size,PROT_READ | PROT_WRITE,MAP_SHARED,fd_mem,phys_addr);
   return lfb == (any_t*)-1 ? 0 : lfb;
@@ -722,7 +730,7 @@ any_t* vbeMapVideoBuffer(unsigned long phys_addr,unsigned long size)
 
 void vbeUnmapVideoBuffer(unsigned long linear_addr,unsigned long size)
 {
-  MSG_DBG2("vbelib: vbeUnmapVideoBuffer(%08lX,%08lX)\n",linear_addr,size);
+  mpxp_dbg2<<"vbelib: vbeUnmapVideoBuffer("<<std::hex<<linear_addr<<","<<std::hex<<size<<")"<<std::endl;
   munmap((any_t*)linear_addr,size);
 }
 

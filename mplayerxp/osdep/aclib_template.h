@@ -164,7 +164,7 @@ namespace mpxp {
 #define MEM_SFENCE _ivec_sfence();
 static inline any_t* PVECTOR_RENAME(fast_stream_copy)(any_t* to, const any_t* from, size_t len)
 {
-    MSG_DBG3("fast_stream_copy(%p, %p, %u) [cl_size=%u]\n",to,from,len,gCpuCaps.cl_size);
+    mpxp_dbg3<<"fast_stream_copy("<<to<<", "<<from<<", "<<len<<") [cl_size="<<gCpuCaps.cl_size<<"]"<<std::endl;
     FAST_MEMORY_COPY(to,from,len);
 }
 
@@ -174,7 +174,7 @@ static inline any_t* PVECTOR_RENAME(fast_stream_copy)(any_t* to, const any_t* fr
 #define MEM_SFENCE
 static inline any_t* PVECTOR_RENAME(fast_memcpy)(any_t* to, const any_t* from, size_t len)
 {
-    MSG_DBG3("fast_memcpy(%p, %p, %u) [cl_size=%u]\n",to,from,len,gCpuCaps.cl_size);
+    mpxp_dbg3<<"fast_memcpy("<<to<<", "<<from<<", "<<len<<") [cl_size="<<gCpuCaps.cl_size<<"]"<<std::endl;
     FAST_MEMORY_COPY(to,from,len);
 }
 } // namesapce mpxp

@@ -59,10 +59,7 @@ static any_t* prot_last_page(any_t* rp,size_t fullsize) { return reinterpret_cas
 static void __prot_print_slots(mp_slot_container_t* c) {
     size_t i;
     for(i=0;i<c->nslots;i++) {
-	MSG_INFO("slot[%u] address: %p size: %u\n"
-		,i
-		,c->slots[i].page_ptr
-		,c->slots[i].size);
+	mpxp_info<<"slot["<<i<<"] address: "<<c->slots[i].page_ptr<<" size: "<<c->slots[i].size<<std::endl;
     }
 }
 
@@ -203,9 +200,9 @@ static __always_inline void __print_backtrace(unsigned num) {
     any_t*	calls[num];
     unsigned	i,ncalls;
     ncalls=backtrace(calls,num);
-    MSG_INFO("*** Backtrace for suspect call ***\n");
+    mpxp_info<<"*** Backtrace for suspect call ***"<<std::endl;
     for(i=0;i<ncalls;i++) {
-	MSG_INFO("    %p -> %s\n",calls[i],addr2line(cache,calls[i]));
+	mpxp_info<<"    "<<calls[i]<<" -> "<<addr2line(cache,calls[i])<<std::endl;
     }
     uninit_bt_cache(cache);
 }
@@ -213,9 +210,9 @@ static __always_inline void __print_backtrace(unsigned num) {
 void print_backtrace(const std::string& why,any_t** stack,unsigned num) {
     char result[4096];
     unsigned	i;
-    MSG_INFO(!why.empty()?why.c_str():"*** Backtrace for suspect call ***\n");
+    mpxp_info<<(!why.empty()?why.c_str():"*** Backtrace for suspect call ***")<<std::endl;
     for(i=0;i<num;i++) {
-	MSG_INFO("    %p -> %s\n",stack[i],exec_addr2line(stack[i],result,sizeof(result)));
+	mpxp_info<<"    "<<stack[i]<<" -> "<<exec_addr2line(stack[i],result,sizeof(result))<<std::endl;
     }
 }
 
@@ -355,7 +352,7 @@ static __always_inline any_t* bt_realloc(any_t*ptr,size_t size) {
     if(rp) {
 	slot=prot_find_slot(&priv->mallocs,ptr);
 	if(!slot) {
-	    MSG_WARN("[bt_realloc] suspect call found! Can't find slot for address: %p\n",ptr);
+	    mpxp_warn<<"[bt_realloc] suspect call found! Can't find slot for address: "<<ptr<<std::endl;
 	    mp_slot_t* _slot;
 	    _slot=prot_append_slot(&priv->reallocs,ptr,size);
 	    _slot->ncalls=backtrace(_slot->calls,Max_BackTraces);
@@ -370,7 +367,7 @@ static __always_inline any_t* bt_realloc(any_t*ptr,size_t size) {
 static __always_inline void bt_free(any_t*ptr) {
     mp_slot_t* slot=prot_find_slot(&priv->mallocs,ptr);
     if(!slot) {
-	MSG_WARN("[bt_free] suspect call found! Can't find slot for address: %p\n",ptr);
+	mpxp_warn<<"[bt_free] suspect call found! Can't find slot for address: "<<ptr<<std::endl;
 	mp_slot_t* _slot;
 	_slot=prot_append_slot(&priv->frees,ptr,0);
 	_slot->ncalls=backtrace(_slot->calls,Max_BackTraces);
@@ -387,7 +384,7 @@ static void bt_print_slots(bt_cache_t* cache,mp_slot_container_t* c) {
     for(i=0;i<c->nslots;i++) {
 	char *s;
 	int printable=1;
-	MSG_INFO("address: %p size: %u dump: ",c->slots[i].page_ptr,c->slots[i].size);
+	mpxp_info<<"address: "<<c->slots[i].page_ptr<<" size: "<<c->slots[i].size<<" dump: ";
 	s=reinterpret_cast<char *>(c->slots[i].page_ptr);
 	for(j=0;j<std::min(c->slots[i].size,size_t(20));j++) {
 	    if(!isprint(s[j])) {
@@ -395,13 +392,13 @@ static void bt_print_slots(bt_cache_t* cache,mp_slot_container_t* c) {
 		break;
 	    }
 	}
-	if(printable) MSG_INFO("%20s",s);
+	if(printable) mpxp_info<<std::string(s).substr(0,20)<<std::endl;
 	else for(j=0;j<std::min(c->slots[i].size,size_t(Max_BackTraces));j++) {
-	    MSG_INFO("%02X ",(unsigned char)s[j]);
+	    mpxp_info<<(unsigned char)s[j]<<" ";
 	}
-	MSG_INFO("\n");
+	mpxp_info<<std::endl;
 	for(j=0;j<c->slots[i].ncalls;j++) {
-	    MSG_INFO("%s%p -> %s\n",j==0?"bt=>":"    ",c->slots[i].calls[j],addr2line(cache,c->slots[i].calls[j]));
+	    mpxp_info<<(j==0?"bt=>":"    ")<<c->slots[i].calls[j]<<" -> "<<addr2line(cache,c->slots[i].calls[j])<<std::endl;
 	}
     }
 }
@@ -427,31 +424,31 @@ void	mp_uninit_malloc(int verbose)
 	    unsigned i;
 	    total=0;
 	    for(i=0;i<priv->mallocs.nslots;i++) total+=priv->mallocs.slots[i].size;
-	    MSG_WARN("Warning! %lli slots were not freed. Totally %llu bytes was leaked\n",priv->mallocs.nslots,total);
+	    mpxp_warn<<"Warning! "<<priv->mallocs.nslots<<" slots were not freed. Totally "<<total<<" bytes was leaked"<<std::endl;
 	}
 	if(verbose) {
 	    if(priv->mallocs.nslots) {
-		MSG_INFO("****** List of malloced but not freed pointers *******\n");
+		mpxp_info<<"****** List of malloced but not freed pointers *******"<<std::endl;
 		bt_print_slots(cache,&priv->mallocs);
 		done=1;
 	    }
 	    if(priv->reallocs.nslots) {
-		MSG_INFO("\n****** List of suspect realloc() calls *******\n");
+		mpxp_info<<std::endl<<"****** List of suspect realloc() calls *******"<<std::endl;
 		bt_print_slots(cache,&priv->reallocs);
 		done=1;
 	    }
 	    if(priv->frees.nslots) {
-		MSG_INFO("\n****** List of suspect free() calls *******\n");
+		mpxp_info<<std::endl<<"****** List of suspect free() calls *******"<<std::endl;
 		bt_print_slots(cache,&priv->frees);
 		done=1;
 	    }
 	} else {
 	    if(priv->reallocs.nslots || priv->frees.nslots)
-		MSG_WARN("*** Were found suspect calls of mp_realloc or mp_free  ***\n"
-			 "*** Most probably your copy of program contains viruses!!!\n");
+		mpxp_warn<<"*** Were found suspect calls of mp_realloc or mp_free  ***"<<std::endl;
+		mpxp_warn<<"*** Most probably your copy of program contains viruses!!!"<<std::endl;
 	}
     }
-    if(done) MSG_HINT("\nFor source lines you may also print in (gdb): list *0xADDRESS\n");
+    if(done) mpxp_hint<<std::endl<<"For source lines you may also print in (gdb): list *0xADDRESS"<<std::endl;
     uninit_bt_cache(cache);
     free(priv);
     priv=NULL;

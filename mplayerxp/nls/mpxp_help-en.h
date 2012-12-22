@@ -427,7 +427,7 @@ NULL
 #endif
 
 #ifndef MSGTR_ShMemAllocFail
-#define MSGTR_ShMemAllocFail "Cannot allocate shared memory\n"
+#define MSGTR_ShMemAllocFail "Cannot allocate shared memory"
 #endif
 #ifndef MSGTR_OutOfMemory
 #define MSGTR_OutOfMemory "Out of memory"

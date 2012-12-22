@@ -87,21 +87,18 @@ void GetCpuCaps( CpuCaps *caps)
 	caps->isX86=1;
 	caps->cl_size=32; /* default */
 	if (!has_cpuid()) {
-	    MSG_WARN("CPUID not supported!???\n");
+	    mpxp_warn<<"CPUID not supported!???"<<std::endl;
 	    return;
 	}
 	do_cpuid(0x00000000, regs); // get _max_ cpuid level and vendor name
-	MSG_V("CPU vendor name: %.4s%.4s%.4s  max cpuid level: %d\n",
-			(char*) (regs+1),(char*) (regs+3),(char*) (regs+2), regs[0]);
-	if (regs[0]>=0x00000001)
-	{
+	if (regs[0]>=0x00000001) {
 		char *tmpstr;
 		unsigned cl_size;
 
 		do_cpuid(0x00000001, regs2);
 
 		tmpstr=GetCpuFriendlyName(regs, regs2);
-		MSG_V("CPU: %s ",tmpstr);
+		mpxp_v<<"CPU: "<<tmpstr<<std::endl;
 		delete tmpstr;
 
 		caps->cpuType=(regs2[0] >> 8)&0xf;
@@ -110,8 +107,7 @@ void GetCpuCaps( CpuCaps *caps)
 		    caps->cpuType=8+((regs2[0]>>20)&255);
 		}
 		caps->cpuStepping=regs2[0] & 0xf;
-		MSG_V("(Type: %d, Stepping: %d)\n",
-		    caps->cpuType, caps->cpuStepping);
+		mpxp_v<<"(Type: "<<caps->cpuType<<", Stepping: "<<caps->cpuStepping<<")"<<std::endl;
 
 		// general feature flags:
 		caps->hasMMX  = (regs2[3] & (1 << 23 )) >> 23; // 0x0800000
@@ -130,7 +126,7 @@ void GetCpuCaps( CpuCaps *caps)
 	}
 	do_cpuid(0x80000000, regs);
 	if (regs[0]>=0x80000001) {
-		MSG_V("extended cpuid-level: %d\n",regs[0]&0x7FFFFFFF);
+		mpxp_v<<"extended cpuid-level: "<<(regs[0]&0x7FFFFFFF)<<std::endl;
 		do_cpuid(0x80000001, regs2);
 		caps->hasMMX  |= (regs2[3] & (1 << 23 )) >> 23; // 0x0800000
 		caps->hasMMX2 |= (regs2[3] & (1 << 22 )) >> 22; // 0x400000
@@ -140,25 +136,24 @@ void GetCpuCaps( CpuCaps *caps)
 	if(regs[0]>=0x80000006)
 	{
 		do_cpuid(0x80000006, regs2);
-		MSG_V("extended cache-info: %d\n",regs2[2]);
+		mpxp_v<<"extended cache-info: "<<regs2[2]<<std::endl;
 		caps->cl_size  = regs2[2] & 0xFF;
 	}
-	MSG_V("Detected cache-line size is %u bytes\n",caps->cl_size);
-	MSG_V("cpudetect: MMX=%d MMX2=%d 3DNow=%d 3DNow2=%d SSE=%d SSE2=%d SSE3=%d SSSE3=%d SSE41=%d SSE42=%d AES=%d AVX=%d FMA=%d\n",
-		gCpuCaps.hasMMX,
-		gCpuCaps.hasMMX2,
-		gCpuCaps.has3DNow,
-		gCpuCaps.has3DNowExt,
-		gCpuCaps.hasSSE,
-		gCpuCaps.hasSSE2,
-		gCpuCaps.hasSSE3,
-		gCpuCaps.hasSSSE3,
-		gCpuCaps.hasSSE41,
-		gCpuCaps.hasSSE42,
-		gCpuCaps.hasAES,
-		gCpuCaps.hasAVX,
-		gCpuCaps.hasFMA
-);
+	mpxp_v<<"Detected cache-line size is "<<caps->cl_size<<" bytes"<<std::endl;
+	mpxp_v<<"cpudetect: MMX="<<gCpuCaps.hasMMX
+	<<" MMX2="<<gCpuCaps.hasMMX2
+	<<" 3DNow="<<gCpuCaps.has3DNow
+	<<" 3DNow2="<<gCpuCaps.has3DNowExt
+	<<" SSE="<<gCpuCaps.hasSSE
+	<<" SSE2="<<gCpuCaps.hasSSE2
+	<<" SSE3="<<gCpuCaps.hasSSE3
+	<<" SSSE3="<<gCpuCaps.hasSSSE3
+	<<" SSE41="<<gCpuCaps.hasSSE41
+	<<" SSE42="<<gCpuCaps.hasSSE42
+	<<" AES="<<gCpuCaps.hasAES
+	<<" AVX="<<gCpuCaps.hasAVX
+	<<" FMA="<<gCpuCaps.hasFMA
+	<<std::endl;
 }
 
 
@@ -176,8 +171,8 @@ char *GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]){
 	int i;
 
 	if (NULL==(retname=(char*)mp_malloc(256))) {
-		MSG_ERR(MSGTR_OutOfMemory);
-		exit(1);
+		mpxp_err<<MSGTR_OutOfMemory<<std::endl;
+		::exit(1);
 	}
 
 	sprintf(vendor,"%.4s%.4s%.4s",(char*)(regs+1),(char*)(regs+3),(char*)(regs+2));
@@ -188,20 +183,14 @@ char *GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]){
 				snprintf(retname,255,"%s %s",cpuvendors[i].name,cpuname[i][CPUID_FAMILY][CPUID_MODEL]);
 			} else {
 				snprintf(retname,255,"unknown %s %d. Generation CPU",cpuvendors[i].name,CPUID_FAMILY);
-				 MSG_ERR("unknown %s CPU:\n"
-					"Vendor:   %s\n"
-					"Type:     %d\n"
-					"Family:   %d (ext: %d)\n"
-					"Model:    %d (ext: %d)\n"
-					"Stepping: %d\n"
-					"Please send the above info along with the exact CPU name"
-					"to the MPlayer-Developers, so we can add it to the list!\n"
-					,cpuvendors[i].name
-					,cpuvendors[i].string
-					,CPUID_TYPE
-					,CPUID_FAMILY,CPUID_EXTFAMILY
-					,CPUID_MODEL,CPUID_EXTMODEL
-					,CPUID_STEPPING);
+				mpxp_err<<"unknown "<<cpuvendors[i].name<<" CPU:"<<std::endl;
+				mpxp_err<<"Vendor:   "<<cpuvendors[i].string<<std::endl;
+				mpxp_err<<"Type:     "<<CPUID_TYPE<<std::endl;
+				mpxp_err<<"Family:   "<<CPUID_FAMILY<<" (ext: "<<CPUID_EXTFAMILY<<")"<<std::endl;
+				mpxp_err<<"Model:    "<<CPUID_MODEL<<" (ext: "<<CPUID_EXTMODEL<<")"<<std::endl;
+				mpxp_err<<"Stepping: "<<CPUID_STEPPING<<std::endl;
+				mpxp_err<<"Please send the above info along with the exact CPU name"<<std::endl;
+				mpxp_err<<"to the MPlayer-Developers, so we can add it to the list!"<<std::endl;
 			}
 		}
 	}
@@ -221,7 +210,7 @@ char *GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]){
 #if defined(__linux__) && defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC)
 static void sigill_handler_sse( int signal, struct sigcontext sc )
 {
-   MSG_ERR( "SIGILL, " );
+   mpxp_err<<"SIGILL, ";
 
    /* Both the "xorps %%xmm0,%%xmm0" and "divps %xmm0,%%xmm1"
     * instructions are 3 bytes long.  We must increment the instruction
@@ -240,7 +229,7 @@ static void sigill_handler_sse( int signal, struct sigcontext sc )
 
 static void sigfpe_handler_sse( int signal, struct sigcontext sc )
 {
-   MSG_ERR( "SIGFPE, " );
+   mpxp_err<<"SIGFPE, ";
 
    if ( sc.fpstate->magic != 0xffff ) {
       /* Our signal context has the extended FPU state, so reset the
@@ -252,8 +241,8 @@ static void sigfpe_handler_sse( int signal, struct sigcontext sc )
    } else {
       /* If we ever get here, we're completely hosed.
        */
-      MSG_ERR( "\n\n" );
-      MSG_ERR( "SSE enabling test failed badly!" );
+      mpxp_err<<std::endl;
+      mpxp_err<<"SSE enabling test failed badly!"<<std::endl;
    }
 }
 #endif /* __linux__ && _POSIX_SOURCE && X86_FXSR_MAGIC */
@@ -295,16 +284,13 @@ static void check_os_katmai_support( void )
     * does.
     */
    if ( gCpuCaps.hasSSE ) {
-      MSG_V( "Testing OS support for SSE... " );
+      mpxp_v<<"Testing OS support for SSE... ";
 
 //      __asm __volatile ("xorps %%xmm0, %%xmm0");
       __asm __volatile ("xorps %xmm0, %xmm0");
 
-      if ( gCpuCaps.hasSSE ) {
-	 MSG_V( "yes.\n" );
-      } else {
-	 MSG_V( "no!\n" );
-      }
+      if ( gCpuCaps.hasSSE ) mpxp_v<<"yes"<<std::endl;
+      else mpxp_v<<"no!"<<std::endl;
    }
 
    /* Emulate test for OSXMMEXCPT in CR4.  The OS will set this bit if
@@ -321,15 +307,12 @@ static void check_os_katmai_support( void )
     * and therefore to be safe I'm going to leave this test in here.
     */
    if ( gCpuCaps.hasSSE ) {
-      MSG_V( "Testing OS support for SSE unmasked exceptions... " );
+      mpxp_v<<"Testing OS support for SSE unmasked exceptions... ";
 
 //      test_os_katmai_exception_support();
 
-      if ( gCpuCaps.hasSSE ) {
-	 MSG_V( "yes.\n" );
-      } else {
-	 MSG_V( "no!\n" );
-      }
+      if ( gCpuCaps.hasSSE ) mpxp_v<<"yes"<<std::endl;
+      else mpxp_v<<"no!"<<std::endl;
    }
 
    /* Restore the original signal handlers.
@@ -340,22 +323,19 @@ static void check_os_katmai_support( void )
    /* If we've gotten to here and the XMM CPUID bit is still set, we're
     * safe to go ahead and hook out the SSE code throughout Mesa.
     */
-   if ( gCpuCaps.hasSSE ) {
-      MSG_V( "Tests of OS support for SSE passed.\n" );
-   } else {
-      MSG_WARN( "Tests of OS support for SSE failed!\n" );
-   }
+   if ( gCpuCaps.hasSSE ) mpxp_v<<"Tests of OS support for SSE passed"<<std::endl;
+   else mpxp_warn<<"Tests of OS support for SSE failed!"<<std::endl;
 #else
    /* We can't use POSIX signal handling to test the availability of
     * SSE, so we disable it by default.
     */
-   MSG_WARN( "Cannot test OS support for SSE, disabling to be safe.\n" );
+   mpxp_warn<<"Cannot test OS support for SSE, disabling to be safe"<<std::endl;
    gCpuCaps.hasSSE=0;
 #endif /* _POSIX_SOURCE && X86_FXSR_MAGIC */
 #else
    /* Do nothing on other platforms for now.
     */
-   MSG_V( "Not testing OS support for SSE, leaving disabled.\n" );
+   mpxp_v<<"Not testing OS support for SSE, leaving disabled"<<std::endl;
    gCpuCaps.hasSSE=0;
 #endif /* __linux__ */
 #endif /*ARCH_X86_64*/

@@ -83,8 +83,8 @@ static int success=0;
 int load_termcap(const char *termtype){
   if(!termtype) termtype=getenv("TERM");
   success=tgetent(term_buffer, termtype);
-  if(success<0){ MSG_ERR("Could not access the 'termcap' data base.\n"); return 0; }
-  if(success==0){ MSG_ERR("Terminal type `%s' is not defined.\n", termtype);return 0;}
+  if(success<0){ mpxp_err<<"Could not access the 'termcap' data base"<<std::endl; return 0; }
+  if(success==0){ mpxp_err<<"Terminal type `"<<termtype<<"' is not defined"<<std::endl; return 0;}
 
   screen_width=tgetnum("co");
   screen_height=tgetnum("li");

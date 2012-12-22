@@ -803,32 +803,32 @@ debug_info(int vret)
 	unsigned char *p;
 
 	fputs("vm86() failed\n", stderr);
-	MSG_V( "return = 0x%x\n", vret);
-	MSG_V( "eax = 0x%08lx\n", context.vm.regs.eax);
-	MSG_V( "ebx = 0x%08lx\n", context.vm.regs.ebx);
-	MSG_V( "ecx = 0x%08lx\n", context.vm.regs.ecx);
-	MSG_V( "edx = 0x%08lx\n", context.vm.regs.edx);
-	MSG_V( "esi = 0x%08lx\n", context.vm.regs.esi);
-	MSG_V( "edi = 0x%08lx\n", context.vm.regs.edi);
-	MSG_V( "ebp = 0x%08lx\n", context.vm.regs.ebp);
-	MSG_V( "eip = 0x%08lx\n", context.vm.regs.eip);
-	MSG_V( "cs  = 0x%04x\n", context.vm.regs.cs);
-	MSG_V( "esp = 0x%08lx\n", context.vm.regs.esp);
-	MSG_V( "ss  = 0x%04x\n", context.vm.regs.ss);
-	MSG_V( "ds  = 0x%04x\n", context.vm.regs.ds);
-	MSG_V( "es  = 0x%04x\n", context.vm.regs.es);
-	MSG_V( "fs  = 0x%04x\n", context.vm.regs.fs);
-	MSG_V( "gs  = 0x%04x\n", context.vm.regs.gs);
-	MSG_V( "eflags  = 0x%08lx\n", context.vm.regs.eflags);
+	mpxp_v<< "return = 0x"<<std::hex<<vret<<std::endl;
+	mpxp_v<< "eax = 0x"<<std::hex<<context.vm.regs.eax<<std::endl;
+	mpxp_v<< "ebx = 0x"<<std::hex<<context.vm.regs.ebx<<std::endl;
+	mpxp_v<< "ecx = 0x"<<std::hex<<context.vm.regs.ecx<<std::endl;
+	mpxp_v<< "edx = 0x"<<std::hex<<context.vm.regs.edx<<std::endl;
+	mpxp_v<< "esi = 0x"<<std::hex<<context.vm.regs.esi<<std::endl;
+	mpxp_v<< "edi = 0x"<<std::hex<<context.vm.regs.edi<<std::endl;
+	mpxp_v<< "ebp = 0x"<<std::hex<<context.vm.regs.ebp<<std::endl;
+	mpxp_v<< "eip = 0x"<<std::hex<<context.vm.regs.eip<<std::endl;
+	mpxp_v<< "cs  = 0x"<<std::hex<<context.vm.regs.cs<<std::endl;
+	mpxp_v<< "esp = 0x"<<std::hex<<context.vm.regs.esp<<std::endl;
+	mpxp_v<< "ss  = 0x"<<std::hex<<context.vm.regs.ss<<std::endl;
+	mpxp_v<< "ds  = 0x"<<std::hex<<context.vm.regs.ds<<std::endl;
+	mpxp_v<< "es  = 0x"<<std::hex<<context.vm.regs.es<<std::endl;
+	mpxp_v<< "fs  = 0x"<<std::hex<<context.vm.regs.fs<<std::endl;
+	mpxp_v<< "gs  = 0x"<<std::hex<<context.vm.regs.gs<<std::endl;
+	mpxp_v<< "eflags  = 0x"<<std::hex<<context.vm.regs.eflags<<std::endl;
 
-	MSG_V("cs:ip = [ ");
+	mpxp_v<<"cs:ip = [ ");
 
 	p = (unsigned char *)((context.vm.regs.cs << 4) + (context.vm.regs.eip & 0xffff));
 
 	for (i = 0; i < 16; ++i)
-		MSG_V( "%02x ", (unsigned int)p[i]);
+		mpxp_v<<(unsigned int)p[i]);
 
-	MSG_V("]\n");
+	mpxp_v<<"]"<<std::endl;
 	}
 #endif
 
@@ -923,7 +923,7 @@ LRMI_int(int i, struct LRMI_regs *r)
 	if (seg < 0xa000 || (seg << 4) + off >= 0x100000)
 		{
 #ifdef ORIGINAL_LRMI_CODE_THAT_GOT_IFDEFED_OUT
-		MSG_WARN( "Int 0x%x is not in rom (%04x:%04x)\n", i, seg, off);
+		mpxp_warn<<"Int 0x"<<std::hex<<i<<" is not in rom ("<<std::hex<<seg<<":"<<std::hex<<off<<")"<<std::endl;
 #endif
 		return 0;
 		}
