@@ -72,12 +72,6 @@ struct transform_in_t {
     uint32_t timestamp;
 };
 
-uint32_t (*rvyuv_custom_message)(cmsg_data_t*,any_t*);
-uint32_t (*rvyuv_free)(any_t*);
-uint32_t (*rvyuv_hive_message)(uint32_t,uint32_t);
-uint32_t (*rvyuv_init)(any_t*,any_t*);
-uint32_t (*rvyuv_transform)(char*, char*,transform_in_t*,unsigned int*,any_t*);
-
 #if 0
 any_t*__builtin_vec_new(unsigned long size) {
     return mp_malloc(size);
@@ -101,11 +95,16 @@ struct vreal_private_t : public Opaque {
     sh_video_t* sh;
     video_decoder_t* parent;
     any_t* rv_handle;
+    uint32_t (*rvyuv_custom_message)(cmsg_data_t*,any_t*);
+    uint32_t (*rvyuv_free)(any_t*);
+    uint32_t (*rvyuv_hive_message)(uint32_t,uint32_t);
+    uint32_t (*rvyuv_init)(any_t*,any_t*);
+    uint32_t (*rvyuv_transform)(char*, char*,transform_in_t*,unsigned int*,any_t*);
 };
 vreal_private_t::vreal_private_t() {}
 vreal_private_t::~vreal_private_t() {
     if(rvyuv_free) rvyuv_free(handle);
-    if(rv_handle) dlclose(rv_handle);
+    if(rv_handle) ::dlclose(rv_handle);
 }
 
 // to set/get/query special features/parameters
@@ -132,34 +131,34 @@ static int load_lib(vreal_private_t& priv,const char *path) {
     any_t*handle;
     char *error;
 
-    priv.rv_handle = handle = dlopen (path, RTLD_LAZY);
+    priv.rv_handle = handle = ::dlopen (path, RTLD_LAZY);
     if (!handle) {
 	MSG_ERR("DLError: %s\n",dlerror());
 	return 0;
     }
 
-    rvyuv_custom_message = (uint32_t (*)(cmsg_data_t*,any_t*))ld_sym(handle, "RV20toYUV420CustomMessage");
-    if ((error = dlerror()) != NULL)  {
+    priv.rvyuv_custom_message = (uint32_t (*)(cmsg_data_t*,any_t*))ld_sym(handle, "RV20toYUV420CustomMessage");
+    if ((error = ::dlerror()) != NULL)  {
 	MSG_ERR( "ld_sym(rvyuvCustomMessage): %s\n", error);
 	return 0;
     }
-    rvyuv_free = (uint32_t (*)(any_t*))ld_sym(handle, "RV20toYUV420Free");
-    if ((error = dlerror()) != NULL)  {
+    priv.rvyuv_free = (uint32_t (*)(any_t*))ld_sym(handle, "RV20toYUV420Free");
+    if ((error = ::dlerror()) != NULL)  {
 	MSG_ERR( "ld_sym(rvyuvFree): %s\n", error);
 	return 0;
     }
-    rvyuv_hive_message = (uint32_t (*)(uint32_t,uint32_t))ld_sym(handle, "RV20toYUV420HiveMessage");
-    if ((error = dlerror()) != NULL)  {
+    priv.rvyuv_hive_message = (uint32_t (*)(uint32_t,uint32_t))ld_sym(handle, "RV20toYUV420HiveMessage");
+    if ((error = ::dlerror()) != NULL)  {
 	MSG_ERR( "ld_sym(rvyuvHiveMessage): %s\n", error);
 	return 0;
     }
-    rvyuv_init = (uint32_t (*)(any_t*,any_t*))ld_sym(handle, "RV20toYUV420Init");
-    if ((error = dlerror()) != NULL)  {
+    priv.rvyuv_init = (uint32_t (*)(any_t*,any_t*))ld_sym(handle, "RV20toYUV420Init");
+    if ((error = ::dlerror()) != NULL)  {
 	MSG_ERR( "ld_sym(rvyuvInit): %s\n", error);
 	return 0;
     }
-    rvyuv_transform = (uint32_t (*)(char*,char*,transform_in_t*,unsigned int*,any_t*))ld_sym(handle, "RV20toYUV420Transform");
-    if ((error = dlerror()) != NULL)  {
+    priv.rvyuv_transform = (uint32_t (*)(char*,char*,transform_in_t*,unsigned int*,any_t*))ld_sym(handle, "RV20toYUV420Transform");
+    if ((error = ::dlerror()) != NULL)  {
 	MSG_ERR( "ld_sym(rvyuvTransform): %s\n", error);
 	return 0;
     }
@@ -205,7 +204,7 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
     // only I420 supported
     if(!mpcodecs_config_vf(opaque,sh->src_w,sh->src_h)) return MPXP_False;
     // init codec:
-    result=(*rvyuv_init)(&init_data, &priv.handle);
+    result=(*priv.rvyuv_init)(&init_data, &priv.handle);
     if (result){
 	MSG_ERR("Couldn't open RealVideo codec, error code: 0x%X  \n",result);
 	return MPXP_False;
@@ -215,7 +214,7 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
 	uint32_t cmsg24[4]={sh->src_w,sh->src_h,sh->src_w,sh->src_h};
 	/* FIXME: Broken for 64-bit pointers */
 	cmsg_data_t cmsg_data={0x24,1+(extrahdr[1]&7), &cmsg24[0]};
-	(*rvyuv_custom_message)(&cmsg_data,priv.handle);
+	(*priv.rvyuv_custom_message)(&cmsg_data,priv.handle);
     }
     MSG_V("INFO: RealVideo codec init OK!\n");
     return MPXP_Ok;
@@ -250,7 +249,7 @@ static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
 		sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
-    result=(*rvyuv_transform)(const_cast<char *>(dp_data), reinterpret_cast<char*>(mpi->planes[0]), &transform_in,
+    result=(*priv.rvyuv_transform)(const_cast<char *>(dp_data), reinterpret_cast<char*>(mpi->planes[0]), &transform_in,
 	transform_out, priv.handle);
 
     return (result?NULL:mpi);

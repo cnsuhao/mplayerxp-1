@@ -28,34 +28,6 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(real)
 
-
-static any_t*handle=NULL;
-
-any_t*__builtin_new(unsigned long size) {
-    return mp_malloc(size);
-}
-
-/* required for cook's uninit: */
-void __builtin_delete(any_t* ize) {
-    delete ize;
-}
-
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-any_t* __ctype_b=NULL;
-#endif
-
-static uint32_t (*raCloseCodec)(uint32_t);
-static uint32_t (*raDecode)(any_t*,any_t*,uint32_t,any_t*,any_t*,uint32_t);
-static uint32_t (*raFreeDecoder)(uint32_t);
-static any_t* (*raGetFlavorProperty)(any_t*,uint32_t,uint32_t,any_t*);
-//static uint32_t (*raGetNumberOfFlavors2)(void);
-static uint32_t (*raInitDecoder)(any_t*,any_t*);
-static uint32_t (*raOpenCodec2)(any_t*,any_t*);
-static uint32_t (*raOpenCodec)(any_t*);
-static uint32_t (*raSetFlavor)(any_t*,uint32_t);
-static void  (*raSetDLLAccessPath)(uint32_t);
-static void  (*raSetPwd)(char*,char*);
-
 typedef struct {
     int samplerate;
     short bits;
@@ -75,11 +47,23 @@ struct areal_private_t : public Opaque {
     any_t*internal;
     float pts;
     sh_audio_t* sh;
+    any_t* handle;
+    uint32_t (*raCloseCodec)(uint32_t);
+    uint32_t (*raDecode)(any_t*,any_t*,uint32_t,any_t*,any_t*,uint32_t);
+    uint32_t (*raFreeDecoder)(uint32_t);
+    any_t* (*raGetFlavorProperty)(any_t*,uint32_t,uint32_t,any_t*);
+    uint32_t (*raInitDecoder)(any_t*,any_t*);
+    uint32_t (*raOpenCodec2)(any_t*,any_t*);
+    uint32_t (*raOpenCodec)(any_t*);
+    uint32_t (*raSetFlavor)(any_t*,uint32_t);
+    void  (*raSetDLLAccessPath)(uint32_t);
+    void  (*raSetPwd)(char*,char*);
 };
 areal_private_t::areal_private_t() {}
 areal_private_t::~areal_private_t() {
     if (raFreeDecoder) raFreeDecoder(long(internal));
     if (raCloseCodec) raCloseCodec(long(internal));
+    if(handle) ::dlclose(handle);
 }
 
 static const audio_probe_t probes[] = {
@@ -99,24 +83,24 @@ static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) {
     return NULL;
 }
 
-static MPXP_Rc load_dll(const char* name)
+static MPXP_Rc load_dll(areal_private_t& priv,const char* name)
 {
-    if(!(handle = dlopen (name, RTLD_LAZY))) return MPXP_False;
+    if(!(priv.handle = ::dlopen (name, RTLD_LAZY))) return MPXP_False;
 
-    raCloseCodec = (uint32_t (*)(uint32_t))ld_sym(handle, "RACloseCodec");
-    raDecode = (uint32_t (*)(any_t*,any_t*,uint32_t,any_t*,any_t*,uint32_t))ld_sym(handle, "RADecode");
-    raFreeDecoder = (uint32_t (*)(uint32_t))ld_sym(handle, "RAFreeDecoder");
-    raGetFlavorProperty = (any_t* (*)(any_t*,uint32_t,uint32_t,any_t*))ld_sym(handle, "RAGetFlavorProperty");
-    raOpenCodec = (uint32_t (*)(any_t*))ld_sym(handle, "RAOpenCodec");
-    raOpenCodec2 = (uint32_t (*)(any_t*,any_t*))ld_sym(handle, "RAOpenCodec2");
-    raInitDecoder = (uint32_t (*)(any_t*,any_t*))ld_sym(handle, "RAInitDecoder");
-    raSetFlavor = (uint32_t (*)(any_t*,uint32_t))ld_sym(handle, "RASetFlavor");
-    raSetDLLAccessPath = (void (*)(uint32_t))ld_sym(handle, "SetDLLAccessPath");
-    raSetPwd = (void (*)(char*,char*))ld_sym(handle, "RASetPwd"); /* optional, used by SIPR */
+    priv.raCloseCodec = (uint32_t (*)(uint32_t))ld_sym(priv.handle, "RACloseCodec");
+    priv.raDecode = (uint32_t (*)(any_t*,any_t*,uint32_t,any_t*,any_t*,uint32_t))ld_sym(priv.handle, "RADecode");
+    priv.raFreeDecoder = (uint32_t (*)(uint32_t))ld_sym(priv.handle, "RAFreeDecoder");
+    priv.raGetFlavorProperty = (any_t* (*)(any_t*,uint32_t,uint32_t,any_t*))ld_sym(priv.handle, "RAGetFlavorProperty");
+    priv.raOpenCodec = (uint32_t (*)(any_t*))ld_sym(priv.handle, "RAOpenCodec");
+    priv.raOpenCodec2 = (uint32_t (*)(any_t*,any_t*))ld_sym(priv.handle, "RAOpenCodec2");
+    priv.raInitDecoder = (uint32_t (*)(any_t*,any_t*))ld_sym(priv.handle, "RAInitDecoder");
+    priv.raSetFlavor = (uint32_t (*)(any_t*,uint32_t))ld_sym(priv.handle, "RASetFlavor");
+    priv.raSetDLLAccessPath = (void (*)(uint32_t))ld_sym(priv.handle, "SetDLLAccessPath");
+    priv.raSetPwd = (void (*)(char*,char*))ld_sym(priv.handle, "RASetPwd"); /* optional, used by SIPR */
 
-    return (raCloseCodec && raDecode && raFreeDecoder &&
-	raGetFlavorProperty && (raOpenCodec2||raOpenCodec) && raSetFlavor &&
-	raInitDecoder)?MPXP_Ok:MPXP_False;
+    return (priv.raCloseCodec && priv.raDecode && priv.raFreeDecoder &&
+	priv.raGetFlavorProperty && (priv.raOpenCodec2||priv.raOpenCodec) && priv.raSetFlavor &&
+	priv.raInitDecoder)?MPXP_Ok:MPXP_False;
 }
 
 static Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_info_t& afi){
@@ -128,9 +112,8 @@ static Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_in
     any_t* prop;
     char path[4096];
     char cpath[4096];
-    areal_private_t *priv;
-    if(load_dll(probe.codec_dll)!=MPXP_Ok) return NULL;
-    priv=new(zeromem) areal_private_t;
+    areal_private_t *priv=new(zeromem) areal_private_t;
+    if(load_dll(*priv,probe.codec_dll)!=MPXP_Ok) { delete priv; return NULL; }
     priv->sh = sh;
 
     char *end;
@@ -145,14 +128,14 @@ static Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_in
     }
     path[strlen(path)+1]=0;
 
-    if(raSetDLLAccessPath)
-	raSetDLLAccessPath(long(path));
+    if(priv->raSetDLLAccessPath)
+	(*priv->raSetDLLAccessPath)(long(path));
 
-    if(raOpenCodec2) {
+    if(priv->raOpenCodec2) {
 	strcat(cpath,"/");
-	result=raOpenCodec2(&priv->internal,cpath);
+	result=(*priv->raOpenCodec2)(&priv->internal,cpath);
     }
-    else result=raOpenCodec(&priv->internal);
+    else result=(*priv->raOpenCodec)(&priv->internal);
     if(result){
 	MSG_WARN("Decoder open failed, error code: 0x%X\n",result);
 	delete priv;
@@ -173,35 +156,35 @@ static Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_in
 	((short*)(sh->wf+1))[4], // codec data length
 	((char*)(sh->wf+1))+10 // extras
     };
-    result=raInitDecoder(priv->internal,&init_data);
+    result=(*priv->raInitDecoder)(priv->internal,&init_data);
     if(result){
 	MSG_WARN("Decoder init failed, error code: 0x%X\n",result);
 	delete priv;
 	return NULL;
     }
 
-    if(raSetPwd){
+    if(priv->raSetPwd){
 	// used by 'SIPR'
-	raSetPwd(reinterpret_cast<char*>(priv->internal),const_cast<char*>("Ardubancel Quazanga")); // set password... lol.
+	(*priv->raSetPwd)(reinterpret_cast<char*>(priv->internal),const_cast<char*>("Ardubancel Quazanga")); // set password... lol.
     }
 
-    result=raSetFlavor(priv->internal,((short*)(sh->wf+1))[2]);
+    result=(*priv->raSetFlavor)(priv->internal,((short*)(sh->wf+1))[2]);
     if(result){
 	MSG_WARN("Decoder flavor setup failed, error code: 0x%X\n",result);
 	delete priv;
 	return NULL;
     }
 
-    prop=raGetFlavorProperty(priv->internal,((short*)(sh->wf+1))[2],0,&len);
+    prop=(*priv->raGetFlavorProperty)(priv->internal,((short*)(sh->wf+1))[2],0,&len);
     MSG_INFO("Audio codec: [%d] %s\n",((short*)(sh->wf+1))[2],prop);
 
-    prop=raGetFlavorProperty(priv->internal,((short*)(sh->wf+1))[2],1,&len);
+    prop=(*priv->raGetFlavorProperty)(priv->internal,((short*)(sh->wf+1))[2],1,&len);
     if(prop){
 	sh->i_bps=((*((int*)prop))+4)/8;
 	MSG_INFO("Audio bitrate: %5.3f kbit/s (%d bps)  \n",(*((int*)prop))*0.001f,sh->i_bps);
     } else sh->i_bps=sh->wf->nAvgBytesPerSec;
 
-//    prop=raGetFlavorProperty(priv->internal,((short*)(sh->wf+1))[2],0x13,&len);
+//    prop=(*priv->raGetFlavorProperty)(priv->internal,((short*)(sh->wf+1))[2],0x13,&len);
 //    MSG_INFO("Samples/block?: %d  \n",(*((int*)prop)));
 
     sh->audio_out_minsize=128000; // no idea how to get... :(
@@ -292,7 +275,7 @@ static unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned m
   }
   else pts=priv.pts;
 
-  result=raDecode(priv.internal, sh->a_in_buffer+sh->a_in_buffer_size-sh->a_in_buffer_len, sh->wf->nBlockAlign,
+  result=(*priv.raDecode)(priv.internal, sh->a_in_buffer+sh->a_in_buffer_size-sh->a_in_buffer_len, sh->wf->nBlockAlign,
        buf, &len, -1);
   if((int)len<0) len=0;
   sh->a_in_buffer_len-=sh->wf->nBlockAlign;

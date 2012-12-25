@@ -192,9 +192,8 @@ enum {
 };
 
 static const int XA_CLOSE_FUNCS=5;
-int xa_close_func = 0;
 
-typedef struct xacodec_driver {
+struct xacodec_driver_t {
     XA_DEC_INFO*	decinfo;
     any_t*		file_handler;
     long (*iq_func)(XA_CODEC_HDR *codec_hdr);
@@ -202,9 +201,7 @@ typedef struct xacodec_driver {
 	unsigned int dsize, XA_DEC_INFO *dec_info);
     any_t*		close_func[XA_CLOSE_FUNCS];
     xacodec_image_t	image;
-} xacodec_driver_t;
-
-xacodec_driver_t *xacodec_driver = NULL;
+};
 
 struct xa_private_t : public Opaque {
     xa_private_t();
@@ -212,6 +209,8 @@ struct xa_private_t : public Opaque {
 
     sh_video_t* sh;
     video_decoder_t* parent;
+    xacodec_driver_t* xacodec_driver;
+    int xa_close_func;
 };
 xa_private_t::xa_private_t() {}
 xa_private_t::~xa_private_t() {}
@@ -233,39 +232,39 @@ void XA_Print(const char *fmt, ...)
 /* 0 is no debug (needed by 3ivX) */
 long xa_debug = 0;
 
-int xacodec_exit(void);
-void TheEnd1(char *err_mess)
+int xacodec_exit(xa_private_t&);
+void TheEnd1(xa_private_t& priv,const char *err_mess)
 {
     XA_Print("error: %s - exiting\n", err_mess);
-    xacodec_exit();
+    xacodec_exit(priv);
 
     return;
 }
 
-void XA_Add_Func_To_Free_Chain(XA_ANIM_HDR *anim_hdr, void (*function)())
+void XA_Add_Func_To_Free_Chain(xa_private_t& priv,XA_ANIM_HDR *anim_hdr, void (*function)())
 {
 //    XA_Print("XA_Add_Func_To_Free_Chain('anim_hdr: %08x', 'function: %08x')",
 //	    anim_hdr, function);
-    xacodec_driver->close_func[xa_close_func] = (any_t*)function;
-    if (xa_close_func+1 < XA_CLOSE_FUNCS)
-	xa_close_func++;
+    priv.xacodec_driver->close_func[priv.xa_close_func] = (any_t*)function;
+    if (priv.xa_close_func+1 < XA_CLOSE_FUNCS)
+	priv.xa_close_func++;
 
     return;
 }
 /* end of crap */
 
 /* load, init and query */
-int xacodec_init(char *filename, xacodec_driver_t *codec_driver)
+int xacodec_init(const char *filename, xacodec_driver_t *codec_driver)
 {
     any_t*(*what_the)();
-    char *error;
+    const char *error;
     XAVID_MOD_HDR *mod_hdr;
     XAVID_FUNC_HDR *func;
     unsigned int i;
 
-    codec_driver->file_handler = dlopen(filename, RTLD_NOW|RTLD_GLOBAL);
+    codec_driver->file_handler = ::dlopen(filename, RTLD_NOW|RTLD_GLOBAL);
     if (!codec_driver->file_handler) {
-	error = dlerror();
+	error = ::dlerror();
 	if (error)
 	    MSG_FATAL( "xacodec: failed to dlopen %s while %s\n", filename, error);
 	else
@@ -274,7 +273,7 @@ int xacodec_init(char *filename, xacodec_driver_t *codec_driver)
     }
 
     what_the = (any_t* (*)())ld_sym(codec_driver->file_handler, "What_The");
-    if ((error = dlerror()) != NULL) {
+    if ((error = ::dlerror()) != NULL) {
 	MSG_FATAL( "xacodec: failed to init %s while %s\n", filename, error);
 	dlclose(codec_driver->file_handler);
 	return 0;
@@ -368,39 +367,40 @@ int xacodec_query(xacodec_driver_t *codec_driver, XA_CODEC_HDR *codec_hdr)
 
 const char *xacodec_def_path = "/usr/lib/xanim/mods";
 
-int xacodec_init_video(sh_video_t *vidinfo, int out_format)
+static int xacodec_init_video(xa_private_t& priv, int out_format)
 {
     char dll[1024];
     XA_CODEC_HDR codec_hdr;
     int i;
+    sh_video_t* sh_video = priv.sh;
 
-    xacodec_driver = (xacodec_driver_t*)mp_realloc(xacodec_driver, sizeof(struct xacodec_driver));
-    if (xacodec_driver == NULL) {
+    priv.xacodec_driver = (xacodec_driver_t*)mp_realloc(priv.xacodec_driver, sizeof(struct xacodec_driver_t));
+    if (priv.xacodec_driver == NULL) {
 	MSG_FATAL( "xacodec: memory allocation error: %s\n",
 	    strerror(errno));
 	return 0;
     }
 
-    xacodec_driver->iq_func = NULL;
-    xacodec_driver->dec_func = NULL;
+    priv.xacodec_driver->iq_func = NULL;
+    priv.xacodec_driver->dec_func = NULL;
 
     for (i=0; i < XA_CLOSE_FUNCS; i++)
-	xacodec_driver->close_func[i] = NULL;
+	priv.xacodec_driver->close_func[i] = NULL;
 
     if (getenv("XANIM_MOD_DIR"))
-	xacodec_def_path = getenv("XANIM_MOD_DIR");
+	xacodec_def_path = ::getenv("XANIM_MOD_DIR");
 
-    snprintf(dll, 1024, "%s/%s", xacodec_def_path, vidinfo->codec->dll_name);
-    if (xacodec_init(dll, xacodec_driver) == 0)
+    snprintf(dll, 1024, "%s/%s", xacodec_def_path, sh_video->codec->dll_name);
+    if (xacodec_init(dll, priv.xacodec_driver) == 0)
 	return 0;
 
     codec_hdr.xapi_rev = XAVID_API_REV;
     codec_hdr.anim_hdr = mp_malloc(4096);
-    codec_hdr.description = vidinfo->codec->s_info;
-    codec_hdr.compression = bswap_32(vidinfo->bih->biCompression);
+    codec_hdr.description = sh_video->codec->s_info;
+    codec_hdr.compression = bswap_32(sh_video->bih->biCompression);
     codec_hdr.decoder = NULL;
-    codec_hdr.x = vidinfo->bih->biWidth; /* ->src_w */
-    codec_hdr.y = vidinfo->bih->biHeight; /* ->src_h */
+    codec_hdr.x = sh_video->bih->biWidth; /* ->src_w */
+    codec_hdr.y = sh_video->bih->biHeight; /* ->src_h */
     /* extra fields to store palette */
     codec_hdr.avi_ctab_flag = 0;
     codec_hdr.avi_read_ext = NULL;
@@ -450,38 +450,38 @@ int xacodec_init_video(sh_video_t *vidinfo, int out_format)
     MSG_INFO( "xacodec: querying for input %dx%d %dbit [fourcc: %4x] (%s)...\n",
 	codec_hdr.x, codec_hdr.y, codec_hdr.depth, codec_hdr.compression, codec_hdr.description);
 
-    if (xacodec_query(xacodec_driver, &codec_hdr) == 0)
+    if (xacodec_query(priv.xacodec_driver, &codec_hdr) == 0)
 	return 0;
 
 //    delete codec_hdr.anim_hdr;
 
-    xacodec_driver->decinfo = new(zeromem) XA_DEC_INFO;
-    if (xacodec_driver->decinfo == NULL) {
+    priv.xacodec_driver->decinfo = new(zeromem) XA_DEC_INFO;
+    if (priv.xacodec_driver->decinfo == NULL) {
 	MSG_FATAL( "xacodec: memory allocation error: %s\n",
 	    strerror(errno));
 	return 0;
     }
-    xacodec_driver->decinfo->cmd = 0;
-    xacodec_driver->decinfo->skip_flag = 0;
-    xacodec_driver->decinfo->imagex = xacodec_driver->decinfo->xe = codec_hdr.x;
-    xacodec_driver->decinfo->imagey = xacodec_driver->decinfo->ye = codec_hdr.y;
-    xacodec_driver->decinfo->imaged = codec_hdr.depth;
-    xacodec_driver->decinfo->chdr = NULL;
-    xacodec_driver->decinfo->map_flag = 0; /* xaFALSE */
-    xacodec_driver->decinfo->map = NULL;
-    xacodec_driver->decinfo->xs = xacodec_driver->decinfo->ys = 0;
-    xacodec_driver->decinfo->special = 0;
-    xacodec_driver->decinfo->extra = codec_hdr.extra;
+    priv.xacodec_driver->decinfo->cmd = 0;
+    priv.xacodec_driver->decinfo->skip_flag = 0;
+    priv.xacodec_driver->decinfo->imagex = priv.xacodec_driver->decinfo->xe = codec_hdr.x;
+    priv.xacodec_driver->decinfo->imagey = priv.xacodec_driver->decinfo->ye = codec_hdr.y;
+    priv.xacodec_driver->decinfo->imaged = codec_hdr.depth;
+    priv.xacodec_driver->decinfo->chdr = NULL;
+    priv.xacodec_driver->decinfo->map_flag = 0; /* xaFALSE */
+    priv.xacodec_driver->decinfo->map = NULL;
+    priv.xacodec_driver->decinfo->xs = priv.xacodec_driver->decinfo->ys = 0;
+    priv.xacodec_driver->decinfo->special = 0;
+    priv.xacodec_driver->decinfo->extra = codec_hdr.extra;
     MSG_DBG2( "decinfo->extra, filled by codec: 0x%08x [%s]\n",
-	&xacodec_driver->decinfo->extra, xacodec_driver->decinfo->extra);
+	&priv.xacodec_driver->decinfo->extra, priv.xacodec_driver->decinfo->extra);
 
-    xacodec_driver->image.out_fmt = out_format;
-    xacodec_driver->image.bpp = codec_hdr.depth;
-    xacodec_driver->image.width = codec_hdr.x;
-    xacodec_driver->image.height = codec_hdr.y;
-    xacodec_driver->image.mem = new unsigned char [codec_hdr.y * codec_hdr.x * ((codec_hdr.depth+7)/8)];
+    priv.xacodec_driver->image.out_fmt = out_format;
+    priv.xacodec_driver->image.bpp = codec_hdr.depth;
+    priv.xacodec_driver->image.width = codec_hdr.x;
+    priv.xacodec_driver->image.height = codec_hdr.y;
+    priv.xacodec_driver->image.mem = new unsigned char [codec_hdr.y * codec_hdr.x * ((codec_hdr.depth+7)/8)];
 
-    if (xacodec_driver->image.mem == NULL) {
+    if (priv.xacodec_driver->image.mem == NULL) {
 	MSG_FATAL( "xacodec: memory allocation error: %s\n",
 	    strerror(errno));
 	return 0;
@@ -490,27 +490,29 @@ int xacodec_init_video(sh_video_t *vidinfo, int out_format)
     return 1;
 }
 
-#define ACT_DLTA_NORM	0x00000000
-#define ACT_DLTA_BODY	0x00000001
-#define ACT_DLTA_XOR	0x00000002
-#define ACT_DLTA_NOP	0x00000004
-#define ACT_DLTA_MAPD	0x00000008
-#define ACT_DLTA_DROP	0x00000010
-#define ACT_DLTA_BAD	0x80000000
+enum {
+    ACT_DLTA_NORM	=0x00000000,
+    ACT_DLTA_BODY	=0x00000001,
+    ACT_DLTA_XOR	=0x00000002,
+    ACT_DLTA_NOP	=0x00000004,
+    ACT_DLTA_MAPD	=0x00000008,
+    ACT_DLTA_DROP	=0x00000010,
+    ACT_DLTA_BAD	=0x80000000
+};
 
 //    unsigned int (*dec_func)(unsigned char *image, unsigned char *delta,
 //	unsigned int dsize, XA_DEC_INFO *dec_info);
 
-xacodec_image_t* xacodec_decode_frame(uint8_t *frame, int frame_size, int skip_flag)
+xacodec_image_t* xacodec_decode_frame(xa_private_t& priv,uint8_t *frame, int frame_size, int skip_flag)
 {
     unsigned int ret;
-    xacodec_image_t *image=&xacodec_driver->image;
+    xacodec_image_t *image=&priv.xacodec_driver->image;
 
 // ugyis kiirja a vegen h dropped vagy nem..
 //    if (skip_flag > 0)
 //	MSG_DBG2( "frame will be dropped..\n");
 
-    xacodec_driver->decinfo->skip_flag = skip_flag;
+    priv.xacodec_driver->decinfo->skip_flag = skip_flag;
 
     image->planes[0]=image->mem;
     image->stride[0]=image->width;
@@ -527,29 +529,29 @@ xacodec_image_t* xacodec_decode_frame(uint8_t *frame, int frame_size, int skip_f
 	break;
     }
 
-    ret = xacodec_driver->dec_func((uint8_t*)&xacodec_driver->image, frame, frame_size, xacodec_driver->decinfo);
+    ret = priv.xacodec_driver->dec_func((uint8_t*)&priv.xacodec_driver->image, frame, frame_size, priv.xacodec_driver->decinfo);
 
 
     if (ret == ACT_DLTA_NORM) {
 //	MSG_DBG2( "norm\n");
-	return &xacodec_driver->image;
+	return &priv.xacodec_driver->image;
     }
 
     if (ret & ACT_DLTA_MAPD)
 	MSG_DBG2( "mapd\n");
 /*
     if (!(ret & ACT_DLT_MAPD))
-	xacodec_driver->decinfo->map_flag = 0;
+	priv.xacodec_driver->decinfo->map_flag = 0;
     else
     {
-	xacodec_driver->decinfo->map_flag = 1;
-	xacodec_driver->decinfo->map = ...
+	priv.xacodec_driver->decinfo->map_flag = 1;
+	priv.xacodec_driver->decinfo->map = ...
     }
 */
 
     if (ret & ACT_DLTA_XOR) {
 	MSG_DBG2( "xor\n");
-	return &xacodec_driver->image;
+	return &priv.xacodec_driver->image;
     }
 
     /* nothing changed */
@@ -578,20 +580,20 @@ xacodec_image_t* xacodec_decode_frame(uint8_t *frame, int frame_size, int skip_f
     return NULL;
 }
 
-int xacodec_exit(void)
+int xacodec_exit(xa_private_t& priv)
 {
     int i;
     void (*close_func)();
-    if(!xacodec_driver) return TRUE;
+    if(!priv.xacodec_driver) return TRUE;
     for (i=0; i < XA_CLOSE_FUNCS; i++)
-	if (xacodec_driver->close_func[i]) {
-	    close_func = reinterpret_cast<void(*)()>(xacodec_driver->close_func[i]);
+	if (priv.xacodec_driver->close_func[i]) {
+	    close_func = reinterpret_cast<void(*)()>(priv.xacodec_driver->close_func[i]);
 	    close_func();
 	}
-    dlclose(xacodec_driver->file_handler);
-    if (xacodec_driver->decinfo != NULL)
-	delete xacodec_driver->decinfo;
-    delete xacodec_driver;
+    dlclose(priv.xacodec_driver->file_handler);
+    if (priv.xacodec_driver->decinfo != NULL)
+	delete priv.xacodec_driver->decinfo;
+    delete priv.xacodec_driver;
     return TRUE;
 }
 
@@ -913,15 +915,15 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
     xa_private_t& priv=static_cast<xa_private_t&>(ctx);
     sh_video_t* sh=priv.sh;
     priv.parent=&opaque;
-    if(xacodec_init_video(sh,sh->codec->outfmt[sh->outfmtidx]))
+    if(xacodec_init_video(priv,sh->codec->outfmt[sh->outfmtidx]))
 	return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
     return MPXP_False;
 }
 
 // uninit driver
 static void uninit(Opaque& ctx){
-    UNUSED(ctx);
-    xacodec_exit();
+    xa_private_t& priv=static_cast<xa_private_t&>(ctx);
+    xacodec_exit(priv);
 }
 
 // decode a frame
@@ -933,7 +935,7 @@ static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
 
     if(frame.len<=0) return NULL; // skipped frame
 
-    image=xacodec_decode_frame(reinterpret_cast<uint8_t*>(frame.data),frame.len,(frame.flags&3)?1:0);
+    image=xacodec_decode_frame(priv,reinterpret_cast<uint8_t*>(frame.data),frame.len,(frame.flags&3)?1:0);
     if(!image) return NULL;
 
     mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_EXPORT, MP_IMGFLAG_PRESERVE,

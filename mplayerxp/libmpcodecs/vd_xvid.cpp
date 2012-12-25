@@ -85,17 +85,17 @@ static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
     return NULL;
 }
 
-#define XVID_MAKE_VERSION(a,b,c) ((((a)&0xff)<<16) | (((b)&0xff)<<8) | ((c)&0xff))
-#define XVID_VERSION_MAJOR(a)    ((char)(((a)>>16) & 0xff))
-#define XVID_VERSION_MINOR(a)    ((char)(((a)>> 8) & 0xff))
-#define XVID_VERSION_PATCH(a)    ((char)(((a)>> 0) & 0xff))
+inline int XVID_MAKE_VERSION(int a,int b,int c) { return (((a&0xff)<<16) | ((b&0xff)<<8) | (c&0xff)); }
+inline char XVID_VERSION_MAJOR(int a) { return ((char)((a>>16) & 0xff)); }
+inline char XVID_VERSION_MINOR(int a) { return ((char)((a>> 8) & 0xff)); }
+inline char XVID_VERSION_PATCH(int a) { return ((char)((a>> 0) & 0xff)); }
 
-#define XVID_MAKE_API(a,b)       ((((a)&0xff)<<16) | (((b)&0xff)<<0))
-#define XVID_API_MAJOR(a)        (((a)>>16) & 0xff)
-#define XVID_API_MINOR(a)        (((a)>> 0) & 0xff)
+inline int XVID_MAKE_API(int a,int b) { return (((a&0xff)<<16) | ((b&0xff)<<0)); }
+inline int XVID_API_MAJOR(int a)      { return ((a>>16) & 0xff); }
+inline int XVID_API_MINOR(int a)      { return ((a>> 0) & 0xff); }
 
-#define XVID_VERSION             XVID_MAKE_VERSION(1,1,3)
-#define XVID_API                 XVID_MAKE_API(4, 1)
+inline int XVID_VERSION() { return  XVID_MAKE_VERSION(1,1,3); }
+inline int XVID_API() { return  XVID_MAKE_API(4, 1); }
 
 enum {
     XVID_GBL_INIT=0, /* initialize xvidcore; must be called before using xvid_decore, or xvid_encore) */
@@ -236,12 +236,6 @@ enum {
     XVID_DEC_DROP	=(1<<30), /* drop bframes to decrease cpu usage *todo* */
     XVID_DEC_PREROLL	=(1<<31) /* decode as fast as you can, don't even show output *todo* */
 };
-static int (*xvid_decore_ptr)(any_t* handle,
-			int dec_opt,
-			any_t*param1,
-			any_t*param2);
-static int (*xvid_global_ptr)(any_t*handle, int opt, any_t*param1, any_t*param2);
-static any_t*dll_handle;
 
 struct xvid_private_t : public Opaque {
     xvid_private_t();
@@ -257,18 +251,25 @@ struct xvid_private_t : public Opaque {
     int			resync;
     sh_video_t*		sh;
     video_decoder_t*	parent;
+    int (*xvid_decore_ptr)(any_t* handle,
+			int dec_opt,
+			any_t*param1,
+			any_t*param2);
+    int (*xvid_global_ptr)(any_t*handle, int opt, any_t*param1, any_t*param2);
+    any_t* dll_handle;
 };
 xvid_private_t::xvid_private_t() {}
 xvid_private_t::~xvid_private_t() {
     if(hdl) (*xvid_decore_ptr)(hdl,XVID_DEC_DESTROY, NULL, NULL);
+    if(dll_handle) ::dlclose(dll_handle);
 }
 
-static int load_lib( const char *libname )
+static int load_lib(xvid_private_t& priv, const char *libname )
 {
-  if(!(dll_handle=ld_codec(libname,mpcodecs_vd_xvid.info->url))) return 0;
-  xvid_decore_ptr = (int (*)(any_t*,int,any_t*,any_t*))ld_sym(dll_handle,"xvid_decore");
-  xvid_global_ptr = (int (*)(any_t*,int,any_t*,any_t*))ld_sym(dll_handle,"xvid_global");
-  return xvid_decore_ptr != NULL && xvid_global_ptr!=NULL;
+    if(!(priv.dll_handle=ld_codec(libname,mpcodecs_vd_xvid.info->url))) return 0;
+    priv.xvid_decore_ptr = (int (*)(any_t*,int,any_t*,any_t*))ld_sym(priv.dll_handle,"xvid_decore");
+    priv.xvid_global_ptr = (int (*)(any_t*,int,any_t*,any_t*))ld_sym(priv.dll_handle,"xvid_global");
+    return priv.xvid_decore_ptr != NULL && priv.xvid_global_ptr!=NULL;
 }
 
 /* Returns DAR value according to VOL's informations contained in stats
@@ -333,8 +334,8 @@ static float stats2aspect(xvid_dec_stats_t *stats)
 
 static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
     UNUSED(psi);
-    if(!load_lib(probe.codec_dll)) return NULL;
     xvid_private_t* priv = new(zeromem) xvid_private_t;
+    if(!load_lib(*priv,probe.codec_dll)) { delete priv; return NULL; }
     priv->sh=sh;
     return priv;
 }
@@ -350,13 +351,13 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
 
 
     memset(&xvid_gbl_info, 0, sizeof(xvid_gbl_info_t));
-    xvid_gbl_info.version = XVID_VERSION;
+    xvid_gbl_info.version = XVID_VERSION();
 
     memset(&xvid_ini, 0, sizeof(xvid_gbl_init_t));
-    xvid_ini.version = XVID_VERSION;
+    xvid_ini.version = XVID_VERSION();
 
     memset(&dec_p, 0, sizeof(xvid_dec_create_t));
-    dec_p.version = XVID_VERSION;
+    dec_p.version = XVID_VERSION();
 
     switch(sh->codec->outfmt[sh->outfmtidx]){
 	case IMGFMT_YUY2:
@@ -396,7 +397,7 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
     }
 
     /* Gather some information about the host library */
-    if((*xvid_global_ptr)(NULL, XVID_GBL_INFO, &xvid_gbl_info, NULL) < 0) {
+    if((*priv.xvid_global_ptr)(NULL, XVID_GBL_INFO, &xvid_gbl_info, NULL) < 0) {
 	MSG_INFO("[XVID] could not get information about the library\n");
     } else {
 	MSG_INFO("[XVID] using library version %d.%d.%d (build %s)\n",
@@ -405,21 +406,21 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
 		XVID_VERSION_PATCH(xvid_gbl_info.actual_version),
 		xvid_gbl_info.build);
     }
-    if(xvid_gbl_info.actual_version < XVID_VERSION) {
+    if(xvid_gbl_info.actual_version < XVID_VERSION()) {
 	MSG_ERR("[XVID] please upgrade xvid library from %d.%d.%d to %d.%d.%d\n",
 		XVID_VERSION_MAJOR(xvid_gbl_info.actual_version),
 		XVID_VERSION_MINOR(xvid_gbl_info.actual_version),
 		XVID_VERSION_PATCH(xvid_gbl_info.actual_version),
-		XVID_VERSION_MAJOR(XVID_VERSION),
-		XVID_VERSION_MINOR(XVID_VERSION),
-		XVID_VERSION_PATCH(XVID_VERSION));
+		XVID_VERSION_MAJOR(XVID_VERSION()),
+		XVID_VERSION_MINOR(XVID_VERSION()),
+		XVID_VERSION_PATCH(XVID_VERSION()));
 	return MPXP_False;
     }
 
     xvid_ini.cpu_flags = 0; /* autodetect */
     xvid_ini.debug = 0;
     /* Initialize the xvidcore library */
-    if((*xvid_global_ptr)(NULL, XVID_GBL_INIT, &xvid_ini, NULL))
+    if((*priv.xvid_global_ptr)(NULL, XVID_GBL_INIT, &xvid_ini, NULL))
 	return MPXP_False;
 
     /* We use 0 width and height so xvidcore will resize its buffers
@@ -431,12 +432,12 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
     dec_p.num_threads=xvid_gbl_info.num_threads;
 
     /* Get a decoder instance */
-    if((*xvid_decore_ptr)(0, XVID_DEC_CREATE, &dec_p, NULL)<0) {
+    if((*priv.xvid_decore_ptr)(0, XVID_DEC_CREATE, &dec_p, NULL)<0) {
 	MSG_ERR("[XVID] init failed\n");
 	return MPXP_False;
     }
 
-    if((*xvid_global_ptr)(NULL, XVID_GBL_INFO, &xvid_gbl_info, NULL))
+    if((*priv.xvid_global_ptr)(NULL, XVID_GBL_INFO, &xvid_gbl_info, NULL))
 	return MPXP_False;
     MSG_INFO("[XVID] using %u cpus/threads. Flags: %08X\n"
 	,xvid_gbl_info.num_threads
@@ -462,10 +463,7 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
 }
 
 // uninit driver
-static void uninit(Opaque& ctx){
-    UNUSED(ctx);
-    dlclose(dll_handle);
-}
+static void uninit(Opaque& ctx){ UNUSED(ctx); }
 
 
 // decode a frame
@@ -481,8 +479,8 @@ static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
 
     memset(&dec,0,sizeof(xvid_dec_frame_t));
     memset(&stats, 0, sizeof(xvid_dec_stats_t));
-    dec.version = XVID_VERSION;
-    stats.version = XVID_VERSION;
+    dec.version = XVID_VERSION();
+    stats.version = XVID_VERSION();
 
     dec.bitstream = frame.data;
     dec.length = frame.len;
@@ -511,7 +509,7 @@ static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
     }
     while(dec.length > 0) {
 	/* Decode data */
-	consumed = (*xvid_decore_ptr)(priv.hdl, XVID_DEC_DECODE, &dec, &stats);
+	consumed = (*priv.xvid_decore_ptr)(priv.hdl, XVID_DEC_DECODE, &dec, &stats);
 	if (consumed < 0) {
 	    MSG_ERR("Decoding error\n");
 	    return NULL;

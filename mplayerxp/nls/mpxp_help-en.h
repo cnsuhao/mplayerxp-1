@@ -209,16 +209,16 @@ NULL
 #define MSGTR_CODEC_BUF_OVERFLOW "AC [%s] causes buffer overflow %i>%i. Be ready to sig11...\n"
 #endif
 #ifndef MSGTR_CODEC_CANT_LOAD_DLL
-#define MSGTR_CODEC_CANT_LOAD_DLL "codec_ld: Can't load library: '%s' due: %s\n"
+#define MSGTR_CODEC_CANT_LOAD_DLL "Can't load library"
 #endif
 #ifndef MSGTR_CODEC_DLL_HINT
-#define MSGTR_CODEC_DLL_HINT "codec_ld: Try obtain this codec at: %s\n"
+#define MSGTR_CODEC_DLL_HINT "Try obtain this codec at"
 #endif
 #ifndef MSGTR_CODEC_DLL_OK
-#define MSGTR_CODEC_DLL_OK "codec_ld: The library: '%s' was loaded OK\n"
+#define MSGTR_CODEC_DLL_OK "The library was loaded OK"
 #endif
 #ifndef MSGTR_CODEC_DLL_SYM_ERR
-#define MSGTR_CODEC_DLL_SYM_ERR "Can't resolve symbol: %s\n"
+#define MSGTR_CODEC_DLL_SYM_ERR "Can't resolve symbol"
 #endif
 //#define MSGTR_NoGui "MPlayer was compiled WITHOUT GUI support!\n"
 //#define MSGTR_GuiNeedsX "MPlayer GUI requires X11!\n"

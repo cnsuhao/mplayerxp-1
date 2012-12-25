@@ -142,14 +142,14 @@ struct divx4_private_t : public Opaque {
     int resync;
     sh_video_t* sh;
     video_decoder_t* parent;
+    any_t* dll_handle;
+    LibQDecoreFunction* (*getDecore_ptr)(unsigned long format);
 };
 divx4_private_t::divx4_private_t() {}
 divx4_private_t::~divx4_private_t() {
-    decoder(pHandle, DEC_OPT_RELEASE, 0, 0);
+    if(pHandle) decoder(pHandle, DEC_OPT_RELEASE, 0, 0);
+    if(dll_handle) ::dlclose(dll_handle);
 }
-
-static LibQDecoreFunction* (*getDecore_ptr)(unsigned long format);
-static any_t*dll_handle;
 
 static const video_probe_t probes[] = {
     { "divx", "libdivx"SLIBSUFFIX,FOURCC_TAG('D','Y','U','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
@@ -174,7 +174,6 @@ static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
 // to set/get/query special features/parameters
 static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
     divx4_private_t& priv=static_cast<divx4_private_t&>(ctx);
-    sh_video_t* sh = priv.sh;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:
 	    *((unsigned*)arg)=100;
@@ -215,17 +214,17 @@ static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
 }
 
 
-static int load_lib( const char *libname )
+static int load_lib(divx4_private_t& priv, const char *libname )
 {
-  if(!(dll_handle=ld_codec(libname,mpcodecs_vd_divx4.info->url))) return 0;
-  getDecore_ptr = (LibQDecoreFunction* (*)(unsigned long))ld_sym(dll_handle,"getDecore");
-  return getDecore_ptr != NULL;
+  if(!(priv.dll_handle=ld_codec(libname,mpcodecs_vd_divx4.info->url))) return 0;
+  priv.getDecore_ptr = (LibQDecoreFunction* (*)(unsigned long))ld_sym(priv.dll_handle,"getDecore");
+  return priv.getDecore_ptr != NULL;
 }
 
 static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
     UNUSED(psi);
-    if(!load_lib(probe.codec_dll)) return NULL;
     divx4_private_t* priv = new(zeromem) divx4_private_t;
+    if(!load_lib(*priv,probe.codec_dll)) { delete priv; return NULL; }
     priv->sh=sh;
     return priv;
 }
@@ -246,7 +245,7 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
 	    MSG_ERR("Unsupported out_fmt: 0x%X\n",sh->codec->outfmt[sh->outfmtidx]);
 	    return MPXP_False;
     }
-    if(!(priv.decoder=getDecore_ptr(sh->fourcc))) {
+    if(!(priv.decoder=priv.getDecore_ptr(sh->fourcc))) {
 	char *fcc=(char *)&(sh->fourcc);
 	MSG_ERR("Can't find decoder for %c%c%c%c fourcc\n",fcc[0],fcc[1],fcc[2],fcc[3]);
 	return MPXP_False;
@@ -270,10 +269,7 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
 }
 
 // uninit driver
-static void uninit(Opaque& ctx){
-    UNUSED(ctx);
-    dlclose(dll_handle);
-}
+static void uninit(Opaque& ctx){ UNUSED(ctx); }
 
 // decode a frame
 static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){

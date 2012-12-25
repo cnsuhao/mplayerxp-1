@@ -13,17 +13,17 @@ using namespace mpxp;
 #include "mpxp_help.h"
 #include "global_msg.h"
 
-any_t* ld_codec(const char *name,const char *url_hint)
+namespace mpxp {
+any_t* ld_codec(const std::string& name,const std::string& url_hint)
 {
-  any_t*dll_handle;
-  if(!(dll_handle=dlopen(name,RTLD_LAZY|RTLD_GLOBAL)))
-  {
-    MSG_FATAL(MSGTR_CODEC_CANT_LOAD_DLL,name,dlerror());
-    if(url_hint) MSG_HINT(MSGTR_CODEC_DLL_HINT,url_hint);
-    return NULL;
-  }
-  MSG_V(MSGTR_CODEC_DLL_OK,name);
-  return dll_handle;
+    any_t*dll_handle;
+    if(!(dll_handle=::dlopen(name.c_str(),RTLD_LAZY|RTLD_GLOBAL))) {
+	mpxp_fatal<<"[codec_ld] "<<MSGTR_CODEC_CANT_LOAD_DLL<<":"<<name<<" {"<<dlerror()<<"}"<<std::endl;
+	if(!url_hint.empty()) mpxp_hint<<"[codec_ld] "<<MSGTR_CODEC_DLL_HINT<<":"<<url_hint<<std::endl;
+	return NULL;
+    }
+    mpxp_v<<"[codec_ld] "<<MSGTR_CODEC_DLL_OK<<":"<<name<<std::endl;
+    return dll_handle;
 }
 
 #if 0
@@ -37,29 +37,30 @@ char * codec_name( const char *name )
 }
 #endif
 
-any_t* ld_sym(any_t*handle,const char *sym_name)
+any_t* ld_sym(any_t*handle,const std::string& sym_name)
 {
-  any_t*rval;
-  if(!(rval=dlsym(handle,sym_name))) {
-    MSG_ERR(MSGTR_CODEC_DLL_SYM_ERR,sym_name);
-  }
-  return rval;
+    any_t*rval;
+    if(!(rval=::dlsym(handle,sym_name.c_str()))) {
+	mpxp_err<<"[codec_ld] "<<MSGTR_CODEC_DLL_SYM_ERR<<":"<<sym_name<<std::endl;
+    }
+    return rval;
 }
 
-any_t* ld_aliased_sym(any_t*handle,const char *sym_name,...)
+any_t* ld_aliased_sym(any_t*handle,const std::string& sym_name,...)
 {
-  any_t*rval=dlsym(handle,sym_name);
-  if(!rval) {
-    const char *alias;
-    va_list list;
-    va_start( list, sym_name );
-    do {
-      alias = va_arg(list, const char *);
-      if(alias) rval = dlsym(handle,alias);
-      if(rval) break;
-    }while(alias);
-    va_end( list );
-  }
-  if(!rval) MSG_ERR(MSGTR_CODEC_DLL_SYM_ERR,sym_name);
-  return rval;
+    any_t*rval=::dlsym(handle,sym_name.c_str());
+    if(!rval) {
+	const char *alias;
+	va_list list;
+	va_start( list, sym_name );
+	do {
+	    alias = va_arg(list, const char *);
+	    if(alias) rval = ::dlsym(handle,alias);
+	    if(rval) break;
+	}while(alias);
+	va_end( list );
+    }
+    if(!rval) mpxp_err<<"[codec_ld] "<<MSGTR_CODEC_DLL_SYM_ERR<<":"<<sym_name<<std::endl;
+    return rval;
 }
+} // namespace mpxp

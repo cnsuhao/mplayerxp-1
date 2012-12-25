@@ -176,67 +176,6 @@ enum mpg123_errors {
     MPG123_LSEEK_FAILED		/**< Low-level seek failed. */
 };
 
-static void (*mpg123_init_ptr)(void);
-#define mpg123_init() (*mpg123_init_ptr)()
-static void (*mpg123_exit_ptr)(void);
-#define mpg123_exit() (*mpg123_exit_ptr)()
-static mpg123_handle * (*mpg123_new_ptr)(const char* decoder, int *error);
-#define mpg123_new(a,b) (*mpg123_new_ptr)(a,b)
-static void (*mpg123_delete_ptr)(mpg123_handle *mh);
-#define mpg123_delete(a) (*mpg123_delete_ptr)(a)
-
-static const char* (*mpg123_plain_strerror_ptr)(int errcode);
-#define mpg123_plain_strerror(a) (*mpg123_plain_strerror_ptr)(a)
-static int (*mpg123_open_feed_ptr)(mpg123_handle *mh);
-#define mpg123_open_feed(a) (*mpg123_open_feed_ptr)(a)
-static int (*mpg123_close_ptr)(mpg123_handle *mh);
-#define mpg123_close(a) (*mpg123_close_ptr)(a)
-static int (*mpg123_read_ptr)(mpg123_handle *mh, unsigned char *outmemory, size_t outmemsize, size_t *done);
-#define mpg123_read(a,b,c,d) (*mpg123_read_ptr)(a,b,c,d)
-static int (*mpg123_feed_ptr)(mpg123_handle *mh, const unsigned char *in, size_t size);
-#define mpg123_feed(a,b,c) (*mpg123_feed_ptr)(a,b,c)
-static int (*mpg123_decode_ptr)(mpg123_handle *mh, const unsigned char *inmemory, size_t inmemsize,
-				unsigned char *outmemory, size_t outmemsize, size_t *done);
-#define mpg123_decode(a,b,c,d,e,f) (*mpg123_decode_ptr)(a,b,c,d,e,f)
-static int (*mpg123_getformat_ptr)(mpg123_handle *mh, long *rate, int *channels, int *encoding);
-#define mpg123_getformat(a,b,c,d) (*mpg123_getformat_ptr)(a,b,c,d)
-static int (*mpg123_param_ptr)(mpg123_handle *mh, enum mpg123_parms type, long value, double fvalue);
-#define mpg123_param(a,b,c,d) (*mpg123_param_ptr)(a,b,c,d)
-static int (*mpg123_info_ptr)(mpg123_handle *mh, struct mpg123_frameinfo *mi);
-#define mpg123_info(a,b) (*mpg123_info_ptr)(a,b)
-static const char* (*mpg123_current_decoder_ptr)(mpg123_handle *mh);
-#define mpg123_current_decoder(a) (*mpg123_current_decoder_ptr)(a)
-static int (*mpg123_decode_frame_ptr)(mpg123_handle *mh, off_t *num, unsigned char **audio, size_t *bytes);
-#define mpg123_decode_frame(a,b,c,d) (*mpg123_decode_frame_ptr)(a,b,c,d)
-static off_t (*mpg123_tell_stream_ptr)(mpg123_handle *mh);
-#define mpg123_tell_stream(a) (*mpg123_tell_stream_ptr)(a)
-
-static any_t*dll_handle;
-static MPXP_Rc load_dll(const char *libname) {
-    if(!(dll_handle=ld_codec(libname,mpcodecs_ad_mp3.info->url))) return MPXP_False;
-    mpg123_init_ptr = (void (*)())ld_aliased_sym(dll_handle,"mpg123_init","mpg123_init_64");
-    mpg123_exit_ptr = (void (*)())ld_aliased_sym(dll_handle,"mpg123_exit","mpg123_exit_64");
-    mpg123_new_ptr = (mpg123_handle* (*)(const char*,int*))ld_aliased_sym(dll_handle,"mpg123_new","mpg123_new_64");
-    mpg123_delete_ptr = (void (*)(mpg123_handle*))ld_aliased_sym(dll_handle,"mpg123_delete","mpg123_delete_64");
-    mpg123_plain_strerror_ptr = (const char* (*)(int))ld_aliased_sym(dll_handle,"mpg123_plain_strerror","mpg123_plain_strerror_64");
-    mpg123_open_feed_ptr = (int (*)(mpg123_handle*))ld_aliased_sym(dll_handle,"mpg123_open_feed","mpg123_open_feed_64");
-    mpg123_close_ptr = (int (*)(mpg123_handle*))ld_aliased_sym(dll_handle,"mpg123_close","mpg123_close_64");
-    mpg123_getformat_ptr = (int (*)(mpg123_handle*,long*,int*,int*))ld_aliased_sym(dll_handle,"mpg123_getformat","mpg123_getformat_64");
-    mpg123_param_ptr = (int (*)(mpg123_handle*,mpg123_parms,long,double))ld_aliased_sym(dll_handle,"mpg123_param","mpg123_param_64");
-    mpg123_info_ptr = (int (*)(mpg123_handle*,mpg123_frameinfo*))ld_aliased_sym(dll_handle,"mpg123_info","mpg123_info_64");
-    mpg123_current_decoder_ptr = (const char* (*)(mpg123_handle*))ld_aliased_sym(dll_handle,"mpg123_current_decoder","mpg123_current_decoder_64");
-    mpg123_decode_ptr = (int (*)(mpg123_handle*,const unsigned char*,size_t,unsigned char*,size_t,size_t*))ld_aliased_sym(dll_handle,"mpg123_decode","mpg123_decode_64");
-    mpg123_read_ptr = (int (*)(mpg123_handle*,unsigned char*,size_t,size_t*))ld_aliased_sym(dll_handle,"mpg123_read","mpg123_read_64");
-    mpg123_feed_ptr = (int (*)(mpg123_handle*,const unsigned char*,size_t))ld_aliased_sym(dll_handle,"mpg123_feed","mpg123_feed_64");
-    mpg123_tell_stream_ptr = (off_t (*)(mpg123_handle*))ld_aliased_sym(dll_handle,"mpg123_tell_stream","mpg123_tell_stream_64");
-    mpg123_decode_frame_ptr = (int (*)(mpg123_handle*,off_t*,unsigned char**,size_t*))ld_aliased_sym(dll_handle,"mpg123_decode_frame","mpg123_decode_frame_64");
-    return (mpg123_decode_ptr && mpg123_init_ptr && mpg123_exit_ptr &&
-	mpg123_new_ptr && mpg123_delete_ptr && mpg123_plain_strerror_ptr &&
-	mpg123_open_feed_ptr && mpg123_close_ptr && mpg123_getformat_ptr &&
-	mpg123_param_ptr && mpg123_info_ptr && mpg123_current_decoder_ptr &&
-	mpg123_read_ptr && mpg123_feed_ptr && mpg123_decode_frame_ptr && mpg123_tell_stream_ptr)?
-	MPXP_Ok:MPXP_False;
-}
 
 struct mp3_private_t : public Opaque {
     mp3_private_t();
@@ -246,14 +185,60 @@ struct mp3_private_t : public Opaque {
     off_t pos;
     float pts;
     sh_audio_t* sh;
+    any_t* dll_handle;
+    void (*mpg123_init_ptr)(void);
+    void (*mpg123_exit_ptr)(void);
+    mpg123_handle * (*mpg123_new_ptr)(const char* decoder, int *error);
+    void (*mpg123_delete_ptr)(mpg123_handle *mh);
+
+    const char* (*mpg123_plain_strerror_ptr)(int errcode);
+    int (*mpg123_open_feed_ptr)(mpg123_handle *mh);
+    int (*mpg123_close_ptr)(mpg123_handle *mh);
+    int (*mpg123_read_ptr)(mpg123_handle *mh, unsigned char *outmemory, size_t outmemsize, size_t *done);
+    int (*mpg123_feed_ptr)(mpg123_handle *mh, const unsigned char *in, size_t size);
+    int (*mpg123_decode_ptr)(mpg123_handle *mh, const unsigned char *inmemory, size_t inmemsize,
+				unsigned char *outmemory, size_t outmemsize, size_t *done);
+    int (*mpg123_getformat_ptr)(mpg123_handle *mh, long *rate, int *channels, int *encoding);
+    int (*mpg123_param_ptr)(mpg123_handle *mh, enum mpg123_parms type, long value, double fvalue);
+    int (*mpg123_info_ptr)(mpg123_handle *mh, struct mpg123_frameinfo *mi);
+    const char* (*mpg123_current_decoder_ptr)(mpg123_handle *mh);
+    int (*mpg123_decode_frame_ptr)(mpg123_handle *mh, off_t *num, unsigned char **audio, size_t *bytes);
+    off_t (*mpg123_tell_stream_ptr)(mpg123_handle *mh);
 };
 mp3_private_t::mp3_private_t() {}
 mp3_private_t::~mp3_private_t() {
     if(mh) {
-	mpg123_close(mh);
-	mpg123_delete(mh);
-	mpg123_exit();
+	(*mpg123_close_ptr)(mh);
+	(*mpg123_delete_ptr)(mh);
+	(*mpg123_exit_ptr)();
     }
+    if(dll_handle) ::dlclose(dll_handle);
+}
+
+static MPXP_Rc load_dll(mp3_private_t& priv,const char *libname) {
+    if(!(priv.dll_handle=ld_codec(libname,mpcodecs_ad_mp3.info->url))) return MPXP_False;
+    priv.mpg123_init_ptr = (void (*)())ld_aliased_sym(priv.dll_handle,"mpg123_init","mpg123_init_64");
+    priv.mpg123_exit_ptr = (void (*)())ld_aliased_sym(priv.dll_handle,"mpg123_exit","mpg123_exit_64");
+    priv.mpg123_new_ptr = (mpg123_handle* (*)(const char*,int*))ld_aliased_sym(priv.dll_handle,"mpg123_new","mpg123_new_64");
+    priv.mpg123_delete_ptr = (void (*)(mpg123_handle*))ld_aliased_sym(priv.dll_handle,"mpg123_delete","mpg123_delete_64");
+    priv.mpg123_plain_strerror_ptr = (const char* (*)(int))ld_aliased_sym(priv.dll_handle,"mpg123_plain_strerror","mpg123_plain_strerror_64");
+    priv.mpg123_open_feed_ptr = (int (*)(mpg123_handle*))ld_aliased_sym(priv.dll_handle,"mpg123_open_feed","mpg123_open_feed_64");
+    priv.mpg123_close_ptr = (int (*)(mpg123_handle*))ld_aliased_sym(priv.dll_handle,"mpg123_close","mpg123_close_64");
+    priv.mpg123_getformat_ptr = (int (*)(mpg123_handle*,long*,int*,int*))ld_aliased_sym(priv.dll_handle,"mpg123_getformat","mpg123_getformat_64");
+    priv.mpg123_param_ptr = (int (*)(mpg123_handle*,mpg123_parms,long,double))ld_aliased_sym(priv.dll_handle,"mpg123_param","mpg123_param_64");
+    priv.mpg123_info_ptr = (int (*)(mpg123_handle*,mpg123_frameinfo*))ld_aliased_sym(priv.dll_handle,"mpg123_info","mpg123_info_64");
+    priv.mpg123_current_decoder_ptr = (const char* (*)(mpg123_handle*))ld_aliased_sym(priv.dll_handle,"mpg123_current_decoder","mpg123_current_decoder_64");
+    priv.mpg123_decode_ptr = (int (*)(mpg123_handle*,const unsigned char*,size_t,unsigned char*,size_t,size_t*))ld_aliased_sym(priv.dll_handle,"mpg123_decode","mpg123_decode_64");
+    priv.mpg123_read_ptr = (int (*)(mpg123_handle*,unsigned char*,size_t,size_t*))ld_aliased_sym(priv.dll_handle,"mpg123_read","mpg123_read_64");
+    priv.mpg123_feed_ptr = (int (*)(mpg123_handle*,const unsigned char*,size_t))ld_aliased_sym(priv.dll_handle,"mpg123_feed","mpg123_feed_64");
+    priv.mpg123_tell_stream_ptr = (off_t (*)(mpg123_handle*))ld_aliased_sym(priv.dll_handle,"mpg123_tell_stream","mpg123_tell_stream_64");
+    priv.mpg123_decode_frame_ptr = (int (*)(mpg123_handle*,off_t*,unsigned char**,size_t*))ld_aliased_sym(priv.dll_handle,"mpg123_decode_frame","mpg123_decode_frame_64");
+    return (priv.mpg123_decode_ptr && priv.mpg123_init_ptr && priv.mpg123_exit_ptr &&
+	priv.mpg123_new_ptr && priv.mpg123_delete_ptr && priv.mpg123_plain_strerror_ptr &&
+	priv.mpg123_open_feed_ptr && priv.mpg123_close_ptr && priv.mpg123_getformat_ptr &&
+	priv.mpg123_param_ptr && priv.mpg123_info_ptr && priv.mpg123_current_decoder_ptr &&
+	priv.mpg123_read_ptr && priv.mpg123_feed_ptr && priv.mpg123_decode_frame_ptr && priv.mpg123_tell_stream_ptr)?
+	MPXP_Ok:MPXP_False;
 }
 
 static const audio_probe_t probes[] = {
@@ -280,8 +265,8 @@ Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_info_t& a
 {
     UNUSED(afi);
     sh->audio_out_minsize=9216;
-    if(load_dll(probe.codec_dll)!=MPXP_Ok) return NULL;
     mp3_private_t* priv = new(zeromem) mp3_private_t;
+    if(load_dll(*priv,probe.codec_dll)!=MPXP_Ok) { delete priv; return NULL; }
     priv->sh = sh;
     return priv;
 }
@@ -298,40 +283,40 @@ MPXP_Rc init(Opaque& ctx)
     struct mpg123_frameinfo fi;
     sh_audio_t* sh = priv.sh;
     sh->afmt=AFMT_FLOAT32;
-    mpg123_init();
-    priv.mh = mpg123_new(NULL,&err);
+    (*priv.mpg123_init_ptr)();
+    priv.mh = (*priv.mpg123_new_ptr)(NULL,&err);
     if(err) {
 	err_exit:
-	MSG_ERR("mpg123_init: %s\n",mpg123_plain_strerror(err));
-	if(priv.mh) mpg123_delete(priv.mh);
-	mpg123_exit();
+	MSG_ERR("mpg123_init: %s\n",(*priv.mpg123_plain_strerror_ptr)(err));
+	if(priv.mh) (*priv.mpg123_delete_ptr)(priv.mh);
+	(*priv.mpg123_exit_ptr)();
 	return MPXP_False;
     }
-    if((err=mpg123_open_feed(priv.mh))!=0) goto err_exit;
+    if((err=(*priv.mpg123_open_feed_ptr)(priv.mh))!=0) goto err_exit;
     param = MPG123_FORCE_STEREO|MPG123_FORCE_FLOAT;
     if(!mp_conf.verbose) param|=MPG123_QUIET;
-    mpg123_param(priv.mh,MPG123_FLAGS,param,0);
+    (*priv.mpg123_param_ptr)(priv.mh,MPG123_FLAGS,param,0);
     // Decode first frame (to get header filled)
     err=MPG123_NEED_MORE;
     len=0;
     while(err==MPG123_NEED_MORE) {
 	indata_size=ds_get_packet_r(*sh->ds,&indata,pts);
-	mpg123_feed(priv.mh,indata,indata_size);
-	err=mpg123_read(priv.mh,reinterpret_cast<unsigned char*>(sh->a_buffer),sh->a_buffer_size,&done);
+	(*priv.mpg123_feed_ptr)(priv.mh,indata,indata_size);
+	err=(*priv.mpg123_read_ptr)(priv.mh,reinterpret_cast<unsigned char*>(sh->a_buffer),sh->a_buffer_size,&done);
 	len+=done;
     }
     sh->a_buffer_len=len;
     if(err!=MPG123_NEW_FORMAT) {
-	MSG_ERR("mpg123_init: within [%d] can't retrieve stream property: %s\n",indata_size,mpg123_plain_strerror(err));
-	mpg123_close(priv.mh);
-	mpg123_delete(priv.mh);
-	mpg123_exit();
+	MSG_ERR("mpg123_init: within [%d] can't retrieve stream property: %s\n",indata_size,(*priv.mpg123_plain_strerror_ptr)(err));
+	(*priv.mpg123_close_ptr)(priv.mh);
+	(*priv.mpg123_delete_ptr)(priv.mh);
+	(*priv.mpg123_exit_ptr)();
 	return MPXP_False;
     }
-    mpg123_getformat(priv.mh, &rate, &nch, &enc);
+    (*priv.mpg123_getformat_ptr)(priv.mh, &rate, &nch, &enc);
     sh->rate = rate;
     sh->nch = nch;
-    mpg123_info(priv.mh,&fi);
+    (*priv.mpg123_info_ptr)(priv.mh,&fi);
     sh->i_bps=((fi.abr_rate?fi.abr_rate:fi.bitrate)/8)*1000;
     // Prints first frame header in ascii.
     static const char *modes[4] = { "Stereo", "Joint-Stereo", "Dual-Channel", "Mono" };
@@ -352,16 +337,11 @@ MPXP_Rc init(Opaque& ctx)
 	,fi.flags&MPG123_ORIGINAL?"Yes":"No"
 	,fi.flags&MPG123_CRC?"Yes":"No"
 	,fi.flags&MPG123_PRIVATE?"Yes":"No"
-	,fi.emphasis,mpg123_current_decoder(priv.mh));
+	,fi.emphasis,(*priv.mpg123_current_decoder_ptr)(priv.mh));
     return MPXP_Ok;
 }
 
-void uninit(Opaque& ctx)
-{
-    UNUSED(ctx);
-    if(dll_handle) dlclose(dll_handle);
-    dll_handle=NULL;
-}
+void uninit(Opaque& ctx) { UNUSED(ctx); }
 
 MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...)
 {
@@ -395,11 +375,11 @@ unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,f
      */
     MSG_DBG2("mp3_decode start: pts=%f\n",pts);
     do {
-	cpos = mpg123_tell_stream(priv.mh);
+	cpos = (*priv.mpg123_tell_stream_ptr)(priv.mh);
 	pts = priv.pts+((float)(cpos-priv.pos)/sh->i_bps);
-	err=mpg123_decode_frame(priv.mh,&offset,&outdata,&done);
+	err=(*priv.mpg123_decode_frame_ptr)(priv.mh,&offset,&outdata,&done);
 	if(!((err==MPG123_OK)||(err==MPG123_NEED_MORE))) {
-	    MSG_ERR("mpg123_read = %s done = %u minlen = %u\n",mpg123_plain_strerror(err),done,minlen);
+	    MSG_ERR("mpg123_read = %s done = %u minlen = %u\n",(*priv.mpg123_plain_strerror_ptr)(err),done,minlen);
 	}
 	if(err==MPG123_OK) {
 	    MSG_DBG2("ad_mp3.decode: copy %u bytes from %p\n",done,outdata);
@@ -409,9 +389,9 @@ unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,f
 	    float apts=0.;
 	    indata_size=ds_get_packet_r(*sh->ds,&indata,apts);
 	    if(indata_size<0) return 0;
-	    priv.pos = mpg123_tell_stream(priv.mh);
+	    priv.pos = (*priv.mpg123_tell_stream_ptr)(priv.mh);
 	    priv.pts = apts;
-	    mpg123_feed(priv.mh,indata,indata_size);
+	    (*priv.mpg123_feed_ptr)(priv.mh,indata,indata_size);
 	}
     }while(err==MPG123_NEED_MORE);
     MSG_DBG2("mp3_decode: %i->%i [%i...%i] pts=%f\n",indata_size,done,minlen,maxlen,pts);
