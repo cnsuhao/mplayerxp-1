@@ -18,7 +18,6 @@ for DLL to know too much about its environment.
  */
 
 #include "mpxp_config.h"
-#include "osdep/mplib.h"
 
 #define QTX 1
 #define REALPLAYER
@@ -936,39 +935,6 @@ static void WINAPI expGetSystemInfo(SYSTEM_INFO* si)
     cachedsi.dwAllocationGranularity	= 0x10000;
     cachedsi.wProcessorLevel		= 5; /* pentium */
     cachedsi.wProcessorRevision		= 0x0101;
-
-    /* mplayer's way to detect PF's */
-    {
-#include "osdep/cpudetect.h"
-	extern CpuCaps gCpuCaps;
-
-	if (gCpuCaps.hasMMX)
-	    PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
-	if (gCpuCaps.hasSSE)
-	    PF[PF_XMMI_INSTRUCTIONS_AVAILABLE] = TRUE;
-	if (gCpuCaps.hasSSE2)
-	    PF[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
-	if (gCpuCaps.has3DNow)
-	    PF[PF_AMD3D_INSTRUCTIONS_AVAILABLE] = TRUE;
-
-	    if (gCpuCaps.cpuType == 4)
-	    {
-		cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
-		cachedsi.wProcessorLevel = 4;
-	    }
-	    else if (gCpuCaps.cpuType >= 5)
-	    {
-		cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
-		cachedsi.wProcessorLevel = 5;
-	    }
-	    else
-	    {
-		cachedsi.dwProcessorType = PROCESSOR_INTEL_386;
-		cachedsi.wProcessorLevel = 3;
-	    }
-	    cachedsi.wProcessorRevision = gCpuCaps.cpuStepping;
-	    cachedsi.dwNumberOfProcessors = 1;	/* hardcoded */
-    }
 
 /* disable cpuid based detection (mplayer's cpudetect.c does this - see above) */
 #ifndef MPLAYER

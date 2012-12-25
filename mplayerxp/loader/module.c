@@ -16,7 +16,6 @@
 //#define DEBUG_QTX_API
 
 #include "mpxp_config.h"
-#include "osdep/mplib.h"
 
 #include <assert.h>
 #include <errno.h>

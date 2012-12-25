@@ -68,11 +68,19 @@ typedef struct {
     any_t* extradata;
 } ra_init_t;
 
-struct ad_private_t {
+struct areal_private_t : public Opaque {
+    areal_private_t();
+    virtual ~areal_private_t();
+
     any_t*internal;
     float pts;
     sh_audio_t* sh;
 };
+areal_private_t::areal_private_t() {}
+areal_private_t::~areal_private_t() {
+    if (raFreeDecoder) raFreeDecoder(long(internal));
+    if (raCloseCodec) raCloseCodec(long(internal));
+}
 
 static const audio_probe_t probes[] = {
     { "realaudio", "14_4.so.6.0", FOURCC_TAG('1','4','_','4'), ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
@@ -111,7 +119,7 @@ static MPXP_Rc load_dll(const char* name)
 	raInitDecoder)?MPXP_Ok:MPXP_False;
 }
 
-static ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi){
+static Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_info_t& afi){
     UNUSED(afi);
     // let's check if the driver is available, return 0 if not.
     // (you should do that if you use external lib(s) which is optional)
@@ -120,9 +128,9 @@ static ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_fil
     any_t* prop;
     char path[4096];
     char cpath[4096];
-    ad_private_t *priv;
-    if(load_dll(probe->codec_dll)!=MPXP_Ok) return NULL;
-    priv=new(zeromem) ad_private_t;
+    areal_private_t *priv;
+    if(load_dll(probe.codec_dll)!=MPXP_Ok) return NULL;
+    priv=new(zeromem) areal_private_t;
     priv->sh = sh;
 
     char *end;
@@ -202,19 +210,14 @@ static ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_fil
     return priv; // return values: 1=OK 0=ERROR
 }
 
-static MPXP_Rc init(ad_private_t *p){
+static MPXP_Rc init(Opaque& ctx){
     // initialize the decoder, set tables etc...
     // set sample format/rate parameters if you didn't do it in preinit() yet.
-    UNUSED(p);
+    UNUSED(ctx);
     return MPXP_Ok; // return values: 1=OK 0=ERROR
 }
 
-static void uninit(ad_private_t *priv){
-    // uninit the decoder etc...
-    if (raFreeDecoder) raFreeDecoder(long(priv->internal));
-    if (raCloseCodec) raCloseCodec(long(priv->internal));
-    delete priv;
-}
+static void uninit(Opaque& ctx){ UNUSED(ctx); }
 
 static const unsigned char sipr_swaps[38][2]={
     {0,63},{1,22},{2,44},{3,90},{5,81},{7,31},{8,86},{9,58},{10,36},{12,68},
@@ -223,8 +226,9 @@ static const unsigned char sipr_swaps[38][2]={
     {42,87},{43,65},{45,59},{48,79},{49,93},{51,89},{55,95},{61,76},{67,83},
     {77,80} };
 
-static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts){
-    sh_audio_t* sh = priv->sh;
+static unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts){
+    areal_private_t& priv=static_cast<areal_private_t&>(ctx);
+    sh_audio_t* sh = priv.sh;
   float null_pts;
   int result;
   unsigned len=0;
@@ -237,7 +241,7 @@ static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,uns
   if(sh->a_in_buffer_len<=0){
       // fill the buffer!
     if (sh->wtag == mmioFOURCC('1','4','_','4')) {
-	demux_read_data_r(sh->ds, reinterpret_cast<unsigned char*>(sh->a_in_buffer), sh->wf->nBlockAlign,pts);
+	demux_read_data_r(*sh->ds, reinterpret_cast<unsigned char*>(sh->a_in_buffer), sh->wf->nBlockAlign,pts);
 	sh->a_in_buffer_size=
 	sh->a_in_buffer_len=sh->wf->nBlockAlign;
     } else
@@ -246,7 +250,7 @@ static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,uns
 	unsigned char *p=reinterpret_cast<unsigned char*>(sh->a_in_buffer);
 	for (j = 0; j < h; j++)
 	    for (i = 0; i < h/2; i++)
-		demux_read_data_r(sh->ds, p+i*2*w+j*cfs, cfs,(i==0&&j==0)?pts:&null_pts);
+		demux_read_data_r(*sh->ds, p+i*2*w+j*cfs, cfs,(i==0&&j==0)?pts:null_pts);
 	sh->a_in_buffer_size=
 	sh->a_in_buffer_len=sh->wf->nBlockAlign*h;
     } else
@@ -255,7 +259,7 @@ static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,uns
       unsigned j,n;
       unsigned bs=h*w*2/96; // nibbles per subpacket
       unsigned char *p=reinterpret_cast<unsigned char*>(sh->a_in_buffer);
-      demux_read_data_r(sh->ds, p, h*w,pts);
+      demux_read_data_r(*sh->ds, p, h*w,pts);
       for(n=0;n<38;n++){
 	  int i=bs*sipr_swaps[n][0];
 	  int o=bs*sipr_swaps[n][1];
@@ -279,27 +283,27 @@ static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,uns
       w/=sps;
       for(y=0;y<h;y++)
 	for(x=0;x<w;x++){
-	    demux_read_data_r(sh->ds, p+sps*(h*x+((h+1)/2)*(y&1)+(y>>1)), sps,(x==0&&y==0)?pts:&null_pts);
+	    demux_read_data_r(*sh->ds, p+sps*(h*x+((h+1)/2)*(y&1)+(y>>1)), sps,(x==0&&y==0)?pts:null_pts);
 	}
       sh->a_in_buffer_size=
       sh->a_in_buffer_len=w*h*sps;
     }
-    priv->pts=*pts;
+    priv.pts=pts;
   }
-  else *pts=priv->pts;
+  else pts=priv.pts;
 
-  result=raDecode(priv->internal, sh->a_in_buffer+sh->a_in_buffer_size-sh->a_in_buffer_len, sh->wf->nBlockAlign,
+  result=raDecode(priv.internal, sh->a_in_buffer+sh->a_in_buffer_size-sh->a_in_buffer_len, sh->wf->nBlockAlign,
        buf, &len, -1);
   if((int)len<0) len=0;
   sh->a_in_buffer_len-=sh->wf->nBlockAlign;
-  priv->pts=FIX_APTS(sh,priv->pts,sh->wf->nBlockAlign);
+  priv.pts=FIX_APTS(sh,priv.pts,sh->wf->nBlockAlign);
 
   return len; // return value: number of _bytes_ written to output buffer,
 	      // or -1 for EOF (or uncorrectable error)
 }
 
-static MPXP_Rc control_ad(ad_private_t *p,int cmd,any_t* arg, ...){
-    UNUSED(p);
+static MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...){
+    UNUSED(ctx);
     UNUSED(arg);
     // various optional functions you MAY implement:
     switch(cmd){

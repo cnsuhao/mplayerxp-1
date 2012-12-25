@@ -53,7 +53,7 @@ struct decvideo_priv_t : public Opaque {
 	sh_video_t*		parent;
 	const vd_functions_t*	mpvdec;
 	libinput_t&		libinput;
-	vd_private_t*		ctx;
+	Opaque*			ctx;
 	vf_stream_t*		vfilter;
 	int			vfilter_inited;
 	put_slice_info_t*	psi;
@@ -67,45 +67,46 @@ decvideo_priv_t::decvideo_priv_t(libinput_t& _libinput)
 
 decvideo_priv_t::~decvideo_priv_t() { delete psi; }
 
-MPXP_Rc mpcv_get_quality_max(video_decoder_t *opaque,unsigned *quality){
-    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
+MPXP_Rc mpcv_get_quality_max(video_decoder_t& opaque,unsigned& quality){
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     if(priv->mpvdec){
-	MPXP_Rc ret=priv->mpvdec->control_vd(priv->ctx,VDCTRL_QUERY_MAX_PP_LEVEL,quality);
+	MPXP_Rc ret=priv->mpvdec->control_vd(*priv->ctx,VDCTRL_QUERY_MAX_PP_LEVEL,&quality);
 	if(ret>=MPXP_Ok) return ret;
     }
     return MPXP_False;
 }
 
-MPXP_Rc mpcv_set_quality(video_decoder_t *opaque,int quality){
-    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
+MPXP_Rc mpcv_set_quality(video_decoder_t& opaque,int quality){
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     if(priv->mpvdec)
-	return priv->mpvdec->control_vd(priv->ctx,VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
+	return priv->mpvdec->control_vd(*priv->ctx,VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
     return MPXP_False;
 }
 
-MPXP_Rc mpcv_set_colors(video_decoder_t *opaque,const char *item,int value)
+MPXP_Rc mpcv_set_colors(video_decoder_t& opaque,const char *item,int value)
 {
-    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     vf_stream_t* vs=priv->vfilter;
     vf_equalizer_t eq;
     eq.item=item;
     eq.value=value*10;
     if(vf_control(vs,VFCTRL_SET_EQUALIZER,&eq)!=MPXP_True) {
-	if(priv->mpvdec) return priv->mpvdec->control_vd(priv->ctx,VDCTRL_SET_EQUALIZER,(any_t*)item,(int)value);
+	if(priv->mpvdec) return priv->mpvdec->control_vd(*priv->ctx,VDCTRL_SET_EQUALIZER,(any_t*)item,(int)value);
     }
     return MPXP_False;
 }
 
-void mpcv_uninit(video_decoder_t *opaque){
-    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
+void mpcv_uninit(video_decoder_t& opaque){
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     sh_video_t* sh_video = priv->parent;
-    if(!sh_video->inited) { delete priv; delete opaque; return; }
+    if(!sh_video->inited) { delete priv; delete &opaque; return; }
     MSG_V("uninit video ...\n");
     if(priv->vfilter && priv->vfilter_inited==1) vf_uninit(priv->vfilter);
-    priv->mpvdec->uninit(priv->ctx);
+    priv->mpvdec->uninit(*priv->ctx);
+    delete priv->ctx;
     sh_video->inited=0;
     delete priv;
-    delete opaque;
+    delete &opaque;
 }
 
 #include "libvo2/video_out.h"
@@ -113,12 +114,12 @@ void mpcv_uninit(video_decoder_t *opaque){
 static unsigned smp_num_cpus=1;
 static unsigned use_vf_threads=0;
 
-static void mpcv_print_codec_info(decvideo_priv_t *priv) {
-    sh_video_t* sh_video = priv->parent;
+static void mpcv_print_codec_info(decvideo_priv_t& priv) {
+    sh_video_t* sh_video = priv.parent;
     MSG_OK("[VC] %s decoder: [%s] drv:%s.%s (%dx%d (aspect %g) %4.2ffps\n"
 	,mp_conf.video_codec?"Forcing":"Selected"
 	,sh_video->codec->codec_name
-	,priv->mpvdec->info->driver_name
+	,priv.mpvdec->info->driver_name
 	,sh_video->codec->dll_name
 	,sh_video->src_w
 	,sh_video->src_h
@@ -126,12 +127,12 @@ static void mpcv_print_codec_info(decvideo_priv_t *priv) {
 	,sh_video->fps);
     // Yeah! We got it!
     sh_video->inited=1;
-    priv->psi->vf_flags=vf_query_flags(priv->vfilter);
+    priv.psi->vf_flags=vf_query_flags(priv.vfilter);
 #ifdef _OPENMP
     if(mp_conf.gomp) {
 	smp_num_cpus=omp_get_num_procs();
 	use_vf_threads=0;
-	if(((priv->psi->vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) use_vf_threads=1;
+	if(((priv.psi->vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) use_vf_threads=1;
 	if(use_vf_threads)
 	    MSG_STATUS("[mpdec] will perform parallel video-filter on %u CPUs\n",smp_num_cpus);
     }
@@ -140,7 +141,7 @@ static void mpcv_print_codec_info(decvideo_priv_t *priv) {
 #endif
 }
 
-video_decoder_t * mpcv_lavc_init(sh_video_t* sh_video,libinput_t& libinput) {
+video_decoder_t* mpcv_lavc_init(sh_video_t* sh_video,libinput_t& libinput) {
     video_decoder_t* handle=new(zeromem) video_decoder_t;
     decvideo_priv_t* priv = new(zeromem) decvideo_priv_t(libinput);
     priv->parent=sh_video;
@@ -150,11 +151,11 @@ video_decoder_t * mpcv_lavc_init(sh_video_t* sh_video,libinput_t& libinput) {
     priv->mpvdec=vfm_find_driver("lavc");
     if(priv->mpvdec) {
 	if((vprobe=priv->mpvdec->probe(sh_video->fourcc))!=NULL) {
-	    if((priv->ctx=priv->mpvdec->preinit(vprobe,sh_video,priv->psi))==NULL){
+	    if((priv->ctx=priv->mpvdec->preinit(*vprobe,sh_video,*priv->psi))==NULL){
 		MSG_ERR(MSGTR_CODEC_CANT_INITV);
 		return NULL;
 	    }
-	    if(priv->mpvdec->init(priv->ctx,handle)!=MPXP_Ok){
+	    if(priv->mpvdec->init(*priv->ctx,*handle)!=MPXP_Ok){
 		MSG_ERR(MSGTR_CODEC_CANT_INITV);
 		return NULL;
 	    }
@@ -164,11 +165,11 @@ video_decoder_t * mpcv_lavc_init(sh_video_t* sh_video,libinput_t& libinput) {
 	MSG_ERR("Cannot find lavc video decoder\n");
 	return NULL;
     }
-    mpcv_print_codec_info(priv);
+    mpcv_print_codec_info(*priv);
     return handle;
 }
 
-video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,libinput_t&libinput){
+video_decoder_t* mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,libinput_t&libinput){
     UNUSED(codecname);
     UNUSED(status);
     int done=0;
@@ -193,7 +194,7 @@ video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const cha
 	priv->mpvdec=vfm_find_driver(vfm);
 	if(priv->mpvdec) vprobe=priv->mpvdec->probe(sh_video->fourcc);
     }
-    else vprobe = vfm_driver_probe(priv->ctx,sh_video,priv->psi);
+    else vprobe = vfm_driver_probe(*priv->ctx,sh_video,*priv->psi);
 
     if(vprobe) {
 	vfm=vprobe->driver;
@@ -207,11 +208,11 @@ video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const cha
 
     priv->mpvdec=vfm_find_driver(vfm);
     if(priv->mpvdec) {
-	if((priv->ctx=priv->mpvdec->preinit(vprobe,sh_video,priv->psi))==NULL){
+	if((priv->ctx=priv->mpvdec->preinit(*vprobe,sh_video,*priv->psi))==NULL){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
 		delete sh_video->codec;
 		sh_video->codec=NULL;
-	} else if(priv->mpvdec->init(priv->ctx,handle)!=MPXP_Ok){
+	} else if(priv->mpvdec->init(*priv->ctx,*handle)!=MPXP_Ok){
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
 		delete sh_video->codec;
 		sh_video->codec=NULL;
@@ -248,7 +249,7 @@ video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const cha
 	    if(!(priv->mpvdec=vfm_find_driver(sh_video->codec->driver_name))) continue;
 	    else    MSG_DBG3("mpcv_init: mpcodecs_vd_drivers[%s]->mpvdec==0\n",priv->mpvdec->info->driver_name);
 	    // it's available, let's try to init!
-	    if(priv->mpvdec->init(priv->ctx,handle)!=MPXP_Ok){
+	    if(priv->mpvdec->init(*priv->ctx,*handle)!=MPXP_Ok){
 		MSG_ERR(MSGTR_CODEC_CANT_INITV);
 		continue; // try next...
 	    }
@@ -258,7 +259,7 @@ video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const cha
     }
 #endif
     if(done) {
-	mpcv_print_codec_info(priv);
+	mpcv_print_codec_info(*priv);
 // memory leak here
 //	if(vprobe) { delete sh_video->codec; sh_video->codec=NULL; }
 	return handle;
@@ -268,9 +269,9 @@ video_decoder_t * mpcv_init(sh_video_t *sh_video,const char* codecname,const cha
     return NULL;
 }
 
-void mpcodecs_draw_image(video_decoder_t* opaque,mp_image_t *mpi)
+void mpcodecs_draw_image(video_decoder_t& opaque,mp_image_t *mpi)
 {
-    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     vf_stream_t* s;
     const unsigned h_step=16;
     unsigned num_slices = mpi->h/h_step;
@@ -325,9 +326,9 @@ void mpcodecs_draw_image(video_decoder_t* opaque,mp_image_t *mpi)
   }
 }
 
-static void update_subtitle(video_decoder_t *opaque,float v_pts,unsigned idx);
-int mpcv_decode(video_decoder_t *opaque,const enc_frame_t* frame){
-    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
+static void update_subtitle(video_decoder_t& opaque,float v_pts,unsigned idx);
+int mpcv_decode(video_decoder_t& opaque,const enc_frame_t& frame){
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     vf_stream_t* s;
     mp_image_t *mpi=NULL;
     unsigned int t;
@@ -340,8 +341,8 @@ int mpcv_decode(video_decoder_t *opaque,const enc_frame_t* frame){
     vf_control(s,VFCTRL_START_FRAME,NULL);
 
     priv->psi->active_slices=0;
-    mpi=priv->mpvdec->decode(priv->ctx, frame);
-    MSG_DBG2("decvideo: decoding video %u bytes\n",frame->len);
+    mpi=priv->mpvdec->decode(*priv->ctx, frame);
+    MSG_DBG2("decvideo: decoding video %u bytes\n",frame.len);
     while(priv->psi->active_slices!=0) yield_timeslice();
 /* ------------------------ frame decoded. -------------------- */
 
@@ -357,8 +358,8 @@ int mpcv_decode(video_decoder_t *opaque,const enc_frame_t* frame){
 	mpxp_context().bench->cur_video=tt;
     }
 
-    if(frame->flags) return 0;
-    update_subtitle(opaque,frame->pts,mpi->xp_idx);
+    if(frame.flags) return 0;
+    update_subtitle(opaque,frame.pts,mpi->xp_idx);
     mpxp_context().video().output->flush_page(dae_curr_vdecoded(mpxp_context().engine().xp_core));
 
     t2=GetTimer()-t2;
@@ -374,20 +375,20 @@ int mpcv_decode(video_decoder_t *opaque,const enc_frame_t* frame){
     return 1;
 }
 
-void mpcv_resync_stream(video_decoder_t *opaque)
+void mpcv_resync_stream(video_decoder_t& opaque)
 {
-    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     sh_video_t* sh_video = priv->parent;
     if(sh_video)
-    if(sh_video->inited && priv->mpvdec) priv->mpvdec->control_vd(priv->ctx,VDCTRL_RESYNC_STREAM,NULL);
+    if(sh_video->inited && priv->mpvdec) priv->mpvdec->control_vd(*priv->ctx,VDCTRL_RESYNC_STREAM,NULL);
 }
 
 #ifdef USE_SUB
 static float sub_last_pts = -303;
 #endif
-static void update_subtitle(video_decoder_t *opaque,float v_pts,unsigned xp_idx)
+static void update_subtitle(video_decoder_t& opaque,float v_pts,unsigned xp_idx)
 {
-    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     sh_video_t* sh_video = priv->parent;
     Demuxer_Stream *d_dvdsub=sh_video->ds->demuxer->sub;
 #ifdef USE_SUB
@@ -435,7 +436,7 @@ static void update_subtitle(video_decoder_t *opaque,float v_pts,unsigned xp_idx)
 		}
 	    }
 	} else {
-	    while((len=ds_get_packet_sub_r(d_dvdsub,&packet))>0){
+	    while((len=ds_get_packet_sub_r(*d_dvdsub,&packet))>0){
 		MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",len,v_pts,d_dvdsub->pts);
 		spudec_assemble(mpxp_context().video().output->spudec,packet,len,90000*d_dvdsub->pts);
 	    }
@@ -449,8 +450,8 @@ static void update_subtitle(video_decoder_t *opaque,float v_pts,unsigned xp_idx)
 
 #include "libvo2/video_out.h"
 
-MPXP_Rc mpcodecs_config_vf(video_decoder_t *opaque, int w, int h){
-    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
+MPXP_Rc mpcodecs_config_vf(video_decoder_t& opaque, int w, int h){
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     sh_video_t* sh = priv->parent;
     int i,j;
     unsigned int out_fmt=0;
@@ -486,7 +487,7 @@ csp_again:
 	if((flags&VFCAP_CSP_SUPPORTED_BY_HW) || ((flags&VFCAP_CSP_SUPPORTED) && j<0)){
 	    // check (query) if codec really support this outfmt...
 	    sh->outfmtidx=j; // pass index to the control() function this way
-	    if(priv->mpvdec->control_vd(priv->ctx,VDCTRL_QUERY_FORMAT,&out_fmt)==MPXP_False) {
+	    if(priv->mpvdec->control_vd(*priv->ctx,VDCTRL_QUERY_FORMAT,&out_fmt)==MPXP_False) {
 		MSG_DBG2("vo_debug: codec[%s] query_format(%s) returned FALSE\n",priv->mpvdec->info->driver_name,vo_format_name(out_fmt));
 		continue;
 	    }
@@ -496,7 +497,7 @@ csp_again:
 	} else
 	if(!palette && !(mpxp_context().video().output->flags&3) && (out_fmt==IMGFMT_RGB8||out_fmt==IMGFMT_BGR8)){
 	    sh->outfmtidx=j; // pass index to the control() function this way
-	    if(priv->mpvdec->control_vd(priv->ctx,VDCTRL_QUERY_FORMAT,&out_fmt)!=MPXP_False)
+	    if(priv->mpvdec->control_vd(*priv->ctx,VDCTRL_QUERY_FORMAT,&out_fmt)!=MPXP_False)
 		palette=1;
 	}
     }
@@ -624,8 +625,8 @@ csp_again:
 // mp_imgflag: buffer requirements (read/write, preserve, stride limits), see xmp_image.h
 // returns NULL or allocated mp_image_t*
 // Note: buffer allocation may be moved to mpcodecs_config_vf() later...
-mp_image_t* mpcodecs_get_image(video_decoder_t *opaque, int mp_imgtype, int mp_imgflag,int w, int h){
-    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
+mp_image_t* mpcodecs_get_image(video_decoder_t& opaque, int mp_imgtype, int mp_imgflag,int w, int h){
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     sh_video_t* sh = priv->parent;
     vf_stream_t* s = priv->vfilter;
 //    MSG_DBG2("mpcodecs_get_image(vf_%s,%i,%i,%i,%i) was called\n",((vf_instance_t *)(sh->vfilter))->info->name,mp_imgtype,mp_imgflag,w,h);
@@ -636,8 +637,8 @@ mp_image_t* mpcodecs_get_image(video_decoder_t *opaque, int mp_imgtype, int mp_i
     return mpi;
 }
 
-void mpcodecs_draw_slice(video_decoder_t *opaque, mp_image_t*mpi) {
-    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque->vd_private);
+void mpcodecs_draw_slice(video_decoder_t& opaque, mp_image_t*mpi) {
+    decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     vf_stream_t* vf = priv->vfilter;
     vf_put_slice(vf,mpi);
 }

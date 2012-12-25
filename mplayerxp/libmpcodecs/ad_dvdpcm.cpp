@@ -8,9 +8,14 @@ using namespace mpxp;
 #include "osdep/bswap.h"
 #include "libao3/afmt.h"
 
-struct ad_private_t {
+struct dvdpcm_private_t : public Opaque {
+    dvdpcm_private_t();
+    virtual ~dvdpcm_private_t();
+
     sh_audio_t* sh;
 };
+dvdpcm_private_t::dvdpcm_private_t() {}
+dvdpcm_private_t::~dvdpcm_private_t() {}
 
 static const ad_info_t info = {
     "Uncompressed DVD/VOB LPCM audio decoder",
@@ -38,10 +43,11 @@ static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) {
     return NULL;
 }
 
-MPXP_Rc init(ad_private_t *priv)
+MPXP_Rc init(Opaque& ctx)
 {
+    dvdpcm_private_t& priv=static_cast<dvdpcm_private_t&>(ctx);
 /* DVD PCM Audio:*/
-    sh_audio_t* sh = priv->sh;
+    sh_audio_t* sh = priv.sh;
     sh->i_bps = 0;
     if(sh->codecdata_len==3){
 	// we have LPCM header:
@@ -77,24 +83,22 @@ MPXP_Rc init(ad_private_t *priv)
     return MPXP_Ok;
 }
 
-ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi)
+Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_info_t& afi)
 {
     UNUSED(probe);
     UNUSED(afi);
     sh->audio_out_minsize=2048;
-    ad_private_t* priv = new(zeromem) ad_private_t;
+    dvdpcm_private_t* priv = new(zeromem) dvdpcm_private_t;
     priv->sh = sh;
     return priv;
 }
 
-void uninit(ad_private_t *priv)
-{
-    delete priv;
-}
+void uninit(Opaque& priv) { UNUSED(priv); }
 
-MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...)
 {
-    sh_audio_t* sh = priv->sh;
+    dvdpcm_private_t& priv=static_cast<dvdpcm_private_t&>(ctx);
+    sh_audio_t* sh = priv.sh;
     int skip;
     UNUSED(arg);
     switch(cmd) {
@@ -102,7 +106,7 @@ MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
 	    float pts;
 	    skip=sh->i_bps/16;
 	    skip=skip&(~3);
-	    demux_read_data_r(sh->ds,NULL,skip,&pts);
+	    demux_read_data_r(*sh->ds,NULL,skip,pts);
 	    return MPXP_True;
 	}
 	default:
@@ -111,21 +115,22 @@ MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
     return MPXP_Unknown;
 }
 
-unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(Opaque &ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts)
 {
-    sh_audio_t* sh_audio = priv->sh;
-  unsigned j;
-  unsigned len;
-  float null_pts;
-  UNUSED(maxlen);
-  if (afmt2bps(sh_audio->afmt) == 3) {
-    if (((sh_audio->codecdata[1] >> 6) & 3) == 1) {
+    dvdpcm_private_t& priv=static_cast<dvdpcm_private_t&>(ctx);
+    sh_audio_t* sh_audio = priv.sh;
+    unsigned j;
+    unsigned len;
+    float null_pts;
+    UNUSED(maxlen);
+    if (afmt2bps(sh_audio->afmt) == 3) {
+      if (((sh_audio->codecdata[1] >> 6) & 3) == 1) {
       // 20 bit
       // not sure if the "& 0xf0" and "<< 4" are the right way around
       // can somebody clarify?
       for (j = 0; j < minlen; j += 12) {
 	unsigned char tmp[10];
-	len = demux_read_data_r(sh_audio->ds, tmp, 10,j?&null_pts:pts);
+	len = demux_read_data_r(*sh_audio->ds, tmp, 10,j?null_pts:pts);
 	if (len < 10) break;
 	// first sample
 	buf[j + 0] = tmp[0];
@@ -149,7 +154,7 @@ unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned m
       // 24 bit
       for (j = 0; j < minlen; j += 12) {
 	unsigned char tmp[12];
-	len = demux_read_data_r(sh_audio->ds, tmp, 12, j?&null_pts:pts);
+	len = demux_read_data_r(*sh_audio->ds, tmp, 12, j?null_pts:pts);
 	if (len < 12) break;
 	// first sample
 	buf[j + 0] = tmp[0];
@@ -171,6 +176,6 @@ unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned m
       len = j;
     }
   } else
-  len=demux_read_data_r(sh_audio->ds,buf,(minlen+3)&(~3),pts);
+  len=demux_read_data_r(*sh_audio->ds,buf,(minlen+3)&(~3),pts);
   return len;
 }

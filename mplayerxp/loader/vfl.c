@@ -6,7 +6,7 @@
  * $Id: vfl.c,v 1.4 2006/09/13 08:13:07 nickols_k Exp $
  *
  */
-#include <config.h>
+#include "mpxp_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,8 +14,6 @@
 
 #include "win32.h"
 #include "loader.h"
-
-#include "osdep/mplib.h"
 
 #include "wine/winbase.h"
 #include "wine/windef.h"

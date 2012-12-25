@@ -5,7 +5,7 @@
 
 *********************************************************/
 #include "mpxp_config.h"
-#include "osdep/mplib.h"
+
 #include "guids.h"
 #include "interfaces.h"
 #include "registry.h"

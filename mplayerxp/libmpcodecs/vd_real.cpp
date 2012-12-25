@@ -26,11 +26,6 @@ static const config_t options[] = {
 
 LIBVD_EXTERN(real)
 
-struct vd_private_t {
-    any_t* handle;
-    sh_video_t* sh;
-    video_decoder_t* parent;
-};
 
 static const video_probe_t probes[] = {
     { "realvideo", "drv2.so.6.0", FOURCC_TAG('R','V','2','0'), VCodecStatus_Problems, {IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
@@ -48,12 +43,12 @@ static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
 }
 
 /* copypaste from demux_real.c - it should match to get it working! */
-typedef struct dp_hdr_s {
+struct dp_hdr_t {
     uint32_t chunks;	// number of chunks
     uint32_t timestamp; // timestamp from packet header
     uint32_t len;	// length of actual data
     uint32_t chunktab;	// offset to chunk offset array
-} dp_hdr_t;
+};
 
 /*
  * Structures for data packets.  These used to be tables of unsigned ints, but
@@ -62,21 +57,20 @@ typedef struct dp_hdr_s {
  * So we have to use structures so the compiler will assign the proper space
  * for the pointer.
  */
-typedef struct cmsg_data_s {
+struct cmsg_data_t {
     uint32_t data1;
     uint32_t data2;
     uint32_t* dimensions;
-} cmsg_data_t;
+};
 
-typedef struct transform_in_s {
+struct transform_in_t {
     uint32_t len;
     uint32_t unknown1;
     uint32_t chunks;
     const uint32_t* extra;
     uint32_t unknown2;
     uint32_t timestamp;
-} transform_in_t;
-
+};
 
 uint32_t (*rvyuv_custom_message)(cmsg_data_t*,any_t*);
 uint32_t (*rvyuv_free)(any_t*);
@@ -84,8 +78,7 @@ uint32_t (*rvyuv_hive_message)(uint32_t,uint32_t);
 uint32_t (*rvyuv_init)(any_t*,any_t*);
 uint32_t (*rvyuv_transform)(char*, char*,transform_in_t*,unsigned int*,any_t*);
 
-any_t*rv_handle=NULL;
-
+#if 0
 any_t*__builtin_vec_new(unsigned long size) {
     return mp_malloc(size);
 }
@@ -99,11 +92,25 @@ void __pure_virtual(void)
     MSG_ERR( "I'm outa here!\n");
     exit(1);
 }
+#endif
+struct vreal_private_t : public Opaque {
+    vreal_private_t();
+    virtual ~vreal_private_t();
 
+    any_t* handle;
+    sh_video_t* sh;
+    video_decoder_t* parent;
+    any_t* rv_handle;
+};
+vreal_private_t::vreal_private_t() {}
+vreal_private_t::~vreal_private_t() {
+    if(rvyuv_free) rvyuv_free(handle);
+    if(rv_handle) dlclose(rv_handle);
+}
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(vd_private_t *p,int cmd,any_t* arg,...){
-    UNUSED(p);
+static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
+    UNUSED(ctx);
     switch(cmd){
 //    case VDCTRL_QUERY_MAX_PP_LEVEL:
 //	    *((unsigned*)arg)=9;
@@ -121,11 +128,11 @@ static MPXP_Rc control_vd(vd_private_t *p,int cmd,any_t* arg,...){
 }
 
 /* exits program when failure */
-static int load_lib(const char *path) {
+static int load_lib(vreal_private_t& priv,const char *path) {
     any_t*handle;
     char *error;
 
-    rv_handle = handle = dlopen (path, RTLD_LAZY);
+    priv.rv_handle = handle = dlopen (path, RTLD_LAZY);
     if (!handle) {
 	MSG_ERR("DLError: %s\n",dlerror());
 	return 0;
@@ -171,18 +178,19 @@ struct rv_init_t {
     int format;
 } rv_init_t;
 
-static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
+static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
     UNUSED(psi);
-    if(!load_lib(probe->codec_dll)) return NULL;
-    vd_private_t* priv = new(zeromem) vd_private_t;
+    vreal_private_t* priv = new(zeromem) vreal_private_t;
+    if(!load_lib(*priv,probe.codec_dll)) { delete priv; return NULL; }
     priv->sh=sh;
     return priv;
 }
 
 // init driver
-static MPXP_Rc init(vd_private_t *p,video_decoder_t* opaque){
-    sh_video_t* sh = p->sh;
-    p->parent = opaque;
+static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
+    vreal_private_t& priv=static_cast<vreal_private_t&>(ctx);
+    sh_video_t* sh = priv.sh;
+    priv.parent = &opaque;
     //unsigned int out_fmt;
     int result;
     // we export codec id and sub-id from demuxer in bitmapinfohdr:
@@ -197,7 +205,7 @@ static MPXP_Rc init(vd_private_t *p,video_decoder_t* opaque){
     // only I420 supported
     if(!mpcodecs_config_vf(opaque,sh->src_w,sh->src_h)) return MPXP_False;
     // init codec:
-    result=(*rvyuv_init)(&init_data, &p->handle);
+    result=(*rvyuv_init)(&init_data, &priv.handle);
     if (result){
 	MSG_ERR("Couldn't open RealVideo codec, error code: 0x%X  \n",result);
 	return MPXP_False;
@@ -207,30 +215,24 @@ static MPXP_Rc init(vd_private_t *p,video_decoder_t* opaque){
 	uint32_t cmsg24[4]={sh->src_w,sh->src_h,sh->src_w,sh->src_h};
 	/* FIXME: Broken for 64-bit pointers */
 	cmsg_data_t cmsg_data={0x24,1+(extrahdr[1]&7), &cmsg24[0]};
-	(*rvyuv_custom_message)(&cmsg_data,p->handle);
+	(*rvyuv_custom_message)(&cmsg_data,priv.handle);
     }
     MSG_V("INFO: RealVideo codec init OK!\n");
     return MPXP_Ok;
 }
 
 // uninit driver
-static void uninit(vd_private_t *p){
-    sh_video_t* sh = p->sh;
-    if(rvyuv_free) rvyuv_free(p->handle);
-    if(rv_handle) dlclose(rv_handle);
-    rv_handle=NULL;
-    if(!sh) __pure_virtual();
-    delete p;
-}
+static void uninit(Opaque& ctx){ UNUSED(ctx); }
 
 // decode a frame
-static mp_image_t* decode(vd_private_t *p,const enc_frame_t* frame){
-    sh_video_t* sh = p->sh;
+static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
+    vreal_private_t& priv=static_cast<vreal_private_t&>(ctx);
+    sh_video_t* sh = priv.sh;
     mp_image_t* mpi;
     unsigned long result;
-    const dp_hdr_t* dp_hdr=(const dp_hdr_t*)frame->data;
-    const char* dp_data=((const char*)frame->data)+sizeof(dp_hdr_t);
-    const uint32_t* extra=(const uint32_t*)(((const char*)frame->data)+dp_hdr->chunktab);
+    const dp_hdr_t* dp_hdr=(const dp_hdr_t*)frame.data;
+    const char* dp_data=((const char*)frame.data)+sizeof(dp_hdr_t);
+    const uint32_t* extra=(const uint32_t*)(((const char*)frame.data)+dp_hdr->chunktab);
 
     unsigned int transform_out[5];
     transform_in_t transform_in={
@@ -242,14 +244,14 @@ static mp_image_t* decode(vd_private_t *p,const enc_frame_t* frame){
 	dp_hdr->timestamp,// timestamp (the integer value from the stream)
     };
 
-    if(frame->len<=0 || frame->flags&2) return NULL; // skipped frame || hardframedrop
+    if(frame.len<=0 || frame.flags&2) return NULL; // skipped frame || hardframedrop
 
-    mpi=mpcodecs_get_image(p->parent, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/,
+    mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/,
 		sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     result=(*rvyuv_transform)(const_cast<char *>(dp_data), reinterpret_cast<char*>(mpi->planes[0]), &transform_in,
-	transform_out, p->handle);
+	transform_out, priv.handle);
 
     return (result?NULL:mpi);
 }

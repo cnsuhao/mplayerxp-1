@@ -27,11 +27,6 @@ using namespace mpxp;
 #include "vd_internal.h"
 #include "codecs_ld.h"
 
-struct vd_private_t {
-    sh_video_t* sh;
-    video_decoder_t* parent;
-};
-
 static const vd_info_t info = {
     "XAnim codecs",
     "xanim",
@@ -75,12 +70,14 @@ typedef struct {
     unsigned int	(*dec_func)();  /* opt decode function */
 } XAVID_FUNC_HDR;
 
-#define XAVID_WHAT_NO_MORE	0x0000
-#define XAVID_AVI_QUERY		0x0001
-#define XAVID_QT_QUERY		0x0002
-#define XAVID_DEC_FUNC		0x0100
+enum {
+    XAVID_WHAT_NO_MORE	=0x0000,
+    XAVID_AVI_QUERY	=0x0001,
+    XAVID_QT_QUERY	=0x0002,
+    XAVID_DEC_FUNC	=0x0100,
 
-#define XAVID_API_REV		0x0003
+    XAVID_API_REV	=0x0003
+};
 
 typedef struct {
     unsigned int	api_rev;
@@ -107,9 +104,11 @@ typedef struct {
     unsigned long	(*avi_read_ext)();
 } XA_CODEC_HDR;
 
-#define CODEC_SUPPORTED 1
-#define CODEC_UNKNOWN 0
-#define CODEC_UNSUPPORTED -1
+enum {
+    CODEC_SUPPORTED=1,
+    CODEC_UNKNOWN=0,
+    CODEC_UNSUPPORTED=-1
+};
 
 /* fuckin colormap structures for xanim */
 typedef struct {
@@ -187,20 +186,12 @@ typedef unsigned short xaUSHORT;
 typedef unsigned int xaULONG;
 #endif
 
-#define xaFALSE 0
-#define xaTRUE 1
+enum {
+    xaFALSE=0,
+    xaTRUE
+};
 
-#ifndef RTLD_NOW
-#define RLTD_NOW 2
-#endif
-#ifndef RTLD_LAZY
-#define RLTD_LAZY 1
-#endif
-#ifndef RTLD_GLOBAL
-#define RLTD_GLOBAL 256
-#endif
-
-#define XA_CLOSE_FUNCS 5
+static const int XA_CLOSE_FUNCS=5;
 int xa_close_func = 0;
 
 typedef struct xacodec_driver {
@@ -214,6 +205,16 @@ typedef struct xacodec_driver {
 } xacodec_driver_t;
 
 xacodec_driver_t *xacodec_driver = NULL;
+
+struct xa_private_t : public Opaque {
+    xa_private_t();
+    virtual ~xa_private_t();
+
+    sh_video_t* sh;
+    video_decoder_t* parent;
+};
+xa_private_t::xa_private_t() {}
+xa_private_t::~xa_private_t() {}
 
 /* Needed by XAnim DLLs */
 void XA_Print(const char *fmt, ...)
@@ -885,8 +886,8 @@ any_t*XA_YUV221111_Func(unsigned int image_type)
 /*************************** END OF XA CODEC BINARY INTERFACE ******************/
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(vd_private_t *p,int cmd,any_t* arg,...){
-    UNUSED(p);
+static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
+    UNUSED(ctx);
     switch(cmd) {
       case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12 ||
@@ -899,41 +900,43 @@ static MPXP_Rc control_vd(vd_private_t *p,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
+static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
     UNUSED(probe);
     UNUSED(psi);
-    vd_private_t* priv = new(zeromem) vd_private_t;
+    xa_private_t* priv = new(zeromem) xa_private_t;
     priv->sh=sh;
     return priv;
 }
 
 // init driver
-static MPXP_Rc init(vd_private_t *p,video_decoder_t* opaque){
-    sh_video_t* sh=p->sh;
-    p->parent=opaque;
+static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
+    xa_private_t& priv=static_cast<xa_private_t&>(ctx);
+    sh_video_t* sh=priv.sh;
+    priv.parent=&opaque;
     if(xacodec_init_video(sh,sh->codec->outfmt[sh->outfmtidx]))
 	return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
     return MPXP_False;
 }
 
 // uninit driver
-static void uninit(vd_private_t *p){
+static void uninit(Opaque& ctx){
+    UNUSED(ctx);
     xacodec_exit();
-    delete p;
 }
 
 // decode a frame
-static mp_image_t* decode(vd_private_t *p,const enc_frame_t* frame){
-    sh_video_t* sh = p->sh;
+static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
+    xa_private_t& priv=static_cast<xa_private_t&>(ctx);
+    sh_video_t* sh = priv.sh;
     mp_image_t* mpi;
     xacodec_image_t* image;
 
-    if(frame->len<=0) return NULL; // skipped frame
+    if(frame.len<=0) return NULL; // skipped frame
 
-    image=xacodec_decode_frame(reinterpret_cast<uint8_t*>(frame->data),frame->len,(frame->flags&3)?1:0);
+    image=xacodec_decode_frame(reinterpret_cast<uint8_t*>(frame.data),frame.len,(frame.flags&3)?1:0);
     if(!image) return NULL;
 
-    mpi=mpcodecs_get_image(p->parent, MP_IMGTYPE_EXPORT, MP_IMGFLAG_PRESERVE,
+    mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_EXPORT, MP_IMGFLAG_PRESERVE,
 	sh->src_w, sh->src_h);
     if(!mpi) return NULL;
 

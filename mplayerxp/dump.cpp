@@ -338,7 +338,7 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
     seek_to_sec = NULL;
     MSG_INFO("seeking to %u seconds\n");
     seek_p.secs=rel_seek_secs;
-    demux_seek_r(demuxer,&seek_p);
+    demux_seek_r(*demuxer,&seek_p);
   }
   aeof=sha?0:1;
   veof=shv?0:1;
@@ -355,7 +355,7 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
 	   and don't generate badly interlaved stream.
 	   The ideal case is:  type=read_packet(ANY_TYPE); put_packet(type);
 	 */
-	in_size=ds_get_packet_r(sha->ds,&start,&a_pts);
+	in_size=ds_get_packet_r(*sha->ds,&start,a_pts);
 	cmd = check_cmd(priv);
 	if(cmd == -1) goto done;
 	else
@@ -420,7 +420,7 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
 	float s_pts=0;
 	while(s_pts < (shv?priv->vtimer:HUGE) || !shv || veof) /* autolimitation of sub reading */
 	{
-	    in_size=ds_get_packet_r(demuxer->sub,&start,&s_pts);
+	    in_size=ds_get_packet_r(*demuxer->sub,&start,s_pts);
 	    seof=demuxer->sub->eof;
 	    if(seof) break;
 	    cmd = check_cmd(priv);

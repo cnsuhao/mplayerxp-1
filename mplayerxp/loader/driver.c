@@ -5,7 +5,6 @@
  */
 
 #include "mpxp_config.h"
-#include "osdep/mplib.h"
 
 #include <stdio.h>
 #include <stdlib.h>

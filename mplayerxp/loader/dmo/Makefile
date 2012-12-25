@@ -19,7 +19,7 @@ CFLAGS  = $(OPTFLAGS) $(INCLUDE) -DNOAVIFILE_HEADERS
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
 
-all:	$(OBJS)
+all:	dep $(OBJS)
 
 clean:
 	rm -f *.o *.a *~

@@ -18,8 +18,7 @@
   but not right now.
 
 ***************************************************************************/
-#include "config.h"
-#include "osdep/mplib.h"
+#include "mpxp_config.h"
 
 #include "wine/winbase.h"
 #include "wine/windef.h"

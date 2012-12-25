@@ -28,28 +28,35 @@ LIBAD_EXTERN(dmo)
 
 #include "loader/dmo/DMO_AudioDecoder.h"
 
-struct ad_private_t {
+struct admo_private_t : public Opaque {
+    admo_private_t();
+    virtual ~admo_private_t();
+
     float pts;
     DMO_AudioDecoder* ds_adec;
     sh_audio_t* sh;
 };
+admo_private_t::admo_private_t() {}
+admo_private_t::~admo_private_t() {
+    DMO_AudioDecoder_Destroy(ds_adec);
+}
 
 static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
 
-static MPXP_Rc init(ad_private_t *p)
+static MPXP_Rc init(admo_private_t *p)
 {
     UNUSED(p);
     return MPXP_Ok;
 }
 
-static ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh_audio,audio_filter_info_t* afi)
+static Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh_audio,audio_filter_info_t& afi)
 {
     UNUSED(probe);
     UNUSED(afi);
-    ad_private_t*priv;
+    admo_private_t*priv;
     int chans=(mp_conf.ao_channels==sh_audio->wf->nChannels) ?
 	mp_conf.ao_channels : (sh_audio->wf->nChannels>=2 ? 2 : 1);
-    if(!(priv=new(zeromem) ad_private_t)) return NULL;
+    if(!(priv=new(zeromem) admo_private_t)) return NULL;
     priv->sh=sh_audio;
     if(!(priv->ds_adec=DMO_AudioDecoder_Open(sh_audio->codec->dll_name,&sh_audio->codec->guid,sh_audio->wf,chans))) {
 	MSG_ERR(MSGTR_MissingDLLcodec,sh_audio->codec->dll_name);
@@ -66,15 +73,12 @@ static ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh_audio,aud
     return priv;
 }
 
-static void uninit(ad_private_t *priv)
-{
-    DMO_AudioDecoder_Destroy(priv->ds_adec);
-    delete priv;
-}
+static void uninit(Opaque& ctx) { UNUSED(ctx); }
 
-static MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
+static MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...)
 {
-    sh_audio_t* sh_audio = priv->sh;
+    admo_private_t& priv=static_cast<admo_private_t&>(ctx);
+    sh_audio_t* sh_audio = priv.sh;
     int skip;
     UNUSED(arg);
     switch(cmd) {
@@ -85,42 +89,43 @@ static MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
 		skip=(sh_audio->wf->nAvgBytesPerSec/16)&(~7);
 		if(skip<16) skip=16;
 	    }
-	    demux_read_data_r(sh_audio->ds,NULL,skip,&pts);
+	    demux_read_data_r(*sh_audio->ds,NULL,skip,pts);
 	    return MPXP_True;
 	}
     }
     return MPXP_Unknown;
 }
 
-static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+static unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts)
 {
-    sh_audio_t* sh_audio = priv->sh;
+    admo_private_t& priv=static_cast<admo_private_t&>(ctx);
+    sh_audio_t* sh_audio = priv.sh;
   unsigned len=0;
   UNUSED(minlen);
   {
 	unsigned size_in=0;
 	unsigned size_out=0;
-	unsigned srcsize=DMO_AudioDecoder_GetSrcSize(priv->ds_adec, maxlen);
+	unsigned srcsize=DMO_AudioDecoder_GetSrcSize(priv.ds_adec, maxlen);
 	MSG_DBG2("DMO says: srcsize=%d  (buffsize=%d)  out_size=%d\n",srcsize,sh_audio->a_in_buffer_size,maxlen);
 	if(srcsize>sh_audio->a_in_buffer_size) srcsize=sh_audio->a_in_buffer_size; // !!!!!!
 	if((unsigned)sh_audio->a_in_buffer_len<srcsize){
 	  unsigned l;
-	  l=demux_read_data_r(sh_audio->ds,reinterpret_cast<unsigned char*>(&sh_audio->a_in_buffer[sh_audio->a_in_buffer_len]),
+	  l=demux_read_data_r(*sh_audio->ds,reinterpret_cast<unsigned char*>(&sh_audio->a_in_buffer[sh_audio->a_in_buffer_len]),
 	    srcsize-sh_audio->a_in_buffer_len,pts);
 	    sh_audio->a_in_buffer_len+=l;
-	    priv->pts=*pts;
+	    priv.pts=pts;
 	}
-	else *pts=priv->pts;
-	DMO_AudioDecoder_Convert(priv->ds_adec, sh_audio->a_in_buffer,sh_audio->a_in_buffer_len,
+	else pts=priv.pts;
+	DMO_AudioDecoder_Convert(priv.ds_adec, sh_audio->a_in_buffer,sh_audio->a_in_buffer_len,
 	    buf,maxlen, &size_in,&size_out);
 	MSG_DBG2("DMO: audio %d -> %d converted  (in_buf_len=%d of %d)  %f\n"
-	,size_in,size_out,sh_audio->a_in_buffer_len,sh_audio->a_in_buffer_size,*pts);
+	,size_in,size_out,sh_audio->a_in_buffer_len,sh_audio->a_in_buffer_size,pts);
 	if(size_in>=(unsigned)sh_audio->a_in_buffer_len){
 	  sh_audio->a_in_buffer_len=0;
 	} else {
 	  sh_audio->a_in_buffer_len-=size_in;
 	  memcpy(sh_audio->a_in_buffer,&sh_audio->a_in_buffer[size_in],sh_audio->a_in_buffer_len);
-	  priv->pts=FIX_APTS(sh_audio,priv->pts,size_in);
+	  priv.pts=FIX_APTS(sh_audio,priv.pts,size_in);
 	}
 	len=size_out;
   }

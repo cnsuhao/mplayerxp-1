@@ -7,11 +7,6 @@ using namespace mpxp;
 #include "vd_internal.h"
 #include "osdep/bswap.h"
 
-struct vd_private_t {
-    sh_video_t* sh;
-    video_decoder_t* parent;
-};
-
 static const vd_info_t info = {
     "MPEG 1/2 Video passthrough",
     "mpegpes",
@@ -100,41 +95,52 @@ static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
     return NULL;
 }
 
+struct mpegpes_private_t : public Opaque {
+    mpegpes_private_t();
+    virtual ~mpegpes_private_t();
+
+    sh_video_t* sh;
+    video_decoder_t* parent;
+};
+mpegpes_private_t::mpegpes_private_t() {}
+mpegpes_private_t::~mpegpes_private_t() {}
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(vd_private_t *ctx,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(Opaque &ctx,int cmd,any_t* arg,...){
     UNUSED(ctx);
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
 }
 
-static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
+static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
     UNUSED(probe);
     UNUSED(psi);
-    vd_private_t* priv = new(zeromem) vd_private_t;
+    mpegpes_private_t* priv = new(zeromem) mpegpes_private_t;
     priv->sh=sh;
     return priv;
 }
 
 // init driver
-static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
-    sh_video_t* sh = priv->sh;
-    priv->parent = opaque;
+static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
+    mpegpes_private_t& priv=static_cast<mpegpes_private_t&>(ctx);
+    sh_video_t* sh = priv.sh;
+    priv.parent = &opaque;
     return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver
-static void uninit(vd_private_t *priv) { delete priv; }
+static void uninit(Opaque& ctx) { UNUSED(ctx); }
 
 // decode a frame
-static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
-    sh_video_t* sh = priv->sh;
+static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
+    mpegpes_private_t& priv=static_cast<mpegpes_private_t&>(ctx);
+    sh_video_t* sh = priv.sh;
     mp_image_t* mpi;
     static vo_mpegpes_t packet;
-    mpi=mpcodecs_get_image(priv->parent, MP_IMGTYPE_EXPORT, 0,sh->src_w, sh->src_h);
+    mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_EXPORT, 0,sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
-    packet.data=frame->data;
-    packet.size=frame->len-4;
+    packet.data=frame.data;
+    packet.size=frame.len-4;
     packet.timestamp=sh->ds->pts;
     packet.id=0x1E0; //+sh_video->ds->id;
     mpi->planes[0]=(uint8_t*)(&packet);

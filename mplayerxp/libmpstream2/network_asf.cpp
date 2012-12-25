@@ -603,7 +603,7 @@ int Asf_Networking::parse_response(HTTP_Header& http_hdr ) {
 			mpxp_warn<<"ASF HTTP PARSE WARNING : Pragma "<<pragma<<" cuted from "<<s<<" bytes to "<<sizeof(features)<<std::endl;
 			len = sizeof(features);
 		    } else len = s;
-		} else len = std::min((unsigned long)(end-pragma),sizeof(features));
+		} else len = std::min(unsigned(end-pragma),unsigned(sizeof(features)));
 		strncpy( features, pragma, len );
 		features[len]='\0';
 		break;

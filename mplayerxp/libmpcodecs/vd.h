@@ -51,20 +51,19 @@ struct put_slice_info_t {
     unsigned		active_slices; // used in dec_video+vd_ffmpeg only!!!
 };
 /* interface of video decoder drivers */
-struct vd_private_t;
 struct vd_functions_t {
     const vd_info_t*	info;
     const config_t*	options;/**< Optional: MPlayerXP's option related */
     const video_probe_t*(*__FASTCALL__ probe)(uint32_t fourcc);
-    vd_private_t*	(*__FASTCALL__ preinit)(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi);
-    MPXP_Rc		(*__FASTCALL__ init)(vd_private_t *ctx,video_decoder_t*opaque);
-    void		(*__FASTCALL__ uninit)(vd_private_t *ctx);
-    MPXP_Rc		(*control_vd)(vd_private_t *ctx,int cmd,any_t* arg, ...);
-    mp_image_t*		(*__FASTCALL__ decode)(vd_private_t *ctx,const enc_frame_t* frame);
+    Opaque*		(*__FASTCALL__ preinit)(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi);
+    MPXP_Rc		(*__FASTCALL__ init)(Opaque& ctx,video_decoder_t& opaque);
+    void		(*__FASTCALL__ uninit)(Opaque& ctx);
+    MPXP_Rc		(*control_vd)(Opaque& ctx,int cmd,any_t* arg, ...);
+    mp_image_t*		(*__FASTCALL__ decode)(Opaque& ctx,const enc_frame_t& frame);
 };
 
-extern const vd_functions_t* vfm_find_driver(const char *name);
-extern const video_probe_t* vfm_driver_probe(vd_private_t*ctx,sh_video_t *sh,put_slice_info_t* psi);
+extern const vd_functions_t* vfm_find_driver(const std::string& name);
+extern const video_probe_t* vfm_driver_probe(Opaque& ctx,sh_video_t *sh,put_slice_info_t& psi);
 
 enum {
     VDCTRL_QUERY_FORMAT		=3, /* test for availabilty of a format */
@@ -74,9 +73,9 @@ enum {
     VDCTRL_RESYNC_STREAM	=7 /* resync video stream if needed */
 };
 // callbacks:
-MPXP_Rc		__FASTCALL__ mpcodecs_config_vf(video_decoder_t *opaque, int w, int h);
-mp_image_t*	__FASTCALL__ mpcodecs_get_image(video_decoder_t *opaque, int mp_imgtype, int mp_imgflag,int w, int h);
-void		__FASTCALL__ mpcodecs_draw_slice(video_decoder_t* opaque, mp_image_t*);
-void		__FASTCALL__ mpcodecs_draw_image(video_decoder_t* opaque, mp_image_t *mpi);
+MPXP_Rc		__FASTCALL__ mpcodecs_config_vf(video_decoder_t& opaque, int w, int h);
+mp_image_t*	__FASTCALL__ mpcodecs_get_image(video_decoder_t& opaque, int mp_imgtype, int mp_imgflag,int w, int h);
+void		__FASTCALL__ mpcodecs_draw_slice(video_decoder_t& opaque, mp_image_t*);
+void		__FASTCALL__ mpcodecs_draw_image(video_decoder_t& opaque, mp_image_t *mpi);
 
 #endif

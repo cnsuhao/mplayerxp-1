@@ -248,17 +248,17 @@ while(1){
     case mmioFOURCC('I','D','I','T'): hdr="Digitization Time";break;
 
     case ckidAVIMAINHDR:          // read 'avih'
-      demuxer->stream->read((char*) &avih,std::min((unsigned long)size2,sizeof(avih)));
+      demuxer->stream->read((char*) &avih,std::min(size2,unsigned(sizeof(avih))));
       le2me_MainAVIHeader(&avih); // swap to machine endian
-      chunksize-=std::min((unsigned long)size2,sizeof(avih));
+      chunksize-=std::min(size2,unsigned(sizeof(avih)));
       demuxer->movi_length=avih.dwTotalFrames;
       if(mp_conf.verbose) print_avih(&avih); else print_avih_flags(&avih);
       break;
     case ckidSTREAMHEADER: {      // read 'strh'
       AVIStreamHeader h;
-      demuxer->stream->read((char*) &h,std::min((unsigned long)size2,sizeof(h)));
+      demuxer->stream->read((char*) &h,std::min(size2,unsigned(sizeof(h))));
       le2me_AVIStreamHeader(&h);  // swap to machine endian
-      chunksize-=std::min((unsigned long)size2,sizeof(h));
+      chunksize-=std::min(size2,unsigned(sizeof(h)));
       ++stream_id;
       if(h.fccType==mmioFOURCC('i','a','v','s')){
 	MSG_FATAL("DVDS chunk found!!! Still is not suupported\n");

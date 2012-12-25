@@ -7,10 +7,15 @@ using namespace mpxp;
 #include "vd_internal.h"
 #include "osdep/bswap.h"
 
-struct vd_private_t {
+struct raw_private_t : public Opaque {
+    raw_private_t();
+    virtual ~raw_private_t();
+
     sh_video_t* sh;
     video_decoder_t* parent;
 };
+raw_private_t::raw_private_t() {}
+raw_private_t::~raw_private_t() {}
 
 static const vd_info_t info = {
     "RAW Uncompressed Video",
@@ -83,7 +88,7 @@ static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(vd_private_t *ctx,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
     UNUSED(ctx);
     switch(cmd) {
 	case VDCTRL_QUERY_FORMAT:
@@ -93,17 +98,18 @@ static MPXP_Rc control_vd(vd_private_t *ctx,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
+static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
     UNUSED(probe);
     UNUSED(psi);
-    vd_private_t* priv = new(zeromem) vd_private_t;
+    raw_private_t* priv = new(zeromem) raw_private_t;
     priv->sh=sh;
     return priv;
 }
 
 // init driver
-static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
-    sh_video_t* sh = priv->sh;
+static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
+    raw_private_t& priv=static_cast<raw_private_t&>(ctx);
+    sh_video_t* sh = priv.sh;
     // set format fourcc for raw RGB:
     if(sh->fourcc==0){
 	switch(sh->bih->biBitCount){
@@ -116,24 +122,25 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
 	    MSG_WARN("RAW: depth %d not supported\n",sh->bih->biBitCount);
 	}
     }
-    priv->parent=opaque;
+    priv.parent=&opaque;
     return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver
-static void uninit(vd_private_t *ctx) { delete ctx; }
+static void uninit(Opaque& ctx) { UNUSED(ctx); }
 
 // decode a frame
-static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
-    sh_video_t* sh = priv->sh;
+static mp_image_t* decode(Opaque &ctx,const enc_frame_t& frame){
+    raw_private_t& priv=static_cast<raw_private_t&>(ctx);
+    sh_video_t* sh = priv.sh;
     mp_image_t* mpi;
-    if(frame->len<=0) return NULL; // skipped frame
+    if(frame.len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(priv->parent, MP_IMGTYPE_EXPORT, 0, sh->src_w, sh->src_h);
+    mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_EXPORT, 0, sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     if(mpi->flags&MP_IMGFLAG_PLANAR){
-	mpi->planes[0]=reinterpret_cast<unsigned char*>(frame->data);
+	mpi->planes[0]=reinterpret_cast<unsigned char*>(frame.data);
 	mpi->stride[0]=mpi->width;
 	switch(sh->codec->outfmt[sh->outfmtidx])
 	{
@@ -141,7 +148,7 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
 	    case IMGFMT_I420:
 	    case IMGFMT_IYUV:
 	    case IMGFMT_YV12:
-		mpi->planes[1]=reinterpret_cast<unsigned char *>(frame->data)+mpi->width*mpi->height;
+		mpi->planes[1]=reinterpret_cast<unsigned char *>(frame.data)+mpi->width*mpi->height;
 		mpi->stride[1]=mpi->width/2;
 		mpi->planes[2]=mpi->planes[1]+(mpi->width/2)*(mpi->height/2);
 		mpi->stride[2]=mpi->width/2;
@@ -153,7 +160,7 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
 		mpi->stride[3]=mpi->width/4;
 		*/
 	    case IMGFMT_YVU9:
-		mpi->planes[1]=reinterpret_cast<unsigned char *>(frame->data)+mpi->width*mpi->height;
+		mpi->planes[1]=reinterpret_cast<unsigned char *>(frame.data)+mpi->width*mpi->height;
 		mpi->stride[1]=mpi->width/4;
 		mpi->planes[2]=mpi->planes[1]+(mpi->width/4)*(mpi->height/4);
 		mpi->stride[2]=mpi->width/4;
@@ -162,7 +169,7 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
 		break;
 	}
     } else {
-	mpi->planes[0]=reinterpret_cast<unsigned char *>(frame->data);
+	mpi->planes[0]=reinterpret_cast<unsigned char *>(frame.data);
 	mpi->stride[0]=mpi->width*((mpi->bpp+7)/8);
     }
     return mpi;

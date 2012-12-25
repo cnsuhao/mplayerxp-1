@@ -20,11 +20,19 @@ using namespace mpxp;
 #include "osdep/bswap.h"
 #include "ad_internal.h"
 
-struct ad_private_t {
+struct libadv_private_t : public Opaque {
+    libadv_private_t();
+    virtual ~libadv_private_t();
+
     dv_decoder_t*	decoder;
     int16_t*		audioBuffers[4];
     sh_audio_t*		sh;
 };
+libadv_private_t::libadv_private_t() {}
+libadv_private_t::~libadv_private_t() {
+    unsigned i;
+    for (i=0; i < 4; i++) delete audioBuffers[i];
+}
 
 static const ad_info_t info = {
     "Raw DV Audio Decoder",
@@ -55,20 +63,21 @@ static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) {
 // defined in vd_libdv.c:
 dv_decoder_t*  init_global_rawdv_decoder(void);
 
-static ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh_audio,audio_filter_info_t* afi)
+static Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh_audio,audio_filter_info_t& afi)
 {
     UNUSED(probe);
     UNUSED(afi);
     sh_audio->audio_out_minsize=4*DV_AUDIO_MAX_SAMPLES*2;
-    ad_private_t* priv = new(zeromem) ad_private_t;
+    libadv_private_t* priv = new(zeromem) libadv_private_t;
     priv->sh = sh_audio;
     return priv;
 }
 
-static MPXP_Rc init(ad_private_t *priv)
+static MPXP_Rc init(Opaque& ctx)
 {
+    libadv_private_t& priv=static_cast<libadv_private_t&>(ctx);
     unsigned i;
-    sh_audio_t* sh = priv->sh;
+    sh_audio_t* sh = priv.sh;
     WAVEFORMATEX *h=sh->wf;
 
     if(!h) return MPXP_False;
@@ -77,40 +86,36 @@ static MPXP_Rc init(ad_private_t *priv)
     sh->nch=h->nChannels;
     sh->rate=h->nSamplesPerSec;
     sh->afmt=bps2afmt((h->wBitsPerSample+7)/8);
-    priv->decoder=init_global_rawdv_decoder();
+    priv.decoder=init_global_rawdv_decoder();
     for (i=0; i < 4; i++)
-	priv->audioBuffers[i] = new int16_t[DV_AUDIO_MAX_SAMPLES];
+	priv.audioBuffers[i] = new int16_t[DV_AUDIO_MAX_SAMPLES];
 
     return MPXP_Ok;
 }
 
-static void uninit(ad_private_t *priv)
-{
-    unsigned i;
-    for (i=0; i < 4; i++) delete priv->audioBuffers[i];
-    delete priv;
-}
+static void uninit(Opaque& ctx) { UNUSED(ctx); }
 
-static MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
+static MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...)
 {
     // TODO!!!
-    UNUSED(priv);
+    UNUSED(ctx);
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
 }
 
-static unsigned decode(ad_private_t *priv, unsigned char *buf, unsigned minlen, unsigned maxlen,float *pts)
+static unsigned decode(Opaque& ctx, unsigned char *buf, unsigned minlen, unsigned maxlen,float& pts)
 {
-    sh_audio_t* sh = priv->sh;
-    dv_decoder_t* decoder=priv->decoder;  //global_rawdv_decoder;
+    libadv_private_t& priv=static_cast<libadv_private_t&>(ctx);
+    sh_audio_t* sh = priv.sh;
+    dv_decoder_t* decoder=priv.decoder;  //global_rawdv_decoder;
     unsigned char* dv_audio_frame=NULL;
     unsigned xx;
     size_t len=0;
     float apts;
     UNUSED(maxlen);
    while(len<minlen) {
-    xx=ds_get_packet_r(sh->ds,&dv_audio_frame,len>0?&apts:pts);
+    xx=ds_get_packet_r(*sh->ds,&dv_audio_frame,len>0?apts:pts);
     if((int)xx<=0 || !dv_audio_frame) return 0; // EOF?
 
     dv_parse_header(decoder, dv_audio_frame);
@@ -118,7 +123,7 @@ static unsigned decode(ad_private_t *priv, unsigned char *buf, unsigned minlen, 
     if(xx!=decoder->frame_size)
        MSG_WARN("AudioFramesize differs %u %u\n",xx, decoder->frame_size);
 
-    if (dv_decode_full_audio(decoder, dv_audio_frame,(int16_t**)priv->audioBuffers)) {
+    if (dv_decode_full_audio(decoder, dv_audio_frame,(int16_t**)priv.audioBuffers)) {
       /* Interleave the audio into a single buffer */
       int i=0;
       int16_t *bufP=(int16_t*)buf;
@@ -127,7 +132,7 @@ static unsigned decode(ad_private_t *priv, unsigned char *buf, unsigned minlen, 
       {
 	 int ch;
 	 for (ch=0; ch < decoder->audio->num_channels; ch++)
-	    bufP[len++] = priv->audioBuffers[ch][i];
+	    bufP[len++] = priv.audioBuffers[ch][i];
       }
     }
     len+=decoder->audio->samples_this_frame;

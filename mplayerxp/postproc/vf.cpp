@@ -247,7 +247,7 @@ mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt
 	if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK && vf->start_slice)
 	    vf->start_slice(vf,mpi);
 	if(!(mpi->flags&MP_IMGFLAG_TYPE_DISPLAYED)){
-	    MSG_V("*** [%s] %s%s mp_image_t, %dx%dx%dbpp %s %s, %d bytes\n",
+	    MSG_DBG2("*** [%s] %s%s mp_image_t, %dx%dx%dbpp %s %s, %d bytes\n",
 		vf->info->name,
 		(mpi->type==MP_IMGTYPE_EXPORT)?"Exporting":
 		((mpi->flags&MP_IMGFLAG_DIRECT)?"Direct Rendering":"Allocating"),

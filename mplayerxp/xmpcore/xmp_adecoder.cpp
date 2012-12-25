@@ -275,7 +275,7 @@ int decode_audio_buffer(Demuxer_Stream *d_audio,unsigned len)
 
     for( l = 0, l2 = len, ret = 0; l < len && l2 >= audio_buffer.sh_audio->audio_out_minsize; ) {
 	float pts;
-	ret = mpca_decode(mpxp_context().audio().decoder, &audio_buffer.buffer[audio_buffer.head], audio_buffer.min_len, l2,blen,&pts);
+	ret = mpca_decode(*mpxp_context().audio().decoder, &audio_buffer.buffer[audio_buffer.head], audio_buffer.min_len, l2,blen,pts);
 	if( ret <= 0 )
 	    break;
 

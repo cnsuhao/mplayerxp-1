@@ -8,10 +8,15 @@ using namespace mpxp;
 #include "libao3/afmt.h"
 #include "osdep/bswap.h"
 
-struct ad_private_t {
+struct pcm_private_t : public Opaque {
+    pcm_private_t();
+    virtual ~pcm_private_t();
+
     sh_audio_t* sh;
     audio_filter_info_t* afi;
 };
+pcm_private_t::pcm_private_t() {}
+pcm_private_t::~pcm_private_t() {}
 
 static const ad_info_t info = {
     "Uncompressed PCM audio decoder",
@@ -53,10 +58,10 @@ static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) {
     return NULL;
 }
 
-
-MPXP_Rc init(ad_private_t *priv)
+MPXP_Rc init(Opaque& ctx)
 {
-    sh_audio_t* sh_audio = priv->sh;
+    pcm_private_t& priv=static_cast<pcm_private_t&>(ctx);
+    sh_audio_t* sh_audio = priv.sh;
     WAVEFORMATEX *h=sh_audio->wf;
     sh_audio->i_bps=h->nAvgBytesPerSec;
     sh_audio->nch=h->nChannels;
@@ -87,24 +92,22 @@ MPXP_Rc init(ad_private_t *priv)
     return MPXP_Ok;
 }
 
-ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi)
+Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_info_t& afi)
 {
     UNUSED(probe);
     sh->audio_out_minsize=16384;
-    ad_private_t* priv = new(zeromem) ad_private_t;
+    pcm_private_t* priv = new(zeromem) pcm_private_t;
     priv->sh = sh;
-    priv->afi = afi;
+    priv->afi = &afi;
     return priv;
 }
 
-void uninit(ad_private_t *priv)
-{
-    delete priv;
-}
+void uninit(Opaque& ctx) { UNUSED(ctx); }
 
-MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...)
 {
-    sh_audio_t* sh = priv->sh;
+    pcm_private_t& priv=static_cast<pcm_private_t&>(ctx);
+    sh_audio_t* sh = priv.sh;
     int skip;
     UNUSED(arg);
     switch(cmd) {
@@ -112,7 +115,7 @@ MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
 	    float pts;
 	    skip=sh->i_bps/16;
 	    skip=skip&(~3);
-	    demux_read_data_r(sh->ds,NULL,skip,&pts);
+	    demux_read_data_r(*sh->ds,NULL,skip,pts);
 	    return MPXP_True;
 	}
 	default:
@@ -121,14 +124,15 @@ MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
     return MPXP_Unknown;
 }
 
-unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts)
 {
-    sh_audio_t* sh_audio = priv->sh;
-  unsigned len = sh_audio->nch*afmt2bps(sh_audio->afmt);
-  len = (minlen + len - 1) / len * len;
-  if (len > maxlen)
-      /* if someone needs hundreds of channels adjust audio_out_minsize based on channels in preinit() */
-      return -1;
-  len=demux_read_data_r(sh_audio->ds,buf,len,pts);
-  return len;
+    pcm_private_t& priv=static_cast<pcm_private_t&>(ctx);
+    sh_audio_t* sh_audio = priv.sh;
+    unsigned len = sh_audio->nch*afmt2bps(sh_audio->afmt);
+    len = (minlen + len - 1) / len * len;
+    if (len > maxlen)
+	/* if someone needs hundreds of channels adjust audio_out_minsize based on channels in preinit() */
+	return -1;
+    len=demux_read_data_r(*sh_audio->ds,buf,len,pts);
+    return len;
 }

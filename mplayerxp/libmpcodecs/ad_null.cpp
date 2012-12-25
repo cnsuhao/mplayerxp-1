@@ -6,9 +6,14 @@ using namespace mpxp;
 #include <unistd.h>
 #include "ad_internal.h"
 
-struct ad_private_t {
+struct anull_private_t : public Opaque {
+    anull_private_t();
+    virtual ~anull_private_t();
+
     sh_audio_t* sh;
 };
+anull_private_t::anull_private_t() {}
+anull_private_t::~anull_private_t() {}
 
 static const ad_info_t info = {
     "Null audio decoder",
@@ -25,40 +30,37 @@ LIBAD_EXTERN(null)
 
 static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { UNUSED(wtag); return NULL; }
 
-MPXP_Rc init(ad_private_t *priv)
+MPXP_Rc init(Opaque& ctx)
 {
-    UNUSED(priv);
+    UNUSED(ctx);
     return MPXP_Ok;
 }
 
-ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi)
+Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_info_t& afi)
 {
     UNUSED(probe);
     UNUSED(afi);
-    ad_private_t* priv = new(zeromem) ad_private_t;
+    anull_private_t* priv = new(zeromem) anull_private_t;
     priv->sh = sh;
     return priv;
 }
 
-void uninit(ad_private_t *priv)
-{
-    delete priv;
-}
+void uninit(Opaque& ctx) { UNUSED(ctx); }
 
-MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...)
 {
-    UNUSED(priv);
+    UNUSED(ctx);
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
 }
 
-unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts)
 {
-    UNUSED(priv);
+    UNUSED(ctx);
     UNUSED(buf);
     UNUSED(minlen);
     UNUSED(maxlen);
-    *pts=0;
+    pts=0;
     return 0;
 }

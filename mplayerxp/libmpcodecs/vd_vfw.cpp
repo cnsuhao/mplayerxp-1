@@ -41,7 +41,10 @@ LIBVD_EXTERN(vfw)
 LIBVD_EXTERN(vfwex)
 #undef info
 
-struct vd_private_t {
+struct vfw_private_t : public Opaque {
+    vfw_private_t();
+    virtual ~vfw_private_t();
+
     BITMAPINFOHEADER *o_bih; /* out format */
     HIC hic;
     int ex;
@@ -49,6 +52,10 @@ struct vd_private_t {
     sh_video_t* sh;
     video_decoder_t* parent;
 };
+vfw_private_t::vfw_private_t() {}
+vfw_private_t::~vfw_private_t() {
+    delete o_bih;
+}
 
 static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
 
@@ -110,64 +117,64 @@ static void set_csp(BITMAPINFOHEADER *o_bih,unsigned int outfmt){
 }
 
 #define IC_FCCTYPE	sh_video->codec->dll_name
-static MPXP_Rc init_vfw_video_codec(vd_private_t *priv){
+static MPXP_Rc init_vfw_video_codec(vfw_private_t& priv){
     HRESULT ret;
     int temp_len;
     int ex;
-    sh_video_t* sh_video = priv->sh;
+    sh_video_t* sh_video = priv.sh;
 
-    ex = priv->ex;
+    ex = priv.ex;
     MSG_V("======= Win32 (VFW) VIDEO Codec init =======\n");
-    priv->hic = ICOpen((long)IC_FCCTYPE, sh_video->fourcc, ICMODE_DECOMPRESS);
-    if(!priv->hic){
+    priv.hic = ICOpen((long)IC_FCCTYPE, sh_video->fourcc, ICMODE_DECOMPRESS);
+    if(!priv.hic){
 	MSG_ERR("ICOpen failed! unknown codec / wrong parameters?\n");
 	return MPXP_False;
     }
 
 //  sh_video->bih->biBitCount=32;
 
-    temp_len = ICDecompressGetFormatSize(priv->hic, sh_video->bih);
+    temp_len = ICDecompressGetFormatSize(priv.hic, sh_video->bih);
     if(temp_len <= 0){
 	MSG_ERR("ICDecompressGetFormatSize failed: Error %d\n", (int)temp_len);
 	return MPXP_False;
     }
 
-    priv->o_bih=(BITMAPINFOHEADER*)mp_mallocz(temp_len);
-    priv->o_bih->biSize = temp_len;
+    priv.o_bih=(BITMAPINFOHEADER*)mp_mallocz(temp_len);
+    priv.o_bih->biSize = temp_len;
 
-    ret = ICDecompressGetFormat(priv->hic, sh_video->bih, priv->o_bih);
+    ret = ICDecompressGetFormat(priv.hic, sh_video->bih, priv.o_bih);
     if(ret < 0){
 	MSG_ERR("ICDecompressGetFormat failed: Error %d\n", (int)ret);
 	return MPXP_False;
     }
 
     // ok, let's set the choosen colorspace:
-    set_csp(priv->o_bih,sh_video->codec->outfmt[sh_video->outfmtidx]);
+    set_csp(priv.o_bih,sh_video->codec->outfmt[sh_video->outfmtidx]);
 
     if(!(sh_video->codec->outflags[sh_video->outfmtidx]&CODECS_FLAG_FLIP)) {
-	priv->o_bih->biHeight=-sh_video->bih->biHeight; // flip image!
+	priv.o_bih->biHeight=-sh_video->bih->biHeight; // flip image!
     }
 
     if(sh_video->codec->outflags[sh_video->outfmtidx] & CODECS_FLAG_YUVHACK)
-	priv->o_bih->biCompression = 0;
+	priv.o_bih->biCompression = 0;
 
     if(mp_conf.verbose) {
 	MSG_V("Starting decompression, format:\n");
 	print_video_header(sh_video->bih,sizeof(BITMAPINFOHEADER));
 	MSG_V("Dest fmt:\n");
-	print_video_header(priv->o_bih,sizeof(BITMAPINFOHEADER));
+	print_video_header(priv.o_bih,sizeof(BITMAPINFOHEADER));
     }
     ret = ex ?
-	ICDecompressQueryEx(priv->hic, sh_video->bih, priv->o_bih) :
-	ICDecompressQuery(priv->hic, sh_video->bih, priv->o_bih);
+	ICDecompressQueryEx(priv.hic, sh_video->bih, priv.o_bih) :
+	ICDecompressQuery(priv.hic, sh_video->bih, priv.o_bih);
     if(ret){
 	MSG_ERR("ICDecompressQuery failed: Error %d\n", (int)ret);
 //    return 0;
     } else MSG_V("ICDecompressQuery OK\n");
 
     ret = ex ?
-	ICDecompressBeginEx(priv->hic, sh_video->bih, priv->o_bih) :
-	ICDecompressBegin(priv->hic, sh_video->bih, priv->o_bih);
+	ICDecompressBeginEx(priv.hic, sh_video->bih, priv.o_bih) :
+	ICDecompressBegin(priv.hic, sh_video->bih, priv.o_bih);
     if(ret){
 	MSG_ERR("ICDecompressBegin failed: Error %d\n", (int)ret);
 //    return 0;
@@ -175,39 +182,39 @@ static MPXP_Rc init_vfw_video_codec(vd_private_t *priv){
 
 //  avi_header.our_in_buffer=mp_malloc(avi_header.video.dwSuggestedBufferSize); // FIXME!!!!
 
-    ICSendMessage(priv->hic, ICM_USER+80, (long)(&mpxp_context().output_quality), 0);
+    ICSendMessage(priv.hic, ICM_USER+80, (long)(&mpxp_context().output_quality), 0);
 
   // don't do this palette mess always, it makes div3 dll crashing...
     if(sh_video->codec->outfmt[sh_video->outfmtidx]==IMGFMT_BGR8){
-	if(ICDecompressGetPalette(priv->hic, sh_video->bih, priv->o_bih)){
-	    priv->palette = (unsigned char*)(priv->o_bih+1);
+	if(ICDecompressGetPalette(priv.hic, sh_video->bih, priv.o_bih)){
+	    priv.palette = (unsigned char*)(priv.o_bih+1);
 	    MSG_V("ICDecompressGetPalette OK\n");
 	} else {
 	    if(sh_video->bih->biSize>=40+4*4)
-		priv->palette = (unsigned char*)(sh_video->bih+1);
+		priv.palette = (unsigned char*)(sh_video->bih+1);
 	}
     }
     MSG_V("VIDEO CODEC Init OK!!! ;-)\n");
     return MPXP_Ok;
 }
 
-static int vfw_set_postproc(vd_private_t* priv,int quality){
+static int vfw_set_postproc(vfw_private_t& priv,int quality){
     // Works only with opendivx/divx4 based DLL
-    return ICSendMessage(priv->hic, ICM_USER+80, (long)(&quality), 0);
+    return ICSendMessage(priv.hic, ICM_USER+80, (long)(&quality), 0);
 }
 
-static MPXP_Rc vfw_close_video_codec(vd_private_t *priv)
+static MPXP_Rc vfw_close_video_codec(vfw_private_t& priv)
 {
     HRESULT ret;
-    sh_video_t* sh_video = priv->sh;
+    sh_video_t* sh_video = priv.sh;
 
-    ret = priv->ex ? ICDecompressEndEx(priv->hic):ICDecompressEnd(priv->hic);
+    ret = priv.ex ? ICDecompressEndEx(priv.hic):ICDecompressEnd(priv.hic);
     if (ret) {
 	MSG_WARN( "ICDecompressEnd failed: %d\n", ret);
 	return MPXP_False;
     }
 
-    ret = ICClose(priv->hic);
+    ret = ICClose(priv.hic);
     if (ret) {
 	MSG_WARN( "ICClose failed: %d\n", ret);
 	return MPXP_False;
@@ -216,8 +223,9 @@ static MPXP_Rc vfw_close_video_codec(vd_private_t *priv)
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...){
-    sh_video_t* sh = priv->sh;
+static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
+    vfw_private_t& priv=static_cast<vfw_private_t&>(ctx);
+    sh_video_t* sh = priv.sh;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:
 	    *((unsigned*)arg)=9;
@@ -230,11 +238,11 @@ static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...){
 	    HRESULT ret;
 //	if(!(sh->codec->outflags[sh->outfmtidx]&CODECS_FLAG_QUERY))
 //	    return MPXP_Unknown;	// do not query!
-	    set_csp(priv->o_bih,*((int*)arg));
-	    if(priv->ex)
-		ret = ICDecompressQueryEx(priv->hic, sh->bih, priv->o_bih);
+	    set_csp(priv.o_bih,*((int*)arg));
+	    if(priv.ex)
+		ret = ICDecompressQueryEx(priv.hic, sh->bih, priv.o_bih);
 	    else
-		ret = ICDecompressQuery(priv->hic, sh->bih, priv->o_bih);
+		ret = ICDecompressQuery(priv.hic, sh->bih, priv.o_bih);
 	    if (ret) {
 		MSG_DBG2("ICDecompressQuery failed:: Error %d\n", (int)ret);
 		return MPXP_False;
@@ -246,68 +254,65 @@ static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
+static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
     UNUSED(probe);
     UNUSED(psi);
-    vd_private_t* priv = new(zeromem) vd_private_t;
+    vfw_private_t* priv = new(zeromem) vfw_private_t;
     priv->sh=sh;
     return priv;
 }
 
 // init driver
-static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
-    sh_video_t* sh = priv->sh;
-    priv->parent = opaque;
+static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
+    vfw_private_t& priv=static_cast<vfw_private_t&>(ctx);
+    sh_video_t* sh = priv.sh;
+    priv.parent = &opaque;
     int vfw_ex;
     if(strcmp(sh->codec->driver_name,"vfwex") == 0) vfw_ex=1;
     else					    vfw_ex=0;
-    if(!(priv = new(zeromem) vd_private_t)) {
-	MSG_ERR(MSGTR_OutOfMemory);
-	return MPXP_False;
-    }
-    priv->ex = vfw_ex;
+    priv.ex = vfw_ex;
     if(init_vfw_video_codec(priv)!=MPXP_Ok) return MPXP_False;
     MSG_V("INFO: Win32/VFW init OK!\n");
     return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver
-static void uninit(vd_private_t *priv)
+static void uninit(Opaque& ctx)
 {
+    vfw_private_t& priv=static_cast<vfw_private_t&>(ctx);
     vfw_close_video_codec(priv);
-    delete priv->o_bih;
-    delete priv;
 }
 
 // decode a frame
-static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
-    sh_video_t* sh = priv->sh;
+static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
+    vfw_private_t& priv=static_cast<vfw_private_t&>(ctx);
+    sh_video_t* sh = priv.sh;
     mp_image_t* mpi;
     HRESULT ret;
 
-    if(frame->len<=0) return NULL; // skipped frame
+    if(frame.len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(priv->parent,
+    mpi=mpcodecs_get_image(*priv.parent,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_WIDTH,
 	sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     // set stride:  (trick discovered by Andreas Ackermann - thanx!)
     sh->bih->biWidth=mpi->width; //mpi->stride[0]/(mpi->bpp/8);
-    priv->o_bih->biWidth=mpi->width; //mpi->stride[0]/(mpi->bpp/8);
+    priv.o_bih->biWidth=mpi->width; //mpi->stride[0]/(mpi->bpp/8);
 
-    sh->bih->biSizeImage = frame->len;
+    sh->bih->biSizeImage = frame.len;
 
-    if(priv->ex)
-    ret = ICDecompressEx(priv->hic,
+    if(priv.ex)
+    ret = ICDecompressEx(priv.hic,
 	  ( (sh->ds->flags&1) ? 0 : ICDECOMPRESS_NOTKEYFRAME ) |
-	  ( ((frame->flags&3)==2 && !(sh->ds->flags&1))?(ICDECOMPRESS_HURRYUP|ICDECOMPRESS_PREROL):0 ),
-	   sh->bih, frame->data, priv->o_bih, (frame->flags&3) ? 0 : mpi->planes[0]);
+	  ( ((frame.flags&3)==2 && !(sh->ds->flags&1))?(ICDECOMPRESS_HURRYUP|ICDECOMPRESS_PREROL):0 ),
+	   sh->bih, frame.data, priv.o_bih, (frame.flags&3) ? 0 : mpi->planes[0]);
     else
-    ret = ICDecompress(priv->hic,
+    ret = ICDecompress(priv.hic,
 	  ( (sh->ds->flags&1) ? 0 : ICDECOMPRESS_NOTKEYFRAME ) |
-	  ( ((frame->flags&3)==2 && !(sh->ds->flags&1))?(ICDECOMPRESS_HURRYUP|ICDECOMPRESS_PREROL):0 ),
-	   sh->bih, frame->data, priv->o_bih, (frame->flags&3) ? 0 : mpi->planes[0]);
+	  ( ((frame.flags&3)==2 && !(sh->ds->flags&1))?(ICDECOMPRESS_HURRYUP|ICDECOMPRESS_PREROL):0 ),
+	   sh->bih, frame.data, priv.o_bih, (frame.flags&3) ? 0 : mpi->planes[0]);
 
     if ((int)ret){
       MSG_WARN("Error decompressing frame, err=%d\n",ret);
@@ -316,9 +321,9 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
 
     // export palette:
     if(mpi->imgfmt==IMGFMT_RGB8 || mpi->imgfmt==IMGFMT_BGR8){
-	if (priv->palette)
+	if (priv.palette)
 	{
-	    mpi->planes[1] = priv->palette;
+	    mpi->planes[1] = priv.palette;
 	    mpi->flags |= MP_IMGFLAG_RGB_PALETTE;
 	    MSG_DBG2("Found and copied palette\n");
 	}

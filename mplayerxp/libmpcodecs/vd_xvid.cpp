@@ -26,18 +26,6 @@ static const vd_info_t info = {
     "http://www.xvid.org",
 };
 
-struct vd_private_t {
-    int			cs;
-    unsigned char	img_type;
-    any_t*		hdl;
-    mp_image_t*		mpi;
-    int			vo_initialized;
-    int			pp_level;
-    int			brightness;
-    int			resync;
-    sh_video_t*		sh;
-    video_decoder_t*	parent;
-};
 
 static const config_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
@@ -109,10 +97,11 @@ static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
 #define XVID_VERSION             XVID_MAKE_VERSION(1,1,3)
 #define XVID_API                 XVID_MAKE_API(4, 1)
 
-#define XVID_GBL_INIT    0 /* initialize xvidcore; must be called before using xvid_decore, or xvid_encore) */
-#define XVID_GBL_INFO    1 /* return some info about xvidcore, and the host computer */
-#define XVID_GBL_CONVERT 2 /* colorspace conversion utility */
-
+enum {
+    XVID_GBL_INIT=0, /* initialize xvidcore; must be called before using xvid_decore, or xvid_encore) */
+    XVID_GBL_INFO=1, /* return some info about xvidcore, and the host computer */
+    XVID_GBL_CONVERT=2 /* colorspace conversion utility */
+};
 /* XVID_GBL_INIT param1 */
 typedef struct {
     int version;
@@ -130,10 +119,11 @@ typedef struct {
     int num_threads;    /* [out] detected number of cpus/threads */
 } xvid_gbl_info_t;
 
-#define XVID_DEC_CREATE  0 /* create decore instance; return 0 on success */
-#define XVID_DEC_DESTROY 1 /* destroy decore instance: return 0 on success */
-#define XVID_DEC_DECODE  2 /* decode a frame: returns number of bytes consumed >= 0 */
-
+enum {
+    XVID_DEC_CREATE=0, /* create decore instance; return 0 on success */
+    XVID_DEC_DESTROY=1, /* destroy decore instance: return 0 on success */
+    XVID_DEC_DECODE=2 /* decode a frame: returns number of bytes consumed >= 0 */
+};
 typedef struct {
     int version;
     int width;     /* [in:opt] image width */
@@ -145,24 +135,26 @@ typedef struct {
 } xvid_dec_create_t;
 
 /* colorspace values */
-#define XVID_CSP_PLANAR   (1<< 0) /* 4:2:0 planar (==I420, except for pointers/strides) */
-#define XVID_CSP_USER	  XVID_CSP_PLANAR
-#define XVID_CSP_I420     (1<< 1) /* 4:2:0 planar */
-#define XVID_CSP_YV12     (1<< 2) /* 4:2:0 planar */
-#define XVID_CSP_YUY2     (1<< 3) /* 4:2:2 packed */
-#define XVID_CSP_UYVY     (1<< 4) /* 4:2:2 packed */
-#define XVID_CSP_YVYU     (1<< 5) /* 4:2:2 packed */
-#define XVID_CSP_BGRA     (1<< 6) /* 32-bit bgra packed */
-#define XVID_CSP_ABGR     (1<< 7) /* 32-bit abgr packed */
-#define XVID_CSP_RGBA     (1<< 8) /* 32-bit rgba packed */
-#define XVID_CSP_ARGB     (1<<15) /* 32-bit argb packed */
-#define XVID_CSP_BGR      (1<< 9) /* 24-bit bgr packed */
-#define XVID_CSP_RGB555   (1<<10) /* 16-bit rgb555 packed */
-#define XVID_CSP_RGB565   (1<<11) /* 16-bit rgb565 packed */
-#define XVID_CSP_SLICE    (1<<12) /* decoder only: 4:2:0 planar, per slice rendering */
-#define XVID_CSP_INTERNAL (1<<13) /* decoder only: 4:2:0 planar, returns ptrs to internal buffers */
-#define XVID_CSP_NULL     (1<<14) /* decoder only: dont output anything */
-#define XVID_CSP_VFLIP    (1<<31) /* vertical flip mask */
+enum {
+    XVID_CSP_PLANAR	=(1<< 0), /* 4:2:0 planar (==I420, except for pointers/strides) */
+    XVID_CSP_USER	=XVID_CSP_PLANAR,
+    XVID_CSP_I420	=(1<< 1), /* 4:2:0 planar */
+    XVID_CSP_YV12	=(1<< 2), /* 4:2:0 planar */
+    XVID_CSP_YUY2	=(1<< 3), /* 4:2:2 packed */
+    XVID_CSP_UYVY	=(1<< 4), /* 4:2:2 packed */
+    XVID_CSP_YVYU	=(1<< 5), /* 4:2:2 packed */
+    XVID_CSP_BGRA	=(1<< 6), /* 32-bit bgra packed */
+    XVID_CSP_ABGR	=(1<< 7), /* 32-bit abgr packed */
+    XVID_CSP_RGBA	=(1<< 8), /* 32-bit rgba packed */
+    XVID_CSP_ARGB	=(1<<15), /* 32-bit argb packed */
+    XVID_CSP_BGR	=(1<< 9), /* 24-bit bgr packed */
+    XVID_CSP_RGB555	=(1<<10), /* 16-bit rgb555 packed */
+    XVID_CSP_RGB565	=(1<<11), /* 16-bit rgb565 packed */
+    XVID_CSP_SLICE	=(1<<12), /* decoder only: 4:2:0 planar, per slice rendering */
+    XVID_CSP_INTERNAL	=(1<<13), /* decoder only: 4:2:0 planar, returns ptrs to internal buffers */
+    XVID_CSP_NULL	=(1<<14), /* decoder only: dont output anything */
+    XVID_CSP_VFLIP	=(1<<31) /* vertical flip mask */
+};
 /* xvid_image_t
 	for non-planar colorspaces use only plane[0] and stride[0]
 	four plane reserved for alpha*/
@@ -211,36 +203,39 @@ typedef struct
 } xvid_dec_stats_t;
 
 /* frame type flags */
-#define XVID_TYPE_VOL     -1 /* decoder only: vol was decoded */
-#define XVID_TYPE_NOTHING  0 /* decoder only (encoder stats): nothing was decoded/encoded */
-#define XVID_TYPE_AUTO     0 /* encoder: automatically determine coding type */
-#define XVID_TYPE_IVOP     1 /* intra frame */
-#define XVID_TYPE_PVOP     2 /* predicted frame */
-#define XVID_TYPE_BVOP     3 /* bidirectionally encoded */
-#define XVID_TYPE_SVOP     4 /* predicted+sprite frame */
-
+enum {
+    XVID_TYPE_VOL=-1, /* decoder only: vol was decoded */
+    XVID_TYPE_NOTHING=0, /* decoder only (encoder stats): nothing was decoded/encoded */
+    XVID_TYPE_AUTO=0, /* encoder: automatically determine coding type */
+    XVID_TYPE_IVOP, /* intra frame */
+    XVID_TYPE_PVOP, /* predicted frame */
+    XVID_TYPE_BVOP, /* bidirectionally encoded */
+    XVID_TYPE_SVOP /* predicted+sprite frame */
+};
 /* aspect ratios */
-#define XVID_PAR_11_VGA    1 /* 1:1 vga (square), default if supplied PAR is not a valid value */
-#define XVID_PAR_43_PAL    2 /* 4:3 pal (12:11 625-line) */
-#define XVID_PAR_43_NTSC   3 /* 4:3 ntsc (10:11 525-line) */
-#define XVID_PAR_169_PAL   4 /* 16:9 pal (16:11 625-line) */
-#define XVID_PAR_169_NTSC  5 /* 16:9 ntsc (40:33 525-line) */
-#define XVID_PAR_EXT      15 /* extended par; use par_width, par_height */
-
+enum {
+    XVID_PAR_11_VGA=1, /* 1:1 vga (square), default if supplied PAR is not a valid value */
+    XVID_PAR_43_PAL=2, /* 4:3 pal (12:11 625-line) */
+    XVID_PAR_43_NTSC=3, /* 4:3 ntsc (10:11 525-line) */
+    XVID_PAR_169_PAL=4, /* 16:9 pal (16:11 625-line) */
+    XVID_PAR_169_NTSC=5, /* 16:9 ntsc (40:33 525-line) */
+    XVID_PAR_EXT=15 /* extended par; use par_width, par_height */
+};
 /* XVID_DEC_DECODE param1 */
 /* general flags */
-#define XVID_LOWDELAY      (1<<0) /* lowdelay mode  */
-#define XVID_DISCONTINUITY (1<<1) /* indicates break in stream */
-#define XVID_DEBLOCKY      (1<<2) /* perform luma deblocking */
-#define XVID_DEBLOCKUV     (1<<3) /* perform chroma deblocking */
-#define XVID_FILMEFFECT    (1<<4) /* adds film grain */
-#define XVID_DERINGUV      (1<<5) /* perform chroma deringing, requires deblocking to work */
-#define XVID_DERINGY       (1<<6) /* perform luma deringing, requires deblocking to work */
+enum {
+    XVID_LOWDELAY	=(1<<0), /* lowdelay mode  */
+    XVID_DISCONTINUITY	=(1<<1), /* indicates break in stream */
+    XVID_DEBLOCKY	=(1<<2), /* perform luma deblocking */
+    XVID_DEBLOCKUV	=(1<<3), /* perform chroma deblocking */
+    XVID_FILMEFFECT	=(1<<4), /* adds film grain */
+    XVID_DERINGUV	=(1<<5), /* perform chroma deringing, requires deblocking to work */
+    XVID_DERINGY	=(1<<6), /* perform luma deringing, requires deblocking to work */
 
-#define XVID_DEC_FAST      (1<<29) /* disable postprocessing to decrease cpu usage *todo* */
-#define XVID_DEC_DROP      (1<<30) /* drop bframes to decrease cpu usage *todo* */
-#define XVID_DEC_PREROLL   (1<<31) /* decode as fast as you can, don't even show output *todo* */
-
+    XVID_DEC_FAST	=(1<<29), /* disable postprocessing to decrease cpu usage *todo* */
+    XVID_DEC_DROP	=(1<<30), /* drop bframes to decrease cpu usage *todo* */
+    XVID_DEC_PREROLL	=(1<<31) /* decode as fast as you can, don't even show output *todo* */
+};
 static int (*xvid_decore_ptr)(any_t* handle,
 			int dec_opt,
 			any_t*param1,
@@ -248,6 +243,25 @@ static int (*xvid_decore_ptr)(any_t* handle,
 static int (*xvid_global_ptr)(any_t*handle, int opt, any_t*param1, any_t*param2);
 static any_t*dll_handle;
 
+struct xvid_private_t : public Opaque {
+    xvid_private_t();
+    virtual ~xvid_private_t();
+
+    int			cs;
+    unsigned char	img_type;
+    any_t*		hdl;
+    mp_image_t*		mpi;
+    int			vo_initialized;
+    int			pp_level;
+    int			brightness;
+    int			resync;
+    sh_video_t*		sh;
+    video_decoder_t*	parent;
+};
+xvid_private_t::xvid_private_t() {}
+xvid_private_t::~xvid_private_t() {
+    if(hdl) (*xvid_decore_ptr)(hdl,XVID_DEC_DESTROY, NULL, NULL);
+}
 
 static int load_lib( const char *libname )
 {
@@ -317,20 +331,21 @@ static float stats2aspect(xvid_dec_stats_t *stats)
 }
 #endif
 
-static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
+static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
     UNUSED(psi);
-    if(!load_lib(probe->codec_dll)) return NULL;
-    vd_private_t* priv = new(zeromem) vd_private_t;
+    if(!load_lib(probe.codec_dll)) return NULL;
+    xvid_private_t* priv = new(zeromem) xvid_private_t;
     priv->sh=sh;
     return priv;
 }
 
 // init driver
-static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
+static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
+    xvid_private_t& priv=static_cast<xvid_private_t&>(ctx);
     xvid_gbl_info_t xvid_gbl_info;
     xvid_gbl_init_t xvid_ini;
     xvid_dec_create_t dec_p;
-    sh_video_t* sh = priv->sh;
+    sh_video_t* sh = priv.sh;
     int cs;
 
 
@@ -427,67 +442,66 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
 	,xvid_gbl_info.num_threads
 	,xvid_gbl_info.cpu_flags);
 
-    priv->parent = opaque;
-    priv->cs = cs;
-    priv->hdl = dec_p.handle;
-    priv->vo_initialized = 0;
+    priv.parent = &opaque;
+    priv.cs = cs;
+    priv.hdl = dec_p.handle;
+    priv.vo_initialized = 0;
 
     switch(cs) {
 	case XVID_CSP_INTERNAL:
-	    priv->img_type = MP_IMGTYPE_EXPORT;
+	    priv.img_type = MP_IMGTYPE_EXPORT;
 	    break;
 	case XVID_CSP_USER:
-	    priv->img_type = MP_IMGTYPE_STATIC;
+	    priv.img_type = MP_IMGTYPE_STATIC;
 	    break;
 	default:
-	    priv->img_type = MP_IMGTYPE_TEMP;
+	    priv.img_type = MP_IMGTYPE_TEMP;
 	    break;
     }
     return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
 }
 
 // uninit driver
-static void uninit(vd_private_t *priv){
-    if(!priv) return;
-    if(priv->hdl) (*xvid_decore_ptr)(priv->hdl,XVID_DEC_DESTROY, NULL, NULL);
-    delete priv;
+static void uninit(Opaque& ctx){
+    UNUSED(ctx);
     dlclose(dll_handle);
 }
 
 
 // decode a frame
-static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
+static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
+    xvid_private_t& priv=static_cast<xvid_private_t&>(ctx);
     xvid_dec_frame_t dec;
     xvid_dec_stats_t stats;
     mp_image_t* mpi = NULL;
     int consumed;
-    sh_video_t* sh = priv->sh;
+    sh_video_t* sh = priv.sh;
 
-    if(frame->len <= 0) return NULL;
+    if(frame.len <= 0) return NULL;
 
     memset(&dec,0,sizeof(xvid_dec_frame_t));
     memset(&stats, 0, sizeof(xvid_dec_stats_t));
     dec.version = XVID_VERSION;
     stats.version = XVID_VERSION;
 
-    dec.bitstream = frame->data;
-    dec.length = frame->len;
+    dec.bitstream = frame.data;
+    dec.length = frame.len;
     dec.general = 0;
-    dec.brightness = priv->brightness;
-    if(!priv->pp_level)	dec.general |= XVID_LOWDELAY | XVID_DEC_FAST;
-    if(priv->pp_level>0)	dec.general = 0;
-    if(priv->pp_level>1)	dec.general |= XVID_DEBLOCKY;
-    if(priv->pp_level>2)	dec.general |= XVID_DEBLOCKUV;
-    if(priv->pp_level>3)	dec.general |= XVID_DERINGY;
-    if(priv->pp_level>4)	dec.general |= XVID_DERINGUV;
-    if(priv->resync)	{ dec.general |= XVID_DISCONTINUITY; priv->resync=0; }
+    dec.brightness = priv.brightness;
+    if(!priv.pp_level)	dec.general |= XVID_LOWDELAY | XVID_DEC_FAST;
+    if(priv.pp_level>0)	dec.general = 0;
+    if(priv.pp_level>1)	dec.general |= XVID_DEBLOCKY;
+    if(priv.pp_level>2)	dec.general |= XVID_DEBLOCKUV;
+    if(priv.pp_level>3)	dec.general |= XVID_DERINGY;
+    if(priv.pp_level>4)	dec.general |= XVID_DERINGUV;
+    if(priv.resync)	{ dec.general |= XVID_DISCONTINUITY; priv.resync=0; }
 
-    if(frame->flags&3) dec.general |= XVID_DEC_DROP;
-    dec.output.csp = priv->cs;
-    mpi = mpcodecs_get_image(priv->parent, priv->img_type,  MP_IMGFLAG_ACCEPT_STRIDE,
+    if(frame.flags&3) dec.general |= XVID_DEC_DROP;
+    dec.output.csp = priv.cs;
+    mpi = mpcodecs_get_image(*priv.parent, priv.img_type,  MP_IMGFLAG_ACCEPT_STRIDE,
 				 sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
-    if(priv->cs != XVID_CSP_INTERNAL) {
+    if(priv.cs != XVID_CSP_INTERNAL) {
 	dec.output.plane[0] = mpi->planes[0];
 	dec.output.plane[1] = mpi->planes[1];
 	dec.output.plane[2] = mpi->planes[2];
@@ -497,7 +511,7 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
     }
     while(dec.length > 0) {
 	/* Decode data */
-	consumed = (*xvid_decore_ptr)(priv->hdl, XVID_DEC_DECODE, &dec, &stats);
+	consumed = (*xvid_decore_ptr)(priv.hdl, XVID_DEC_DECODE, &dec, &stats);
 	if (consumed < 0) {
 	    MSG_ERR("Decoding error\n");
 	    return NULL;
@@ -506,7 +520,7 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
 	dec.bitstream = reinterpret_cast<any_t*>(reinterpret_cast<long>(dec.bitstream)+consumed);
 	dec.length -= consumed;
     }
-    if (mpi != NULL && priv->cs == XVID_CSP_INTERNAL) {
+    if (mpi != NULL && priv.cs == XVID_CSP_INTERNAL) {
 	mpi->planes[0] = reinterpret_cast<unsigned char *>(dec.output.plane[0]);
 	mpi->planes[1] = reinterpret_cast<unsigned char *>(dec.output.plane[1]);
 	mpi->planes[2] = reinterpret_cast<unsigned char *>(dec.output.plane[2]);
@@ -519,7 +533,8 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(vd_private_t* priv,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
+    xvid_private_t& priv=static_cast<xvid_private_t&>(ctx);
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:
 	    *((unsigned*)arg)=5;
@@ -527,7 +542,7 @@ static MPXP_Rc control_vd(vd_private_t* priv,int cmd,any_t* arg,...){
 	case VDCTRL_SET_PP_LEVEL: {
 	    int quality=*((int*)arg);
 	    if(quality<0 || quality>5) quality=5;
-	    priv->pp_level=quality;
+	    priv.pp_level=quality;
 	    return MPXP_Ok;
 	}
 	case VDCTRL_SET_EQUALIZER: {
@@ -539,7 +554,7 @@ static MPXP_Rc control_vd(vd_private_t* priv,int cmd,any_t* arg,...){
 
 	    if(strcmp(reinterpret_cast<char*>(arg),VO_EC_BRIGHTNESS)!=0) return MPXP_False;
 
-	    priv->brightness = (value * 256) / 100;
+	    priv.brightness = (value * 256) / 100;
 	    return MPXP_Ok;
 	}
 	case VDCTRL_QUERY_FORMAT:
@@ -556,7 +571,7 @@ static MPXP_Rc control_vd(vd_private_t* priv,int cmd,any_t* arg,...){
 			return MPXP_True;
 	    else	return MPXP_False;
 	case VDCTRL_RESYNC_STREAM:
-	    priv->resync=1;
+	    priv.resync=1;
 	    return MPXP_True;
 	default: break;
     }

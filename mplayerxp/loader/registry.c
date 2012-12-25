@@ -1,5 +1,4 @@
-#include "config.h"
-#include "osdep/mplib.h"
+#include "mpxp_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>

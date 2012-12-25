@@ -43,27 +43,28 @@ LIBVD_EXTERN(huffyuv)
 /*
  * Bitmap types
  */
-#define BMPTYPE_YUV -1
-#define BMPTYPE_RGB -2
-#define BMPTYPE_RGBA -3
-
+enum {
+    BMPTYPE_YUV=-1,
+    BMPTYPE_RGB=-2,
+    BMPTYPE_RGBA=-3
+};
 /*
  * Compression methods
  */
-#define METHOD_LEFT 0
-#define METHOD_GRAD 1
-#define METHOD_MEDIAN 2
-#define DECORR_FLAG 64
-#define METHOD_LEFT_DECORR (METHOD_LEFT | DECORR_FLAG)
-#define METHOD_GRAD_DECORR (METHOD_GRAD | DECORR_FLAG)
-#define METHOD_OLD -2
+enum {
+    METHOD_LEFT=0,
+    METHOD_GRAD=1,
+    METHOD_MEDIAN=2,
+    DECORR_FLAG=64,
+    METHOD_LEFT_DECORR=(METHOD_LEFT | DECORR_FLAG),
+    METHOD_GRAD_DECORR=(METHOD_GRAD | DECORR_FLAG),
+    METHOD_OLD=-2,
+};
+static const uint32_t FOURCC_HFYU=mmioFOURCC('H','F','Y','U');
 
-#define FOURCC_HFYU mmioFOURCC('H','F','Y','U')
-
-#define HUFFTABLE_CLASSIC_YUV ((unsigned char*) -1)
-#define HUFFTABLE_CLASSIC_RGB ((unsigned char*) -2)
-#define HUFFTABLE_CLASSIC_YUV_CHROMA ((unsigned char*) -3)
-
+#define HUFFTABLE_CLASSIC_YUV ((unsigned char*)-1)
+#define HUFFTABLE_CLASSIC_RGB ((unsigned char*)-2)
+#define HUFFTABLE_CLASSIC_YUV_CHROMA ((unsigned char*)-3)
 
 /*
  * Huffman table
@@ -73,11 +74,13 @@ typedef struct {
     unsigned char table_data[129*25];
 } DecodeTable;
 
-
 /*
  * Decoder context
  */
-struct vd_private_t {
+struct huffyuv_private_t : public Opaque {
+    huffyuv_private_t();
+    virtual ~huffyuv_private_t();
+
     // Real image depth
     int bitcount;
     // Prediction method
@@ -94,6 +97,13 @@ struct vd_private_t {
     sh_video_t* sh;
     video_decoder_t* parent;
 };
+huffyuv_private_t::huffyuv_private_t() {}
+huffyuv_private_t::~huffyuv_private_t() {
+    if (abovebuf1)
+	delete abovebuf1;
+    if (abovebuf2)
+	delete abovebuf2;
+}
 
 static const video_probe_t probes[] = {
     { "huffyuv", "huffyuv", FOURCC_TAG('H','F','Y','U'), VCodecStatus_Working, {IMGFMT_YUY2,IMGFMT_BGR32,IMGFMT_BGR24}, {VideoFlag_None, VideoFlag_None } },
@@ -176,11 +186,12 @@ unsigned char huff_decompress(unsigned int* in, unsigned int *pos,
 
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...)
+static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...)
 {
+    huffyuv_private_t& priv=static_cast<huffyuv_private_t&>(ctx);
     switch(cmd) {
 	case VDCTRL_QUERY_FORMAT:
-	    if  (priv->bitmaptype == BMPTYPE_YUV) {
+	    if  (priv.bitmaptype == BMPTYPE_YUV) {
 		if (*((int*)arg) == IMGFMT_YUY2)
 		    return MPXP_True;
 		else
@@ -195,10 +206,10 @@ static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...)
     return MPXP_Unknown;
 }
 
-static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
+static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
     UNUSED(probe);
     UNUSED(psi);
-    vd_private_t* priv = new(zeromem) vd_private_t;
+    huffyuv_private_t* priv = new(zeromem) huffyuv_private_t;
     priv->sh=sh;
     return priv;
 }
@@ -208,22 +219,23 @@ static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice
  * Init HuffYUV decoder
  *
  */
-static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque)
+static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque)
 {
-    sh_video_t* sh = priv->sh;
+    huffyuv_private_t& priv=static_cast<huffyuv_private_t&>(ctx);
+    sh_video_t* sh = priv.sh;
     MPXP_Rc vo_ret; // Video output init ret value
     unsigned char *hufftable; // Compressed huffman tables
     BITMAPINFOHEADER *bih = sh->bih;
 
-    priv->parent = opaque;
+    priv.parent = &opaque;
 
     MSG_V( "[HuffYUV] Allocating above line buffer\n");
-    if ((priv->abovebuf1 = new unsigned char [4*bih->biWidth]) == NULL) {
+    if ((priv.abovebuf1 = new unsigned char [4*bih->biWidth]) == NULL) {
 	MSG_ERR(MSGTR_OutOfMemory);
 	return MPXP_False;
     }
 
-    if ((priv->abovebuf2 = new unsigned char [4*bih->biWidth]) == NULL) {
+    if ((priv.abovebuf2 = new unsigned char [4*bih->biWidth]) == NULL) {
 	MSG_ERR(MSGTR_OutOfMemory);
 	return MPXP_False;
     }
@@ -234,28 +246,28 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque)
     }
 
     /* Get bitcount */
-    priv->bitcount = 0;
+    priv.bitcount = 0;
     if (bih->biSize > sizeof(BITMAPINFOHEADER)+1)
-	priv->bitcount = *((char*)bih + sizeof(BITMAPINFOHEADER) + 1);
-    if (priv->bitcount == 0)
-	priv->bitcount = bih->biBitCount;
+	priv.bitcount = *((char*)bih + sizeof(BITMAPINFOHEADER) + 1);
+    if (priv.bitcount == 0)
+	priv.bitcount = bih->biBitCount;
 
     /* Get bitmap type */
-    switch (priv->bitcount & ~7) {
+    switch (priv.bitcount & ~7) {
 	case 16:
-	    priv->bitmaptype = BMPTYPE_YUV; // -1
+	    priv.bitmaptype = BMPTYPE_YUV; // -1
 	    MSG_V( "[HuffYUV] Image type is YUV\n");
 	    break;
 	case 24:
-	    priv->bitmaptype = BMPTYPE_RGB; // -2
+	    priv.bitmaptype = BMPTYPE_RGB; // -2
 	    MSG_V( "[HuffYUV] Image type is RGB\n");
 	    break;
 	case 32:
-	    priv->bitmaptype = BMPTYPE_RGBA; //-3
+	    priv.bitmaptype = BMPTYPE_RGBA; //-3
 	    MSG_V( "[HuffYUV] Image type is RGBA\n");
 	    break;
 	default:
-	    priv->bitmaptype = 0; // ERR
+	    priv.bitmaptype = 0; // ERR
 	    MSG_WARN( "[HuffYUV] Image type is unknown\n");
     }
 
@@ -263,34 +275,34 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque)
     switch (bih->biBitCount & 7) {
 	case 0:
 	    if (bih->biSize > sizeof(BITMAPINFOHEADER)) {
-		priv->method = *((unsigned char*)bih + sizeof(BITMAPINFOHEADER));
+		priv.method = *((unsigned char*)bih + sizeof(BITMAPINFOHEADER));
 		MSG_V( "[HuffYUV] Method stored in extra data\n");
 	    } else
-		priv->method = METHOD_OLD;	// Is it really needed?
+		priv.method = METHOD_OLD;	// Is it really needed?
 	    break;
 	case 1:
-	    priv->method = METHOD_LEFT;
+	    priv.method = METHOD_LEFT;
 	    break;
 	case 2:
-	    priv->method = METHOD_LEFT_DECORR;
+	    priv.method = METHOD_LEFT_DECORR;
 	    break;
 	case 3:
-	    if (priv->bitmaptype == BMPTYPE_YUV) {
-		priv->method = METHOD_GRAD;
+	    if (priv.bitmaptype == BMPTYPE_YUV) {
+		priv.method = METHOD_GRAD;
 	    } else {
-		priv->method = METHOD_GRAD_DECORR;
+		priv.method = METHOD_GRAD_DECORR;
 	    }
 	    break;
 	case 4:
-	    priv->method = METHOD_MEDIAN;
+	    priv.method = METHOD_MEDIAN;
 	    break;
 	default:
 	    MSG_V( "[HuffYUV] Method: fallback to METHOD_OLD\n");
-	    priv->method = METHOD_OLD;
+	    priv.method = METHOD_OLD;
     }
 
     /* Print method info */
-    switch (priv->method) {
+    switch (priv.method) {
 	case METHOD_LEFT:
 	    MSG_V( "[HuffYUV] Method: Predict Left\n");
 	    break;
@@ -315,7 +327,7 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque)
 
     /* Get compressed Huffman tables */
     if (bih->biSize == sizeof(BITMAPINFOHEADER) /*&& !(bih->biBitCount&7)*/) {
-	hufftable = (priv->bitmaptype == BMPTYPE_YUV) ? HUFFTABLE_CLASSIC_YUV : HUFFTABLE_CLASSIC_RGB;
+	hufftable = (priv.bitmaptype == BMPTYPE_YUV) ? HUFFTABLE_CLASSIC_YUV : HUFFTABLE_CLASSIC_RGB;
 	MSG_V( "[HuffYUV] Using classic static Huffman tables\n");
     } else {
 	hufftable = (unsigned char*)bih + sizeof(BITMAPINFOHEADER) + ((bih->biBitCount&7) ? 0 : 4);
@@ -323,14 +335,14 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque)
     }
 
     /* Initialize decoder Huffman tables */
-    hufftable = InitializeDecodeTable(hufftable, priv->decode1_shift, &(priv->decode1));
-    hufftable = InitializeDecodeTable(hufftable, priv->decode2_shift, &(priv->decode2));
-    InitializeDecodeTable(hufftable, priv->decode3_shift, &(priv->decode3));
+    hufftable = InitializeDecodeTable(hufftable, priv.decode1_shift, &(priv.decode1));
+    hufftable = InitializeDecodeTable(hufftable, priv.decode2_shift, &(priv.decode2));
+    InitializeDecodeTable(hufftable, priv.decode3_shift, &(priv.decode3));
 
     /*
      * Initialize video output device
      */
-    switch (priv->bitmaptype) {
+    switch (priv.bitmaptype) {
 	case BMPTYPE_RGB:
 	case BMPTYPE_YUV:
 	    vo_ret = mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
@@ -350,37 +362,28 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque)
  * Uninit HuffYUV decoder
  *
  */
-static void uninit(vd_private_t *priv)
-{
-    if (priv) {
-	if (priv->abovebuf1)
-	    delete priv->abovebuf1;
-	if (priv->abovebuf2)
-	    delete priv->abovebuf2;
-	delete priv;
-    }
-}
+static void uninit(Opaque& ctx) { UNUSED(ctx); }
 
 #define HUFF_DECOMPRESS_YUYV() \
 { \
-    y1 = huff_decompress((unsigned int *)encoded, &pos, &(priv->decode1), priv->decode1_shift); \
-    u = huff_decompress((unsigned int *)encoded, &pos, &(priv->decode2), priv->decode2_shift); \
-    y2 = huff_decompress((unsigned int *)encoded, &pos, &(priv->decode1), priv->decode1_shift); \
-    v = huff_decompress((unsigned int *)encoded, &pos, &(priv->decode3), priv->decode3_shift); \
+    y1 = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode1), priv.decode1_shift); \
+    u = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode2), priv.decode2_shift); \
+    y2 = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode1), priv.decode1_shift); \
+    v = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode3), priv.decode3_shift); \
 }
 
 #define HUFF_DECOMPRESS_RGB_DECORR() \
 { \
-    g = huff_decompress((unsigned int *)encoded, &pos, &(priv->decode2), priv->decode2_shift); \
-    b = huff_decompress((unsigned int *)encoded, &pos, &(priv->decode1), priv->decode1_shift); \
-    r = huff_decompress((unsigned int *)encoded, &pos, &(priv->decode3), priv->decode3_shift); \
+    g = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode2), priv.decode2_shift); \
+    b = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode1), priv.decode1_shift); \
+    r = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode3), priv.decode3_shift); \
 }
 
 #define HUFF_DECOMPRESS_RGB() \
 { \
-    b = huff_decompress((unsigned int *)encoded, &pos, &(priv->decode1), priv->decode1_shift); \
-    g = huff_decompress((unsigned int *)encoded, &pos, &(priv->decode2), priv->decode2_shift); \
-    r = huff_decompress((unsigned int *)encoded, &pos, &(priv->decode3), priv->decode3_shift); \
+    b = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode1), priv.decode1_shift); \
+    g = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode2), priv.decode2_shift); \
+    r = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode3), priv.decode3_shift); \
 }
 
 #define MEDIAN(left, above, aboveleft) \
@@ -482,9 +485,10 @@ static void uninit(vd_private_t *priv)
  * Decode a HuffYUV frame
  *
  */
-static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame)
+static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame)
 {
-    sh_video_t* sh = priv->sh;
+    huffyuv_private_t& priv=static_cast<huffyuv_private_t&>(ctx);
+    sh_video_t* sh = priv.sh;
     mp_image_t* mpi;
     int pixel_ptr;
     unsigned char y1, y2, u, v, r, g, b;
@@ -493,29 +497,29 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame)
     unsigned char *swap;
     int row, col;
     unsigned int pos = 32;
-    const unsigned char *encoded = (const unsigned char *)frame->data;
-    unsigned char *abovebuf = priv->abovebuf1;
-    unsigned char *curbuf = priv->abovebuf2;
+    const unsigned char *encoded = (const unsigned char *)frame.data;
+    unsigned char *abovebuf = priv.abovebuf1;
+    unsigned char *curbuf = priv.abovebuf2;
     unsigned char *outptr;
     int width = sh->src_w; // Real image width
     int height = sh->src_h; // Real image height
     int bgr32;
 
     // skipped frame
-    if(frame->len <= 0) return NULL;
+    if(frame.len <= 0) return NULL;
 
     /* Do not accept stride for rgb, it gives me wrong output :-( */
-    if (priv->bitmaptype == BMPTYPE_YUV)
-	mpi=mpcodecs_get_image(priv->parent, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,sh->src_w, sh->src_h);
+    if (priv.bitmaptype == BMPTYPE_YUV)
+	mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,sh->src_w, sh->src_h);
     else
-	mpi=mpcodecs_get_image(priv->parent, MP_IMGTYPE_TEMP, 0,sh->src_w, sh->src_h);
+	mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_TEMP, 0,sh->src_w, sh->src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     outptr = mpi->planes[0]; // Output image pointer
 
-    if (priv->bitmaptype == BMPTYPE_YUV) {
+    if (priv.bitmaptype == BMPTYPE_YUV) {
 	width >>= 1; // Each cycle stores two pixels
-	if (priv->method == METHOD_GRAD) {
+	if (priv.method == METHOD_GRAD) {
 	    /*
 	     * YUV predict gradient
 	     */
@@ -545,7 +549,7 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame)
 		abovebuf = curbuf;
 		curbuf = swap;
 	    }
-	} else if (priv->method == METHOD_MEDIAN) {
+	} else if (priv.method == METHOD_MEDIAN) {
 	    /*
 	     * YUV predict median
 	     */
@@ -610,7 +614,7 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame)
 	}
     } else {
 	bgr32 = (mpi->bpp) >> 5; // 1 if bpp = 32, 0 if bpp = 24
-	if (priv->method == METHOD_LEFT_DECORR) {
+	if (priv.method == METHOD_LEFT_DECORR) {
 	    /*
 	     * RGB predict left with decorrelation
 	     */
@@ -628,7 +632,7 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame)
 		    RGB_PREDLEFT_DECORR();
 		}
 	    }
-	} else if (priv->method == METHOD_GRAD_DECORR) {
+	} else if (priv.method == METHOD_GRAD_DECORR) {
 	    /*
 	     * RGB predict gradient with decorrelation
 	     */

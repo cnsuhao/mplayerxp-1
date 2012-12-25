@@ -2,7 +2,7 @@
 #include "wine/windef.h"
 #include "mediatype.h"
 #include "outputpin.h"
-#include "osdep/mplib.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

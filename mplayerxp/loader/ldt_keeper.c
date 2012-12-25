@@ -19,7 +19,6 @@
  */
 
 #include "ldt_keeper.h"
-#include "osdep/mplib.h"
 
 #include <string.h>
 #include <stdlib.h>

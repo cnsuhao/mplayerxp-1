@@ -77,23 +77,23 @@ void libmpcodecs_ad_register_options(m_config_t& cfg)
     }
 }
 
-const ad_functions_t* afm_find_driver(const char *name) {
+const ad_functions_t* afm_find_driver(const std::string& name) {
     unsigned i;
     for (i=0; mpcodecs_ad_drivers[i] != &mpcodecs_ad_null; i++) {
-	if(strcmp(mpcodecs_ad_drivers[i]->info->driver_name,name)==0){
+	if(name==mpcodecs_ad_drivers[i]->info->driver_name){
 	    return mpcodecs_ad_drivers[i];
 	}
     }
     return NULL;
 }
 
-const audio_probe_t* afm_probe_driver(ad_private_t*ctx,sh_audio_t *sh,audio_filter_info_t* afi) {
+const audio_probe_t* afm_probe_driver(Opaque& ctx,sh_audio_t *sh,audio_filter_info_t& afi) {
     unsigned i;
     const audio_probe_t* probe;
     for (i=0; mpcodecs_ad_drivers[i] != &mpcodecs_ad_null; i++) {
 	MSG_V("Probing: %s\n",mpcodecs_ad_drivers[i]->info->driver_name);
 	if((probe=mpcodecs_ad_drivers[i]->probe(sh->wtag))!=NULL) {
-	    ad_private_t* priv=mpcodecs_ad_drivers[i]->preinit(probe,sh,afi);
+	    Opaque* priv=mpcodecs_ad_drivers[i]->preinit(*probe,sh,afi);
 	    MSG_V("Driver: %s supports these outfmt for 0x%X wtag:\n"
 		    ,mpcodecs_ad_drivers[i]->info->driver_name,sh->wtag);
 	    for(i=0;i<Audio_MaxOutSample;i++) {
@@ -101,7 +101,8 @@ const audio_probe_t* afm_probe_driver(ad_private_t*ctx,sh_audio_t *sh,audio_filt
 		    if(probe->sample_fmt[i]==-1||probe->sample_fmt[i]==0) break;
 	    }
 	    MSG_V("\n");
-	    mpcodecs_ad_drivers[i]->uninit(priv);
+	    mpcodecs_ad_drivers[i]->uninit(*priv);
+	    delete priv;
 	    return probe;
 	}
     }

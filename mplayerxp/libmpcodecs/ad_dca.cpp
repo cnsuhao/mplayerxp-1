@@ -22,16 +22,21 @@ using namespace mpxp;
 #include "libao3/audio_out.h"
 #include "postproc/af.h"
 
-#define MAX_AC5_FRAME 4096
+static const unsigned MAX_AC5_FRAME=4096;
 
 dca_state_t* mpxp_dca_state;
 uint32_t mpxp_dca_accel=0;
 uint32_t mpxp_dca_flags=0;
 
-struct ad_private_t {
+struct dca_private_t : public Opaque {
+    dca_private_t();
+    virtual ~dca_private_t();
+
     float last_pts;
     sh_audio_t* sh;
 };
+dca_private_t::dca_private_t() {}
+dca_private_t::~dca_private_t() {}
 
 static const ad_info_t info = {
     "DTS Coherent Acoustics",
@@ -66,20 +71,19 @@ static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) {
     return NULL;
 }
 
-int dca_fillbuff(ad_private_t *priv,float *pts){
+int dca_fillbuff(dca_private_t& priv,float& pts){
     int length=0,flen=0;
     int flags=0;
     int sample_rate=0;
     int bit_rate=0;
     float apts=0.,null_pts;
-    sh_audio_t* sh_audio = priv->sh;
-
+    sh_audio_t* sh_audio=priv.sh;
     sh_audio->a_in_buffer_len=0;
     /* sync frame:*/
     while(1){
 	while(sh_audio->a_in_buffer_len<16){
-	    int c=demux_getc_r(sh_audio->ds,apts?&null_pts:&apts);
-	    if(c<0) { priv->last_pts=*pts=apts; return -1; } /* EOF*/
+	    int c=demux_getc_r(*sh_audio->ds,apts?null_pts:apts);
+	    if(c<0) { priv.last_pts=pts=apts; return -1; } /* EOF*/
 	    sh_audio->a_in_buffer[sh_audio->a_in_buffer_len++]=c;
 	}
 	length = dca_syncinfo (mpxp_dca_state,reinterpret_cast<uint8_t*>(sh_audio->a_in_buffer), reinterpret_cast<int *>(&flags), &sample_rate, &bit_rate, &flen);
@@ -92,8 +96,8 @@ int dca_fillbuff(ad_private_t *priv,float *pts){
     MSG_DBG2("dca[%08X]: len=%d  flags=0x%X  %d Hz %d bit/s frame=%u\n",*((long *)sh_audio->a_in_buffer),length,flags,sample_rate,bit_rate,flen);
     sh_audio->rate=sample_rate;
     sh_audio->i_bps=bit_rate/8;
-    demux_read_data_r(sh_audio->ds,reinterpret_cast<unsigned char*>(sh_audio->a_in_buffer+16),length-16,apts?&null_pts:&apts);
-    priv->last_pts=*pts=apts;
+    demux_read_data_r(*sh_audio->ds,reinterpret_cast<unsigned char*>(sh_audio->a_in_buffer+16),length-16,apts?null_pts:apts);
+    priv.last_pts=pts=apts;
 
     return length;
 }
@@ -125,7 +129,7 @@ static int dca_printinfo(sh_audio_t *sh_audio){
     return (flags&DCA_LFE) ? (channels+1) : channels;
 }
 
-ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi)
+Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_info_t& afi)
 {
     UNUSED(probe);
     /*	DTS audio:
@@ -138,22 +142,23 @@ ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_inf
 #define DCA_FMT24 AFMT_S24_LE
 #endif
     sh->afmt=bps2afmt(2);
-    if(	af_query_fmt(afi->afilter,afmt2mpaf(AFMT_FLOAT32)) == MPXP_Ok||
-	af_query_fmt(afi->afilter,afmt2mpaf(DCA_FMT32)) == MPXP_Ok ||
-	af_query_fmt(afi->afilter,afmt2mpaf(DCA_FMT24)) == MPXP_Ok)
+    if(	af_query_fmt(afi.afilter,afmt2mpaf(AFMT_FLOAT32)) == MPXP_Ok||
+	af_query_fmt(afi.afilter,afmt2mpaf(DCA_FMT32)) == MPXP_Ok ||
+	af_query_fmt(afi.afilter,afmt2mpaf(DCA_FMT24)) == MPXP_Ok)
     {
 	sh->afmt=AFMT_FLOAT32;
     }
     sh->audio_out_minsize=mp_conf.ao_channels*afmt2bps(sh->afmt)*256*8;
     sh->audio_in_minsize=MAX_AC5_FRAME;
-    ad_private_t* priv = new(zeromem) ad_private_t;
+    dca_private_t* priv = new(zeromem) dca_private_t;
     priv->sh = sh;
     return priv;
 }
 
-MPXP_Rc init(ad_private_t *priv)
+MPXP_Rc init(Opaque& ctx)
 {
-    sh_audio_t* sh_audio = priv->sh;
+    dca_private_t& priv=static_cast<dca_private_t&>(ctx);
+    sh_audio_t* sh_audio = priv.sh;
     sample_t level=1, bias=384;
     float pts;
     int flags=0;
@@ -164,7 +169,7 @@ MPXP_Rc init(ad_private_t *priv)
 	MSG_ERR("dca init failed\n");
 	return MPXP_False;
     }
-    if(dca_fillbuff(priv,&pts)<0){
+    if(dca_fillbuff(priv,pts)<0){
 	MSG_ERR("dca sync failed\n");
 	return MPXP_False;
     }
@@ -204,14 +209,12 @@ MPXP_Rc init(ad_private_t *priv)
     return MPXP_Ok;
 }
 
-void uninit(ad_private_t *ctx)
-{
-    delete ctx;
-}
+void uninit(Opaque& ctx) { UNUSED(ctx); }
 
-MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
+MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...)
 {
-    sh_audio_t* sh = priv->sh;
+    dca_private_t& priv=static_cast<dca_private_t&>(ctx);
+    sh_audio_t* sh = priv.sh;
     UNUSED(arg);
     switch(cmd) {
 	case ADCTRL_RESYNC_STREAM:
@@ -219,7 +222,7 @@ MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
 	    return MPXP_True;
 	case ADCTRL_SKIP_FRAME: {
 	    float pts;
-	    dca_fillbuff(priv,&pts); // skip AC3 frame
+	    dca_fillbuff(priv,pts); // skip AC3 frame
 	    return MPXP_True;
 	}
 	default:
@@ -228,18 +231,19 @@ MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
     return MPXP_Unknown;
 }
 
-unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts)
 {
+    dca_private_t& priv=static_cast<dca_private_t&>(ctx);
     sample_t level=1, bias=384;
     unsigned i,nblocks,flags=mpxp_dca_flags|DCA_ADJUST_LEVEL;
     unsigned len=0;
-    sh_audio_t* sh_audio = priv->sh;
+    sh_audio_t* sh_audio = priv.sh;
     UNUSED(minlen);
     UNUSED(maxlen);
 	if(!sh_audio->a_in_buffer_len) {
 	    if(dca_fillbuff(priv,pts)<0) return len; /* EOF */
 	}
-	else *pts=priv->last_pts;
+	else pts=priv.last_pts;
 	sh_audio->a_in_buffer_len=0;
 	if (dca_frame (mpxp_dca_state, reinterpret_cast<uint8_t *>(sh_audio->a_in_buffer), reinterpret_cast<int *>(&flags), &level, bias)!=0){
 	    MSG_WARN("dca: error decoding frame\n");

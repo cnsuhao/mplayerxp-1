@@ -84,22 +84,22 @@ void libmpcodecs_vd_register_options(m_config_t& cfg)
     }
 }
 
-const vd_functions_t* vfm_find_driver(const char *name) {
+const vd_functions_t* vfm_find_driver(const std::string& name) {
     unsigned i;
     for (i=0; mpcodecs_vd_drivers[i] != &mpcodecs_vd_null; i++)
-	if(strcmp(mpcodecs_vd_drivers[i]->info->driver_name,name)==0) {
+	if(name==mpcodecs_vd_drivers[i]->info->driver_name) {
 	    return mpcodecs_vd_drivers[i];
 	}
     return NULL;
 }
 
-const video_probe_t* vfm_driver_probe(vd_private_t* ctx,sh_video_t *sh,put_slice_info_t* psi) {
+const video_probe_t* vfm_driver_probe(Opaque& ctx,sh_video_t *sh,put_slice_info_t& psi) {
     unsigned i;
     const video_probe_t* probe;
     for (i=0; mpcodecs_vd_drivers[i] != &mpcodecs_vd_null; i++) {
 	MSG_V("Probing: %s\n",mpcodecs_vd_drivers[i]->info->driver_name);
 	if((probe=mpcodecs_vd_drivers[i]->probe(sh->fourcc))!=NULL) {
-	    vd_private_t* priv=mpcodecs_vd_drivers[i]->preinit(probe,sh,psi);
+	    Opaque* priv=mpcodecs_vd_drivers[i]->preinit(*probe,sh,psi);
 	    if(priv) {
 		const char* pfcc = reinterpret_cast<const char*>(&sh->fourcc);
 		MSG_V("Driver: %s supports these outfmt for %c%c%c%c fourcc:\n"
@@ -111,7 +111,8 @@ const video_probe_t* vfm_driver_probe(vd_private_t* ctx,sh_video_t *sh,put_slice
 		    if(probe->pix_fmt[i]==0||probe->pix_fmt[i]==-1) break;
 		}
 		MSG_V("\n");
-		mpcodecs_vd_drivers[i]->uninit(priv);
+		mpcodecs_vd_drivers[i]->uninit(*priv);
+		delete priv;
 		return probe;
 	    }
 	}

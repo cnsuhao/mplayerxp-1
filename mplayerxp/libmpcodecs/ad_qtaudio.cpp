@@ -156,13 +156,16 @@ static SoundComponentData		InputFormatInfo,OutputFormatInfo;
 static int InFrameSize;
 static int OutFrameSize;
 
-struct ad_private_t {
+struct qta_private_t : public Opaque {
+    qta_private_t();
+    virtual ~qta_private_t();
+
     sh_audio_t* sh;
 };
 
 static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { return NULL; }
 
-static ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi){
+static Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_info_t& afi){
     UNUSED(probe);
     UNUSED(afi);
     int error;
@@ -240,19 +243,20 @@ static ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_fil
 //InputBufferSize*WantedBufferSize/OutputBufferSize;
 
 #endif
-    ad_private_t* priv = new(zeromem) ad_private_t;
+    qta_private_t* priv = new(zeromem) qta_private_t;
     priv->sh = sh;
     return priv; // return values: 1=OK 0=ERROR
 }
 
-static MPXP_Rc init(ad_private_t *p)
+static MPXP_Rc init(Opaque& ctx)
 {
-    UNUSED(p);
+    UNUSED(ctx);
     return MPXP_Ok; // return values: 1=OK 0=ERROR
 }
 
-static void uninit(ad_private_t *p){
-    sh_audio_t* sh = p->sh;
+static void uninit(Opaque& ctx){
+    qta_private_t& priv=static_cast<qta_private_t&>(ctx);
+    sh_audio_t* sh = priv.sh;
     int error;
     unsigned long ConvertedFrames=0;
     unsigned long ConvertedBytes=0;
@@ -269,11 +273,11 @@ static void uninit(ad_private_t *p){
 #ifdef MACOSX
     ExitMovies();
 #endif
-    delete p;
 }
 
-static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts){
-    sh_audio_t* sh = priv->sh;
+static unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts){
+    qta_private_t& priv=static_cast<qta_private_t&>(ctx);
+    sh_audio_t* sh = priv.sh;
     int error;
     unsigned long FramesToGet=0; //how many frames the demuxer has to get
     unsigned long InputBufferSize=0; //size of the input buffer
@@ -292,7 +296,7 @@ static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,uns
 //	InputBufferSize, FramesToGet*OutFrameSize);
 
     if(InputBufferSize>(unsigned)sh->a_in_buffer_len){
-	int x=demux_read_data_r(sh->ds,reinterpret_cast<unsigned char*>(&sh->a_in_buffer[sh->a_in_buffer_len]),
+	int x=demux_read_data_r(*sh->ds,reinterpret_cast<unsigned char*>(&sh->a_in_buffer[sh->a_in_buffer_len]),
 	    InputBufferSize-sh->a_in_buffer_len,pts);
 	if(x>0) sh->a_in_buffer_len+=x;
 	if(InputBufferSize>(unsigned)sh->a_in_buffer_len)
@@ -318,9 +322,9 @@ static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,uns
     return ConvertedBytes;
 }
 
-static MPXP_Rc control_ad(ad_private_t *p,int cmd,any_t* arg, ...){
+static MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...){
     // various optional functions you MAY implement:
-    UNUSED(p);
+    UNUSED(ctx);
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;

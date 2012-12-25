@@ -5,7 +5,6 @@
 
 *********************************************************/
 #include "mpxp_config.h"
-#include "osdep/mplib.h"
 
 #ifndef NOAVIFILE_HEADERS
 #include "audiodecoder.h"

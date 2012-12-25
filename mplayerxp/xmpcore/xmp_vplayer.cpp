@@ -227,7 +227,7 @@ static int mpxp_play_video(Demuxer* demuxer,sh_audio_t* sh_audio,sh_video_t*sh_v
     // PTS = (last timestamp) + (bytes after last timestamp)/(bytes per sec)
     a_pts=d_audio->pts;
     if(!delay_corrected) if(a_pts) delay_corrected=1;
-    a_pts+=(ds_tell_pts_r(d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
+    a_pts+=(ds_tell_pts_r(*d_audio)-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 
     mpxp_dbg2<<"### A:"<<a_pts<<" ("<<(a_pts-delay)<<")  V:"<<v_pts<<"  A-V:"<<((a_pts-delay)-v_pts)<<std::endl;
 

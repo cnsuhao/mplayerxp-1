@@ -83,7 +83,10 @@ LIBVD_EXTERN(lavc)
 
 
 static int vcodec_inited=0;
-struct vd_private_t {
+struct vlavc_private_t : public Opaque {
+    vlavc_private_t();
+    virtual ~vlavc_private_t();
+
     video_decoder_t* parent;
     sh_video_t* sh;
     int use_slices;
@@ -107,6 +110,19 @@ struct vd_private_t {
     const video_probe_t* probe;
     put_slice_info_t*	psi;
 };
+vlavc_private_t::vlavc_private_t() {}
+vlavc_private_t::~vlavc_private_t() {
+    if(ctx) {
+	if (avcodec_close(ctx) < 0)
+	    MSG_ERR( MSGTR_CantCloseCodec);
+	if (ctx->extradata_size)
+	    delete ctx->extradata;
+	delete ctx;
+	delete lavc_picture;
+    }
+    if(probe) { delete probe->codec_dll; delete probe; }
+}
+
 static pp_context* ppContext=NULL;
 static void draw_slice(struct AVCodecContext *s, const AVFrame *src, int offset[4], int y, int type, int height);
 
@@ -131,9 +147,10 @@ const __attribute((used)) uint8_t last_coeff_flag_offset_8x8[63] = {
 };
 
 /* to set/get/query special features/parameters */
-static MPXP_Rc control_vd(vd_private_t *priv,int cmd,any_t* arg,...){
+static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
+    vlavc_private_t& priv=static_cast<vlavc_private_t&>(ctx);
     uint32_t out_fourcc;
-    AVCodecContext *avctx = priv->ctx;
+    AVCodecContext *avctx = priv.ctx;
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:
 	    *((unsigned*)arg)=PP_QUALITY_MAX;
@@ -218,6 +235,7 @@ static const video_probe_t* __FASTCALL__ probe(uint32_t fcc) {
     vprobe=new(zeromem) video_probe_t;
     vprobe->driver="lavc";
     vprobe->codec_dll=mp_strdup(avcodec_get_name(ff_id));
+    i=0;
     if(codec->pix_fmts)
     for(i=0;i<Video_MaxOutFmt;i++) {
 	if(codec->pix_fmts[i]==-1) break;
@@ -228,11 +246,11 @@ static const video_probe_t* __FASTCALL__ probe(uint32_t fcc) {
     return vprobe;
 }
 
-static MPXP_Rc find_vdecoder(vd_private_t* ctx)
+static MPXP_Rc find_vdecoder(vlavc_private_t& ctx)
 {
-    sh_video_t* sh = ctx->sh;
+    sh_video_t* sh = ctx.sh;
     const video_probe_t* vprobe=probe(sh->fourcc);
-    ctx->probe = vprobe;
+    ctx.probe = vprobe;
     if(vprobe) {
 	sh->codec=new(zeromem) struct codecs_st;
 	strcpy(sh->codec->dll_name,vprobe->codec_dll);
@@ -244,100 +262,101 @@ static MPXP_Rc find_vdecoder(vd_private_t* ctx)
     return MPXP_False;
 }
 
-static vd_private_t* preinit(const video_probe_t* probe,sh_video_t *sh,put_slice_info_t* psi){
+static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
     UNUSED(probe);
-    vd_private_t* priv = new(zeromem) vd_private_t;
+    vlavc_private_t* priv = new(zeromem) vlavc_private_t;
     priv->sh=sh;
-    priv->psi=psi;
+    priv->psi=&psi;
     return priv;
 }
 
-static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
+static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
+    vlavc_private_t& priv=static_cast<vlavc_private_t&>(ctx);
     unsigned avc_version=0;
     int pp_flags;
-    sh_video_t* sh = priv->sh;
+    sh_video_t* sh = priv.sh;
     if(mp_conf.npp_options) pp2_init();
     if(!vcodec_inited){
 //	avcodec_init();
 	avcodec_register_all();
 	vcodec_inited=1;
     }
-    priv->parent = opaque;
-    priv->frame_number=-2;
+    priv.parent = &opaque;
+    priv.frame_number=-2;
     if(!sh->codec) if(find_vdecoder(priv)!=MPXP_False) {
 	MSG_ERR("Can't find lavc decoder\n");
 	return MPXP_False;
     }
-    priv->lavc_codec = (AVCodec *)avcodec_find_decoder_by_name(sh->codec->dll_name);
-    if(!priv->lavc_codec){
+    priv.lavc_codec = (AVCodec *)avcodec_find_decoder_by_name(sh->codec->dll_name);
+    if(!priv.lavc_codec){
 	MSG_ERR(MSGTR_MissingLAVCcodec,sh->codec->dll_name);
 	return MPXP_False;
     }
 
-    priv->ctx = avcodec_alloc_context3(priv->lavc_codec);
-    priv->lavc_picture = avcodec_alloc_frame();
-    if(!(priv->ctx && priv->lavc_picture)) {
+    priv.ctx = avcodec_alloc_context3(priv.lavc_codec);
+    priv.lavc_picture = avcodec_alloc_frame();
+    if(!(priv.ctx && priv.lavc_picture)) {
 	MSG_ERR(MSGTR_OutOfMemory);
 	return MPXP_False;
     }
 
-    priv->ctx->width = sh->src_w;
-    priv->ctx->height= sh->src_h;
-  //  priv->ctx->error_recognition= lavc_param_error_resilience;
-    priv->ctx->error_concealment= lavc_param_error_concealment;
-    priv->ctx->debug= lavc_param_debug;
-    priv->ctx->codec_tag= sh->fourcc;
-    priv->ctx->stream_codec_tag=sh->video.fccHandler;
-    priv->ctx->idct_algo=0; /*auto*/
+    priv.ctx->width = sh->src_w;
+    priv.ctx->height= sh->src_h;
+  //  priv.ctx->error_recognition= lavc_param_error_resilience;
+    priv.ctx->error_concealment= lavc_param_error_concealment;
+    priv.ctx->debug= lavc_param_debug;
+    priv.ctx->codec_tag= sh->fourcc;
+    priv.ctx->stream_codec_tag=sh->video.fccHandler;
+    priv.ctx->idct_algo=0; /*auto*/
 #if 0
     if (lavc_param_debug)
 	av_log_set_level(AV_LOG_DEBUG);
 #endif
-    priv->ctx->debug_mv= lavc_param_vismv;
-    priv->ctx->skip_top   = lavc_param_skip_top;
-    priv->ctx->skip_bottom= lavc_param_skip_bottom;
+    priv.ctx->debug_mv= lavc_param_vismv;
+    priv.ctx->skip_top   = lavc_param_skip_top;
+    priv.ctx->skip_bottom= lavc_param_skip_bottom;
     if(lavc_param_lowres_str != NULL) {
 	int lowres_w=0;
 	sscanf(lavc_param_lowres_str, "%d,%d", &lavc_param_lowres, &lowres_w);
-	if(lavc_param_lowres < 1 || lavc_param_lowres > 16 || (lowres_w > 0 && priv->ctx->width < lowres_w))
+	if(lavc_param_lowres < 1 || lavc_param_lowres > 16 || (lowres_w > 0 && priv.ctx->width < lowres_w))
 	    lavc_param_lowres = 0;
-	priv->ctx->lowres = lavc_param_lowres;
+	priv.ctx->lowres = lavc_param_lowres;
     }
-    priv->ctx->skip_loop_filter = str2AVDiscard(lavc_param_skip_loop_filter_str);
-    priv->ctx->skip_idct = str2AVDiscard(lavc_param_skip_idct_str);
-    priv->ctx->skip_frame = str2AVDiscard(lavc_param_skip_frame_str);
+    priv.ctx->skip_loop_filter = str2AVDiscard(lavc_param_skip_loop_filter_str);
+    priv.ctx->skip_idct = str2AVDiscard(lavc_param_skip_idct_str);
+    priv.ctx->skip_frame = str2AVDiscard(lavc_param_skip_frame_str);
     if(sh->bih)
-	priv->ctx->bits_per_coded_sample= sh->bih->biBitCount;
-    MSG_DBG2("libavcodec.size: %d x %d\n",priv->ctx->width,priv->ctx->height);
+	priv.ctx->bits_per_coded_sample= sh->bih->biBitCount;
+    MSG_DBG2("libavcodec.size: %d x %d\n",priv.ctx->width,priv.ctx->height);
     /* AVRn stores huffman table in AVI header */
     /* Pegasus MJPEG stores it also in AVI header, but it uses the common
        MJPG fourcc :( */
     if (sh->bih && (sh->bih->biSize != sizeof(BITMAPINFOHEADER)) &&
 	(sh->fourcc == mmioFOURCC('A','V','R','n') ||
 	sh->fourcc == mmioFOURCC('M','J','P','G'))) {
-//	priv->ctx->flags |= CODEC_FLAG_EXTERN_HUFF;
-	priv->ctx->extradata_size = sh->bih->biSize-sizeof(BITMAPINFOHEADER);
-	priv->ctx->extradata = new uint8_t [priv->ctx->extradata_size];
-	memcpy(priv->ctx->extradata, sh->bih+sizeof(BITMAPINFOHEADER),
-	    priv->ctx->extradata_size);
+//	priv.ctx->flags |= CODEC_FLAG_EXTERN_HUFF;
+	priv.ctx->extradata_size = sh->bih->biSize-sizeof(BITMAPINFOHEADER);
+	priv.ctx->extradata = new uint8_t [priv.ctx->extradata_size];
+	memcpy(priv.ctx->extradata, sh->bih+sizeof(BITMAPINFOHEADER),
+	    priv.ctx->extradata_size);
     }
     if(sh->fourcc == mmioFOURCC('R', 'V', '1', '0')
 	|| sh->fourcc == mmioFOURCC('R', 'V', '1', '3')
 	|| sh->fourcc == mmioFOURCC('R', 'V', '2', '0')
 	|| sh->fourcc == mmioFOURCC('R', 'V', '3', '0')
 	|| sh->fourcc == mmioFOURCC('R', 'V', '4', '0')) {
-	    priv->ctx->extradata_size= 8;
-	    priv->ctx->extradata = new uint8_t[priv->ctx->extradata_size];
+	    priv.ctx->extradata_size= 8;
+	    priv.ctx->extradata = new uint8_t[priv.ctx->extradata_size];
 	    if(sh->bih->biSize!=sizeof(*sh->bih)+8){
 		/* only 1 packet per frame & sub_id from fourcc */
-		((uint32_t*)priv->ctx->extradata)[0] = 0;
-		((uint32_t*)priv->ctx->extradata)[1] =
+		((uint32_t*)priv.ctx->extradata)[0] = 0;
+		((uint32_t*)priv.ctx->extradata)[1] =
 		(sh->fourcc == mmioFOURCC('R', 'V', '1', '3')) ? 0x10003001 : 0x10000000;
 	    } else {
 		/* has extra slice header (demux_rm or rm->avi streamcopy) */
 		unsigned int* extrahdr=(unsigned int*)(sh->bih+1);
-		((uint32_t*)priv->ctx->extradata)[0] = extrahdr[0];
-		((uint32_t*)priv->ctx->extradata)[1] = extrahdr[1];
+		((uint32_t*)priv.ctx->extradata)[0] = extrahdr[0];
+		((uint32_t*)priv.ctx->extradata)[1] = extrahdr[1];
 	    }
 	}
     if (sh->bih && (sh->bih->biSize != sizeof(BITMAPINFOHEADER)) &&
@@ -359,50 +378,50 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
 	 sh->fourcc == mmioFOURCC('L','O','C','O') ||
 	 sh->fourcc == mmioFOURCC('t','h','e','o')
 	 )) {
-	    priv->ctx->extradata_size = sh->bih->biSize-sizeof(BITMAPINFOHEADER);
-	    priv->ctx->extradata = new uint8_t [priv->ctx->extradata_size];
-	    memcpy(priv->ctx->extradata, sh->bih+1, priv->ctx->extradata_size);
+	    priv.ctx->extradata_size = sh->bih->biSize-sizeof(BITMAPINFOHEADER);
+	    priv.ctx->extradata = new uint8_t [priv.ctx->extradata_size];
+	    memcpy(priv.ctx->extradata, sh->bih+1, priv.ctx->extradata_size);
     }
     if (sh->ImageDesc &&
 	 sh->fourcc == mmioFOURCC('S','V','Q','3')){
-	    priv->ctx->extradata_size = *(int*)sh->ImageDesc;
-	    priv->ctx->extradata = new uint8_t [priv->ctx->extradata_size];
-	    memcpy(priv->ctx->extradata, ((int*)sh->ImageDesc)+1, priv->ctx->extradata_size);
+	    priv.ctx->extradata_size = *(int*)sh->ImageDesc;
+	    priv.ctx->extradata = new uint8_t [priv.ctx->extradata_size];
+	    memcpy(priv.ctx->extradata, ((int*)sh->ImageDesc)+1, priv.ctx->extradata_size);
     }
     /* Pass palette to codec */
 #if 0
     if (sh->bih && (sh->bih->biBitCount <= 8)) {
-	priv->ctx->palctrl = (AVPaletteControl*)mp_calloc(1,sizeof(AVPaletteControl));
-	priv->ctx->palctrl->palette_changed = 1;
+	priv.ctx->palctrl = (AVPaletteControl*)mp_calloc(1,sizeof(AVPaletteControl));
+	priv.ctx->palctrl->palette_changed = 1;
 	if (sh->bih->biSize-sizeof(BITMAPINFOHEADER))
 	    /* Palette size in biSize */
-	    memcpy(priv->ctx->palctrl->palette, sh->bih+1,
+	    memcpy(priv.ctx->palctrl->palette, sh->bih+1,
 		   std::min(sh->bih->biSize-sizeof(BITMAPINFOHEADER), AVPALETTE_SIZE));
 	else
 	    /* Palette size in biClrUsed */
-	    memcpy(priv->ctx->palctrl->palette, sh->bih+1,
+	    memcpy(priv.ctx->palctrl->palette, sh->bih+1,
 		   std::min(sh->bih->biClrUsed * 4, AVPALETTE_SIZE));
 	}
 #endif
     if(sh->bih)
-	priv->ctx->bits_per_coded_sample= sh->bih->biBitCount;
+	priv.ctx->bits_per_coded_sample= sh->bih->biBitCount;
 
 #ifdef _OPENMP
     /* Note: Slices have effect on UNI-processor machines only */
     if(enable_ffslices && omp_get_num_procs()>1 && mp_conf.gomp) enable_ffslices=0;
 #endif
-    if(priv->lavc_codec->capabilities&CODEC_CAP_DRAW_HORIZ_BAND && enable_ffslices) priv->cap_slices=1;
+    if(priv.lavc_codec->capabilities&CODEC_CAP_DRAW_HORIZ_BAND && enable_ffslices) priv.cap_slices=1;
 /* enable DR1 method */
-    if(priv->lavc_codec->capabilities&CODEC_CAP_DR1) priv->cap_dr1=1;
-    priv->ctx->flags|= CODEC_FLAG_EMU_EDGE;
+    if(priv.lavc_codec->capabilities&CODEC_CAP_DR1) priv.cap_dr1=1;
+    priv.ctx->flags|= CODEC_FLAG_EMU_EDGE;
 
     if(lavc_param_threads < 0) lavc_param_threads = get_number_cpu();
     if(lavc_param_threads > 1) {
-	priv->ctx->thread_count = lavc_param_threads;
+	priv.ctx->thread_count = lavc_param_threads;
 	MSG_STATUS("Using %i threads in lavc\n",lavc_param_threads);
     }
     /* open it */
-    if (avcodec_open2(priv->ctx, priv->lavc_codec, NULL) < 0) {
+    if (avcodec_open2(priv.ctx, priv.lavc_codec, NULL) < 0) {
 	MSG_ERR(MSGTR_CantOpenCodec);
 	return MPXP_False;
     }
@@ -437,17 +456,8 @@ static MPXP_Rc init(vd_private_t *priv,video_decoder_t* opaque){
 }
 
 // uninit driver
-static void uninit(vd_private_t *priv){
-    if(priv->ctx) {
-	if (avcodec_close(priv->ctx) < 0)
-	    MSG_ERR( MSGTR_CantCloseCodec);
-	if (priv->ctx->extradata_size)
-	    delete priv->ctx->extradata;
-	delete priv->ctx;
-	delete priv->lavc_picture;
-    }
-    if(priv->probe) { delete priv->probe->codec_dll; delete priv->probe; }
-    delete priv;
+static void uninit(Opaque& ctx){
+    vlavc_private_t& priv=static_cast<vlavc_private_t&>(ctx);
     if(ppContext) pp_free_context(ppContext);
     ppContext=NULL;
     pp2_uninit();
@@ -455,7 +465,7 @@ static void uninit(vd_private_t *priv){
 }
 
 static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
-    vd_private_t *priv = reinterpret_cast<vd_private_t*>(avctx->opaque);
+    vlavc_private_t& priv = *reinterpret_cast<vlavc_private_t*>(avctx->opaque);
     mp_image_t* mpi=NULL;
     int flags= MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE;
     int type= MP_IMGTYPE_IPB;
@@ -479,25 +489,25 @@ static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
 	    type = MP_IMGTYPE_STATIC;
 	    flags |= MP_IMGFLAG_PRESERVE;
 	}
-	flags|=((avctx->skip_frame==AVDISCARD_NONE) && priv->use_slices) ?
+	flags|=((avctx->skip_frame==AVDISCARD_NONE) && priv.use_slices) ?
 		MP_IMGFLAG_DRAW_CALLBACK:0;
 	MSG_DBG2( type == MP_IMGTYPE_STATIC ? "using STATIC\n" : "using TEMP\n");
     } else {
 	if(!pic->reference){
-	    priv->b_count++;
-	    flags|=((avctx->skip_frame==AVDISCARD_NONE) && priv->use_slices) ?
+	    priv.b_count++;
+	    flags|=((avctx->skip_frame==AVDISCARD_NONE) && priv.use_slices) ?
 		    MP_IMGFLAG_DRAW_CALLBACK:0;
 	}else{
-	    priv->ip_count++;
+	    priv.ip_count++;
 	    flags|= MP_IMGFLAG_PRESERVE|MP_IMGFLAG_READABLE
-		    | (priv->use_slices ? MP_IMGFLAG_DRAW_CALLBACK : 0);
+		    | (priv.use_slices ? MP_IMGFLAG_DRAW_CALLBACK : 0);
 	}
     }
 
     if (!pic->buffer_hints) {
-	if(priv->b_count>1 || priv->ip_count>2){
+	if(priv.b_count>1 || priv.ip_count>2){
 	    MSG_WARN("DR1 failure\n");
-	    priv->use_dr1=0; //FIXME
+	    priv.use_dr1=0; //FIXME
 	    avctx->get_buffer= avcodec_default_get_buffer;
 	    return avctx->get_buffer(avctx, pic);
 	}
@@ -510,7 +520,7 @@ static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
     }
 
     MSG_V("ff width=%i height=%i\n",width,height);
-    mpi= mpcodecs_get_image(priv->parent,type, flags, (width+align)&(~align), (height+align)&(~align));
+    mpi= mpcodecs_get_image(*priv.parent,type, flags, (width+align)&(~align), (height+align)&(~align));
     if(mpi->flags & MP_IMGFLAG_DIRECT) mpi->flags |= MP_IMGFLAG_RENDERED;
     // Palette support: libavcodec copies palette to *data[1]
     if (mpi->bpp == 8) mpi->planes[1] = new unsigned char [AVPALETTE_SIZE];
@@ -529,15 +539,15 @@ static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
     pic->opaque = mpi;
 
     if(pic->reference) {
-//	 pic->age= priv->ip_age[0];
-	priv->ip_age[0]= priv->ip_age[1]+1;
-	priv->ip_age[1]= 1;
-	priv->b_age++;
+//	 pic->age= priv.ip_age[0];
+	priv.ip_age[0]= priv.ip_age[1]+1;
+	priv.ip_age[1]= 1;
+	priv.b_age++;
     } else {
-//	 pic->age= priv->b_age;
-	priv->ip_age[0]++;
-	priv->ip_age[1]++;
-	priv->b_age=1;
+//	 pic->age= priv.b_age;
+	priv.ip_age[0]++;
+	priv.ip_age[1]++;
+	priv.b_age=1;
     }
     pic->type= FF_BUFFER_TYPE_USER;
     return 0;
@@ -545,15 +555,14 @@ static int get_buffer(AVCodecContext *avctx, AVFrame *pic){
 
 static void release_buffer(struct AVCodecContext *avctx, AVFrame *pic){
     mp_image_t* mpi= reinterpret_cast<mp_image_t*>(pic->opaque);
-    vd_private_t *priv = reinterpret_cast<vd_private_t*>(avctx->opaque);
-    sh_video_t * sh = priv->sh;
+    vlavc_private_t& priv = *reinterpret_cast<vlavc_private_t*>(avctx->opaque);
     int i;
 
-    if(priv->ip_count <= 2 && priv->b_count<=1){
+    if(priv.ip_count <= 2 && priv.b_count<=1){
 	if(mpi->flags&MP_IMGFLAG_PRESERVE)
-	    priv->ip_count--;
+	    priv.ip_count--;
 	else
-	    priv->b_count--;
+	    priv.b_count--;
     }
 
     if(mpi) {
@@ -579,15 +588,15 @@ static void draw_slice(struct AVCodecContext *s,
 {
     UNUSED(offset);
     UNUSED(type);
-    vd_private_t *priv=reinterpret_cast<vd_private_t*>(s->opaque);
-    sh_video_t *sh=priv->sh;
-    mp_image_t *mpi=priv->mpi;
+    vlavc_private_t& priv=*reinterpret_cast<vlavc_private_t*>(s->opaque);
+    sh_video_t *sh=priv.sh;
+    mp_image_t *mpi=priv.mpi;
     unsigned long long int total_frame;
     unsigned orig_idx = mpi->xp_idx;
     /* sync-point*/
-    if(src->pict_type==AV_PICTURE_TYPE_I) priv->frame_number = src->coded_picture_number;
-    total_frame = priv->frame_number;
-    if(priv->use_dr1) { MSG_DBG2("Ignoring draw_slice due dr1\n"); return; } /* we may call vo_start_slice() here */
+    if(src->pict_type==AV_PICTURE_TYPE_I) priv.frame_number = src->coded_picture_number;
+    total_frame = priv.frame_number;
+    if(priv.use_dr1) { MSG_DBG2("Ignoring draw_slice due dr1\n"); return; } /* we may call vo_start_slice() here */
 //    mpi=mpcodecs_get_image(sh,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,s->width,s->height);
 
     mpi->stride[0]=src->linesize[0];
@@ -601,10 +610,10 @@ static void draw_slice(struct AVCodecContext *s,
     mpi->h=height;
     mpi->chroma_height = height >> mpi->chroma_y_shift;
     /* provide info for pp */
-    mpi->qscale=(char *)priv->lavc_picture->qscale_table;
-    mpi->qstride=priv->lavc_picture->qstride;
-    mpi->pict_type=priv->lavc_picture->pict_type;
-    mpi->qscale_type=priv->lavc_picture->qscale_type;
+    mpi->qscale=(char *)priv.lavc_picture->qscale_table;
+    mpi->qstride=priv.lavc_picture->qstride;
+    mpi->pict_type=priv.lavc_picture->pict_type;
+    mpi->qscale_type=priv.lavc_picture->qscale_type;
 
     if(sh->codec->outfmt[sh->outfmtidx] == IMGFMT_I420 ||
        sh->codec->outfmt[sh->outfmtidx] == IMGFMT_IYUV)
@@ -642,10 +651,10 @@ static void draw_slice(struct AVCodecContext *s,
     src->pict_type==AV_PICTURE_TYPE_P?"p":
     src->pict_type==AV_PICTURE_TYPE_I?"i":"??"
     ,mpi->width,mpi->height,mpi->x,mpi->y,mpi->w,mpi->h);
-    __MP_ATOMIC(priv->psi->active_slices++);
-    mpcodecs_draw_slice (priv->parent, mpi);
+    __MP_ATOMIC(priv.psi->active_slices++);
+    mpcodecs_draw_slice (*priv.parent, mpi);
     mpi->xp_idx = orig_idx;
-    __MP_ATOMIC(priv->psi->active_slices--);
+    __MP_ATOMIC(priv.psi->active_slices--);
 }
 
 /* copypaste from demux_real.c - it should match to get it working!*/
@@ -658,40 +667,41 @@ typedef struct __attribute__((__packed__)) dp_hdr_s {
 } dp_hdr_t;
 
 // decode a frame
-static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
+static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
+    vlavc_private_t& priv=static_cast<vlavc_private_t&>(ctx);
     int got_picture=0;
     int ret,has_b_frames;
-    unsigned len=frame->len;
-    any_t* data=frame->data;
+    unsigned len=frame.len;
+    any_t* data=frame.data;
     mp_image_t* mpi=NULL;
-    sh_video_t* sh = priv->sh;
+    sh_video_t* sh = priv.sh;
 
-    priv->ctx->opaque=priv;
-    if(frame->len<=0) return NULL; // skipped frame
+    priv.ctx->opaque=&priv;
+    if(frame.len<=0) return NULL; // skipped frame
 
-    priv->ctx->skip_frame=(frame->flags&3)?((frame->flags&2)?AVDISCARD_NONKEY:AVDISCARD_DEFAULT):AVDISCARD_NONE;
-    if(priv->cap_slices)	priv->use_slices= !(priv->psi->vf_flags&VF_FLAGS_SLICES)?0:(priv->ctx->skip_frame!=AVDISCARD_NONE)?0:1;
-    else			priv->use_slices=0;
+    priv.ctx->skip_frame=(frame.flags&3)?((frame.flags&2)?AVDISCARD_NONKEY:AVDISCARD_DEFAULT):AVDISCARD_NONE;
+    if(priv.cap_slices)	priv.use_slices= !(priv.psi->vf_flags&VF_FLAGS_SLICES)?0:(priv.ctx->skip_frame!=AVDISCARD_NONE)?0:1;
+    else			priv.use_slices=0;
 /*
     if codec is capable DR1
     if sh->vfilter==vf_vo2 (DR1 is meaningless into temp buffer)
     It always happens with (vidix+bus mastering), (if (src_w%16==0)) with xv
 */
-    has_b_frames=priv->ctx->has_b_frames||
+    has_b_frames=priv.ctx->has_b_frames||
 		 sh->fourcc==0x10000001 || /* mpeg1 may have b frames */
-		 priv->lavc_codec->id==CODEC_ID_SVQ3||
+		 priv.lavc_codec->id==CODEC_ID_SVQ3||
 		 1;
-    mpi= mpcodecs_get_image(priv->parent,has_b_frames?MP_IMGTYPE_IPB:MP_IMGTYPE_IP,MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_PREFER_ALIGNED_STRIDE|MP_IMGFLAG_READABLE|MP_IMGFLAG_PRESERVE,
+    mpi= mpcodecs_get_image(*priv.parent,has_b_frames?MP_IMGTYPE_IPB:MP_IMGTYPE_IP,MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_PREFER_ALIGNED_STRIDE|MP_IMGFLAG_READABLE|MP_IMGFLAG_PRESERVE,
 			    16,16);
-    if(priv->cap_dr1 &&
-       priv->lavc_codec->id != CODEC_ID_H264 &&
-       priv->use_slices && mpi->flags&MP_IMGFLAG_DIRECT)
-		priv->use_dr1=1;
+    if(priv.cap_dr1 &&
+       priv.lavc_codec->id != CODEC_ID_H264 &&
+       priv.use_slices && mpi->flags&MP_IMGFLAG_DIRECT)
+		priv.use_dr1=1;
     if(has_b_frames) {
 	MSG_V("Disable slice-based rendering in lavc due possible B-frames in video-stream\n");
-	priv->use_slices=0;
+	priv.use_slices=0;
     }
-    if(priv->use_slices) priv->use_dr1=0;
+    if(priv.use_slices) priv.use_dr1=0;
     if(   sh->fourcc == mmioFOURCC('R', 'V', '1', '0')
        || sh->fourcc == mmioFOURCC('R', 'V', '1', '3')
        || sh->fourcc == mmioFOURCC('R', 'V', '2', '0')
@@ -701,68 +711,68 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
 	int i;
 	const dp_hdr_t *hdr= (const dp_hdr_t*)data;
 
-	if(priv->ctx->slice_offset==NULL)
-	    priv->ctx->slice_offset= new int [1000];
+	if(priv.ctx->slice_offset==NULL)
+	    priv.ctx->slice_offset= new int [1000];
 
 //        for(i=0; i<25; i++) printf("%02X ", ((uint8_t*)data)[i]);
 
-	priv->ctx->slice_count= hdr->chunks+1;
-	for(i=0; i<priv->ctx->slice_count; i++)
-	    priv->ctx->slice_offset[i]= ((const uint32_t*)(data+hdr->chunktab))[2*i+1];
+	priv.ctx->slice_count= hdr->chunks+1;
+	for(i=0; i<priv.ctx->slice_count; i++)
+	    priv.ctx->slice_offset[i]= ((const uint32_t*)(data+hdr->chunktab))[2*i+1];
 	len=hdr->len;
 	data=reinterpret_cast<any_t*>(reinterpret_cast<long>(data)+sizeof(dp_hdr_t));
     }
-    if(priv->use_dr1){
-	priv->b_age= priv->ip_age[0]= priv->ip_age[1]= 256*256*256*64;
-	priv->ip_count= priv->b_count= 0;
-	priv->ctx->get_buffer= get_buffer;
-	priv->ctx->release_buffer= release_buffer;
-	priv->ctx->reget_buffer= get_buffer;
+    if(priv.use_dr1){
+	priv.b_age= priv.ip_age[0]= priv.ip_age[1]= 256*256*256*64;
+	priv.ip_count= priv.b_count= 0;
+	priv.ctx->get_buffer= get_buffer;
+	priv.ctx->release_buffer= release_buffer;
+	priv.ctx->reget_buffer= get_buffer;
     }
-    if(!(frame->flags&3) && priv->use_slices)
+    if(!(frame.flags&3) && priv.use_slices)
     {
 	if(mpi) free_mp_image(mpi);
-	mpi=mpcodecs_get_image(priv->parent, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,sh->src_w, sh->src_h);
-	priv->mpi = mpi;
-	priv->frame_number++;
-	priv->ctx->draw_horiz_band=draw_slice;
+	mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,sh->src_w, sh->src_h);
+	priv.mpi = mpi;
+	priv.frame_number++;
+	priv.ctx->draw_horiz_band=draw_slice;
     }
-    else priv->ctx->draw_horiz_band=NULL; /* skip draw_slice on framedropping */
-    if(!priv->hello_printed) {
-	if(priv->use_slices)
+    else priv.ctx->draw_horiz_band=NULL; /* skip draw_slice on framedropping */
+    if(!priv.hello_printed) {
+	if(priv.use_slices)
 	    MSG_STATUS("Use slice-based rendering in lavc\n");
-	else if (priv->use_dr1)
+	else if (priv.use_dr1)
 	    MSG_STATUS("Use DR1 rendering in lavc\n");
 	else
-	priv->hello_printed=1;
+	priv.hello_printed=1;
     }
     AVPacket pkt;
     av_init_packet(&pkt);
     pkt.data=reinterpret_cast<uint8_t*>(data);
     pkt.size=len;
-    ret = avcodec_decode_video2(priv->ctx, priv->lavc_picture,
+    ret = avcodec_decode_video2(priv.ctx, priv.lavc_picture,
 				&got_picture, &pkt);
     if(ret<0) MSG_WARN("Error while decoding frame!\n");
     if(!got_picture) return NULL;	// skipped image
-    if(!priv->ctx->draw_horiz_band)
+    if(!priv.ctx->draw_horiz_band)
     {
 	if(mpi) free_mp_image(mpi);
-	mpi=mpcodecs_get_image(priv->parent, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,sh->src_w,sh->src_h);
+	mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,sh->src_w,sh->src_h);
 	if(!mpi){	// temporary!
 	    MSG_ERR("couldn't allocate image for lavc codec\n");
 	    return NULL;
 	}
-	mpi->planes[0]=priv->lavc_picture->data[0];
-	mpi->planes[1]=priv->lavc_picture->data[1];
-	mpi->planes[2]=priv->lavc_picture->data[2];
-	mpi->stride[0]=priv->lavc_picture->linesize[0];
-	mpi->stride[1]=priv->lavc_picture->linesize[1];
-	mpi->stride[2]=priv->lavc_picture->linesize[2];
+	mpi->planes[0]=priv.lavc_picture->data[0];
+	mpi->planes[1]=priv.lavc_picture->data[1];
+	mpi->planes[2]=priv.lavc_picture->data[2];
+	mpi->stride[0]=priv.lavc_picture->linesize[0];
+	mpi->stride[1]=priv.lavc_picture->linesize[1];
+	mpi->stride[2]=priv.lavc_picture->linesize[2];
 	/* provide info for pp */
-	mpi->qscale=(char *)priv->lavc_picture->qscale_table;
-	mpi->qstride=priv->lavc_picture->qstride;
-	mpi->pict_type=priv->lavc_picture->pict_type;
-	mpi->qscale_type=priv->lavc_picture->qscale_type;
+	mpi->qscale=(char *)priv.lavc_picture->qscale_table;
+	mpi->qstride=priv.lavc_picture->qstride;
+	mpi->pict_type=priv.lavc_picture->pict_type;
+	mpi->qscale_type=priv.lavc_picture->qscale_type;
 	/*
 	if(sh->codec->outfmt[sh->outfmtidx] == IMGFMT_I420 ||
 	   sh->codec->outfmt[sh->outfmtidx] == IMGFMT_IYUV)
@@ -776,7 +786,7 @@ static mp_image_t* decode(vd_private_t *priv,const enc_frame_t* frame){
 	    mpi->stride[2]=mpi->stride[1];
 	    mpi->stride[1]=ls;
 	}*/
-	if(priv->ctx->pix_fmt==PIX_FMT_YUV422P){
+	if(priv.ctx->pix_fmt==PIX_FMT_YUV422P){
 	    mpi->stride[1]*=2;
 	    mpi->stride[2]*=2;
 	}

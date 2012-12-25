@@ -1,7 +1,6 @@
 #ifndef CPUDETECT_H
 #define CPUDETECT_H
 
-#include "mplayerxp.h"
 namespace mpxp {
 #ifdef ARCH_X86_64
 #  define REGa    rax

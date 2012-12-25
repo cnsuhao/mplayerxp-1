@@ -12,7 +12,7 @@
  * $Id: ext.c,v 1.5 2007/04/05 08:25:08 nickols_k Exp $
  */
 
-#include "config.h"
+#include "mpxp_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -28,7 +28,6 @@
 #include "wine/debugtools.h"
 #include "wine/heap.h"
 #include "ext.h"
-#include "osdep/mplib.h"
 
 #if 0
 //REMOVE SIMPLIFY

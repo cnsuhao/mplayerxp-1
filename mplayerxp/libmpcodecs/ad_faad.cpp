@@ -35,11 +35,16 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(faad)
 
-struct ad_private_t {
+struct faad_private_t : public Opaque {
+    faad_private_t();
+    virtual ~faad_private_t();
+
     float pts;
     sh_audio_t* sh;
     audio_filter_info_t* afi;
 };
+faad_private_t::faad_private_t() {}
+faad_private_t::~faad_private_t() {}
 
 static const audio_probe_t probes[] = {
     { "faad", "libfaad"SLIBSUFFIX,  0xFF,   ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
@@ -103,11 +108,11 @@ typedef struct NeAACDecFrameInfo {
     /* PS: 0: off, 1: on */
     unsigned char ps;
 } NeAACDecFrameInfo;
-#define FAAD_MIN_STREAMSIZE 768 /* 6144 bits/channel */
+static const int FAAD_MIN_STREAMSIZE=768; /* 6144 bits/channel */
 /* configure maximum supported channels, *
  * this is theoretically max. 64 chans   */
-#define FAAD_MAX_CHANNELS 6
-#define FAAD_BUFFLEN (FAAD_MIN_STREAMSIZE*FAAD_MAX_CHANNELS)
+static const int FAAD_MAX_CHANNELS=6;
+static const int FAAD_BUFFLEN=(FAAD_MIN_STREAMSIZE*FAAD_MAX_CHANNELS);
 #ifdef _WIN32
   #pragma pack(push, 8)
   #ifndef NEAACDECAPI
@@ -179,23 +184,24 @@ static MPXP_Rc load_dll(const char *libname)
 
 }
 
-static ad_private_t* preinit(const audio_probe_t* probe,sh_audio_t *sh,audio_filter_info_t* afi)
+static Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_info_t& afi)
 {
     sh->audio_out_minsize=8192*FAAD_MAX_CHANNELS;
     sh->audio_in_minsize=FAAD_BUFFLEN;
-    ad_private_t* priv = new(zeromem) ad_private_t;
+    faad_private_t* priv = new(zeromem) faad_private_t;
     priv->sh = sh;
-    priv->afi = afi;
-    if(load_dll(probe->codec_dll)!=MPXP_Ok) {
+    priv->afi = &afi;
+    if(load_dll(probe.codec_dll)!=MPXP_Ok) {
 	delete priv;
 	return NULL;
     }
     return priv;
 }
 
-static MPXP_Rc init(ad_private_t *priv)
+static MPXP_Rc init(Opaque& ctx)
 {
-    sh_audio_t* sh = priv->sh;
+    faad_private_t& priv=static_cast<faad_private_t&>(ctx);
+    sh_audio_t* sh = priv.sh;
     unsigned long NeAAC_samplerate;
     unsigned char NeAAC_channels;
     float pts;
@@ -224,9 +230,9 @@ static MPXP_Rc init(ad_private_t *priv)
 #endif
     /* Set the maximal quality */
     /* This is useful for expesive audio cards */
-    if(af_query_fmt(priv->afi->afilter,afmt2mpaf(AFMT_FLOAT32)) == MPXP_Ok ||
-	af_query_fmt(priv->afi->afilter,afmt2mpaf(NeAAC_FMT32)) == MPXP_Ok ||
-	af_query_fmt(priv->afi->afilter,afmt2mpaf(NeAAC_FMT24)) == MPXP_Ok) {
+    if(af_query_fmt(priv.afi->afilter,afmt2mpaf(AFMT_FLOAT32)) == MPXP_Ok ||
+	af_query_fmt(priv.afi->afilter,afmt2mpaf(NeAAC_FMT32)) == MPXP_Ok ||
+	af_query_fmt(priv.afi->afilter,afmt2mpaf(NeAAC_FMT24)) == MPXP_Ok) {
 	    sh->afmt=AFMT_FLOAT32;
 	    NeAAC_conf->outputFormat=FAAD_FMT_FLOAT;
     } else {
@@ -236,7 +242,7 @@ static MPXP_Rc init(ad_private_t *priv)
     /* Set the default object type and samplerate */
     NeAACDecSetConfiguration(NeAAC_hdec, NeAAC_conf);
     if(!sh->codecdata_len) {
-	sh->a_in_buffer_len = demux_read_data_r(sh->ds, reinterpret_cast<unsigned char*>(sh->a_in_buffer), sh->a_in_buffer_size,&pts);
+	sh->a_in_buffer_len = demux_read_data_r(*sh->ds, reinterpret_cast<unsigned char*>(sh->a_in_buffer), sh->a_in_buffer_size,pts);
 	/* init the codec */
 	NeAAC_init = NeAACDecInit(NeAAC_hdec, reinterpret_cast<unsigned char*>(sh->a_in_buffer),
 				sh->a_in_buffer_len, &NeAAC_samplerate,
@@ -276,24 +282,25 @@ static MPXP_Rc init(ad_private_t *priv)
     return MPXP_Ok;
 }
 
-static void uninit(ad_private_t *priv)
+static void uninit(Opaque& ctx)
 {
+    UNUSED(ctx);
     MSG_V("FAAD: Closing decoder!\n");
     NeAACDecClose(NeAAC_hdec);
-    delete priv;
 }
 
-static MPXP_Rc control_ad(ad_private_t *priv,int cmd,any_t* arg, ...)
+static MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...)
 {
-    UNUSED(priv);
+    UNUSED(ctx);
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
 }
 
-static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,unsigned maxlen,float *pts)
+static unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts)
 {
-    sh_audio_t* sh = priv->sh;
+    faad_private_t& priv=static_cast<faad_private_t&>(ctx);
+    sh_audio_t* sh = priv.sh;
   int j = 0;
   unsigned len = 0;
   any_t*NeAAC_sample_buffer;
@@ -305,12 +312,12 @@ static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,uns
   {
     if(sh->a_in_buffer_len < sh->a_in_buffer_size){
       sh->a_in_buffer_len +=
-	demux_read_data_r(sh->ds,reinterpret_cast<unsigned char*>(&sh->a_in_buffer[sh->a_in_buffer_len]),
+	demux_read_data_r(*sh->ds,reinterpret_cast<unsigned char*>(&sh->a_in_buffer[sh->a_in_buffer_len]),
 	sh->a_in_buffer_size - sh->a_in_buffer_len,pts);
-	*pts=FIX_APTS(sh,*pts,-sh->a_in_buffer_len);
-	priv->pts=*pts;
+	pts=FIX_APTS(sh,pts,-sh->a_in_buffer_len);
+	priv.pts=pts;
     }
-    else *pts=priv->pts;
+    else pts=priv.pts;
 #ifdef DUMP_AAC_COMPRESSED
     {unsigned i;
     for (i = 0; i < 16; i++)
@@ -329,7 +336,7 @@ static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,uns
     } else {
       sh->a_in_buffer_len-=NeAAC_finfo.bytesconsumed;
       memcpy(sh->a_in_buffer,&sh->a_in_buffer[NeAAC_finfo.bytesconsumed],sh->a_in_buffer_len);
-      priv->pts=FIX_APTS(sh,priv->pts,NeAAC_finfo.bytesconsumed);
+      priv.pts=FIX_APTS(sh,priv.pts,NeAAC_finfo.bytesconsumed);
     }
 
     if(NeAAC_finfo.error > 0) {
@@ -342,7 +349,7 @@ static unsigned decode(ad_private_t *priv,unsigned char *buf,unsigned minlen,uns
   } else {
    // packetized (.mp4) aac stream:
     unsigned char* bufptr=NULL;
-    int buflen=ds_get_packet_r(sh->ds, &bufptr,pts);
+    int buflen=ds_get_packet_r(*sh->ds, &bufptr,pts);
     if(buflen<=0) break;
     NeAAC_sample_buffer = NeAACDecDecode(NeAAC_hdec, &NeAAC_finfo, bufptr, buflen);
 //    printf("NeAAC decoded %d of %d  (err: %d)  \n",NeAAC_finfo.bytesconsumed,buflen,NeAAC_finfo.error);

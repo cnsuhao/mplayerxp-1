@@ -1,7 +1,7 @@
 #include "cmediasample.h"
 #include "mediatype.h"
 #include "wine/winerror.h"
-#include "osdep/mplib.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

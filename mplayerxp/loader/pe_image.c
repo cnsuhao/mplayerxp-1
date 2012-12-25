@@ -33,8 +33,7 @@
  *   newer pe binaries produced by MSVC 5 and later, since they are also aligned
  *   to 4096 byte boundaries on disk.
  */
-#include "config.h"
-#include "osdep/mplib.h"
+#include "mpxp_config.h"
 
 #include <errno.h>
 #include <assert.h>
