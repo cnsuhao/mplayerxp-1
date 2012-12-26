@@ -5,9 +5,6 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef MP_DEBUG
-#include <assert.h>
-#endif
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -19,9 +16,9 @@ using namespace mpxp;
 #include "playtreeparser.h"
 #include "playtree_msg.h"
 
-#define BUF_STEP 1024
+static const int BUF_STEP=1024;
 
-#define WHITES " \n\r\t"
+static const char* WHITES=" \n\r\t";
 
 static void __FASTCALL__ strstrip(char* str) {
   char* i;
@@ -343,11 +340,6 @@ play_tree_t* parse_playtree(libinput_t&libinput,Stream * stream) {
   play_tree_parser_t* p;
   play_tree_t* ret;
 
-#ifdef MP_DEBUG
-  assert(stream != NULL);
-  assert(stream->type & STREAMTYPE_TEXT);
-#endif
-
   p = play_tree_parser_new(stream,0);
   if(!p)
     return NULL;
@@ -392,10 +384,6 @@ play_tree_parser_t* play_tree_parser_new(Stream * stream,int deep) {
 void
 play_tree_parser_free(play_tree_parser_t* p) {
 
-#ifdef MP_DEBUG
-  assert(p != NULL);
-#endif
-
   if(p->buffer) delete p->buffer;
   if(p->line) delete p->line;
   delete p;
@@ -404,11 +392,6 @@ play_tree_parser_free(play_tree_parser_t* p) {
 play_tree_t*
 play_tree_parser_get_play_tree(libinput_t& libinput,play_tree_parser_t* p) {
   play_tree_t* tree = NULL;
-
-#ifdef MP_DEBUG
-  assert(p != NULL);
-#endif
-
 
   while(play_tree_parser_get_line(p) != NULL) {
     play_tree_parser_reset(p);

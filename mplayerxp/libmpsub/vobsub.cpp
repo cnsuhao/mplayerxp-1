@@ -82,7 +82,7 @@ struct mpeg_t {
     int fd;
 };
 
-static mpeg_t *  __FASTCALL__ mpeg_open(const char *filename)
+static mpeg_t *  __FASTCALL__ mpeg_open(const std::string& filename)
 {
     mpeg_t *res = new(zeromem) mpeg_t;
     int err = res == NULL;
@@ -93,7 +93,7 @@ static mpeg_t *  __FASTCALL__ mpeg_open(const char *filename)
 	res->packet = NULL;
 	res->packet_size = 0;
 	res->packet_reserve = 0;
-	fd = open(filename, O_RDONLY);
+	fd = ::open(filename.c_str(), O_RDONLY);
 	err = fd < 0;
 	if (!err) {
 	    res->stream = new(zeromem) Stream(Stream::Type_Seekable);
@@ -297,7 +297,7 @@ struct packet_t {
 };
 
 struct packet_queue_t {
-    char *id;
+    std::string id;
     packet_t *packets;
     unsigned int packets_reserve;
     unsigned int packets_size;
@@ -320,7 +320,7 @@ static void __FASTCALL__ packet_destroy(packet_t *pkt)
 
 static void __FASTCALL__ packet_queue_construct(packet_queue_t *queue)
 {
-    queue->id = NULL;
+    queue->id = "";
     queue->packets = NULL;
     queue->packets_reserve = 0;
     queue->packets_size = 0;
@@ -439,25 +439,16 @@ static int __FASTCALL__ vobsub_ensure_spu_stream(vobsub_t *vob, unsigned int _in
     return 0;
 }
 
-static int __FASTCALL__ vobsub_add_id(vobsub_t *vob, const char *id, size_t idlen, const unsigned int _index)
+static int __FASTCALL__ vobsub_add_id(vobsub_t *vob, const std::string& id, const unsigned int _index)
 {
     if (vobsub_ensure_spu_stream(vob, _index) < 0)
 	return -1;
-    if (id && idlen) {
-	if (vob->spu_streams[_index].id)
-	    delete vob->spu_streams[_index].id;
-	vob->spu_streams[_index].id = new char [idlen + 1];
-	if (vob->spu_streams[_index].id == NULL) {
-	    MSG_ERR("vobsub_add_id: mp_malloc failure");
-	    return -1;
-	}
-	vob->spu_streams[_index].id[idlen] = 0;
-	memcpy(vob->spu_streams[_index].id, id, idlen);
+    if (!id.empty()) {
+	vob->spu_streams[_index].id=id;
     }
     vob->spu_streams_current = _index;
     if (mp_conf.verbose)
-	MSG_ERR( "[vobsub] subtitle (vobsubid): %d language %s\n",
-		_index, vob->spu_streams[_index].id);
+	mpxp_err<<"[vobsub] subtitle (vobsubid): "<<_index<<" language "<<vob->spu_streams[_index].id<<std::endl;
     return 0;
 }
 
@@ -503,7 +494,7 @@ static int __FASTCALL__ vobsub_parse_id(vobsub_t *vob, const char *line)
 	++q;
     if (!isdigit(*q))
 	return -1;
-    return vobsub_add_id(vob, p, idlen, atoi(q));
+    return vobsub_add_id(vob, p, atoi(q));
 }
 
 static int __FASTCALL__ vobsub_parse_timestamp(vobsub_t *vob, const char *line)
@@ -778,23 +769,23 @@ static int __FASTCALL__ vobsub_parse_one_line(vobsub_t *vob, FILE *fd)
     return res;
 }
 
-int __FASTCALL__ vobsub_parse_ifo(any_t* _vob, const char *const name, unsigned int *palette, unsigned int *width, unsigned int *height, int force, int sid, char *langid)
+int __FASTCALL__ vobsub_parse_ifo(any_t* _vob, const std::string& name, unsigned int *palette, unsigned int *width, unsigned int *height, int force, int sid, std::string& langid)
 {
     vobsub_t *vob = (vobsub_t*)_vob;
     int res = -1;
-    FILE *fd = fopen(name, "rb");
+    FILE *fd = ::fopen(name.c_str(), "rb");
     if (fd == NULL) {
 	if (force)
-	    MSG_WARN("VobSub: Can't open IFO file\n");
+	    mpxp_warn<<"VobSub: Can't open IFO file"<<std::endl;
     } else {
 	// parse IFO header
 	unsigned char block[0x800];
 	const char *const ifo_magic = "DVDVIDEO-VTS";
 	if (fread(block, sizeof(block), 1, fd) != 1) {
 	    if (force)
-		MSG_ERR("VobSub: Can't read IFO header\n");
+		mpxp_err<<"VobSub: Can't read IFO header"<<std::endl;
 	} else if (memcmp(block, ifo_magic, strlen(ifo_magic) + 1))
-	    MSG_ERR("VobSub: Bad magic in IFO header\n");
+	    mpxp_err<<"VobSub: Bad magic in IFO header"<<std::endl;
 	else {
 	    unsigned long pgci_sector = block[0xcc] << 24 | block[0xcd] << 16
 		| block[0xce] << 8 | block[0xcf];
@@ -817,17 +808,15 @@ int __FASTCALL__ vobsub_parse_ifo(any_t* _vob, const char *const name, unsigned 
 		*height /= 2;
 		break;
 	    default:
-		MSG_WARN("Vobsub: Unknown resolution %d \n", resolution);
+		mpxp_warn<<"Vobsub: Unknown resolution "<<resolution<<std::endl;
 	    }
-	    if (langid && 0 <= sid && sid < 32) {
-		unsigned char *tmp = block + 0x256 + sid * 6 + 2;
-		langid[0] = tmp[0];
-		langid[1] = tmp[1];
-		langid[2] = 0;
+	    if (!langid.empty() && 0 <= sid && sid < 32) {
+		char *tmp = (char *)block + 0x256 + sid * 6 + 2;
+		langid.assign(tmp,2);
 	    }
 	    if (fseek(fd, pgci_sector * sizeof(block), SEEK_SET)
 		|| fread(block, sizeof(block), 1, fd) != 1)
-		MSG_ERR("VobSub: Can't read IFO PGCI\n");
+		mpxp_err<<"VobSub: Can't read IFO PGCI"<<std::endl;
 	    else {
 		unsigned long idx;
 		unsigned long pgc_offset = block[0xc] << 24 | block[0xd] << 16
@@ -846,13 +835,12 @@ int __FASTCALL__ vobsub_parse_ifo(any_t* _vob, const char *const name, unsigned 
     return res;
 }
 
-any_t* __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,const int force,any_t** spu)
+any_t* __FASTCALL__ vobsub_open(const std::string& name,const char *const ifo,const int force,any_t** spu)
 {
     vobsub_t *vob = new(zeromem) vobsub_t;
     if(spu)
       *spu = NULL;
     if (vob) {
-	char *buf;
 	vob->custom = 0;
 	vob->have_palette = 0;
 	vob->orig_frame_width = 0;
@@ -862,107 +850,95 @@ any_t* __FASTCALL__ vobsub_open(const char *const name,const char *const ifo,con
 	vob->spu_streams_current = 0;
 	vob->delay = 0;
 	vob->forced_subs=0;
-	buf = new char [strlen(name) + 5];
-	if (buf) {
-	    FILE *fd;
-	    mpeg_t *mpg;
-	    /* read in the info file */
-	    if(!ifo) {
-	      strcpy(buf, name);
-	      strcat(buf, ".ifo");
-	      vobsub_parse_ifo(vob,buf, vob->palette, &vob->orig_frame_width, &vob->orig_frame_height, force, -1, NULL);
-	    } else
-	      vobsub_parse_ifo(vob,ifo, vob->palette, &vob->orig_frame_width, &vob->orig_frame_height, force, -1, NULL);
-	    /* read in the index */
-	    strcpy(buf, name);
-	    strcat(buf, ".idx");
-	    fd = fopen(buf, "rb");
-	    if (fd == NULL) {
-		if(force)
-		  MSG_ERR("VobSub: Can't open IDX file\n");
-		else {
-		  delete buf;
-		  delete vob;
-		  return NULL;
-		}
-	    } else {
-		while (vobsub_parse_one_line(vob, fd) >= 0)
-		    /* NOOP */ ;
-		fclose(fd);
-	    }
-	    /* if no palette in .idx then use custom colors */
-	    if ((vob->custom == 0)&&(vob->have_palette!=1))
-		vob->custom = 1;
-	    if (spu && vob->orig_frame_width && vob->orig_frame_height)
-	      *spu = spudec_new_scaled_vobsub(vob->palette, vob->cuspal, vob->custom, vob->orig_frame_width, vob->orig_frame_height);
-
-	    /* read the indexed mpeg_stream */
-	    strcpy(buf, name);
-	    strcat(buf, ".sub");
-	    mpg = mpeg_open(buf);
-	    if (mpg == NULL) {
-	      if(force)
-		MSG_ERR("VobSub: Can't open SUB file\n");
-	      else {
-
-		delete buf;
+	std::string buf;
+	FILE *fd;
+	mpeg_t *mpg;
+	/* read in the info file */
+	std::string stmp="";
+	if(!ifo) {
+	    buf=name+".ifo";
+	    vobsub_parse_ifo(vob,buf, vob->palette, &vob->orig_frame_width, &vob->orig_frame_height, force, -1, stmp);
+	} else
+	    vobsub_parse_ifo(vob,ifo, vob->palette, &vob->orig_frame_width, &vob->orig_frame_height, force, -1, stmp);
+	/* read in the index */
+	buf=name+".idx";
+	fd = ::fopen(buf.c_str(), "rb");
+	if (fd == NULL) {
+	    if(force)
+		mpxp_err<<"VobSub: Can't open IDX file"<<std::endl;
+	    else {
 		delete vob;
 		return NULL;
-	      }
-	    } else {
-		long last_pts_diff = 0;
-		while (!mpeg_eof(mpg)) {
-		    off_t pos = mpeg_tell(mpg);
-		    if (mpeg_run(mpg) < 0) {
-			if (!mpeg_eof(mpg))
-			    MSG_ERR("VobSub: mpeg_run error\n");
-			break;
-		    }
-		    if (mpg->packet_size) {
-			if ((mpg->aid & 0xe0) == 0x20) {
-			    unsigned int sid = mpg->aid & 0x1f;
-			    if (vobsub_ensure_spu_stream(vob, sid) >= 0)  {
-				packet_queue_t *queue = vob->spu_streams + sid;
-				/* get the packet to fill */
-				if (queue->packets_size == 0 && packet_queue_grow(queue)  < 0)
-				  abort();
-				while (queue->current_index + 1 < queue->packets_size
-				       && queue->packets[queue->current_index + 1].filepos <= pos)
-				    ++queue->current_index;
-				if (queue->current_index < queue->packets_size) {
-				    packet_t *pkt;
-				    if (queue->packets[queue->current_index].data) {
-					/* insert a new packet and fix the PTS ! */
-					packet_queue_insert(queue);
-					queue->packets[queue->current_index].pts100 =
-					    mpg->pts + last_pts_diff;
-				    }
-				    pkt = queue->packets + queue->current_index;
-				    if (pkt->pts100 != UINT_MAX) {
-				    if (queue->packets_size > 1)
-					last_pts_diff = pkt->pts100 - mpg->pts;
-				    else
-					pkt->pts100 = mpg->pts;
-				    /* FIXME: should not use mpg_sub internal informations, make a copy */
-				    pkt->data = mpg->packet;
-				    pkt->size = mpg->packet_size;
-				    mpg->packet = NULL;
-				    mpg->packet_reserve = 0;
-				    mpg->packet_size = 0;
-				    }
+	    }
+	} else {
+	    while (vobsub_parse_one_line(vob, fd) >= 0) /* NOOP */ ;
+	    ::fclose(fd);
+	}
+	/* if no palette in .idx then use custom colors */
+	if ((vob->custom == 0)&&(vob->have_palette!=1))
+	    vob->custom = 1;
+	if (spu && vob->orig_frame_width && vob->orig_frame_height)
+	    *spu = spudec_new_scaled_vobsub(vob->palette, vob->cuspal, vob->custom, vob->orig_frame_width, vob->orig_frame_height);
+
+	/* read the indexed mpeg_stream */
+	buf=name+".sub";
+	mpg = mpeg_open(buf);
+	if (mpg == NULL) {
+	    if(force) mpxp_err<<"VobSub: Can't open SUB file"<<std::endl;
+	    else {
+		delete vob;
+		return NULL;
+	    }
+	} else {
+	    long last_pts_diff = 0;
+	    while (!mpeg_eof(mpg)) {
+		off_t pos = mpeg_tell(mpg);
+		if (mpeg_run(mpg) < 0) {
+		    if (!mpeg_eof(mpg)) mpxp_err<<"VobSub: mpeg_run error"<<std::endl;
+		    break;
+		}
+		if (mpg->packet_size) {
+		    if ((mpg->aid & 0xe0) == 0x20) {
+			unsigned int sid = mpg->aid & 0x1f;
+			if (vobsub_ensure_spu_stream(vob, sid) >= 0)  {
+			    packet_queue_t *queue = vob->spu_streams + sid;
+			    /* get the packet to fill */
+			    if (queue->packets_size == 0 && packet_queue_grow(queue)  < 0)
+				abort();
+			    while (queue->current_index + 1 < queue->packets_size
+				    && queue->packets[queue->current_index + 1].filepos <= pos)
+				++queue->current_index;
+			    if (queue->current_index < queue->packets_size) {
+				packet_t *pkt;
+				if (queue->packets[queue->current_index].data) {
+				    /* insert a new packet and fix the PTS ! */
+				    packet_queue_insert(queue);
+				    queue->packets[queue->current_index].pts100 =
+						mpg->pts + last_pts_diff;
+				}
+				pkt = queue->packets + queue->current_index;
+				if (pkt->pts100 != UINT_MAX) {
+				if (queue->packets_size > 1)
+				    last_pts_diff = pkt->pts100 - mpg->pts;
+				else
+				    pkt->pts100 = mpg->pts;
+				/* FIXME: should not use mpg_sub internal informations, make a copy */
+				pkt->data = mpg->packet;
+				pkt->size = mpg->packet_size;
+				mpg->packet = NULL;
+				mpg->packet_reserve = 0;
+				mpg->packet_size = 0;
 				}
 			    }
-			    else
-				MSG_WARN("don't know what to do with subtitle #%u\n", sid);
 			}
+			else mpxp_warn<<"don't know what to do with subtitle #"<<sid<<std::endl;
 		    }
 		}
-		vob->spu_streams_current = vob->spu_streams_size;
-		while (vob->spu_streams_current-- > 0)
-		    vob->spu_streams[vob->spu_streams_current].current_index = 0;
-		mpeg_free(mpg);
 	    }
-	    delete buf;
+	    vob->spu_streams_current = vob->spu_streams_size;
+	    while (vob->spu_streams_current-- > 0)
+		vob->spu_streams[vob->spu_streams_current].current_index = 0;
+	    mpeg_free(mpg);
 	}
     }
     return vob;
@@ -989,10 +965,10 @@ void __FASTCALL__ vobsub_reset(any_t*vobhandle)
     }
 }
 
-char * __FASTCALL__ vobsub_get_id(any_t*vobhandle, unsigned int _index)
+std::string __FASTCALL__ vobsub_get_id(any_t*vobhandle, unsigned int _index)
 {
     vobsub_t *vob = (vobsub_t *) vobhandle;
-    return (_index < vob->spu_streams_size) ? vob->spu_streams[_index].id : NULL;
+    return (_index < vob->spu_streams_size) ? vob->spu_streams[_index].id : "";
 }
 
 unsigned int __FASTCALL__ vobsub_get_forced_subs_flag(void const * const vobhandle)
@@ -1003,21 +979,22 @@ unsigned int __FASTCALL__ vobsub_get_forced_subs_flag(void const * const vobhand
     return 0;
 }
 
-int __FASTCALL__ vobsub_set_from_lang(any_t*vobhandle,const char * lang)
+int __FASTCALL__ vobsub_set_from_lang(any_t*vobhandle,const std::string& lang)
 {
     unsigned i;
+    size_t pos=0;
     vobsub_t *vob= (vobsub_t *) vobhandle;
-    while(lang && strlen(lang) >= 2){
+    while(!lang.empty() && lang.length() >= 2){
       for(i=0; i < vob->spu_streams_size; i++)
-	if (vob->spu_streams[i].id)
-	  if ((strncmp(vob->spu_streams[i].id, lang, 2)==0)){
+	if (!vob->spu_streams[i].id.empty())
+	  if (vob->spu_streams[i].id==lang.substr(pos,2)){
 	    mp_conf.vobsub_id=i;
-	    MSG_INFO("Selected VOBSUB language: %d language: %s\n", i, vob->spu_streams[i].id);
+	    mpxp_info<<"Selected VOBSUB language: "<<i<<" language: "<<vob->spu_streams[i].id<<std::endl;
 	    return 0;
 	  }
-      lang+=2;while (lang[0]==',' || lang[0]==' ') ++lang;
+      pos+=2;while (lang[pos]==',' || lang[pos]==' ') ++pos;
     }
-    MSG_WARN("No matching VOBSUB language found!\n");
+    mpxp_warn<<"No matching VOBSUB language found!"<<std::endl;
     return -1;
 }
 
@@ -1035,7 +1012,7 @@ void __FASTCALL__ vobsub_seek(any_t* vobhandle,const seek_args_t* seeka)
     }
     if (vob->spu_streams && 0 <= mp_conf.vobsub_id && (unsigned) mp_conf.vobsub_id < vob->spu_streams_size) {
 	/* do not seek if we don't know the id */
-	if (vobsub_get_id(vob, mp_conf.vobsub_id) == NULL) return;
+	if (vobsub_get_id(vob, mp_conf.vobsub_id).empty()) return;
 	queue = vob->spu_streams + mp_conf.vobsub_id;
 	queue->current_index = 0;
 	while (queue->current_index < queue->packets_size

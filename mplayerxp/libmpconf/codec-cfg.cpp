@@ -18,7 +18,6 @@ using namespace mpxp;
 #include <unistd.h>
 #include <errno.h>
 #include <ctype.h>
-#include <assert.h>
 #include <string.h>
 
 // for mmioFOURCC:

@@ -89,7 +89,9 @@ MPXP_Rc m_config_parse_config_file(m_config_t& config,const char *conffile);
  * 	-1 on error (invalid option...)
  * 	 1 otherwise
  */
-MPXP_Rc m_config_parse_command_line(m_config_t& config, int argc, char **argv, char **envp);
+namespace mpxp {
+    MPXP_Rc mpxp_parse_command_line(m_config_t& config, int argc, char **argv, char **envp);
+}
 
 m_config_t& m_config_new(play_tree_t* pt,libinput_t&libinput);
 

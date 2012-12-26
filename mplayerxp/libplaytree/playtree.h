@@ -1,6 +1,9 @@
 #ifndef __PLAYTREE_H
 #define __PLAYTREE_H
 
+#include "osdep/mplib.h"
+#include <stack>
+
 struct m_config_t;
 namespace mpxp {
     struct Stream;
@@ -40,37 +43,65 @@ enum {
 ///@{
 
 struct play_tree_param_t {
-  char* name;
-  char* value;
+    const char* name;
+    const char* value;
 };
 
 struct play_tree_t {
-  play_tree_t* parent;
-  play_tree_t* child;
-  play_tree_t* next;
-  play_tree_t* prev;
+    play_tree_t* parent;
+    play_tree_t* child;
+    play_tree_t* next;
+    play_tree_t* prev;
 
   //play_tree_info_t info;
-  play_tree_param_t* params;
-  int loop;
-  char** files;
-  int entry_type;
-  int flags;
+    play_tree_param_t* params;
+    int loop;
+    char** files;
+    int entry_type;
+    int flags;
 };
 
-struct play_tree_iter_t {
-    play_tree_t* root; // Iter root tree
-    play_tree_t* tree; // Current tree
-    m_config_t* config;
-    int loop;  // Looping status
-    int file;
-    int num_files;
-    int entry_pushed;
-    int mode;
+namespace mpxp {
+    struct _PlayTree_Iter : public Opaque {
+	public:
+	    _PlayTree_Iter(play_tree_t* parent,m_config_t& config);
+	    _PlayTree_Iter(const _PlayTree_Iter& old);
+	    virtual ~_PlayTree_Iter();
 
-    int* status_stack; //  loop/valid stack to save/revert status when we go up/down
-    int stack_size;  // status stack size
-};
+	    // d is the direction : d > 0 == next , d < 0 == prev
+	    // with_node : TRUE == stop on nodes with childs, FALSE == go directly to the next child
+	    virtual int		step(int d,int with_nodes);
+	    // Break a loop, etc
+	    virtual int		up_step(int d,int with_nodes);
+	    // Enter a node child list
+	    virtual int		down_step(int d,int with_nodes);
+	    virtual std::string	get_file(int d);
+
+	    play_tree_t*	get_root() const { return root; }
+	    play_tree_t*	get_tree() const { return tree; }
+	    void		set_tree(play_tree_t* _tree) { tree=_tree; }
+	    void		reset_tree() { tree=root; }
+	    int			get_file() const { return file; }
+	    int			get_num_files() const { return num_files; }
+	private:
+	    void		push_params();
+	    play_tree_t*	root; // Iter root tree
+	    play_tree_t*	tree; // Current tree
+	    m_config_t&		config;
+	    int			loop;  // Looping status
+	    int			file;
+	    int			num_files;
+	    int			entry_pushed;
+	    int			mode;
+
+	    std::stack<int> status_stack;
+    };
+} // namespace mpxp
+play_tree_t* parse_playtree(libinput_t& libinput,Stream * stream);
+
+play_tree_t* play_tree_cleanup(play_tree_t* pt);
+
+play_tree_t* parse_playlist_file(libinput_t&libinput,const char* file);
 
 play_tree_t* play_tree_new(void);
 
@@ -126,37 +157,6 @@ void
 play_tree_set_params_from(play_tree_t* dest,const play_tree_t* src);
 
 
-/// Iterator
-
-play_tree_iter_t*
-play_tree_iter_new(play_tree_t* pt, m_config_t& config);
-
-play_tree_iter_t*
-play_tree_iter_new_copy(play_tree_iter_t const* old);
-
-void
-play_tree_iter_free(play_tree_iter_t* iter);
-
-// d is the direction : d > 0 == next , d < 0 == prev
-// with_node : TRUE == stop on nodes with childs, FALSE == go directly to the next child
-
-int
-play_tree_iter_step(play_tree_iter_t* iter, int d,int with_nodes);
-
-int // Break a loop, etc
-play_tree_iter_up_step(play_tree_iter_t* iter, int d,int with_nodes);
-
-int // Enter a node child list
-play_tree_iter_down_step(play_tree_iter_t* iter, int d,int with_nodes);
-
-const char* play_tree_iter_get_file(play_tree_iter_t* iter, int d);
-
-play_tree_t* parse_playtree(libinput_t& libinput,Stream * stream);
-
-play_tree_t* play_tree_cleanup(play_tree_t* pt);
-
-play_tree_t* parse_playlist_file(libinput_t&libinput,const char* file);
-
 /// \defgroup PtAPI Playtree highlevel API
 /// \ingroup Playtree
 /// Highlevel API with pt-suffix to different from low-level API
@@ -164,23 +164,23 @@ play_tree_t* parse_playlist_file(libinput_t&libinput,const char* file);
 ///@{
 
 // Cleans up pt and creates a new iter.
-play_tree_iter_t* pt_iter_create(play_tree_t** pt, struct m_config* config);
+_PlayTree_Iter* pt_iter_create(play_tree_t** pt, struct m_config* config);
 
 /// Frees the iter.
-void pt_iter_destroy(play_tree_iter_t** iter);
+void pt_iter_destroy(_PlayTree_Iter** iter);
 
 /// Gets the next available file in the direction (d=-1 || d=+1).
-const char* pt_iter_get_file(play_tree_iter_t* iter, int d);
+std::string pt_iter_get_file(_PlayTree_Iter* iter, int d);
 
 // Two Macros that implement forward and backward direction.
-static inline const char* pt_iter_get_next_file(play_tree_iter_t* iter) { return pt_iter_get_file(iter, 1); }
-static inline const char* pt_iter_get_prev_file(play_tree_iter_t* iter) { return pt_iter_get_file(iter, -1); }
+static inline std::string pt_iter_get_next_file(_PlayTree_Iter* iter) { return pt_iter_get_file(iter, 1); }
+static inline std::string pt_iter_get_prev_file(_PlayTree_Iter* iter) { return pt_iter_get_file(iter, -1); }
 
 /// Inserts entry into the playtree.
-void pt_iter_insert_entry(play_tree_iter_t* iter, play_tree_t* entry);
+void pt_iter_insert_entry(_PlayTree_Iter* iter, play_tree_t* entry);
 
 /// Replaces current entry in playtree with entry by doing insert and remove.
-void pt_iter_replace_entry(play_tree_iter_t* iter, play_tree_t* entry);
+void pt_iter_replace_entry(_PlayTree_Iter* iter, play_tree_t* entry);
 
 /// Adds a new file to the playtree, if it is not valid it is created.
 void pt_add_file(play_tree_t** ppt,const char* filename);
@@ -190,11 +190,11 @@ void pt_add_file(play_tree_t** ppt,const char* filename);
 void pt_add_gui_file(play_tree_t** ppt,const char* path,const char* file);
 
 // Two macros to use only the iter and not the other things.
-static inline void pt_iter_add_file(play_tree_iter_t* iter, const char *filename) { pt_add_file(&iter->tree, filename); }
-static inline void pt_iter_add_gui_file(play_tree_iter_t* iter,const char* path,const char* name) { pt_add_gui_file(&iter->tree, path, name); }
+static inline void pt_iter_add_file(_PlayTree_Iter* iter, const char *filename) { play_tree_t* tree=iter->get_tree();  pt_add_file(&tree, filename); }
+static inline void pt_iter_add_gui_file(_PlayTree_Iter* iter,const char* path,const char* name) { play_tree_t* tree=iter->get_tree(); pt_add_gui_file(&tree, path, name); }
 
 /// Resets the iter and goes back to head.
-void pt_iter_goto_head(play_tree_iter_t* iter);
+void pt_iter_goto_head(_PlayTree_Iter* iter);
 
 ///@}
 

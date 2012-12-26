@@ -22,14 +22,9 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <assert.h>
 
 #include "subopt-helper.h"
 #include "global_msg.h"
-
-#ifndef MP_DEBUG
-  #define NDEBUG
-#endif
 
 /* prototypes for argument parsing */
 static char const * parse_int( char const * const str, int * const valp );
@@ -99,8 +94,6 @@ int subopt_parse( char const * const str, const opt_t * opts )
 	  /* option was found */
 	  next = 1;
 
-	  assert( opts[idx].valp && "Need a pointer to store the arg!" );
-
 	  /* type specific code */
 	  if ( opts[idx].type == OPT_ARG_BOOL )
 	  {
@@ -164,7 +157,6 @@ int subopt_parse( char const * const str, const opt_t * opts )
 				  (float *)opts[idx].valp );
 		break;
 	      default:
-		assert( 0 && "Arg type of suboption doesn't exist!" );
 		last = NULL; // break parsing!
 	    }
 
@@ -238,8 +230,6 @@ static char const * parse_int( char const * const str, int * const valp )
 {
   char * endp;
 
-  assert( str && "parse_int(): str == NULL" );
-
   *valp = (int)strtol( str, &endp, 0 );
 
   /* nothing was converted */
@@ -252,8 +242,6 @@ static char const * parse_float( char const * const str, float * const valp )
 {
   char * endp;
 
-  assert( str && "parse_float(): str == NULL" );
-
   *valp = strtod( str, &endp );
 
   /* nothing was converted */
@@ -262,7 +250,7 @@ static char const * parse_float( char const * const str, float * const valp )
   return endp;
 }
 
-#define QUOTE_CHAR '%'
+static const char QUOTE_CHAR='%';
 static char const * parse_str( char const * str, strarg_t * const valp )
 {
   char const * match = strchr( str, ':' );

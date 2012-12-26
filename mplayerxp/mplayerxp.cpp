@@ -126,15 +126,15 @@ struct MPXPSystem : public Opaque {
 	void		seek(osd_args_t *osd,const seek_args_t* seek) const;
 	void		init_keyboard_fifo();
 	char*		init_output_subsystems();
-	int		init_vobsub(const char *filename);
+	int		init_vobsub(const std::string& filename);
 	void		init_dvd_nls() const;
 
-	int		handle_playlist(const char *filename) const;
+	int		handle_playlist(const std::string& filename) const;
 
 	void		print_stream_formats() const;
 	void		print_audio_status() const;
 	void		read_video_properties() const;
-	void		read_subtitles(const char *filename,int forced_subs_only,int stream_dump_type);
+	void		read_subtitles(const std::string& filename,int forced_subs_only,int stream_dump_type);
 
 	void		find_acodec(const char *ao_subdevice);
 	int		configure_audio();
@@ -154,6 +154,8 @@ struct MPXPSystem : public Opaque {
 	int		osd_show_framedrop;
 	int		osd_function;
 	play_tree_t*	playtree;
+	// for multifile support:
+	_PlayTree_Iter* playtree_iter;
     private:
 	Opaque		unusable;
 	Demuxer*	_demuxer;
@@ -812,9 +814,6 @@ static void show_benchmark_status(void)
     mpxp_status.flush();
 }
 
-// for multifile support:
-play_tree_iter_t* playtree_iter = NULL;
-
 void MPXPSystem::init_keyboard_fifo()
 {
 #ifdef HAVE_TERMCAP
@@ -891,7 +890,7 @@ char* MPXPSystem::init_output_subsystems() {
     return rs;
 }
 
-int MPXPSystem::init_vobsub(const char *filename) {
+int MPXPSystem::init_vobsub(const std::string& filename) {
     int forced_subs_only=0;
     MP_UNIT("vobsub");
     if (mp_conf.vobsub_name){
@@ -904,12 +903,10 @@ int MPXPSystem::init_vobsub(const char *filename) {
 	// check if vobsub requested only to display forced subtitles
 	forced_subs_only=vobsub_get_forced_subs_flag(mpxp_context().video().output->vobsub);
       }
-    }else if(mp_conf.sub_auto && filename && (strlen(filename)>=5)){
+    }else if(mp_conf.sub_auto && !filename.empty() && filename.length()>=5){
       /* try to autodetect vobsub from movie filename ::atmos */
-      char *buf = new(zeromem) char[strlen(filename)-3];
-      strncpy(buf, filename, strlen(filename)-4);
+      std::string buf = filename.substr(0,filename.length()-4);
       mpxp_context().video().output->vobsub=vobsub_open(buf,mp_conf.spudec_ifo,0,&mpxp_context().video().output->spudec);
-      delete buf;
     }
     if(mpxp_context().video().output->vobsub)
     {
@@ -919,7 +916,7 @@ int MPXPSystem::init_vobsub(const char *filename) {
     return forced_subs_only;
 }
 
-int MPXPSystem::handle_playlist(const char *filename) const {
+int MPXPSystem::handle_playlist(const std::string& filename) const {
     Stream* stream=static_cast<Stream*>(_demuxer->stream);
     int eof=0;
     play_tree_t* entry;
@@ -928,13 +925,13 @@ int MPXPSystem::handle_playlist(const char *filename) const {
     mpxp_v<<"Parsing playlist "<<filename<<"..."<<std::endl;
     entry = parse_playtree(_libinput,stream);
     if(!entry) {
-      entry = playtree_iter->tree;
-      if(play_tree_iter_step(playtree_iter,1,0) != PLAY_TREE_ITER_ENTRY) {
+      entry = playtree_iter->get_tree();
+      if(playtree_iter->step(1,0) != PLAY_TREE_ITER_ENTRY) {
 	eof = PT_NEXT_ENTRY;
 	return eof;
       }
-      if(playtree_iter->tree == entry ) { // Loop with a single file
-	if(play_tree_iter_up_step(playtree_iter,1,0) != PLAY_TREE_ITER_ENTRY) {
+      if(playtree_iter->get_tree() == entry ) { // Loop with a single file
+	if(playtree_iter->up_step(1,0) != PLAY_TREE_ITER_ENTRY) {
 	  eof = PT_NEXT_ENTRY;
 	  return eof;
 	}
@@ -943,9 +940,9 @@ int MPXPSystem::handle_playlist(const char *filename) const {
       eof = PT_NEXT_SRC;
       return eof;
     }
-    play_tree_insert_entry(playtree_iter->tree,entry);
-    entry = playtree_iter->tree;
-    if(play_tree_iter_step(playtree_iter,1,0) != PLAY_TREE_ITER_ENTRY) {
+    play_tree_insert_entry(playtree_iter->get_tree(),entry);
+    entry = playtree_iter->get_tree();
+    if(playtree_iter->step(1,0) != PLAY_TREE_ITER_ENTRY) {
       eof = PT_NEXT_ENTRY;
       return eof;
     }
@@ -1033,13 +1030,14 @@ void MPXPSystem::read_video_properties() const {
     }
 }
 
-void MPXPSystem::read_subtitles(const char *filename,int forced_subs_only,int stream_dump_type) {
+void MPXPSystem::read_subtitles(const std::string& filename,int forced_subs_only,int stream_dump_type) {
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     Stream* stream=static_cast<Stream*>(_demuxer->stream);
     if (mp_conf.spudec_ifo) {
 	unsigned int palette[16], width, height;
 	MP_UNIT("spudec_init_vobsub");
-	if (vobsub_parse_ifo(NULL,mp_conf.spudec_ifo, palette, &width, &height, 1, -1, NULL) >= 0)
+	std::string buf="";
+	if (vobsub_parse_ifo(NULL,mp_conf.spudec_ifo, palette, &width, &height, 1, -1, buf) >= 0)
 	    mpxp_context().video().output->spudec=spudec_new_scaled(palette, sh_video->src_w, sh_video->src_h);
     }
 
@@ -1071,7 +1069,7 @@ void MPXPSystem::read_subtitles(const char *filename,int forced_subs_only,int st
 	mpxp_context().subtitles=sub_read_file(mp_conf.sub_name, sh_video->fps);
 	if(!mpxp_context().subtitles) mpxp_err<<MSGTR_CantLoadSub<<": "<<mp_conf.sub_name<<std::endl;
     } else if(mp_conf.sub_auto) { // auto load sub file ...
-	mpxp_context().subtitles=sub_read_file( filename ? sub_filename(get_path("sub/").c_str(), filename )
+	mpxp_context().subtitles=sub_read_file( !filename.empty() ? sub_filename(get_path("sub/").c_str(), filename.c_str() )
 				      : "default.sub", sh_video->fps );
     }
     if(mpxp_context().subtitles) {
@@ -1450,25 +1448,25 @@ For future:
 		 exit_player(MSGTR_Exit_quit);
 	    case MP_CMD_PLAY_TREE_STEP : {
 		int n = cmd->args[0].v.i > 0 ? 1 : -1;
-		play_tree_iter_t* it = play_tree_iter_new_copy(playtree_iter);
+		_PlayTree_Iter* it = new _PlayTree_Iter(*playtree_iter);
 
-		if(play_tree_iter_step(it,n,0) == PLAY_TREE_ITER_ENTRY)
+		if(it->step(n,0) == PLAY_TREE_ITER_ENTRY)
 		    eof = (n > 0) ? PT_NEXT_ENTRY : PT_PREV_ENTRY;
-		play_tree_iter_free(it);
+		delete it;
 	    } break;
 	    case MP_CMD_PLAY_TREE_UP_STEP : {
 		int n = cmd->args[0].v.i > 0 ? 1 : -1;
-		play_tree_iter_t* it = play_tree_iter_new_copy(playtree_iter);
-		if(play_tree_iter_up_step(it,n,0) == PLAY_TREE_ITER_ENTRY)
+		_PlayTree_Iter* it = new _PlayTree_Iter(*playtree_iter);
+		if(it->up_step(n,0) == PLAY_TREE_ITER_ENTRY)
 		    eof = (n > 0) ? PT_UP_NEXT : PT_UP_PREV;
-		play_tree_iter_free(it);
+		delete it;
 	    } break;
 	    case MP_CMD_PLAY_ALT_SRC_STEP :
-		if(playtree_iter->num_files > 1) {
+		if(playtree_iter->get_num_files() > 1) {
 		    int v = cmd->args[0].v.i;
-		    if(v > 0 && playtree_iter->file < playtree_iter->num_files)
+		    if(v > 0 && playtree_iter->get_file() < playtree_iter->get_num_files())
 			eof = PT_NEXT_SRC;
-		    else if(v < 0 && playtree_iter->file > 1)
+		    else if(v < 0 && playtree_iter->get_file() > 1)
 			eof = PT_PREV_SRC;
 		}
 		break;
@@ -1642,18 +1640,20 @@ static void mpxp_config_malloc(int argc,char *argv[])
     }
     mp_init_malloc(argv[0],1000,10,flg);
 }
+
+_PlayTree_Iter* mpxp_get_playtree_iter() { return mpxp_context().engine().MPXPSys->playtree_iter; }
 /******************************************\
 * MAIN MPLAYERXP FUNCTION !!!              *
 \******************************************/
 int MPlayerXP(int argc,char* argv[], char *envp[]){
     mpxp_init_antiviral_protection(1);
-    mpxp_test_backtrace();
+//    mpxp_test_backtrace();
     int i;
     Stream* stream=NULL;
     int stream_dump_type=0;
     input_state_t input_state = { 0, 0, 0 };
-    char *ao_subdevice;
-    const char* filename=NULL; //"MI2-Trailer.avi";
+    const char *ao_subdevice;
+    std::string filename=""; //"MI2-Trailer.avi";
     int file_format=Demuxer::Type_UNKNOWN;
 
 // movie info:
@@ -1693,7 +1693,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     mp_register_options(m_config);
     parse_cfgfiles(m_config);
 
-    if(m_config_parse_command_line(m_config, argc, argv, envp)!=MPXP_Ok)
+    if(mpxp_parse_command_line(m_config, argc, argv, envp)!=MPXP_Ok)
 	exit_player("Error parse command line"); // error parsing cmdline
 
     if(!mp_conf.xp) {
@@ -1716,13 +1716,13 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 
     MPXPSys.playtree = play_tree_cleanup(MPXPSys.playtree);
     if(MPXPSys.playtree) {
-      playtree_iter = play_tree_iter_new(MPXPSys.playtree,m_config);
-      if(playtree_iter) {
-	if(play_tree_iter_step(playtree_iter,0,0) != PLAY_TREE_ITER_ENTRY) {
-	  play_tree_iter_free(playtree_iter);
-	  playtree_iter = NULL;
+      MPXPSys.playtree_iter = new _PlayTree_Iter(MPXPSys.playtree,m_config);
+      if(MPXPSys.playtree_iter) {
+	if(MPXPSys.playtree_iter->step(0,0) != PLAY_TREE_ITER_ENTRY) {
+	  delete MPXPSys.playtree_iter;
+	  MPXPSys.playtree_iter = NULL;
 	}
-	filename = play_tree_iter_get_file(playtree_iter,1);
+	filename = MPXPSys.playtree_iter->get_file(1);
       }
     }
 
@@ -1730,7 +1730,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 
     init_player();
 
-    if(!filename){
+    if(filename.empty()){
 	show_help();
 	exit_player(MSGTR_Exit_quit);
     }
@@ -1753,7 +1753,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 play_next_file:
 
     ao_subdevice=MPXPSys.init_output_subsystems();
-    if(filename) mpxp_ok<<MSGTR_Playing<<" "<<filename<<std::endl;
+    if(!filename.empty()) mpxp_ok<<MSGTR_Playing<<" "<<filename<<std::endl;
 
     forced_subs_only=MPXPSys.init_vobsub(filename);
 
@@ -2087,24 +2087,24 @@ goto_next_file:  // don't jump here after ao/vo/getch initialization!
 
     if(mp_conf.benchmark) show_benchmark();
 
-    if(playtree_iter != NULL && !input_state.after_dvdmenu) {
+    if(MPXPSys.playtree_iter != NULL && !input_state.after_dvdmenu) {
 	if(eof == PT_NEXT_ENTRY || eof == PT_PREV_ENTRY) {
 	    eof = eof == PT_NEXT_ENTRY ? 1 : -1;
-	    if(play_tree_iter_step(playtree_iter,eof,0) == PLAY_TREE_ITER_ENTRY) {
+	    if(MPXPSys.playtree_iter->step(eof,0) == PLAY_TREE_ITER_ENTRY) {
 		MPXPSys.uninit_player(INITED_ALL-(INITED_LIRC+INITED_INPUT+INITED_VO));
 		eof = 1;
 	    } else {
-		play_tree_iter_free(playtree_iter);
-		playtree_iter = NULL;
+		delete MPXPSys.playtree_iter;
+		MPXPSys.playtree_iter = NULL;
 	    }
 	} else if (eof == PT_UP_NEXT || eof == PT_UP_PREV) {
 	    eof = eof == PT_UP_NEXT ? 1 : -1;
-	    if(play_tree_iter_up_step(playtree_iter,eof,0) == PLAY_TREE_ITER_ENTRY) {
+	    if(MPXPSys.playtree_iter->up_step(eof,0) == PLAY_TREE_ITER_ENTRY) {
 		MPXPSys.uninit_player(INITED_ALL-(INITED_LIRC+INITED_INPUT+INITED_VO));
 		eof = 1;
 	    } else {
-		play_tree_iter_free(playtree_iter);
-		playtree_iter = NULL;
+		delete MPXPSys.playtree_iter;
+		MPXPSys.playtree_iter = NULL;
 	    }
 	} else { // NEXT PREV SRC
 	    MPXPSys.uninit_player(INITED_ALL-(INITED_LIRC+INITED_INPUT+INITED_VO+INITED_DEMUXER));
@@ -2116,17 +2116,17 @@ goto_next_file:  // don't jump here after ao/vo/getch initialization!
     if(eof == 0) eof = 1;
 
     if(!input_state.after_dvdmenu)
-	while(playtree_iter != NULL) {
-	    filename = play_tree_iter_get_file(playtree_iter,eof);
-	    if(filename == NULL) {
-		if( play_tree_iter_step(playtree_iter,eof,0) != PLAY_TREE_ITER_ENTRY) {
-		    play_tree_iter_free(playtree_iter);
-		    playtree_iter = NULL;
+	while(MPXPSys.playtree_iter != NULL) {
+	    filename = MPXPSys.playtree_iter->get_file(eof);
+	    if(filename.empty()) {
+		if( MPXPSys.playtree_iter->step(eof,0) != PLAY_TREE_ITER_ENTRY) {
+		    delete MPXPSys.playtree_iter;
+		    MPXPSys.playtree_iter = NULL;
 		}
 	    } else break;
 	}
 
-    if( playtree_iter != NULL ){
+    if( MPXPSys.playtree_iter != NULL ){
 	int flg;
 	flg=INITED_ALL;
 	if(input_state.after_dvdmenu) flg &=~(INITED_STREAM|INITED_DEMUXER);

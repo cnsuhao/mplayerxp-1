@@ -19,18 +19,15 @@ using namespace mpxp;
 #include <string.h>
 #include <errno.h>
 
-#define COMMAND_LINE		0
-#define CONFIG_FILE		1
+enum {
+    COMMAND_LINE=0,
+    CONFIG_FILE=1,
 
-#define CONFIG_GLOBAL (1<<0)
-#define CONFIG_RUNNING (1<<1)
+    CONFIG_GLOBAL=(1<<0),
+    CONFIG_RUNNING=(1<<1),
 
-#define MAX_RECURSION_DEPTH	8
-
-#ifdef MP_DEBUG
-#include <assert.h>
-#endif
-
+    MAX_RECURSION_DEPTH=8
+};
 #include "mplayerxp.h"
 #include "cfgparser.h"
 #include "libplaytree/playtree.h"
@@ -50,14 +47,6 @@ static void
 m_config_save_option(m_config_t& config,const config_t* conf,const char* opt,const char *param) {
   config_save_t* save;
   int sl=0;
-
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(config.cs_level >= 0);
-  assert(conf != NULL);
-  assert(opt != NULL);
-  assert( ! (conf->flags & CONF_NOSAVE));
-#endif
 
   switch(conf->type) {
   case CONF_TYPE_PRINT :
@@ -116,13 +105,6 @@ static int m_config_revert_option(m_config_t& config, config_save_t* save) {
   config_save_t* iter=NULL;
   int i=-1;
 
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(config.cs_level >= 0);
-  assert(save != NULL);
-#endif
-
-
   arg = save->opt_name ? save->opt_name : save->opt->name;
   MSG_DBG2("Reverting option %s\n",arg);
 
@@ -176,11 +158,6 @@ static int m_config_revert_option(m_config_t& config, config_save_t* save) {
 
 void m_config_push(m_config_t& config) {
 
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(config.cs_level >= 0);
-#endif
-
   config.cs_level++;
   config.config_stack = (config_save_t**)mp_realloc(config.config_stack ,sizeof(config_save_t*)*(config.cs_level+1));
   if(config.config_stack == NULL) {
@@ -195,11 +172,6 @@ void m_config_push(m_config_t& config) {
 int m_config_pop(m_config_t& config) {
   int i,ret= 1;
   config_save_t* cs;
-
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  //assert(config.cs_level > 0);
-#endif
 
   if(config.config_stack[config.cs_level] != NULL) {
     cs = config.config_stack[config.cs_level];
@@ -221,9 +193,6 @@ int m_config_pop(m_config_t& config) {
 }
 
 m_config_t& m_config_new(play_tree_t* pt,libinput_t&libinput) {
-#ifdef MP_DEBUG
-  assert(pt != NULL);
-#endif
   m_config_t& config = *new(zeromem) m_config_t(libinput);
   config.config_stack = (config_save_t**)mp_calloc(1,sizeof(config_save_t*));
   SET_GLOBAL(config); // We always start with global options
@@ -240,9 +209,6 @@ static void m_config_add_dynamic(m_config_t& conf,any_t*ptr) {
 
 void m_config_free(m_config_t* config) {
   unsigned i;
-#ifdef MP_DEBUG
-  assert(config != NULL);
-#endif
   for(i=0;i<config->dynasize;i++) delete config->dynamics[i];
   delete config->dynamics;
   config->dynasize=0;
@@ -254,16 +220,6 @@ void m_config_free(m_config_t* config) {
 
 static int init_conf(m_config_t& config, int mode)
 {
-#ifdef MP_DEBUG
-	assert(config != NULL);
-	assert(config.pt != NULL);
-	assert(config.last_entry == NULL || config.last_entry->parent == config.pt);
-
-	if (mode != COMMAND_LINE && mode != CONFIG_FILE) {
-		MSG_ERR( "init_conf: wrong mode!\n");
-		return -1;
-	}
-#endif
 	config.parser_mode = mode;
 	config.dynamics=NULL;
 	config.dynasize=0;
@@ -273,10 +229,6 @@ static int init_conf(m_config_t& config, int mode)
 
 static int config_is_entry_option(m_config_t& config,const char *opt,const char *param) {
   play_tree_t* entry = NULL;
-
-#ifdef MP_DEBUG
-  assert(config.pt != NULL);
-#endif
 
   if(strcasecmp(opt,"playlist") == 0) { // We handle playlist here
     if(!param)
@@ -316,11 +268,6 @@ static int config_read_option(m_config_t& config,const config_t** conf_list,cons
 	char *endptr;
 	const config_t* conf=NULL;
 
-#ifdef MP_DEBUG
-	assert(config != NULL);
-	assert(conf_list != NULL);
-	assert(opt != NULL);
-#endif
 	MSG_DBG3( "read_option: conf=%p opt='%s' param='%s'\n",
 	    conf, opt, param);
 	for(nconf = 0 ;  conf_list[nconf] != NULL; nconf++) {
@@ -496,67 +443,6 @@ static int config_read_option(m_config_t& config,const config_t** conf_list,cons
 			}
 			ret = 1;
 			break;
-#if 0
-// we have handled it in other function
-		case CONF_TYPE_SUBCONFIG:
-		    {
-			char *subparam;
-			char *subopt;
-			int subconf_optnr;
-			config_t *subconf;
-			config_t *sublist[] = { NULL , NULL };
-			char *token;
-			char *p;
-
-			if (param == NULL)
-				goto err_missing_param;
-
-			subparam = new char [strlen(param)+1];
-			subopt = new char [strlen(param)+1];
-			p = mp_strdup(param); // In case that param is a static string (cf man strtok)
-
-			subconf = conf[i].p;
-			sublist[0] = subconf;
-			for (subconf_optnr = 0; subconf[subconf_optnr].name != NULL; subconf_optnr++)
-			    /* NOTHING */;
-			config.sub_conf = opt;
-			token = strtok(p, (char *)&(":"));
-			while(token)
-			{
-			    int sscanf_ret;
-			    /* clear out */
-			    subopt[0] = subparam[0] = 0;
-
-			    sscanf_ret = sscanf(token, "%[^=]=%s", subopt, subparam);
-
-			    MSG_DBG3( "token: '%s', i=%d, subopt='%s', subparam='%s' (ret: %d)\n", token, i, subopt, subparam, sscanf_ret);
-			    switch(sscanf_ret)
-			    {
-				case 1:
-				    subparam[0] = 0;
-				case 2:
-				    if ((ret = config_read_option(config,sublist, subopt, subparam)) < 0)
-				    {
-					MSG_ERR( "Subconfig parsing returned error: %d in token: %s\n",
-					    ret, token);
-					goto out;
-				    }
-				    break;
-				default:
-				    MSG_ERR( "Invalid subconfig argument! ('%s')\n", token);
-				    ret = ERR_NOT_AN_OPTION;
-				    goto out;
-			    }
-			    token = strtok(NULL, (char *)&(":"));
-			}
-			config.sub_conf = NULL;
-			delete subparam;
-			delete subopt;
-			delete p;
-			ret = 1;
-			break;
-		    }
-#endif
 		case CONF_TYPE_PRINT:
 			MSG_INFO("%s", (char *) conf[i].p);
 			exit(1);
@@ -568,9 +454,6 @@ out:
 	if(ret >= 0 && ! IS_RUNNING(config) && ! IS_GLOBAL(config) && ! (conf[i].flags & CONF_GLOBAL) && conf[i].type != CONF_TYPE_SUBCONFIG ) {
 	  play_tree_t* dest = config.last_entry ? config.last_entry : config.last_parent;
 	  char* o;
-#ifdef MP_DEBUG
-	  assert(dest != NULL);
-#endif
 	  if(config.sub_conf) {
 	    o = new char [(strlen(config.sub_conf) + 1 + strlen(opt) + 1)];
 	    sprintf(o,"%s:%s",config.sub_conf,opt);
@@ -596,14 +479,9 @@ static const config_t* m_config_find_option(const config_t**list,const char *nam
 int m_config_set_option(m_config_t& config,const char *opt,const char *param) {
   const char *e;
   const config_t**clist=config.opt_list;
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(config.opt_list != NULL);
-  assert(opt != NULL);
-#endif
   MSG_DBG2( "Setting option %s=%s\n",opt,param);
   clist = config.opt_list;
-#if 1
+
   if(strchr(opt,'.')) {
     int flg,ret;
     const config_t *subconf=NULL;
@@ -633,7 +511,7 @@ int m_config_set_option(m_config_t& config,const char *opt,const char *param) {
     config.flags=flg;
     return ret;
   }
-#endif
+
   e = strchr(opt,':');
   if(e && e[1] != '\0') {
     int ret;
@@ -658,12 +536,12 @@ int m_config_set_option(m_config_t& config,const char *opt,const char *param) {
   return config_read_option(config,config.opt_list,opt,param);
 }
 
+static void PRINT_LINENUM(const std::string& conffile,int line_num) { mpxp_err<<conffile<<"("<<line_num<<")"<<std::endl; }
+static const int MAX_LINE_LEN=1000;
+static const int MAX_OPT_LEN=100;
+static const int MAX_PARAM_LEN=100;
 MPXP_Rc m_config_parse_config_file(m_config_t& config,const char *conffile)
 {
-#define PRINT_LINENUM	MSG_ERR("%s(%d): ", conffile, line_num)
-#define MAX_LINE_LEN	1000
-#define MAX_OPT_LEN	100
-#define MAX_PARAM_LEN	100
     FILE *fp;
     char *line;
     char opt[MAX_OPT_LEN + 1];
@@ -677,10 +555,6 @@ MPXP_Rc m_config_parse_config_file(m_config_t& config,const char *conffile)
     MPXP_Rc ret = MPXP_Ok;
     int errors = 0;
 
-#ifdef MP_DEBUG
-    assert(config != NULL);
-    //	assert(conf_list != NULL);
-#endif
     if (++config.recursion_depth > 1) MSG_INFO("Reading config file: %s", conffile);
 
     if (config.recursion_depth > MAX_RECURSION_DEPTH) {
@@ -730,34 +604,29 @@ MPXP_Rc m_config_parse_config_file(m_config_t& config,const char *conffile)
 		line[line_pos] != '='; /* NOTHING */) {
 	    opt[opt_pos++] = line[line_pos++];
 	    if (opt_pos >= MAX_OPT_LEN) {
-		PRINT_LINENUM;
-		MSG_ERR("too long option\n");
+		PRINT_LINENUM(conffile,line_num);
+		mpxp_err<<"too long option"<<std::endl;
 		errors++;
 		ret = MPXP_False;
 		goto nextline;
 	    }
 	}
 	if (opt_pos == 0) {
-	    PRINT_LINENUM;
-	    MSG_ERR("parse error\n");
+	    PRINT_LINENUM(conffile,line_num);
+	    mpxp_err<<"parse error"<<std::endl;
 	    ret = MPXP_False;
 	    errors++;
 	    continue;
 	}
 	opt[opt_pos] = '\0';
 
-#ifdef MP_DEBUG
-	PRINT_LINENUM;
-	MSG_DBG2("option: %s\n", opt);
-#endif
-
 	/* skip whitespaces */
 	while (isspace(line[line_pos])) ++line_pos;
 
 	/* check '=' */
 	if (line[line_pos++] != '=') {
-	    PRINT_LINENUM;
-	    MSG_ERR("option without parameter\n");
+	    PRINT_LINENUM(conffile,line_num);
+	    mpxp_err<<"option without parameter"<<std::endl;
 	    ret = MPXP_False;
 	    errors++;
 	    continue;
@@ -773,8 +642,8 @@ MPXP_Rc m_config_parse_config_file(m_config_t& config,const char *conffile)
 	    for (param_pos = 0; line[line_pos] != c; /* NOTHING */) {
 		param[param_pos++] = line[line_pos++];
 		if (param_pos >= MAX_PARAM_LEN) {
-		    PRINT_LINENUM;
-		    MSG_ERR("too long parameter\n");
+		    PRINT_LINENUM(conffile,line_num);
+		    mpxp_err<<"too long parameter"<<std::endl;
 		    ret = MPXP_False;
 		    errors++;
 		    goto nextline;
@@ -786,8 +655,8 @@ MPXP_Rc m_config_parse_config_file(m_config_t& config,const char *conffile)
 			&& line[line_pos] != '#'; /* NOTHING */) {
 		param[param_pos++] = line[line_pos++];
 		if (param_pos >= MAX_PARAM_LEN) {
-		    PRINT_LINENUM;
-		    MSG_ERR("too long parameter\n");
+		    PRINT_LINENUM(conffile,line_num);
+		    mpxp_err<<"too long parameter"<<std::endl;
 		    ret = MPXP_False;
 		    errors++;
 		    goto nextline;
@@ -798,17 +667,12 @@ MPXP_Rc m_config_parse_config_file(m_config_t& config,const char *conffile)
 
 	/* did we read a parameter? */
 	if (param_pos == 0) {
-	    PRINT_LINENUM;
-	    MSG_ERR("option without parameter\n");
+	    PRINT_LINENUM(conffile,line_num);
+	    mpxp_err<<"option without parameter"<<std::endl;
 	    ret = MPXP_False;
 	    errors++;
 	    continue;
 	}
-
-#ifdef MP_DEBUG
-	PRINT_LINENUM;
-	MSG_DBG2("parameter: %s\n", param);
-#endif
 
 	/* now, check if we have some more chars on the line */
 	/* whitespace... */
@@ -816,8 +680,8 @@ MPXP_Rc m_config_parse_config_file(m_config_t& config,const char *conffile)
 
 	/* EOL / comment */
 	if (line[line_pos] != '\0' && line[line_pos] != '#') {
-	    PRINT_LINENUM;
-	    MSG_ERR("extra characters on line: %s\n", line+line_pos);
+	    PRINT_LINENUM(conffile,line_num);
+	    mpxp_err<<"extra characters on line: "<<line+line_pos<<std::endl;
 	    ret = MPXP_False;
 	}
 
@@ -828,8 +692,8 @@ MPXP_Rc m_config_parse_config_file(m_config_t& config,const char *conffile)
 	    case ERR_OUT_OF_RANGE:
 	    case ERR_NO_SUBCONF:
 	    case ERR_FUNC_ERR:
-		PRINT_LINENUM;
-		MSG_ERR("%s\n", opt);
+		PRINT_LINENUM(conffile,line_num);
+		mpxp_err<<opt<<std::endl;
 		ret = MPXP_False;
 		errors++;
 		continue;
@@ -846,21 +710,14 @@ out:
     return ret;
 }
 
-MPXP_Rc m_config_parse_command_line(m_config_t& config, int argc, char **argv, char **envp)
+namespace mpxp {
+MPXP_Rc mpxp_parse_command_line(m_config_t& config, int argc, char **argv, char **envp)
 {
     int i;
     int tmp;
     char *opt;
     int no_more_opts = 0;
     UNUSED(envp);
-
-#ifdef MP_DEBUG
-    assert(config != NULL);
-    assert(config.pt != NULL);
-    assert(argv != NULL);
-    assert(envp != NULL);
-    assert(argc >= 1);
-#endif
 
     if (init_conf(config, COMMAND_LINE) == -1) return MPXP_False;
     if(config.last_parent == NULL) config.last_parent = config.pt;
@@ -972,24 +829,16 @@ MPXP_Rc m_config_parse_command_line(m_config_t& config, int argc, char **argv, c
     UNSET_GLOBAL(config);
     SET_RUNNING(config);
     return MPXP_Ok;
-#if 0
-err_out_mem:
-    MSG_ERR( "can't allocate memory for filenames (%s)\n", strerror(errno));
-#endif
 err_out:
     --config.recursion_depth;
     MSG_ERR( "command line: %s\n", argv[i]);
     return MPXP_False;
 }
+} // namespace mpxp
 
 int m_config_register_options(m_config_t& config,const config_t *args) {
   int list_len = 0;
   const config_t** conf_list = config.opt_list;
-
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(args != NULL);
-#endif
 
   if(conf_list) {
     for ( ; conf_list[list_len] != NULL; list_len++)
@@ -1029,11 +878,6 @@ const config_t* m_config_get_option(const m_config_t& config,const char* arg) {
   const config_t **conf_list;
   const config_t* cl[] = { NULL, NULL };
 
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(arg != NULL);
-#endif
-
   e = strchr(arg,':');
 
   if(e) {
@@ -1052,11 +896,6 @@ const config_t* m_config_get_option(const m_config_t& config,const char* arg) {
 any_t* m_config_get_option_ptr(const m_config_t& config,const char* arg) {
   const config_t* conf;
 
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(arg != NULL);
-#endif
-
   conf = m_config_get_option(config,arg);
   if(!conf) return NULL;
   return conf->p;
@@ -1064,11 +903,6 @@ any_t* m_config_get_option_ptr(const m_config_t& config,const char* arg) {
 
 int m_config_get_int (const m_config_t& config,const char* arg,int* err_ret) {
   int *ret;
-
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(arg != NULL);
-#endif
 
   ret = (int*)m_config_get_option_ptr(config,arg);
   if(err_ret)
@@ -1083,11 +917,6 @@ int m_config_get_int (const m_config_t& config,const char* arg,int* err_ret) {
 
 float m_config_get_float (const m_config_t& config,const char* arg,int* err_ret) {
   float *ret;
-
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(arg != NULL);
-#endif
 
   ret = (float*)m_config_get_option_ptr(config,arg);
   if(err_ret)
@@ -1105,11 +934,6 @@ inline void AS_INT(const config_t* c,int val) { *((int*)c->p)=val; }
 
 int m_config_set_int(m_config_t& config,const char* arg,int val) {
   const config_t* opt;
-
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(arg != NULL);
-#endif
 
   opt = m_config_get_option(config,arg);
 
@@ -1129,11 +953,6 @@ int m_config_set_int(m_config_t& config,const char* arg,int val) {
 
 int m_config_set_float(m_config_t& config,const char* arg,float val) {
   const config_t* opt;
-
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(arg != NULL);
-#endif
 
   opt = m_config_get_option(config,arg);
 
@@ -1155,11 +974,6 @@ int m_config_set_float(m_config_t& config,const char* arg,float val) {
 int m_config_switch_flag(m_config_t& config,const char* opt) {
   const config_t *conf;
 
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(opt != NULL);
-#endif
-
   conf = m_config_get_option(config,opt);
   if(!conf || conf->type != CONF_TYPE_FLAG) return 0;
   if( AS_INT(conf) == conf->min) AS_INT(conf,conf->max);
@@ -1172,11 +986,6 @@ int m_config_switch_flag(m_config_t& config,const char* opt) {
 int m_config_set_flag(m_config_t& config,const char* opt, int state) {
   const config_t *conf;
 
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(opt != NULL);
-#endif
-
   conf = m_config_get_option(config,opt);
   if(!conf || conf->type != CONF_TYPE_FLAG) return 0;
   if(state) AS_INT(conf,conf->max);
@@ -1185,11 +994,6 @@ int m_config_set_flag(m_config_t& config,const char* opt, int state) {
 }
 
 int m_config_get_flag(const m_config_t& config,const char* opt) {
-
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(opt != NULL);
-#endif
 
   const config_t* conf = m_config_get_option(config,opt);
   if(!conf || conf->type != CONF_TYPE_FLAG) return -1;
@@ -1202,11 +1006,6 @@ int m_config_is_option_set(const m_config_t& config,const char* arg) {
   const config_t* opt;
   config_save_t* save;
   int l,i;
-
-#ifdef MP_DEBUG
-  assert(config != NULL);
-  assert(arg != NULL);
-#endif
 
   opt = m_config_get_option(config,arg);
 
@@ -1325,5 +1124,3 @@ void m_config_show_options(const m_config_t& args) {
 	j++;
     };
 }
-
-#undef AS_INT

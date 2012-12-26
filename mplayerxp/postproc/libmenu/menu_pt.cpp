@@ -57,22 +57,22 @@ static void read_cmd(menu_t* menu,int cmd) {
     char str[15];
     play_tree_t* i;
     mp_cmd_t* c;
-    play_tree_iter_t* _playtree_iter =playtree_iter;
+    _PlayTree_Iter* _playtree_iter =mpxp_get_playtree_iter();
 
-    if(_playtree_iter->tree == mpriv->p.current->pt)
+    if(_playtree_iter->get_tree() == mpriv->p.current->pt)
       break;
 
-    if(_playtree_iter->tree->parent && mpriv->p.current->pt == _playtree_iter->tree->parent)
+    if(_playtree_iter->get_tree()->parent && mpriv->p.current->pt == _playtree_iter->get_tree()->parent)
       snprintf(str,15,"pt_up_step 1");
     else {
-      for(i = _playtree_iter->tree->next; i != NULL ; i = i->next) {
+      for(i = _playtree_iter->get_tree()->next; i != NULL ; i = i->next) {
 	if(i == mpriv->p.current->pt)
 	  break;
 	d++;
       }
       if(i == NULL) {
 	d = -1;
-	for(i = _playtree_iter->tree->prev; i != NULL ; i = i->prev) {
+	for(i = _playtree_iter->get_tree()->prev; i != NULL ; i = i->prev) {
 	  if(i == mpriv->p.current->pt)
 	    break;
 	  d--;
@@ -106,7 +106,7 @@ static void close_menu(menu_t* menu) {
 static int op(menu_t* menu,const char* args) {
   play_tree_t* i;
   list_entry_t* e;
-  play_tree_iter_t* _playtree_iter = playtree_iter;
+  _PlayTree_Iter* _playtree_iter = mpxp_get_playtree_iter();
 
   args = NULL; // Warning kill
 
@@ -119,14 +119,14 @@ static int op(menu_t* menu,const char* args) {
 
   mpriv->p.title = mpriv->title;
 
-  if(_playtree_iter->tree->parent != _playtree_iter->root) {
+  if(_playtree_iter->get_tree()->parent != _playtree_iter->get_root()) {
     e = new(zeromem) list_entry_t;
     e->p.txt = "..";
-    e->pt = _playtree_iter->tree->parent;
+    e->pt = _playtree_iter->get_tree()->parent;
     menu_list_add_entry(menu,e);
   }
 
-  for(i = _playtree_iter->tree ; i->prev != NULL ; i = i->prev)
+  for(i = _playtree_iter->get_tree() ; i->prev != NULL ; i = i->prev)
     /* NOP */;
   for( ; i != NULL ; i = i->next ) {
     e = new(zeromem) list_entry_t;
