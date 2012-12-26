@@ -137,13 +137,13 @@ static int open_txt(menu_t* menu,const char* args) {
   menu->read_key = read_key;
 
   if(!mpriv->file) {
-    MSG_WARN("[libmenu] MenuTxt need a TxtFileName\n");
+    mpxp_warn<<"[libmenu] MenuTxt need a TxtFileName"<<std::endl;
     return 0;
   }
 
   fd = fopen(mpriv->file,"r");
   if(!fd) {
-    MSG_WARN("[libmenu] MenuTxt can't open: %s\n",mpriv->file);
+    mpxp_warn<<"[libmenu] MenuTxt can't open: "<<mpriv->file<<std::endl;
     return 0;
   }
 
@@ -174,7 +174,7 @@ static int open_txt(menu_t* menu,const char* args) {
       mpriv->num_lines++;
     }
     if(pos >= BUF_SIZE-1) {
-      MSG_WARN("[libmenu] Warning too long line splitting\n");
+      mpxp_warn<<"[libmenu] Warning too long line splitting"<<std::endl;
       mpriv->lines = (char **)mp_realloc(mpriv->lines,(mpriv->num_lines + 1)*sizeof(char*));
       mpriv->lines[mpriv->num_lines] = mp_strdup(buf);
       mpriv->num_lines++;
@@ -182,7 +182,7 @@ static int open_txt(menu_t* menu,const char* args) {
     }
   }
 
-  MSG_INFO("[libmenu] Parsed lines: %i\n",mpriv->num_lines);
+  mpxp_info<<"[libmenu] Parsed lines: "<<mpriv->num_lines<<std::endl;
 
   return 1;
 }

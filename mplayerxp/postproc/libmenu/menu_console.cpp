@@ -267,10 +267,10 @@ static void check_child(menu_t* menu) {
 	mpriv->prompt = mpriv->mp_prompt;
 	//add_line(mpriv,"Child process exited");
       }
-      else MSG_ERR("[libmenu] WaitPid error: %s\n",strerror(errno));
+      else mpxp_err<<"[libmenu] WaitPid error: "<<strerror(errno)<<std::endl;
     }
   } else if(r < 0) {
-    MSG_ERR("[libmenu] SelectError\n");
+    mpxp_err<<"[libmenu] SelectError"<<std::endl;
     return;
   }
 
@@ -280,7 +280,7 @@ static void check_child(menu_t* menu) {
       if(w) mpriv->add_line = 1;
       r = read(mpriv->child_fd[i],buffer,255);
       if(r < 0)
-	MSG_ERR("[libmenu] ReadError on child FD: %s\n", i == 1 ? "stdout":"stderr");
+	mpxp_err<<"[libmenu] ReadError on child FD: "<<(i==1?"stdout":"stderr")<<std::endl;
       else if(r>0) {
 	buffer[r] = '\0';
 	add_string(mpriv,buffer);
@@ -298,9 +298,9 @@ static int run_shell_cmd(menu_t* menu, char* cmd) {
 #ifndef __MINGW32__
   int in[2],out[2],err[2];
 
-  MSG_INFO("[libmenu] ConsoleRun: %s\n",cmd);
+  mpxp_info<<"[libmenu] ConsoleRun: "<<cmd<<std::endl;
   if(mpriv->child) {
-    MSG_ERR("[libmenu] a child is already running\n");
+    mpxp_err<<"[libmenu] a child is already running"<<std::endl;
     return 0;
   }
 
@@ -310,7 +310,7 @@ static int run_shell_cmd(menu_t* menu, char* cmd) {
 
   mpriv->child = fork();
   if(mpriv->child < 0) {
-    MSG_ERR("[libmenu] Fork failed\n");
+    mpxp_err<<"[libmenu] Fork failed"<<std::endl;
     close_pipe(in);
     close_pipe(out);
     close_pipe(err);
@@ -385,14 +385,14 @@ static void read_key(menu_t* menu,int c) {
       while(l > 0) {
 	int w = write(mpriv->child_fd[0],str,l);
 	if(w < 0) {
-	  MSG_ERR("[libmenu] Write error\n");
+	  mpxp_err<<"[libmenu] Write error"<<std::endl;
 	  break;
 	}
 	l -= w;
 	str += w;
       }
       if(write(mpriv->child_fd[0],"\n",1) < 0)
-	MSG_ERR("[libmenu] Write error\n");
+	mpxp_err<<"[libmenu] Write error"<<std::endl;
       enter_cmd(menu);
       return;
     }

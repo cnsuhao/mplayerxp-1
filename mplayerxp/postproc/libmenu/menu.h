@@ -1,5 +1,6 @@
 #ifndef MPXP_MENU_H
 #define MPXP_MENU_H 1
+#include <string>
 
 namespace mpxp {
     struct libinput_t;
@@ -47,11 +48,11 @@ enum {
     MENU_CMD_ACTION	=6
 };
 /// Global init/uninit
-int menu_init(struct MPContext *mpctx,const char* cfg_file);
+int menu_init(struct MPContext *mpctx,const std::string& cfg_file);
 void menu_uninit(void);
 
 /// Open a menu defined in the config file
-menu_t* menu_open(const char *name,libinput_t&libinput);
+menu_t* menu_open(const std::string& name,libinput_t&libinput);
 
 void menu_draw(menu_t* menu,mp_image_t* mpi);
 void menu_read_cmd(menu_t* menu,int cmd);
@@ -73,15 +74,15 @@ enum {
     MENU_TEXT_HMASK	=(MENU_TEXT_LEFT|MENU_TEXT_HCENTER|MENU_TEXT_RIGHT),
     MENU_TEXT_CENTER	=(MENU_TEXT_VCENTER|MENU_TEXT_HCENTER)
 };
-void menu_draw_text(mp_image_t* mpi,const char* txt, int x, int y);
-int menu_text_length(const char* txt);
-int menu_text_num_lines(const char* txt, int max_width);
+void menu_draw_text(mp_image_t* mpi,const std::string& txt, int x, int y);
+int menu_text_length(const std::string& txt);
+int menu_text_num_lines(const std::string& txt, int max_width);
 
-void menu_text_size(const char* txt,int max_width,
+void menu_text_size(const std::string& txt,int max_width,
 		    int vspace, int warp,
 		    int* _w, int* _h);
 
-void menu_draw_text_full(mp_image_t* mpi,const char* txt,
+void menu_draw_text_full(mp_image_t* mpi,const std::string& txt,
 			 int x, int y,int w, int h,
 			 int vspace, int warp, int align, int anchor);
 

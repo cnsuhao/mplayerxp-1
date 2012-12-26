@@ -2,6 +2,8 @@
 #define __PLAYTREE_H
 
 #include "osdep/mplib.h"
+#include "xmpcore/xmp_enums.h"
+#include <vector>
 #include <stack>
 
 struct m_config_t;
@@ -43,8 +45,8 @@ enum {
 ///@{
 
 struct play_tree_param_t {
-    const char* name;
-    const char* value;
+    std::string name;
+    std::string value;
 };
 
 struct play_tree_t {
@@ -54,9 +56,9 @@ struct play_tree_t {
     play_tree_t* prev;
 
   //play_tree_info_t info;
-    play_tree_param_t* params;
+    std::vector<play_tree_param_t> params;
     int loop;
-    char** files;
+    std::vector<std::string> files;
     int entry_type;
     int flags;
 };
@@ -97,11 +99,11 @@ namespace mpxp {
 	    std::stack<int> status_stack;
     };
 } // namespace mpxp
-play_tree_t* parse_playtree(libinput_t& libinput,Stream * stream);
+play_tree_t* parse_playtree(libinput_t& libinput,Stream* stream);
 
 play_tree_t* play_tree_cleanup(play_tree_t* pt);
 
-play_tree_t* parse_playlist_file(libinput_t&libinput,const char* file);
+play_tree_t* parse_playlist_file(libinput_t&libinput,const std::string& file);
 
 play_tree_t* play_tree_new(void);
 
@@ -140,18 +142,15 @@ play_tree_remove(play_tree_t* pt, int free_it,int with_childs);
 
 
 void
-play_tree_add_file(play_tree_t* pt,const char* file);
+play_tree_add_file(play_tree_t* pt,const std::string& file);
 
-int
-play_tree_remove_file(play_tree_t* pt,const char* file);
-
+MPXP_Rc play_tree_remove_file(play_tree_t* pt,const std::string& file);
 
 // Val can be NULL
 void
-play_tree_set_param(play_tree_t* pt,const char* name,const char* val);
+play_tree_set_param(play_tree_t* pt,const std::string& name,const std::string& val);
 
-int
-play_tree_unset_param(play_tree_t* pt,const char* name);
+MPXP_Rc play_tree_unset_param(play_tree_t* pt,const std::string& name);
 /// Copy the config parameters from one item to another.
 void
 play_tree_set_params_from(play_tree_t* dest,const play_tree_t* src);
@@ -183,15 +182,15 @@ void pt_iter_insert_entry(_PlayTree_Iter* iter, play_tree_t* entry);
 void pt_iter_replace_entry(_PlayTree_Iter* iter, play_tree_t* entry);
 
 /// Adds a new file to the playtree, if it is not valid it is created.
-void pt_add_file(play_tree_t** ppt,const char* filename);
+void pt_add_file(play_tree_t** ppt,const std::string& filename);
 
 /// \brief Performs a convert to playtree-syntax, by concat path/file
 /// and performs pt_add_file
-void pt_add_gui_file(play_tree_t** ppt,const char* path,const char* file);
+void pt_add_gui_file(play_tree_t** ppt,const std::string& path,const std::string& file);
 
 // Two macros to use only the iter and not the other things.
-static inline void pt_iter_add_file(_PlayTree_Iter* iter, const char *filename) { play_tree_t* tree=iter->get_tree();  pt_add_file(&tree, filename); }
-static inline void pt_iter_add_gui_file(_PlayTree_Iter* iter,const char* path,const char* name) { play_tree_t* tree=iter->get_tree(); pt_add_gui_file(&tree, path, name); }
+static inline void pt_iter_add_file(_PlayTree_Iter* iter, const std::string& filename) { play_tree_t* tree=iter->get_tree();  pt_add_file(&tree, filename); }
+static inline void pt_iter_add_gui_file(_PlayTree_Iter* iter,const std::string& path,const std::string& name) { play_tree_t* tree=iter->get_tree(); pt_add_gui_file(&tree, path, name); }
 
 /// Resets the iter and goes back to head.
 void pt_iter_goto_head(_PlayTree_Iter* iter);

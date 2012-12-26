@@ -100,7 +100,6 @@ static void free_entry(list_entry_t* entry) {
     delete entry->ok;
   if(entry->cancel)
     delete entry->cancel;
-  delete entry->p.txt;
   delete entry;
 }
 
@@ -118,19 +117,20 @@ static int parse_args(menu_t* menu,const char* args) {
   while(1) {
     r = parser.get_element(&args,element);
     if(r < 0) {
-      MSG_WARN("[libmenu] Syntax error at line: %i\n",parser.get_line());
+      mpxp_warn<<"[libmenu] Syntax error at line: "<<parser.get_line()<<std::endl;
+
       delete &parser;
       return -1;
     } else if(r == 0) {
       delete &parser;
       if(!m)
-	MSG_WARN("[libmenu] No entry found in the menu definition\n");
+	mpxp_warn<<"[libmenu] No entry found in the menu definition"<<std::endl;
       return m ? 1 : 0;
     }
     // Has it a name ?
     name = element.attribs().get("name");
     if(name.empty()) {
-      MSG_WARN("[libmenu] ListMenu entry definitions need a name: %i\n",parser.get_line());
+      mpxp_warn<<"[libmenu] ListMenu entry definitions need a name: "<<parser.get_line()<<std::endl;
       continue;
     }
     m = new(zeromem) struct list_entry_s;
@@ -152,7 +152,7 @@ static int open_cmdlist(menu_t* menu, const char* args) {
   menu->close = close_menu;
 
   if(!args) {
-    MSG_WARN("libmenu] ListMenu needs an argument\n");
+    mpxp_warn<<"libmenu] ListMenu needs an argument"<<std::endl;
     return 0;
   }
 

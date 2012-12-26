@@ -10,7 +10,7 @@ struct list_entry {
   list_entry_t* prev;
   list_entry_t* next;
 
-  const char* txt;
+  std::string txt;
   char hide;
 };
 

@@ -46,10 +46,10 @@ struct config_t {
     float min,max;
     const char *help;
 };
-typedef void (*cfg_default_func_t)(config_t*,const char*);
+typedef void (*cfg_default_func_t)(config_t*,const std::string&);
 
 struct config_save_t;
-struct m_config_t {
+struct m_config_t : public Opaque {
     m_config_t(libinput_t& _libinput):libinput(_libinput) {}
     ~m_config_t() {}
 
@@ -83,7 +83,7 @@ struct config_save_t {
  * 	 0 if can't open configfile
  * 	 1 on success
  */
-MPXP_Rc m_config_parse_config_file(m_config_t& config,const char *conffile);
+MPXP_Rc m_config_parse_config_file(m_config_t& config,const std::string& conffile);
 
 /* parse_command_line returns:
  * 	-1 on error (invalid option...)
@@ -119,55 +119,55 @@ void m_config_show_options(const m_config_t& args);
 
 /** Return 1 on sucess 0 on failure
 **/
-int m_config_set_option(m_config_t& config,const char *opt,const char *param);
+int m_config_set_option(m_config_t& config,const std::string& opt,const std::string& param);
 
 /** Get the config struct defining an option
   * @return NULL on error
 **/
-const config_t* m_config_get_option(const m_config_t& config,const char* arg);
+const config_t* m_config_get_option(const m_config_t& config,const std::string& arg);
 
 /** Get the p field of the struct defining an option
   * @return NULL on error
 **/
-any_t* m_config_get_option_ptr(const m_config_t& config,const char* arg);
+any_t* m_config_get_option_ptr(const m_config_t& config,const std::string& arg);
 
 /** Tell is an option is alredy set or not
   * @return -1 one error (requested option arg exist) otherwise 0 or 1
 **/
-int m_config_is_option_set(const m_config_t& config,const char* arg);
+int m_config_is_option_set(const m_config_t& config,const std::string& arg);
 
 /** Return 0 on error 1 on success
 **/
-int m_config_switch_flag(m_config_t& config,const char* opt);
+int m_config_switch_flag(m_config_t& config,const std::string& opt);
 
 /** Return 0 on error 1 on success
 **/
-int m_config_set_flag(m_config_t& config,const char* opt, int max);
+int m_config_set_flag(m_config_t& config,const std::string& opt, int max);
 
 /** Return the value of a flag (O or 1) and -1 on error
 **/
-int m_config_get_flag(const m_config_t& config,const char* opt);
+int m_config_get_flag(const m_config_t& config,const std::string& opt);
 
 /** Set the value of an int option
   * @return	0 on error 1 on success
 **/
-int m_config_set_int(m_config_t& config,const char* arg,int val);
+int m_config_set_int(m_config_t& config,const std::string& arg,int val);
 
 /** Get the value of an int option
   * @param err_ret	If it is not NULL it's set to 1 on error
   * @return		the option value or -1 on error
 **/
-int m_config_get_int (const m_config_t&,const char* arg,int* err_ret);
+int m_config_get_int (const m_config_t&,const std::string& arg,int& err_ret);
 
 /** Set the value of a float option
   * @return	0 on error 1 on success
 **/
-int m_config_set_float(m_config_t& config,const char* arg,float val);
+int m_config_set_float(m_config_t& config,const std::string& arg,float val);
 
 /** Get the value of a float option
   * @param err_ret	If it is not NULL it's set to 1 on error
   * @return		the option value or -1 on error
 **/
-float m_config_get_float (const m_config_t&,const char* arg,int* err_ret);
+float m_config_get_float (const m_config_t&,const std::string& arg,int& err_ret);
 
 #endif /* __CONFIG_H */

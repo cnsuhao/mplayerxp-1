@@ -979,26 +979,17 @@ void MPXPSystem::print_stream_formats() const {
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     int fmt;
-    char *c;
     mpxp_info<<"[Stream]:";
     if(sh_video) {
 	mpxp_info<<"Video=";
 	if(sh_video->bih)fmt=sh_video->bih->biCompression;
 	else		 fmt=sh_video->fourcc;
-	c=(char *)&fmt;
-	if(isprint(c[0]) && isprint(c[1]) && isprint(c[2]) && isprint(c[3]))
-	    mpxp_info<<std::setw(4)<<c;
-	else
-	    mpxp_info<<std::hex<<std::setfill('0')<<std::setw(8)<<fmt;
+	fourcc(mpxp_info,fmt);
     }
     if(sh_audio) {
 	mpxp_info<<" Audio=";
 	fmt=sh_audio->wtag;
-	c=(char *)&fmt;
-	if(isprint(c[0]) && isprint(c[1]) && isprint(c[2]) && isprint(c[3]))
-	    mpxp_info<<std::setw(4)<<c;
-	else
-	    mpxp_info<<std::hex<<std::setfill('0')<<std::setw(8)<<fmt;
+	fourcc(mpxp_info,fmt);
     }
     mpxp_info<<std::endl;
 }
@@ -1120,13 +1111,8 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
     }
 #endif
     if(!found) {
-	const char *fmt;
 	mpxp_err<<MSGTR_CantFindAudioCodec<<std::endl;
-	fmt = (const char *)&sh_audio->wtag;
-	if(isprint(fmt[0]) && isprint(fmt[1]) && isprint(fmt[2]) && isprint(fmt[3]))
-	    mpxp_err<<std::setw(4)<<" '"<<fmt<<"'!"<<std::endl;
-	else
-	    mpxp_err<<" 0x"<<std::hex<<std::setfill('0')<<std::setw(8)<<sh_audio->wtag<<"!"<<std::endl;
+	fourcc(mpxp_err,sh_audio->wtag);
 	mpxp_hint<<get_path("win32codecs.conf")<<":"<<MSGTR_TryUpgradeCodecsConfOrRTFM<<std::endl;
 	d_audio->sh=NULL;
 	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
@@ -1182,13 +1168,8 @@ MPXP_Rc MPXPSystem::find_vcodec(void) {
 #endif
 
     if(!sh_video->inited) {
-	const char *fmt;
 	mpxp_err<<MSGTR_CantFindVideoCodec<<std::endl;
-	fmt = (const char *)&sh_video->fourcc;
-	if(isprint(fmt[0]) && isprint(fmt[1]) && isprint(fmt[2]) && isprint(fmt[3]))
-	    mpxp_err<<std::setw(4)<<" '"<<fmt<<"'!"<<std::endl;
-	else
-	    mpxp_err<<" 0x"<<std::hex<<std::setfill('0')<<std::setw(8)<<sh_video->fourcc<<std::endl;
+	fourcc(mpxp_err,sh_video->fourcc);
 	mpxp_hint<<get_path("win32codecs.conf")<<":"<<MSGTR_TryUpgradeCodecsConfOrRTFM<<std::endl;
 	d_video->sh = NULL;
 	sh_video = reinterpret_cast<sh_video_t*>(d_video->sh);

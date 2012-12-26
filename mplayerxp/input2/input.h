@@ -145,7 +145,7 @@ namespace mpxp {
     // If pause is true, the next input will always return a pause command.
     extern mp_cmd_t* mp_input_get_cmd(libinput_t& handle,int time, int paused, int peek_only);
 
-    extern mp_cmd_t* mp_input_parse_cmd(const char* str);
+    extern mp_cmd_t* mp_input_parse_cmd(const std::string& str);
 
     /// These filter allow you to process the command before mplayer
     /// If a filter return a true value mp_input_get_cmd will return NULL

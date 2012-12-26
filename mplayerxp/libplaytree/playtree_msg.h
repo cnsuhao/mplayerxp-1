@@ -1,7 +1,6 @@
 #ifndef PLAYTREE_MSG_H
 #define PLAYTREE_MSG_H 1
 
-#define MSGT_CLASS MSGT_PLAYTREE
 #include "mpxp_msg.h"
 
 namespace mpxp {

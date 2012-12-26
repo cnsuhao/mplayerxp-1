@@ -58,17 +58,18 @@ static menu_def_t* menu_list = NULL;
 static int menu_count = 0;
 
 
-static int menu_parse_config(const char* buffer) {
+static int menu_parse_config(const std::string& _buffer) {
   std::string name;
   ASX_Element element;
   menu_info_t* minfo = NULL;
   int r,i;
   ASX_Parser& parser = *new(zeromem) ASX_Parser;
+  const char* buffer = _buffer.c_str();
 
   while(1) {
     r = parser.get_element(&buffer,element);
     if(r < 0) {
-      MSG_WARN("[libmenu] Syntax error at line: %i\n",parser.get_line());
+      mpxp_warn<<"[libmenu] Syntax error at line: "<<parser.get_line()<<std::endl;
       delete &parser;
       return 0;
     } else if(r == 0) {
@@ -78,7 +79,7 @@ static int menu_parse_config(const char* buffer) {
     // Has it a name ?
     name = element.attribs().get("name");
     if(name.empty()) {
-      MSG_WARN("[libmenu] Menu definitions need a name attrib: %i\n",parser.get_line());
+      mpxp_warn<<"[libmenu] Menu definitions need a name attrib: "<<parser.get_line()<<std::endl;
       continue;
     }
 
@@ -105,13 +106,12 @@ static int menu_parse_config(const char* buffer) {
 	    if(strcasecmp(sfirst.c_str(),"name") == 0) continue;
 	    // Setup the attribs
 	    if(!m_struct_set(minfo->priv_st,menu_list[menu_count].cfg,mp_strdup(sfirst.c_str()),mp_strdup(ssecond.c_str())))
-		MSG_WARN("[libmenu] Bad attrib: %s %s %s %i\n"
-		    ,sfirst.c_str(),ssecond.c_str(),name.c_str(),parser.get_line());
+		mpxp_warn<<"[libmenu] Bad attrib: "<<sfirst<<" "<<ssecond<<" "<<name<<" "<<parser.get_line()<<std::endl;
 	}
 	menu_count++;
 	memset(&menu_list[menu_count],0,sizeof(menu_def_t));
     } else {
-	MSG_WARN("[libmenu] Unknown menu type: %s %i\n",element.name().c_str(),parser.get_line());
+	mpxp_warn<<"[libmenu] Unknown menu type: "<<element.name()<<" "<<parser.get_line()<<std::endl;
     }
   }
   delete &parser;
@@ -119,10 +119,10 @@ static int menu_parse_config(const char* buffer) {
 }
 
 /// This will build the menu_defs list from the cfg file
-#define BUF_STEP 1024
-#define BUF_MIN 128
-#define BUF_MAX BUF_STEP*1024
-int menu_init(struct MPContext *mpctx,const char* cfg_file) {
+static const int BUF_STEP=1024;
+static const int BUF_MIN=128;
+static const int BUF_MAX=BUF_STEP*1024;
+int menu_init(struct MPContext *mpctx,const std::string& cfg_file) {
   char* buffer = NULL;
   int bl = BUF_STEP, br = 0;
   int f, fd;
@@ -130,9 +130,9 @@ int menu_init(struct MPContext *mpctx,const char* cfg_file) {
   if(mpxp_context().video().output->font == NULL)
     return 0;
 #endif
-  fd = open(cfg_file, O_RDONLY);
+  fd = ::open(cfg_file.c_str(), O_RDONLY);
   if(fd < 0) {
-    MSG_WARN("[libmenu] Can't open ConfigFile: %s\n",cfg_file);
+    mpxp_warn<<"[libmenu] Can't open ConfigFile: "<<cfg_file<<std::endl;
     return 0;
   }
   buffer = new char [bl];
@@ -140,20 +140,20 @@ int menu_init(struct MPContext *mpctx,const char* cfg_file) {
     int r;
     if(bl - br < BUF_MIN) {
       if(bl >= BUF_MAX) {
-	MSG_WARN("[libmenu] ConfigFile is too big: %u\n",BUF_MAX/1024);
-	close(fd);
+	mpxp_warn<<"[libmenu] ConfigFile is too big: "<<(BUF_MAX/1024)<<std::endl;
+	::close(fd);
 	delete buffer;
 	return 0;
       }
       bl += BUF_STEP;
       buffer = (char *)mp_realloc(buffer,bl);
     }
-    r = read(fd,buffer+br,bl-br);
+    r = ::read(fd,buffer+br,bl-br);
     if(r == 0) break;
     br += r;
   }
   if(!br) {
-    MSG_WARN("[libmenu] ConfigFile is empty\n");
+    mpxp_warn<<"[libmenu] ConfigFile is empty"<<std::endl;
     return 0;
   }
   buffer[br-1] = '\0';
@@ -202,29 +202,28 @@ void menu_dflt_read_key(menu_t* menu,int cmd) {
   }
 }
 
-menu_t* menu_open(const char *name,libinput_t& libinput) {
+menu_t* menu_open(const std::string& name,libinput_t& libinput) {
   menu_t* m;
   int i;
 
   if(menu_list == NULL) {
-    MSG_WARN("[libmenu] Menu was not initialized\n");
+    mpxp_warn<<"[libmenu] Menu was not initialized"<<std::endl;
     return NULL;
   }
-  if(name == NULL) {
-    MSG_WARN("[libmenu] Name of menu was not specified\n");
+  if(name.empty()) {
+    mpxp_warn<<"[libmenu] Name of menu was not specified"<<std::endl;
     return NULL;
   }
-  if(!strcmp(name,"help"))
-  {
+  if(name=="help") {
     for(i = 0 ; menu_list[i].name != NULL ; i++)
-	MSG_INFO("[libmenu] menu entry[%i]: %s\n",i,menu_list[i].name);
+	mpxp_info<<"[libmenu] menu entry["<<i<<"]: "<<menu_list[i].name<<std::endl;
     return NULL;
   }
   for(i = 0 ; menu_list[i].name != NULL ; i++) {
-    if(strcmp(name,menu_list[i].name) == 0) break;
+    if(name==menu_list[i].name) break;
   }
   if(menu_list[i].name == NULL) {
-    MSG_WARN("[libmenu] Menu not found: %s\n",name);
+    mpxp_warn<<"[libmenu] Menu not found: "<<name<<std::endl;
     return NULL;
   }
   m = new(zeromem) menu_t(libinput);
@@ -236,7 +235,7 @@ menu_t* menu_open(const char *name,libinput_t& libinput) {
   if(m->priv)
     m_struct_free(m->priv_st,m->priv);
   delete m;
-  MSG_WARN("[libmenu] Menu init failed: %s\n",name);
+  mpxp_warn<<"[libmenu] Menu init failed: "<<name<<std::endl;
   return NULL;
 }
 
@@ -335,7 +334,8 @@ static char *menu_fribidi(char *txt)
 }
 #endif
 
-void menu_draw_text(mp_image_t* mpi,const char* txt, int x, int y) {
+void menu_draw_text(mp_image_t* mpi,const std::string& _txt, int x, int y) {
+  const char* txt = _txt.c_str();
   const LocalPtr<OSD_Render> draw_alpha(new(zeromem) OSD_Render(mpi->imgfmt));
   int font;
   int finalize=mpxp_context().video().output->is_final();
@@ -359,9 +359,10 @@ void menu_draw_text(mp_image_t* mpi,const char* txt, int x, int y) {
 
 }
 
-void menu_draw_text_full(mp_image_t* mpi,const char* txt,
+void menu_draw_text_full(mp_image_t* mpi,const std::string& _txt,
 			 int x, int y,int w, int h,
 			 int vspace, int warp, int align, int anchor) {
+  const char* txt=_txt.c_str();
   int need_w,need_h;
   int sy, ymin, ymax;
   int sx, xmin, xmax, xmid, xrmin;
@@ -533,7 +534,8 @@ void menu_draw_text_full(mp_image_t* mpi,const char* txt,
   }
 }
 
-int menu_text_length(const char* txt) {
+int menu_text_length(const std::string& _txt) {
+  const char* txt = _txt.c_str();
   int l = 0;
   render_txt(txt);
   while (*txt) {
@@ -543,7 +545,8 @@ int menu_text_length(const char* txt) {
   return l - mpxp_context().video().output->font->charspace;
 }
 
-void menu_text_size(const char* txt,int max_width, int vspace, int warp, int* _w, int* _h) {
+void menu_text_size(const std::string& _txt,int max_width, int vspace, int warp, int* _w, int* _h) {
+  const char* txt = _txt.c_str();
   int l = 1, i = 0;
   int w = 0;
 
@@ -565,7 +568,8 @@ void menu_text_size(const char* txt,int max_width, int vspace, int warp, int* _w
 }
 
 
-int menu_text_num_lines(const char* txt, int max_width) {
+int menu_text_num_lines(const std::string& _txt, int max_width) {
+  const char* txt = _txt.c_str();
   int l = 1, i = 0;
   render_txt(txt);
   while (*txt) {
@@ -580,7 +584,7 @@ int menu_text_num_lines(const char* txt, int max_width) {
   return l;
 }
 
-char* menu_text_get_next_line(char* txt, int max_width) {
+static const char* menu_text_get_next_line(const char* txt, int max_width) {
   int i = 0;
   render_txt(txt);
   while (*txt) {

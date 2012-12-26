@@ -1,6 +1,7 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace mpxp;
+#include <algorithm>
 
 #include <stdlib.h>
 #include <string.h>
@@ -19,7 +20,7 @@ play_tree_t*
 play_tree_new(void) {
   play_tree_t* r = (play_tree_t*)mp_calloc(1,sizeof(play_tree_t));
   if(r == NULL)
-    MSG_ERR("Can't allocate %d bytes of memory\n",sizeof(play_tree_t));
+    mpxp_err<<"Can't allocate memory"<<std::endl;
   r->entry_type = PLAY_TREE_ENTRY_NODE;
   return r;
 }
@@ -41,14 +42,6 @@ play_tree_free(play_tree_t* pt, int childs) {
 
   for(iter = pt->child ; iter != NULL ; iter = iter->next)
     iter->parent = NULL;
-
-  //if(pt->params) delete pt->params;
-  if(pt->files) {
-    int i;
-    for(i = 0 ; pt->files[i] != NULL ; i++)
-      delete pt->files[i];
-    delete pt->files;
-  }
 
   delete pt;
 }
@@ -177,144 +170,101 @@ play_tree_set_parent(play_tree_t* pt, play_tree_t* parent) {
     parent->child = iter;
   } else
     parent->child = pt;
-
 }
 
+void play_tree_add_file(play_tree_t* pt,const std::string& file) {
+    if(pt->entry_type != PLAY_TREE_ENTRY_NODE &&
+	pt->entry_type != PLAY_TREE_ENTRY_FILE)
+	return;
 
-void
-play_tree_add_file(play_tree_t* pt,const char* file) {
-  int n = 0;
-  char* e;
+    size_t pos;
+    std::string tail,lf=file;
+    std::transform(lf.begin(),lf.end(),lf.begin(), ::tolower);
 
-  if(pt->entry_type != PLAY_TREE_ENTRY_NODE &&
-     pt->entry_type != PLAY_TREE_ENTRY_FILE)
-    return;
-
-  if(pt->files) {
-    for(n = 0 ; pt->files[n] != NULL ; n++)
-      /* NOTHING */;
-  }
-  pt->files = (char**)mp_realloc((any_t*)pt->files,(n+2)*sizeof(char*));
-  if(pt->files ==NULL) {
-    MSG_ERR("Can't allocate %d bytes of memory\n",(n+2)*sizeof(char*));
-    return;
-  }
-
-  e = pt->files[n] = mp_strdup(file);
-  pt->files[n+1] = NULL;
-
-  if(strncasecmp(e,"vcd://",6) == 0) {
-    pt->entry_type = PLAY_TREE_ENTRY_VCD;
-    memmove(e,e + 6,strlen(&e[6])+1);
-  } else if(strncasecmp(e,"dvd://",6) == 0) {
-    pt->entry_type = PLAY_TREE_ENTRY_DVD;
-    memmove(e,&e[6],strlen(&e[6])+1);
-  } else if(strncasecmp(e,"tv://",5) == 0) {
-    pt->entry_type = PLAY_TREE_ENTRY_TV;
-    memmove(e,&e[5],strlen(&e[5])+1);
-  } else
-    pt->entry_type = PLAY_TREE_ENTRY_FILE;
-
-}
-
-int
-play_tree_remove_file(play_tree_t* pt,const char* file) {
-  int n,f = -1;
-
-  for(n=0 ; pt->files[n] != NULL ; n++) {
-    if(strcmp(file,pt->files[n]) == 0)
-      f = n;
-  }
-
-  if(f < 0) // Not found
-    return 0;
-
-  delete pt->files[f];
-
-  if(n > 1) {
-    memmove(&pt->files[f],&pt->files[f+1],(n-f)*sizeof(char*));
-    pt->files = (char**)mp_realloc((any_t*)pt->files,n*sizeof(char*));
-    if(pt->files == NULL) {
-      MSG_ERR("Can't allocate %d bytes of memory\n",(n+2)*sizeof(char*));
-      return -1;
+    if(lf.substr(0,6)=="vcd://") {
+	pt->entry_type = PLAY_TREE_ENTRY_VCD;
+	pos=6;
+    } else if(lf.substr(0,6)=="dvd://") {
+	pt->entry_type = PLAY_TREE_ENTRY_DVD;
+	pos=6;
+    } else if(lf.substr(0,5)=="tv://") {
+	pt->entry_type = PLAY_TREE_ENTRY_TV;
+	pos=5;
+    } else {
+	pt->entry_type = PLAY_TREE_ENTRY_FILE;
+	pos=0;
     }
-  } else {
-    delete pt->files;
-    pt->files = NULL;
-  }
-
-  return 1;
+    tail=file.substr(pos);
+    pt->files.push_back(tail);
 }
 
-void play_tree_set_param(play_tree_t* pt,const char* name,const char* val) {
-  int n = 0,ni = -1;
+MPXP_Rc play_tree_remove_file(play_tree_t* pt,const std::string& file) {
+    int f = -1;
+    size_t n,sz=pt->files.size();
 
-  if(pt->params) {
-    for( ; pt->params[n].name != NULL ; n++) {
-      if(strcasecmp(pt->params[n].name,name) == 0)
-	ni = n;
-    }
-  }
+    for(n=0; n<sz; n++) if(file==pt->files[n]) f = n;
 
-  if(ni > 0) {
-    if(pt->params[n].value != NULL) delete pt->params[n].value;
-    pt->params[n].value = val != NULL ? mp_strdup(val) : NULL;
-    return;
-  }
+    if(f < 0) return MPXP_False; // Not found
 
-  pt->params = (play_tree_param_t*)mp_realloc(pt->params,(n+2)*sizeof(play_tree_param_t));
-  if(pt->params == NULL)
-  {
-    MSG_FATAL("Can't mp_realloc params\n");
-    return;
-  }
-  pt->params[n].name = mp_strdup(name);
-  pt->params[n].value = val != NULL ? mp_strdup(val) : NULL;
-  memset(&pt->params[n+1],0,sizeof(play_tree_param_t));
+    pt->files.erase(pt->files.begin()+f);
 
-  return;
+    return MPXP_Ok;
 }
 
-int play_tree_unset_param(play_tree_t* pt,const char* name) {
-  int n,ni = -1;
+void play_tree_set_param(play_tree_t* pt,const std::string& name,const std::string& val) {
+    int ni = -1;
+    size_t n,sz=pt->params.size();
 
-  for(n = 0 ; pt->params[n].name != NULL ; n++) {
-    if(strcasecmp(pt->params[n].name,name) == 0)
-      ni = n;
-  }
-
-  if(ni < 0)
-    return 0;
-
-  if(pt->params[ni].name) delete pt->params[ni].name;
-  if(pt->params[ni].value) delete pt->params[ni].value;
-
-  if(n > 1) {
-    memmove(&pt->params[ni],&pt->params[ni+1],(n-ni)*sizeof(play_tree_param_t));
-    pt->params = (play_tree_param_t*)mp_realloc(pt->params,n*sizeof(play_tree_param_t));
-    if(pt->params == NULL) {
-      MSG_ERR("Can't allocate %d bytes of memory\n",n*sizeof(play_tree_param_t));
-      return -1;
+    std::string lname=name;
+    std::transform(lname.begin(),lname.end(),lname.begin(), ::tolower);
+    if(!pt->params.empty()) {
+	for(n=0; n<sz; n++) {
+	    std::string lparm=pt->params[n].name;
+	    std::transform(lparm.begin(),lparm.end(),lparm.begin(), ::tolower);
+	    if(lname==lparm) ni = n;
+	}
     }
-  } else {
-    delete pt->params;
-    pt->params = NULL;
-  }
 
-  return 1;
+    if(ni > 0) {
+	pt->params[n].value = val;
+	return;
+    }
+
+    play_tree_param_t param;
+    param.name=name;
+    param.value=val;
+    pt->params.push_back(param);
+}
+
+MPXP_Rc play_tree_unset_param(play_tree_t* pt,const std::string& name) {
+    int ni = -1;
+    size_t n,sz=pt->params.size();
+
+    std::string lname=name;
+    std::transform(lname.begin(),lname.end(),lname.begin(), ::tolower);
+    for(n=0;n<sz;n++) {
+	std::string lparm=pt->params[n].name;
+	std::transform(lparm.begin(),lparm.end(),lparm.begin(), ::tolower);
+	if(lname==lparm) ni = n;
+    }
+
+    if(ni < 0) return MPXP_False;
+
+    if(n > 1)	pt->params.erase(pt->params.begin()+ni);
+    else	pt->params.clear();
+
+    return MPXP_Ok;
 }
 
 void play_tree_set_params_from(play_tree_t* dest,const play_tree_t* src) {
-  int i;
+    size_t i,sz=src->params.size();
 
-  if(!src->params)
-    return;
+    if(src->params.empty()) return;
 
-  for(i = 0; src->params[i].name != NULL ; i++)
-    play_tree_set_param(dest,src->params[i].name,src->params[i].value);
-  if(src->flags & PLAY_TREE_RND) // pass the random flag too
-    dest->flags |= PLAY_TREE_RND;
-
+    for(i=0;i<sz; i++)
+	play_tree_set_param(dest,src->params[i].name,src->params[i].value);
+    if(src->flags & PLAY_TREE_RND) // pass the random flag too
+	dest->flags |= PLAY_TREE_RND;
 }
 
 // all children if deep < 0
@@ -374,7 +324,7 @@ play_tree_rnd_step(play_tree_t* pt) {
     if(!(i->flags & PLAY_TREE_RND_PLAYED)) return i;
   }
 
-  MSG_ERR("Random stepping error r=%i\n",rnd);
+  mpxp_err<<"Random stepping error r="<<rnd<<std::endl;
   return NULL;
 }
 
@@ -398,7 +348,6 @@ _PlayTree_Iter::_PlayTree_Iter(const _PlayTree_Iter& old)
 _PlayTree_Iter::~_PlayTree_Iter() {}
 
 void _PlayTree_Iter::push_params() {
-    int n;
     play_tree_t* pt;
 
     pt = tree;
@@ -407,9 +356,10 @@ void _PlayTree_Iter::push_params() {
     // while playing
     m_config_push(config);
 
-    if(pt->params == NULL) return;
+    if(pt->params.empty()) return;
+    size_t n,sz=pt->params.size();
 
-    for(n = 0; pt->params[n].name != NULL ; n++) {
+    for(n=0; n<sz; n++) {
 	int e;
 	if((e = m_config_set_option(config,pt->params[n].name,pt->params[n].value)) < 0)
 	    mpxp_err<<"Error "<<e<<" while setting option '"<<pt->params[n].name<<"' with value '"<<pt->params[n].value<<"'"<<std::endl;
@@ -493,8 +443,7 @@ int _PlayTree_Iter::step(int d,int with_nodes) {
 
     tree = pt;
 
-    for(d = 0 ; tree->files[d] != NULL ; d++) /* NOTHING */;
-    num_files = d;
+    num_files = tree->files.size();
 
     push_params();
     entry_pushed = 1;
@@ -535,9 +484,9 @@ int _PlayTree_Iter::down_step(int d,int with_nodes) {
 }
 
 std::string _PlayTree_Iter::get_file(int d) {
-    const char* entry;
+    std::string entry;
 
-    if(tree->files == NULL) return "";
+    if(tree->files.empty()) return "";
     if(file >= num_files-1 || file < -1) return "";
     if(d > 0) {
 	if(file >= num_files - 1) file = 0;
@@ -550,28 +499,27 @@ std::string _PlayTree_Iter::get_file(int d) {
 
     switch(tree->entry_type) {
 	case PLAY_TREE_ENTRY_DVD :
-	    if(strlen(entry) == 0) entry = "1";
+	    if(entry.length() == 0) entry = "1";
 	    m_config_set_option(config,"dvd",entry);
 	    return std::string("DVD title ")+entry;
 	case PLAY_TREE_ENTRY_VCD :
-	    if(strlen(entry) == 0) entry = "1";
+	    if(entry.length() == 0) entry = "1";
 	    m_config_set_option(config,"vcd",entry);
 	    return std::string("vcd://")+entry;
 	case PLAY_TREE_ENTRY_TV: {
-	    if(strlen(entry) != 0) {
-		char *val = new char [strlen(entry) + 11 + 1];
-		const char* e;
+	    if(entry.length() != 0) {
+		std::string val;
+		size_t e;
 		std::string rs;
-		sprintf(val,"on:channel=%s",entry);
+		val="on:channel="+entry;
 		m_config_set_option(config,"tv",val);
 		rs="TV channel ";
-		e = strchr(entry,':');
-		if(!e) rs+=std::string(entry).substr(0,255-11);
+		e = entry.find(':');
+		if(e==std::string::npos) rs+=entry.substr(0,255-11);
 		else {
-		    if(entry-e > 255) e = entry+255;
-		    rs+=std::string(entry).substr(0,val-e);
+		    if(e > 255) e = 255;
+		    rs+=entry.substr(0,e);
 		}
-		delete val;
 		return rs;
 	    } else m_config_set_option(config,"tv","on");
 	    return "TV";
@@ -697,7 +645,7 @@ void pt_iter_replace_entry(_PlayTree_Iter* iter, play_tree_t* entry)
 }
 
 //Add a new file as a new entry
-void pt_add_file(play_tree_t** ppt,const char* filename)
+void pt_add_file(play_tree_t** ppt,const std::string& filename)
 {
   play_tree_t *pt = *ppt, *entry = play_tree_new();
 
@@ -712,18 +660,12 @@ void pt_add_file(play_tree_t** ppt,const char* filename)
   play_tree_set_params_from(entry,pt);
 }
 
-void pt_add_gui_file(play_tree_t** ppt,const char* path,const char* file)
+void pt_add_gui_file(play_tree_t** ppt,const std::string& path,const std::string& file)
 {
-  char* wholename = new char [strlen(path)+strlen(file)+2];
+    std::string wholename;
 
-  if (wholename)
-  {
-    strcpy(wholename, path);
-    strcat(wholename, "/");
-    strcat(wholename, file);
+    wholename=path+"/"+file;
     pt_add_file(ppt, wholename);
-    delete wholename; // As pt_add_file strdups it anyway!
-  }
 }
 
 void pt_iter_goto_head(_PlayTree_Iter* iter)

@@ -97,20 +97,19 @@ const video_probe_t* vfm_driver_probe(Opaque& ctx,sh_video_t *sh,put_slice_info_
     unsigned i;
     const video_probe_t* probe;
     for (i=0; mpcodecs_vd_drivers[i] != &mpcodecs_vd_null; i++) {
-	MSG_V("Probing: %s\n",mpcodecs_vd_drivers[i]->info->driver_name);
+	mpxp_v<<"Probing: "<<mpcodecs_vd_drivers[i]->info->driver_name<<std::endl;
 	if((probe=mpcodecs_vd_drivers[i]->probe(sh->fourcc))!=NULL) {
 	    Opaque* priv=mpcodecs_vd_drivers[i]->preinit(*probe,sh,psi);
 	    if(priv) {
-		const char* pfcc = reinterpret_cast<const char*>(&sh->fourcc);
-		MSG_V("Driver: %s supports these outfmt for %c%c%c%c fourcc:\n"
-		    ,mpcodecs_vd_drivers[i]->info->driver_name
-		    ,pfcc[0],pfcc[1],pfcc[2],pfcc[3],probe->flags[i]);
+		mpxp_v<<"Driver: "<<mpcodecs_vd_drivers[i]->info->driver_name<<" supports these outfmt for ";
+		fourcc(mpxp_v,sh->fourcc);
+		mpxp_v<<" fourcc:"<<std::endl;
 		for(i=0;i<Video_MaxOutFmt;i++) {
-		    pfcc = reinterpret_cast<const char*>(&probe->pix_fmt[i]);
-		    MSG_V("%c%c%c%c (flg=%X) ",pfcc[0],pfcc[1],pfcc[2],pfcc[3],probe->flags[i]);
+		    fourcc(mpxp_v,probe->pix_fmt[i]);
+		    mpxp_v<<" (flg="<<probe->flags[i]<<")"<<std::endl;
 		    if(probe->pix_fmt[i]==0||probe->pix_fmt[i]==-1) break;
 		}
-		MSG_V("\n");
+		mpxp_v<<std::endl;
 		mpcodecs_vd_drivers[i]->uninit(*priv);
 		delete priv;
 		return probe;
@@ -122,11 +121,11 @@ const video_probe_t* vfm_driver_probe(Opaque& ctx,sh_video_t *sh,put_slice_info_
 
 void vfm_help(void) {
     unsigned i;
-    MSG_INFO("Available video codec families/drivers:\n");
+    mpxp_info<<"Available video codec families/drivers:"<<std::endl;
     for(i=0;i<nddrivers;i++) {
 	if(mpcodecs_vd_drivers[i])
 	    if(mpcodecs_vd_drivers[i]->options)
-		MSG_INFO("\t%-10s %s\n",mpcodecs_vd_drivers[i]->info->driver_name,mpcodecs_vd_drivers[i]->info->descr);
+		mpxp_info<<"\t"<<std::setw(10)<<std::left<<mpcodecs_vd_drivers[i]->info->driver_name<<" "<<mpcodecs_vd_drivers[i]->info->descr<<std::endl;
     }
-    MSG_INFO("\n");
+    mpxp_info<<std::endl;
 }

@@ -523,12 +523,12 @@ static MPXP_Rc mp_input_add_key_fd(libinput_t& priv,any_t* opaque, int sel, mp_k
     return MPXP_Ok;
 }
 
-mp_cmd_t* mp_input_parse_cmd(const char* _str) {
+mp_cmd_t* mp_input_parse_cmd(const std::string& _str) {
     int i,l;
     char *ptr,*e;
     mp_cmd_t *cmd;
     const mp_cmd_t *cmd_def;
-    char *str=mp_strdup(_str);
+    char *str=mp_strdup(_str.c_str());
 
 #ifdef MP_DEBUG
     assert(str != NULL);
@@ -776,7 +776,7 @@ mp_cmd_t* mp_input_get_cmd_from_keys(libinput_t& priv,int n,int* keys) {
     mp_cmd_t* ret;
 
     if(priv.cmd_binds) cmd = mp_input_find_bind_for_key(priv.cmd_binds,n,keys);
-    if(cmd == NULL)     cmd = mp_input_find_bind_for_key(def_cmd_binds,n,keys);
+    if(cmd == NULL)    cmd = mp_input_find_bind_for_key(def_cmd_binds,n,keys);
     if(cmd == NULL) {
 	mpxp_warn<<"No bind found for key: "<<mp_input_get_key_name(priv,keys[0]);
 	if(n > 1) {
@@ -943,7 +943,7 @@ static mp_cmd_t* mp_input_read_cmds(libinput_t& priv) {
 	    else if(r == MP_INPUT_DEAD) priv.cmd_fds[i].flags |= MP_FD_DEAD;
 	    continue;
 	}
-	ret = mp_input_parse_cmd(cmd);
+	ret = mp_input_parse_cmd(cmd?cmd:"");
 	delete cmd;
 	if(!ret) continue;
 	last_loop = i;

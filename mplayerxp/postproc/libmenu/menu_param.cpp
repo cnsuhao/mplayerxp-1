@@ -78,7 +78,6 @@ static void entry_set_text(menu_t* menu, list_entry_t* e) {
   } else if(mpriv->hide_na)
       e->p.hide = 0;
   l = strlen(e->name) + 2 + strlen(val) + (edit ? 4 : 0) + 1;
-  if(e->p.txt) delete e->p.txt;
   char * etxt = new char [l];
   sprintf(etxt,"%s: %s%s%s",e->name,edit ? "> " : "",val,edit ? " <" : "");
   e->p.txt=etxt;
@@ -102,13 +101,13 @@ static int parse_args(menu_t* menu,const char* args) {
   while(1) {
     r = parser.get_element(&args,element);
     if(r < 0) {
-      MSG_ERR("[libmenu] Syntax error at line: %s\n",parser.get_line());
+      mpxp_err<<"[libmenu] Syntax error at line: "<<parser.get_line()<<std::endl;
       delete &parser;
       return -1;
     } else if(r == 0) {
       delete &parser;
       if(!m)
-	MSG_WARN("[libmenu] No entry found in the menu definition\n");
+	mpxp_warn<<"[libmenu] No entry found in the menu definition"<<std::endl;
       m = new(zeromem) struct list_entry_s;
       m->p.txt = mp_strdup("Back");
       menu_list_add_entry(menu,m);
@@ -117,13 +116,13 @@ static int parse_args(menu_t* menu,const char* args) {
     if(!strcasecmp(element.name().c_str(),"menu")) {
       name = element.attribs().get("menu");
       if(name.empty()) {
-	MSG_WARN("[libmenu] Submenu definition need a menu attribut\n");
+	mpxp_warn<<"[libmenu] Submenu definition need a menu attribut"<<std::endl;
 	continue;
       }
       m = new(zeromem) struct list_entry_s;
       m->menu = mp_strdup(name.c_str());
       m->p.txt = mp_strdup(element.attribs().get("name").c_str());
-      if(!m->p.txt) m->p.txt = mp_strdup(m->menu);
+      if(m->p.txt.empty()) m->p.txt = mp_strdup(m->menu);
       menu_list_add_entry(menu,m);
       continue;
     }
@@ -131,13 +130,12 @@ static int parse_args(menu_t* menu,const char* args) {
     name = element.attribs().get("property");
     opt = NULL;
     if(!name.empty() && mp_property_do(name.c_str(),M_PROPERTY_GET_TYPE,&opt,menu->ctx) <= 0) {
-      MSG_WARN("[libmenu] Invalid property: %s %i\n",
-	     name.c_str(),parser.get_line());
+      mpxp_warn<<"[libmenu] Invalid property: "<<name<<" "<<parser.get_line()<<std::endl;
       continue;
     }
     txt = element.attribs().get("txt");
     if(name.empty() || txt.empty()) {
-      MSG_WARN("[libmenu] PrefMenu entry definitions need: %i\n",parser.get_line());
+      mpxp_warn<<"[libmenu] PrefMenu entry definitions need: "<<parser.get_line()<<std::endl;
       continue;
     }
     m = new(zeromem) struct list_entry_s;
@@ -227,7 +225,6 @@ static void read_cmd(menu_t* menu,int cmd) {
 }
 
 static void free_entry(list_entry_t* entry) {
-  delete entry->p.txt;
   if(entry->name) delete entry->name;
   if(entry->txt)  delete entry->txt;
   if(entry->prop) delete entry->prop;
@@ -248,7 +245,7 @@ static int openMenu(menu_t* menu,const char* args) {
 
 
   if(!args) {
-    MSG_ERR("[libmenu] PrefMenu needs an argument\n");
+    mpxp_err<<"[libmenu] PrefMenu needs an argument"<<std::endl;
     return 0;
   }
 

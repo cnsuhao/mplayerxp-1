@@ -443,10 +443,8 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
 	    default: {
 		const char *fmt;
 		fmt = (const char *)&sh->codec->outfmt[sh->outfmtidx];
-		MSG_WARN("Can't apply postprocessing for");
-		if(isprint(fmt[0]) && isprint(fmt[1]) && isprint(fmt[2]) && isprint(fmt[3]))
-		    MSG_WARN(" '%c%c%c%c'!\n",fmt[0],fmt[1],fmt[2],fmt[3]);
-		else MSG_ERR(" 0x%08X!\n",sh->codec->outfmt[sh->outfmtidx]);
+		mpxp_warn<<"Can't apply postprocessing for";
+		fourcc(mpxp_warn,sh->codec->outfmt[sh->outfmtidx]);
 		break;
 	    }
 	}

@@ -4,6 +4,7 @@
 #include "osdep/mplib.h"
 
 #include <iostream>
+#include <iomanip>
 #include <string>
 
 /* TODO: more highlighted levels */
@@ -168,6 +169,18 @@ namespace mpxp {
 	protected:
 	    virtual MPXP_Rc	test_conditions();
     };
+
+    inline mpxp_ostream& fourcc(mpxp_ostream& os,uint32_t value) {
+	union {
+	    uint32_t	v;
+	    char	c[4];
+	}p;
+	p.v=value;
+	if(::isprint(p.c[0])&&::isprint(p.c[1])&&::isprint(p.c[2])&&::isprint(p.c[3])) {
+	    os<<p.c[0]<<p.c[1]<<p.c[2]<<p.c[3];
+	} else os<<std::hex<<std::setw(8)<<std::setfill('0')<<p.v;
+	return os;
+    }
 
     void mpxp_print_init(int verbose);
     void mpxp_print_uninit(void);

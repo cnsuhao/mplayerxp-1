@@ -19,8 +19,10 @@ using namespace mpxp;
 #include "input2/input.h"
 #include "pp_msg.h"
 
-static inline const char* mp_basename(const char *s) {
-    return strrchr((s),'/')==NULL?(const char*)(s):(strrchr((s),'/')+1);
+static inline std::string mp_basename(const std::string& s) {
+    size_t pos;
+    pos=s.rfind('/');
+    return (pos==std::string::npos)?s:s.substr(pos+1);
 }
 
 struct list_entry_s {
@@ -78,7 +80,7 @@ static void read_cmd(menu_t* menu,int cmd) {
 	  d--;
 	}
 	if(i == NULL) {
-	  MSG_WARN("[libmenu] Can't find the target item\n");
+	  mpxp_warn<<"[libmenu] Can't find the target item"<<std::endl;
 	  break;
 	}
       }
@@ -88,7 +90,7 @@ static void read_cmd(menu_t* menu,int cmd) {
     if(c)
       mp_input_queue_cmd(menu->libinput,c);
     else
-      MSG_WARN("[libmenu] Failed to build command: %s\n",str);
+      mpxp_warn<<"[libmenu] Failed to build command: "<<str<<std::endl;
   } break;
   default:
     menu_list_read_cmd(menu,cmd);
@@ -130,7 +132,7 @@ static int op(menu_t* menu,const char* args) {
     /* NOP */;
   for( ; i != NULL ; i = i->next ) {
     e = new(zeromem) list_entry_t;
-    if(i->files)
+    if(!i->files.empty())
       e->p.txt = mp_basename(i->files[0]);
     else
       e->p.txt = "Group ...";

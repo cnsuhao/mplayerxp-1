@@ -242,12 +242,13 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
 	case IMGFMT_I420:
 	case IMGFMT_IYUV: break;
 	default:
-	    MSG_ERR("Unsupported out_fmt: 0x%X\n",sh->codec->outfmt[sh->outfmtidx]);
+	    mpxp_err<<"Unsupported out_fmt: "; fourcc(mpxp_err,sh->codec->outfmt[sh->outfmtidx]);
+	    mpxp_err<<std::endl;
 	    return MPXP_False;
     }
     if(!(priv.decoder=priv.getDecore_ptr(sh->fourcc))) {
-	char *fcc=(char *)&(sh->fourcc);
-	MSG_ERR("Can't find decoder for %c%c%c%c fourcc\n",fcc[0],fcc[1],fcc[2],fcc[3]);
+	mpxp_err<<"Can't find decoder for "; fourcc(mpxp_err,sh->fourcc);
+	mpxp_err<<" fourcc"<<std::endl;
 	return MPXP_False;
     }
     dinit.formatOut.fourCC=sh->codec->outfmt[sh->outfmtidx];
@@ -260,8 +261,8 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
     dinit.formatIn.fourCC=sh->fourcc;
     dinit.formatIn.framePeriod=sh->fps;
     if(priv.decoder(NULL, DEC_OPT_INIT, (any_t*) &priv.pHandle, &dinit)!=DEC_OK) {
-	char *fcc=(char *)&(dinit.formatOut);
-	MSG_ERR("Can't find decoder for %c%c%c%c fourcc\n",fcc[0],fcc[1],fcc[2],fcc[3]);
+	mpxp_err<<"Can't find decoder for "; fourcc(mpxp_err,dinit.formatOut.fourCC);
+	mpxp_err<<" fourcc"<<std::endl;
     }
     MSG_V("INFO: DivX4Linux (libdivx.so) video codec init OK!\n");
     fflush(stdout);

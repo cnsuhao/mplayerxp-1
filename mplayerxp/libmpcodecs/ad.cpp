@@ -91,16 +91,17 @@ const audio_probe_t* afm_probe_driver(Opaque& ctx,sh_audio_t *sh,audio_filter_in
     unsigned i;
     const audio_probe_t* probe;
     for (i=0; mpcodecs_ad_drivers[i] != &mpcodecs_ad_null; i++) {
-	MSG_V("Probing: %s\n",mpcodecs_ad_drivers[i]->info->driver_name);
+	mpxp_v<<"Probing: "<<mpcodecs_ad_drivers[i]->info->driver_name<<std::endl;
 	if((probe=mpcodecs_ad_drivers[i]->probe(sh->wtag))!=NULL) {
 	    Opaque* priv=mpcodecs_ad_drivers[i]->preinit(*probe,sh,afi);
-	    MSG_V("Driver: %s supports these outfmt for 0x%X wtag:\n"
-		    ,mpcodecs_ad_drivers[i]->info->driver_name,sh->wtag);
+	    mpxp_v<<"Driver: "<<mpcodecs_ad_drivers[i]->info->driver_name<<" supports these outfmt for ";
+	    fourcc(mpxp_v,sh->wtag);
+	    mpxp_v<<std::endl;
 	    for(i=0;i<Audio_MaxOutSample;i++) {
-		    MSG_V("%X ",probe->sample_fmt[i]);
+		    mpxp_v<<std::hex<<probe->sample_fmt[i]<<" ";
 		    if(probe->sample_fmt[i]==-1||probe->sample_fmt[i]==0) break;
 	    }
-	    MSG_V("\n");
+	    mpxp_v<<std::endl;
 	    mpcodecs_ad_drivers[i]->uninit(*priv);
 	    delete priv;
 	    return probe;
@@ -111,11 +112,11 @@ const audio_probe_t* afm_probe_driver(Opaque& ctx,sh_audio_t *sh,audio_filter_in
 
 void afm_help(void) {
   unsigned i;
-  MSG_INFO("Available audio codec families/drivers:\n");
+  mpxp_info<<"Available audio codec families/drivers:"<<std::endl;
   for(i=0;i<nddrivers;i++) {
     if(mpcodecs_ad_drivers[i])
 	if(mpcodecs_ad_drivers[i]->options)
-	    MSG_INFO("\t%-10s %s\n",mpcodecs_ad_drivers[i]->info->driver_name,mpcodecs_ad_drivers[i]->info->descr);
+	    mpxp_info<<"\t"<<std::left<<std::setw(10)<<mpcodecs_ad_drivers[i]->info->driver_name<<" "<<mpcodecs_ad_drivers[i]->info->descr<<std::endl;
   }
-  MSG_INFO("\n");
+  mpxp_info<<std::endl;
 }

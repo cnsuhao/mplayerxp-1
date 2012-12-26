@@ -82,12 +82,13 @@ static m_option_t cfg_fields[] = {
 #define mpriv (menu->priv)
 
 static void free_entry(list_entry_t* entry) {
-  delete entry->p.txt;
   delete entry;
 }
 
-static const char* replace_path(const char* title,const char* dir) {
-  const char *p = strstr(title,"%p");
+static const char* replace_path(const std::string& _title,const std::string& _dir) {
+  const char* title=_title.c_str();
+  const char* dir=_dir.c_str();
+  const char* p = strstr(title,"%p");
   if(p) {
     int tl = strlen(title);
     int dl = strlen(dir);
@@ -207,7 +208,7 @@ static int open_dir(menu_t* menu,const char* args) {
   mpriv->p.title = replace_path(mpriv->title,mpriv->dir);
 
   if ((dirp = opendir (mpriv->dir)) == NULL){
-    MSG_ERR("[libmenu] Opendir error: %s\n", strerror(errno));
+    mpxp_err<<"[libmenu] Opendir error: "<<strerror(errno)<<std::endl;
     return 0;
   }
 
@@ -248,7 +249,7 @@ static int open_dir(menu_t* menu,const char* args) {
     if(n%20 == 0){ // Get some more mem
       if((tp = (char **) mp_realloc(namelist, (n+20) * sizeof (char *)))
 	 == NULL) {
-	MSG_ERR("[libmenu] Realloc error: %s\n", strerror(errno));
+	mpxp_err<<"[libmenu] Realloc error: "<<strerror(errno)<<std::endl;
 	n--;
 	goto bailout;
       }
@@ -257,7 +258,7 @@ static int open_dir(menu_t* menu,const char* args) {
 
     namelist[n] = (char *) mp_malloc(strlen(dp->d_name) + 2);
     if(namelist[n] == NULL){
-      MSG_ERR("[libmenu] Malloc error: %s\n", strerror(errno));
+      mpxp_err<<"[libmenu] Malloc error: "<<strerror(errno)<<std::endl;
       n--;
       goto bailout;
     }
@@ -275,7 +276,7 @@ bailout:
   qsort(namelist, n, sizeof(char *), (kill_warn)compare);
 
   if (n < 0) {
-    MSG_ERR("[libmenu] Readdir error: %s\n",strerror(errno));
+    mpxp_err<<"[libmenu] Readdir error: "<<strerror(errno)<<std::endl;
     return 0;
   }
   while(n--) {
@@ -286,7 +287,7 @@ bailout:
       e->d = 1;
     menu_list_add_entry(menu,e);
     }else{
-      MSG_ERR("[libmenu] Malloc error: %s\n", strerror(errno));
+      mpxp_err<<"[libmenu] Malloc error: "<<strerror(errno)<<std::endl;
     }
     delete namelist[n];
   }
@@ -308,10 +309,9 @@ static void read_cmd(menu_t* menu,int cmd) {
     // Directory
     if(mpriv->p.current->d) {
       if(mpriv->dir_action) {
-	int fname_len = strlen(mpriv->dir) + strlen(mpriv->p.current->p.txt) + 1;
-	char filename[fname_len];
+	std::string filename;
 	const char* str;
-	sprintf(filename,"%s%s",mpriv->dir,mpriv->p.current->p.txt);
+	filename=mpriv->dir+mpriv->p.current->p.txt;
 	str = replace_path(mpriv->dir_action,filename);
 	c = mp_input_parse_cmd(str);
 	if(str != mpriv->dir_action)
@@ -319,7 +319,7 @@ static void read_cmd(menu_t* menu,int cmd) {
       } else { // Default action : open this dirctory ourself
 	int l = strlen(mpriv->dir);
 	char *slash =  NULL, *p = NULL;
-	if(strcmp(mpriv->p.current->p.txt,"../") == 0) {
+	if(mpriv->p.current->p.txt=="../") {
 	  if(l <= 1) break;
 	  mpriv->dir[l-1] = '\0';
 	  slash = strrchr(mpriv->dir,'/');
@@ -331,21 +331,20 @@ static void read_cmd(menu_t* menu,int cmd) {
 	  slash[1] = '\0';
 	  p = mp_strdup(mpriv->dir);
 	} else {
-	  p = new char [l + strlen(mpriv->p.current->p.txt) + 1];
-	  sprintf(p,"%s%s",mpriv->dir,mpriv->p.current->p.txt);
+	  p = new char [l + mpriv->p.current->p.txt.length() + 1];
+	  sprintf(p,"%s%s",mpriv->dir,mpriv->p.current->p.txt.c_str());
 	}
 	menu_list_uninit(menu,free_entry);
 	if(!open_dir(menu,p)) {
-	  MSG_ERR("[libmenu] Can't open directory: %s\n",p);
+	  mpxp_err<<"[libmenu] Can't open directory: "<<p<<std::endl;
 	  menu->cl = 1;
 	}
 	delete p;
       }
     } else { // Files
-      int fname_len = strlen(mpriv->dir) + strlen(mpriv->p.current->p.txt) + 1;
-      char filename[fname_len];
+      std::string filename;
       const char *str;
-      sprintf(filename,"%s%s",mpriv->dir,mpriv->p.current->p.txt);
+      filename=mpriv->dir+mpriv->p.current->p.txt;
       str = replace_path(mpriv->file_action,filename);
       c = mp_input_parse_cmd(str);
       if(str != mpriv->file_action)
@@ -358,10 +357,9 @@ static void read_cmd(menu_t* menu,int cmd) {
     }
   } break;
   case MENU_CMD_ACTION: {
-    int fname_len = strlen(mpriv->dir) + strlen(mpriv->p.current->p.txt) + 1;
-    char filename[fname_len];
+    std::string filename;
     const char *str;
-    sprintf(filename,"%s%s",mpriv->dir,mpriv->p.current->p.txt);
+    filename=mpriv->dir+mpriv->p.current->p.txt;
     str = replace_path(action, filename);
     mp_input_queue_cmd(menu->libinput,mp_input_parse_cmd(str));
     if(str != action)
