@@ -201,30 +201,15 @@ m_config_t& m_config_new(PlayTree* pt,libinput_t&libinput) {
   return config;
 }
 
-static void m_config_add_dynamic(m_config_t& conf,any_t*ptr) {
-    if(!conf.dynasize) conf.dynamics = (any_t**)mp_malloc(sizeof(any_t*));
-    else		conf.dynamics = (any_t**)mp_realloc(conf.dynamics,(conf.dynasize+1)*sizeof(any_t*));
-    conf.dynamics[conf.dynasize] = ptr;
-    conf.dynasize++;
-}
-
 void m_config_free(m_config_t* config) {
-  unsigned i;
-  for(i=0;i<config->dynasize;i++) delete config->dynamics[i];
-  delete config->dynamics;
-  config->dynasize=0;
   delete config->config_stack;
   delete config;
 }
 
-
 static int init_conf(m_config_t& config, int mode)
 {
-	config.parser_mode = mode;
-	config.dynamics=NULL;
-	config.dynasize=0;
-
-	return 1;
+    config.parser_mode = mode;
+    return 1;
 }
 
 static int config_is_entry_option(m_config_t& config,const std::string& opt,const std::string& param) {
@@ -423,7 +408,6 @@ static int config_read_option(m_config_t& config,const std::vector<const config_
 					goto out;
 				}
 			*((char **) conf[i].p) = mp_strdup(param.c_str());
-			m_config_add_dynamic(config,*((char **) conf[i].p));
 			mpxp_dbg3<<"assigning "<<conf[i].name<<"="<<param<<" as string value"<<std::endl;
 			ret = 1;
 			break;

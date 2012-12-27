@@ -58,8 +58,6 @@ struct m_config_t : public Opaque {
 
     std::vector<const config_t*> opt_list;
     config_save_t** config_stack;
-    any_t**dynamics;
-    unsigned dynasize;
     int cs_level;
     int parser_mode;  /* COMMAND_LINE or CONFIG_FILE */
     int flags;
