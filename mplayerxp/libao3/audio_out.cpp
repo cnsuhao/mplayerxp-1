@@ -205,23 +205,23 @@ void Audio_Output::print_help() {
     mpxp_info<<std::endl;
 }
 
-MPXP_Rc Audio_Output::_register(const char *driver_name,unsigned flags) const {
+MPXP_Rc Audio_Output::_register(const std::string& driver_name,unsigned flags) const {
     priv_t& priv=static_cast<priv_t&>(opaque);
     unsigned i;
-    if(!driver_name) {
+    if(driver_name.empty()) {
 	priv.info=audio_out_drivers[0];
 	priv.driver=audio_out_drivers[0]->query_interface(subdevice?subdevice:"");
     }
     else
     for (i=0; audio_out_drivers[i] != &audio_out_null; i++) {
 	const ao_info_t *info = audio_out_drivers[i];
-	if(strcmp(info->short_name,driver_name) == 0){
+	if(info->short_name==driver_name){
 	    priv.info = audio_out_drivers[i];
 	    priv.driver = audio_out_drivers[i]->query_interface(subdevice?subdevice:"");
 	    break;
 	}
     }
-    if(priv.driver->open(flags)==MPXP_Ok) return MPXP_Ok;
+    if(priv.driver) { if(priv.driver->open(flags)==MPXP_Ok) return MPXP_Ok; }
     return MPXP_False;
 }
 

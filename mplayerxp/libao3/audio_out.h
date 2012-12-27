@@ -34,7 +34,7 @@ namespace mpxp {
 	    virtual ~Audio_Output();
 
 	    static void			print_help();
-	    virtual MPXP_Rc		_register(const char *driver_name,unsigned flags) const;
+	    virtual MPXP_Rc		_register(const std::string& driver_name,unsigned flags) const;
 	    virtual const ao_info_t*	get_info() const;
 	    virtual MPXP_Rc		configure(unsigned rate,unsigned channels,unsigned format) const;
 	    virtual unsigned		buffersize() const;

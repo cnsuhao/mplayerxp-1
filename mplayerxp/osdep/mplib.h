@@ -46,7 +46,7 @@ namespace mpxp {
 	MPA_FLG_BEFORE_CHECK = 0x00000002,
 	MPA_FLG_BACKTRACE    = 0x00000004
     };
-    void	__FASTCALL__ mp_init_malloc(const char *argv0,unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags);
+    void	__FASTCALL__ mp_init_malloc(const std::string& argv0,unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags);
     void	__FASTCALL__ mp_uninit_malloc(int verbose);
 
     any_t*	__FASTCALL__ mp_malloc(size_t __size);

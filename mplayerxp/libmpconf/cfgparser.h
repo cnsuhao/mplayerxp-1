@@ -4,6 +4,8 @@
 #ifndef __CFG_PARSER_H
 #define __CFG_PARSER_H 1
 #include "xmpcore/xmp_enums.h"
+#include <vector>
+#include <string>
 
 namespace mpxp {
     struct libinput_t;
@@ -90,7 +92,7 @@ MPXP_Rc m_config_parse_config_file(m_config_t& config,const std::string& conffil
  * 	 1 otherwise
  */
 namespace mpxp {
-    MPXP_Rc mpxp_parse_command_line(m_config_t& config, int argc, char **argv, char **envp);
+    MPXP_Rc mpxp_parse_command_line(m_config_t& config, const std::vector<std::string>& argv);
 }
 
 m_config_t& m_config_new(play_tree_t* pt,libinput_t&libinput);

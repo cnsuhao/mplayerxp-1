@@ -695,40 +695,39 @@ out:
 }
 
 namespace mpxp {
-MPXP_Rc mpxp_parse_command_line(m_config_t& config, int argc, char **argv, char **envp)
+MPXP_Rc mpxp_parse_command_line(m_config_t& config, const std::vector<std::string>& argv)
 {
-    int i;
+    size_t i,siz=argv.size();
     int tmp;
-    char *opt;
+    std::string opt;
     int no_more_opts = 0;
-    UNUSED(envp);
 
     if (init_conf(config, COMMAND_LINE) == -1) return MPXP_False;
     if(config.last_parent == NULL) config.last_parent = config.pt;
     /* in order to work recursion detection properly in parse_config_file */
     ++config.recursion_depth;
 
-    for (i = 1; i < argc; i++) {
+    for (i = 1; i < siz; i++) {
 	 //next:
 	opt = argv[i];
-	if(strcmp(opt,"--help")==0) {
+	if(opt=="--help") {
 	    show_help();
 	    exit(0);
 	}
-	if(strcmp(opt,"--long-help")==0) {
+	if(opt=="--long-help") {
 	    show_long_help();
 	    exit(0);
 	}
 	/* check for -- (no more options id.) except --help! */
-	if ((*opt == '-') && (*(opt+1) == '-')) {
+	if (opt[0] == '-' && opt[1] == '-') {
 	    no_more_opts = 1;
-	    if (i+1 >= argc) {
+	    if (i+1 >= siz) {
 		mpxp_err<<"You added '--' but no filenames presented!"<<std::endl;
 		goto err_out;
 	    }
 	    continue;
 	}
-	if((opt[0] == '{') && (opt[1] == '\0')) {
+	if(opt[0] == '{' && opt[1] == '\0') {
 	    play_tree_t* entry = play_tree_new();
 	    UNSET_GLOBAL(config);
 	    if(config.last_entry == NULL) {
@@ -741,7 +740,7 @@ MPXP_Rc mpxp_parse_command_line(m_config_t& config, int argc, char **argv, char 
 	    continue;
 	}
 
-	if((opt[0] == '}') && (opt[1] == '\0')) {
+	if(opt[0] == '}' && opt[1] == '\0') {
 	    if( ! config.last_parent || ! config.last_parent->parent) {
 		mpxp_err<<"too much }-"<<std::endl;
 		goto err_out;
@@ -751,30 +750,25 @@ MPXP_Rc mpxp_parse_command_line(m_config_t& config, int argc, char **argv, char 
 	    continue;
 	}
 
-	if ((no_more_opts == 0) && (*opt == '-') && (*(opt+1) != 0)) /* option */ {
+	if (no_more_opts == 0 && opt[0] == '-' && opt.length()>1) /* option */ {
 	    /* remove leading '-' */
-	    char *assign,*item,*parm;
-	    unsigned sz;
-	    opt++;
+	    size_t pos;
+	    std::string item,parm;
+	    pos=1;
 
 	    mpxp_dbg2<<"this_option: "<<opt<<std::endl;
 	    parm = argv[i+1];
-	    item=opt;
-	    assign = strchr(opt,'=');
-	    if(assign) {
-		sz=assign-opt;
-		item = new char [sz+1];
-		memcpy(item,opt,sz);
-		item[sz]='\0';
-		parm = mp_strdup(assign+1);
+	    item=opt.substr(pos);
+	    pos = item.find('=');
+	    if(pos!=std::string::npos) {
+		parm=item.substr(pos+1);
+		item=item.substr(0,pos);
 	    }
-	    tmp = m_config_set_option(config, std::string(item?item:""), std::string(parm?parm:""));
-	    if(!tmp && assign) mpxp_err<<"Option '"<<item<<"' doesn't require arguments"<<std::endl;
-	    if(assign) {
-		delete item;
-		delete parm;
+	    tmp = m_config_set_option(config, item, parm);
+	    if(!tmp && pos!=std::string::npos) {
+		mpxp_err<<"Option '"<<item<<"' doesn't require arguments"<<std::endl;
+		goto err_out;
 	    }
-	    if(!tmp && assign) goto err_out;
 
 	    switch (tmp) {
 		case ERR_NOT_AN_OPTION:
@@ -790,15 +784,14 @@ MPXP_Rc mpxp_parse_command_line(m_config_t& config, int argc, char **argv, char 
 			    <<"' while parsing option: '"<<opt<<"'"<<std::endl;
 		    goto err_out;
 		default:
-		    i += tmp;
-		    if(assign) i--;
+		    if(pos==std::string::npos) i++;
 		    break;
 	    }
 	} else /* filename */ {
 	    play_tree_t* entry = play_tree_new();
 	    mpxp_dbg2<<"Adding file "<<argv[i]<<std::endl;
 	    play_tree_add_file(entry,argv[i]);
-	    if(strcasecmp(argv[i],"-") == 0) m_config_set_option(config,"use-stdin",NULL);
+	    if(argv[i]=="-") m_config_set_option(config,"use-stdin",NULL);
 	    /* opt is not an option -> treat it as a filename */
 	    UNSET_GLOBAL(config); // We start entry specific options
 	    if(config.last_entry == NULL) play_tree_set_child(config.last_parent,entry);

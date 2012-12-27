@@ -226,7 +226,7 @@ void play_tree_set_param(play_tree_t* pt,const std::string& name,const std::stri
     }
 
     if(ni > 0) {
-	pt->params[n].value = val;
+	pt->params[ni].value = val;
 	return;
     }
 

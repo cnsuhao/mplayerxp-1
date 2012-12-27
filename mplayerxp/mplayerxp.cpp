@@ -395,7 +395,7 @@ void exit_player(const std::string& why){
     if(mpxp_context().mconfig) m_config_free(mpxp_context().mconfig);
     mpxp_print_uninit();
     mpxp_uninit_structs();
-    if(!why.empty()) exit(0);
+    if(!why.empty()) ::exit(0);
     return; /* Still try coredump!!!*/
 }
 
@@ -1598,16 +1598,17 @@ For future:
     return eof;
 }
 
-static void mpxp_config_malloc(int argc,char *argv[])
+static void mpxp_config_malloc(const std::vector<std::string>& argv)
 {
-    int i;
+    size_t i,sz=argv.size();
     mp_conf.malloc_debug=0;
     mp_malloc_e flg=MPA_FLG_RANDOMIZER;
-    for(i=0;i<argc;i++) {
-	if(strncmp(argv[i],"-core.malloc-debug",18)==0) {
-	    char *p;
-	    if((p=strchr(argv[i],'='))!=NULL) {
-		mp_conf.malloc_debug=atoi(p+1);
+    for(i=0;i<sz;i++) {
+	std::string s=argv[i];
+	if(s.substr(0,18)=="-core.malloc-debug") {
+	    size_t pos;
+	    if((pos=s.find('='))!=std::string::npos) {
+		mp_conf.malloc_debug=::atoi(s.substr(pos+1).c_str());
 	    }
 	    switch(mp_conf.malloc_debug) {
 		default:
@@ -1626,7 +1627,7 @@ _PlayTree_Iter* mpxp_get_playtree_iter() { return mpxp_context().engine().MPXPSy
 /******************************************\
 * MAIN MPLAYERXP FUNCTION !!!              *
 \******************************************/
-int MPlayerXP(int argc,char* argv[], char *envp[]){
+int MPlayerXP(const std::vector<std::string>& argv){
     mpxp_init_antiviral_protection(1);
 //    mpxp_test_backtrace();
     int i;
@@ -1643,7 +1644,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     int forced_subs_only=0;
     seek_args_t seek_args = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
 
-    mpxp_config_malloc(argc,argv);
+    mpxp_config_malloc(argv);
 
     // Yes, it really must be placed in stack or in very secret place
     PointerProtector<MPXPSecureKeys> ptr_protector;
@@ -1674,7 +1675,7 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
     mp_register_options(m_config);
     parse_cfgfiles(m_config);
 
-    if(mpxp_parse_command_line(m_config, argc, argv, envp)!=MPXP_Ok)
+    if(mpxp_parse_command_line(m_config, argv)!=MPXP_Ok)
 	exit_player("Error parse command line"); // error parsing cmdline
 
     if(!mp_conf.xp) {
@@ -1718,8 +1719,9 @@ int MPlayerXP(int argc,char* argv[], char *envp[]){
 
     // Many users forget to include command line in bugreports...
     if(mp_conf.verbose){
+	size_t sz=argv.size();
 	mpxp_info<<"CommandLine:";
-	for(i=1;i<argc;i++) mpxp_info<<" '"<<argv[i]<<"'";
+	for(i=1;i<sz;i++) mpxp_info<<" '"<<argv[i]<<"'";
 	mpxp_info<<std::endl;
     }
 
@@ -2128,10 +2130,19 @@ goto_next_file:  // don't jump here after ao/vo/getch initialization!
 }
 } // namespace mpxp
 
-int main(int argc,char* argv[], char *envp[])
+int main(int argc,char* args[], char *envp[])
 {
+    UNUSED(envp);
     try {
-	return MPlayerXP(argc,argv,envp);
+	std::vector<std::string> argv;
+	std::string str;
+	for(int i=0;i<argc;i++) {
+	    str=args[i];
+	    argv.push_back(str);
+	}
+	return MPlayerXP(argv);
+    } catch(const std::string& what) {
+	std::cout<<"Exception '"<<what<<"'caught in module: MPlayerXP"<<std::endl;
     } catch(...) {
 	std::cout<<"Exception caught in module: MPlayerXP"<<std::endl;
     }

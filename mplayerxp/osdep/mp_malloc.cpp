@@ -19,20 +19,20 @@ namespace mpxp {
 
 enum { Max_BackTraces=13 };
 
-typedef struct mp_slot_s {
+struct mp_slot_t {
     any_t*	page_ptr;
     size_t	size;
     size_t	ncalls;
     any_t*	calls[Max_BackTraces];
-}mp_slot_t;
+};
 
-typedef struct mp_slot_container_s {
+struct mp_slot_container_t {
     mp_slot_t*	slots;
     size_t	nslots;
     size_t	size;
-}mp_slot_container_t;
+};
 
-typedef struct priv_s {
+struct priv_t {
     const char*			argv0;
     unsigned			rnd_limit;
     unsigned			every_nth_call;
@@ -43,7 +43,7 @@ typedef struct priv_s {
     mp_slot_container_t		mallocs;/* not freed mallocs */
     mp_slot_container_t		reallocs; /* suspect reallocs */
     mp_slot_container_t		frees;    /* suspect free */
-}priv_t;
+};
 static priv_t* priv=NULL;
 
 static any_t* prot_page_align(any_t *ptr) { return (any_t*)(((unsigned long)ptr)&(~(__VM_PAGE_SIZE__-1))); }
@@ -403,12 +403,12 @@ static void bt_print_slots(bt_cache_t* cache,mp_slot_container_t* c) {
     }
 }
 /* ================== HEAD FUNCTIONS  ======================= */
-void	mp_init_malloc(const char *argv0,unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags)
+void	mp_init_malloc(const std::string& argv0,unsigned rnd_limit,unsigned every_nth_call,enum mp_malloc_e flags)
 {
     ::srand(::time(0));
     if(!priv) priv=(priv_t*)::malloc(sizeof(priv_t));
     ::memset(priv,0,sizeof(priv_t));
-    priv->argv0=argv0;
+    priv->argv0=::strdup(argv0.c_str());
     priv->rnd_limit=rnd_limit;
     priv->every_nth_call=every_nth_call;
     priv->flags=flags;
@@ -450,6 +450,7 @@ void	mp_uninit_malloc(int verbose)
     }
     if(done) mpxp_hint<<std::endl<<"For source lines you may also print in (gdb): list *0xADDRESS"<<std::endl;
     uninit_bt_cache(cache);
+    if(priv->argv0) ::free((void*)priv->argv0);
     ::free(priv);
     priv=NULL;
 }
@@ -457,7 +458,7 @@ void	mp_uninit_malloc(int verbose)
 any_t* mp_malloc(size_t __size)
 {
     any_t* rb,*rnd_buff=NULL;
-    if(!priv) mp_init_malloc(NULL,1000,10,MPA_FLG_RANDOMIZER);
+    if(!priv) mp_init_malloc("",1000,10,MPA_FLG_RANDOMIZER);
     if(priv->every_nth_call && priv->rnd_limit && !priv->flags) {
 	if(priv->total_calls%priv->every_nth_call==0) {
 	    rnd_buff=::malloc(::rand()%priv->rnd_limit);
@@ -475,7 +476,7 @@ any_t* mp_malloc(size_t __size)
 any_t*	__FASTCALL__ mp_memalign (size_t boundary, size_t __size)
 {
     any_t* rb;
-    if(!priv) mp_init_malloc(NULL,1000,10,MPA_FLG_RANDOMIZER);
+    if(!priv) mp_init_malloc("",1000,10,MPA_FLG_RANDOMIZER);
     if(priv->flags&(MPA_FLG_BOUNDS_CHECK|MPA_FLG_BEFORE_CHECK)) rb=prot_memalign(boundary,__size);
     else if(priv->flags&MPA_FLG_BACKTRACE)			rb=bt_memalign(boundary,__size);
     else							rb=memalign(boundary,__size);
@@ -492,15 +493,18 @@ any_t*	mp_realloc(any_t*__ptr, size_t __size) {
 
 void	mp_free(any_t*__ptr)
 {
-    if(!priv) mp_init_malloc(NULL,1000,10,MPA_FLG_RANDOMIZER);
-    if(__ptr) {
-	if(priv->flags&(MPA_FLG_BOUNDS_CHECK|MPA_FLG_BEFORE_CHECK))
-	    prot_free(__ptr);
-	else if(priv->flags&MPA_FLG_BACKTRACE)
-	    bt_free(__ptr);
-	else
-	    ::free(__ptr);
-    }
+    // we really may have some number of pointers malloced before mp_init_malloc()
+    // example: global constructors with using of overloaded operator new()
+    if(priv) {
+	if(__ptr) {
+	    if(priv->flags&(MPA_FLG_BOUNDS_CHECK|MPA_FLG_BEFORE_CHECK))
+		prot_free(__ptr);
+	    else if(priv->flags&MPA_FLG_BACKTRACE)
+		bt_free(__ptr);
+	    else
+		::free(__ptr);
+	}
+    } else ::free(__ptr);
 }
 
 /* ================ APPENDIX ==================== */
