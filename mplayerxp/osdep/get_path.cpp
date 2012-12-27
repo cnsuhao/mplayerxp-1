@@ -9,11 +9,11 @@ using namespace mpxp;
 #include "osdep_msg.h"
 namespace mpxp {
 std::string get_path(const std::string& filename){
-    char *homedir;
+    const char *homedir;
     std::string rs;
     std::string config_dir = std::string("/.")+PROGNAME;
 
-    if ((homedir = ::getenv("HOME")) == NULL) return "";
+    if ((homedir = ::getenv("HOME")) == NULL) throw "No 'HOME' environment found";
     rs=std::string(homedir)+config_dir;
     if (!filename.empty()) rs+="/"+filename;
     mpxp_v<<"get_path('"<<filename<<"') -> "<<rs<<std::endl;

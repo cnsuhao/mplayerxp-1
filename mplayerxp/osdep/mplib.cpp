@@ -35,7 +35,7 @@ any_t* fill_false_pointers(any_t* buffer,size_t size)
     long filler;
     for(i=0;i<psize/sizeof(long);i++) {
 	filler=::rand()&lo_mask;
-	filler=(reinterpret_cast<long>(buffer)&hi_mask)|lo_mask;
+	filler|=(reinterpret_cast<long>(buffer)&hi_mask);
 	((long *)buffer)[i]=::rand()%2?filler:0;
     }
     ::memset(&((char *)buffer)[psize],0,size-psize);
