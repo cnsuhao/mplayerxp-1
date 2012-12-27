@@ -695,7 +695,7 @@ out:
 }
 
 namespace mpxp {
-MPXP_Rc mpxp_parse_command_line(m_config_t& config, const std::vector<std::string>& argv)
+MPXP_Rc mpxp_parse_command_line(m_config_t& config, const std::vector<std::string>& argv,const std::map<std::string,std::string>& envm)
 {
     size_t i,siz=argv.size();
     int tmp;
@@ -715,7 +715,7 @@ MPXP_Rc mpxp_parse_command_line(m_config_t& config, const std::vector<std::strin
 	    exit(0);
 	}
 	if(opt=="--long-help") {
-	    show_long_help();
+	    show_long_help(envm);
 	    exit(0);
 	}
 	/* check for -- (no more options id.) except --help! */

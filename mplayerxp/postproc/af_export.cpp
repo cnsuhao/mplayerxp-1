@@ -30,11 +30,9 @@ using namespace mpxp;
 #include "osdep/get_path.h"
 #include "pp_msg.h"
 
-#define DEF_SZ 512 // default buffer size (in samples)
-#define SHARED_FILE "mplayer-af_export" /* default file name
-					   (relative to ~/.mplayer/ */
-
-#define SIZE_HEADER (2 * sizeof(int) + sizeof(unsigned long long))
+static const int DEF_SZ=512; // default buffer size (in samples)
+static const char* SHARED_FILE="mplayer-af_export"; /* default file name (relative to ~/.mplayer/ */
+static const int SIZE_HEADER=(2 * sizeof(int) + sizeof(unsigned long long));
 
 // Data for specific instances of this filter
 struct af_export_t

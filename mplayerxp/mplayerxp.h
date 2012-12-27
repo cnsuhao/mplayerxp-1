@@ -197,7 +197,7 @@ namespace mpxp {
 
     unsigned get_number_cpu(void);
     void show_help(void);
-    void show_long_help(void);
+    void show_long_help(const std::map<std::string,std::string>& envm);
 
 
     void update_osd( float v_pts );

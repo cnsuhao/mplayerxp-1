@@ -18,5 +18,5 @@ struct af_instance_t {
     double		delay; // Delay caused by the filter [ms]
     frac_t		mul; /* length multiplier: how much does this instance change
 				the length of the buffer. */
-}__attribute__ ((packed));
+};
 #endif

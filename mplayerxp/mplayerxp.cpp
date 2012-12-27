@@ -5,6 +5,7 @@ using namespace mpxp;
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
+#include <map>
 
 #include <ctype.h>
 #include <stdio.h>
@@ -134,12 +135,12 @@ struct MPXPSystem : public Opaque {
 	void		print_stream_formats() const;
 	void		print_audio_status() const;
 	void		read_video_properties() const;
-	void		read_subtitles(const std::string& filename,int forced_subs_only,int stream_dump_type);
+	void		read_subtitles(const std::map<std::string,std::string>& envm,const std::string& filename,int forced_subs_only,int stream_dump_type);
 
-	void		find_acodec(const char *ao_subdevice);
+	void		find_acodec(const std::map<std::string,std::string>& envm,const char *ao_subdevice);
 	int		configure_audio();
 
-	MPXP_Rc		find_vcodec();
+	MPXP_Rc		find_vcodec(const std::map<std::string,std::string>& envm);
 
 	void		run_ahead_engine();
 
@@ -198,6 +199,21 @@ MP_Config::MP_Config() {
     max_trace=10;
 }
 MP_Config mp_conf;
+
+__always_inline std::string get_path(const std::map<std::string,std::string>& envm,const std::string& filename="") {
+    std::map<std::string,std::string>::const_iterator it;
+    it = envm.find("HOME");
+    const std::string homedir = (*it).second;
+    std::string rs;
+    std::string config_dir = std::string("/.")+PROGNAME;
+
+    if (homedir.empty()) throw "No 'HOME' environment found";
+    rs=homedir+config_dir;
+    if (!filename.empty()) rs+="/"+filename;
+    mpxp_v<<"get_path('"<<homedir<<":"<<filename<<"') -> "<<rs<<std::endl;
+    return rs;
+}
+
 
 MPXPContext::MPXPContext()
 	    :_engine(new(zeromem) mpxp_engine_t),
@@ -426,15 +442,15 @@ static const char* default_config=
 //"nosound=nein"
 "\n";
 
-void parse_cfgfiles( m_config_t& conf )
+void parse_cfgfiles(const std::map<std::string,std::string>& envm, m_config_t& conf )
 {
     std::string conffile;
     int conffile_fd;
-    conffile = get_path();
+    conffile = get_path(envm);
     if (conffile.empty()) mpxp_warn<<MSGTR_NoHomeDir<<std::endl;
     else {
 	::mkdir(conffile.c_str(), 0777);
-	conffile = get_path("config");
+	conffile = get_path(envm,"config");
 	if (conffile.empty()) {
 	    mpxp_err<<MSGTR_GetpathProblem<<std::endl;
 	    conffile="config";
@@ -532,7 +548,7 @@ static void get_mmx_optimizations( void )
 #endif
 
 
-static void init_player( void )
+static void init_player(const std::map<std::string,std::string>& envm)
 {
     if(mp_conf.video_driver && strcmp(mp_conf.video_driver,"help")==0) {
 	mpxp_context().video().output->print_help();
@@ -567,7 +583,7 @@ static void init_player( void )
 
 #ifdef ENABLE_WIN32LOADER
     /* check codec.conf*/
-    if(!parse_codec_cfg(get_path("win32codecs.conf").c_str())) {
+    if(!parse_codec_cfg(get_path(envm,"win32codecs.conf").c_str())) {
       if(!parse_codec_cfg(CONFDIR"/win32codecs.conf")) {
 	mpxp_hint<<MSGTR_CopyCodecsConf<<std::endl;
 	mpxp_uninit_structs();
@@ -600,7 +616,7 @@ void show_help(void) {
     mpxp_info<<"Use --long-help option for full help"<<std::endl;
 }
 
-void show_long_help(void) {
+void show_long_help(const std::map<std::string,std::string>& envm) {
     MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
     m_config_show_options(*mpxp_context().mconfig);
     mp_input_print_binds(MPXPSys.libinput());
@@ -613,7 +629,7 @@ void show_long_help(void) {
     afm_help();
 #ifdef ENABLE_WIN32LOADER
     /* check codec.conf*/
-    if(!parse_codec_cfg(get_path("win32codecs.conf").c_str())){
+    if(!parse_codec_cfg(get_path(envm,"win32codecs.conf").c_str())){
       if(!parse_codec_cfg(CONFDIR"/win32codecs.conf")){
 	mpxp_hint<<MSGTR_CopyCodecsConf<<std::endl;
 	mpxp_uninit_structs();
@@ -829,7 +845,7 @@ void mplayer_put_key(int code){
 }
 
 
-static void mpxp_init_osd(void) {
+static void mpxp_init_osd(const std::map<std::string,std::string>& envm) {
 // check font
 #ifdef USE_OSD
     if(mp_conf.font_name){
@@ -838,7 +854,7 @@ static void mpxp_init_osd(void) {
 	    mpxp_err<<MSGTR_CantLoadFont<<": "<<mp_conf.font_name<<std::endl;
     } else {
 	// try default:
-	mpxp_context().video().output->font=read_font_desc(get_path("font/font.desc").c_str(),mp_conf.font_factor,mp_conf.verbose>1);
+	mpxp_context().video().output->font=read_font_desc(get_path(envm,"font/font.desc").c_str(),mp_conf.font_factor,mp_conf.verbose>1);
 	if(!mpxp_context().video().output->font)
 	    mpxp_context().video().output->font=read_font_desc(DATADIR"/font/font.desc",mp_conf.font_factor,mp_conf.verbose>1);
     }
@@ -846,7 +862,7 @@ static void mpxp_init_osd(void) {
     /* Configure menu here */
     {
 	std::string menu_cfg;
-	menu_cfg = get_path("menu.conf");
+	menu_cfg = get_path(envm,"menu.conf");
 	if(menu_init(NULL, menu_cfg.c_str()))
 	    mpxp_info<<"Menu initialized: "<<menu_cfg<<std::endl;
 	else {
@@ -1021,7 +1037,7 @@ void MPXPSystem::read_video_properties() const {
     }
 }
 
-void MPXPSystem::read_subtitles(const std::string& filename,int forced_subs_only,int stream_dump_type) {
+void MPXPSystem::read_subtitles(const std::map<std::string,std::string>& envm,const std::string& filename,int forced_subs_only,int stream_dump_type) {
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     Stream* stream=static_cast<Stream*>(_demuxer->stream);
     if (mp_conf.spudec_ifo) {
@@ -1060,7 +1076,7 @@ void MPXPSystem::read_subtitles(const std::string& filename,int forced_subs_only
 	mpxp_context().subtitles=sub_read_file(mp_conf.sub_name, sh_video->fps);
 	if(!mpxp_context().subtitles) mpxp_err<<MSGTR_CantLoadSub<<": "<<mp_conf.sub_name<<std::endl;
     } else if(mp_conf.sub_auto) { // auto load sub file ...
-	mpxp_context().subtitles=sub_read_file( !filename.empty() ? sub_filename(get_path("sub/").c_str(), filename.c_str() )
+	mpxp_context().subtitles=sub_read_file( !filename.empty() ? sub_filename(get_path(envm,"sub/").c_str(), filename.c_str() )
 				      : "default.sub", sh_video->fps );
     }
     if(mpxp_context().subtitles) {
@@ -1070,7 +1086,7 @@ void MPXPSystem::read_subtitles(const std::string& filename,int forced_subs_only
 #endif
 }
 
-void MPXPSystem::find_acodec(const char *ao_subdevice) {
+void MPXPSystem::find_acodec(const std::map<std::string,std::string>& envm,const char *ao_subdevice) {
     int found=0;
     audio_decoder_t* mpca=0;
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
@@ -1113,7 +1129,7 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
     if(!found) {
 	mpxp_err<<MSGTR_CantFindAudioCodec<<std::endl;
 	fourcc(mpxp_err,sh_audio->wtag);
-	mpxp_hint<<get_path("win32codecs.conf")<<":"<<MSGTR_TryUpgradeCodecsConfOrRTFM<<std::endl;
+	mpxp_hint<<get_path(envm,"win32codecs.conf")<<":"<<MSGTR_TryUpgradeCodecsConfOrRTFM<<std::endl;
 	d_audio->sh=NULL;
 	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
     } else {
@@ -1131,7 +1147,7 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
     }
 }
 
-MPXP_Rc MPXPSystem::find_vcodec(void) {
+MPXP_Rc MPXPSystem::find_vcodec(const std::map<std::string,std::string>& envm) {
     Demuxer_Stream *d_video=_demuxer->video;
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     MPXP_Rc rc=MPXP_Ok;
@@ -1170,7 +1186,7 @@ MPXP_Rc MPXPSystem::find_vcodec(void) {
     if(!sh_video->inited) {
 	mpxp_err<<MSGTR_CantFindVideoCodec<<std::endl;
 	fourcc(mpxp_err,sh_video->fourcc);
-	mpxp_hint<<get_path("win32codecs.conf")<<":"<<MSGTR_TryUpgradeCodecsConfOrRTFM<<std::endl;
+	mpxp_hint<<get_path(envm,"win32codecs.conf")<<":"<<MSGTR_TryUpgradeCodecsConfOrRTFM<<std::endl;
 	d_video->sh = NULL;
 	sh_video = reinterpret_cast<sh_video_t*>(d_video->sh);
 	rc=MPXP_False;
@@ -1627,10 +1643,9 @@ _PlayTree_Iter* mpxp_get_playtree_iter() { return mpxp_context().engine().MPXPSy
 /******************************************\
 * MAIN MPLAYERXP FUNCTION !!!              *
 \******************************************/
-int MPlayerXP(const std::vector<std::string>& argv){
+int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,std::string>& envm){
     mpxp_init_antiviral_protection(1);
 //    mpxp_test_backtrace();
-    int i;
     Stream* stream=NULL;
     int stream_dump_type=0;
     input_state_t input_state = { 0, 0, 0 };
@@ -1673,9 +1688,9 @@ int MPlayerXP(const std::vector<std::string>& argv){
     m_config_register_options(m_config,mplayer_opts);
     // TODO : add something to let modules register their options
     mp_register_options(m_config);
-    parse_cfgfiles(m_config);
+    parse_cfgfiles(envm,m_config);
 
-    if(mpxp_parse_command_line(m_config, argv)!=MPXP_Ok)
+    if(mpxp_parse_command_line(m_config, argv,envm)!=MPXP_Ok)
 	exit_player("Error parse command line"); // error parsing cmdline
 
     if(!mp_conf.xp) {
@@ -1710,7 +1725,7 @@ int MPlayerXP(const std::vector<std::string>& argv){
 
     mpxp_context().engine().xp_core->num_a_buffs = vo_conf.xp_buffs;
 
-    init_player();
+    init_player(envm);
 
     if(filename.empty()){
 	show_help();
@@ -1719,14 +1734,18 @@ int MPlayerXP(const std::vector<std::string>& argv){
 
     // Many users forget to include command line in bugreports...
     if(mp_conf.verbose){
-	size_t sz=argv.size();
+	std::map<std::string,std::string>::const_iterator it;
+	mpxp_info<<"Environment:"<<std::endl;
+	for(it=envm.begin();it!=envm.end();it++)
+	    mpxp_info<<(*it).first<<" => "<<(*it).second<<std::endl;
+	size_t i,sz=argv.size();
 	mpxp_info<<"CommandLine:";
 	for(i=1;i<sz;i++) mpxp_info<<" '"<<argv[i]<<"'";
 	mpxp_info<<std::endl;
     }
 
 //------ load global data first ------
-    mpxp_init_osd();
+    mpxp_init_osd(envm);
 // ========== Init keyboard FIFO (connection to libvo) ============
 
     MP_UNIT(NULL);
@@ -1829,12 +1848,12 @@ play_next_file:
     }
 
 //================== Read SUBTITLES (DVD & TEXT) ==========================
-    if(sh_video) MPXPSys.read_subtitles(filename,forced_subs_only,stream_dump_type);
+    if(sh_video) MPXPSys.read_subtitles(envm,filename,forced_subs_only,stream_dump_type);
 
 //================== Init AUDIO (codec) ==========================
     MP_UNIT("init_audio_codec");
 
-    if(sh_audio) MPXPSys.find_acodec(ao_subdevice);
+    if(sh_audio) MPXPSys.find_acodec(envm,ao_subdevice);
     sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys.demuxer()->audio->sh);
 
     if(stream_dump_type>1) {
@@ -1871,7 +1890,7 @@ play_next_file:
 /*================== Init VIDEO (codec & libvo) ==========================*/
     if(!sh_video) goto main;
 
-    if((MPXPSys.find_vcodec())!=MPXP_Ok) {
+    if((MPXPSys.find_vcodec(envm))!=MPXP_Ok) {
 	sh_video=reinterpret_cast<sh_video_t*>(MPXPSys.demuxer()->video->sh);
 	if(!sh_audio) goto goto_next_file;
 	goto main;
@@ -2132,15 +2151,25 @@ goto_next_file:  // don't jump here after ao/vo/getch initialization!
 
 int main(int argc,char* args[], char *envp[])
 {
-    UNUSED(envp);
     try {
 	std::vector<std::string> argv;
-	std::string str;
+	std::string str,stmp;
 	for(int i=0;i<argc;i++) {
 	    str=args[i];
 	    argv.push_back(str);
 	}
-	return MPlayerXP(argv);
+	std::map<std::string,std::string> envm;
+	unsigned j=0;
+	size_t pos;
+	while(envp[j]) {
+	    str=envp[j++];
+	    pos=str.find('=');
+	    if(pos==std::string::npos) throw "Broken environment variable: "+str;
+	    stmp=str.substr(pos+1);
+	    str=str.substr(0,pos);
+	    envm[str]=stmp;
+	}
+	return MPlayerXP(argv,envm);
     } catch(const std::string& what) {
 	std::cout<<"Exception '"<<what<<"'caught in module: MPlayerXP"<<std::endl;
     } catch(...) {

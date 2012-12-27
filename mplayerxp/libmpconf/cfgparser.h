@@ -6,6 +6,7 @@
 #include "xmpcore/xmp_enums.h"
 #include <vector>
 #include <string>
+#include <map>
 
 namespace mpxp {
     struct libinput_t;
@@ -92,7 +93,7 @@ MPXP_Rc m_config_parse_config_file(m_config_t& config,const std::string& conffil
  * 	 1 otherwise
  */
 namespace mpxp {
-    MPXP_Rc mpxp_parse_command_line(m_config_t& config, const std::vector<std::string>& argv);
+    MPXP_Rc mpxp_parse_command_line(m_config_t& config, const std::vector<std::string>& argv,const std::map<std::string,std::string>& envm);
 }
 
 m_config_t& m_config_new(play_tree_t* pt,libinput_t&libinput);
