@@ -51,7 +51,7 @@ namespace mpxp {
 	    ASX_Parser();
 	    virtual ~ASX_Parser();
 
-	    static play_tree_t*	build_tree(libinput_t& libinput,const char* buffer, int ref);
+	    static PlayTree*	build_tree(libinput_t& libinput,const char* buffer, int ref);
 
 	    virtual int		parse_attribs(const char* buffer,ASX_Attrib& _attribs) const;
 	    /*
@@ -60,13 +60,13 @@ namespace mpxp {
 	    virtual int		get_element(const char** _buffer,ASX_Element& _attribs);
 	    int			get_line() const { return line; }
 	private:
-	    play_tree_t*	repeat(libinput_t&libinput,const char* buffer,ASX_Attrib& _attribs);
+	    PlayTree*		repeat(libinput_t&libinput,const char* buffer,ASX_Attrib& _attribs);
 	    void		warning_attrib_required(const char *elem, const char *attr) const;
 	    void		warning_body_parse_error(const char *elem) const;
-	    void		param(ASX_Attrib& attribs, play_tree_t* pt) const;
-	    void		ref(ASX_Attrib& attribs, play_tree_t* pt) const;
-	    play_tree_t*	entryref(libinput_t& libinput,const char* buffer,ASX_Attrib& _attribs) const;
-	    play_tree_t*	entry(const char* buffer,ASX_Attrib& _attribs);
+	    void		param(ASX_Attrib& attribs, PlayTree* pt) const;
+	    void		ref(ASX_Attrib& attribs, PlayTree* pt) const;
+	    PlayTree*		entryref(libinput_t& libinput,const char* buffer,ASX_Attrib& _attribs) const;
+	    PlayTree*		entry(const char* buffer,ASX_Attrib& _attribs);
 
 	    int			line; // Curent line
 	    ASX_LineSave_t*	ret_stack;

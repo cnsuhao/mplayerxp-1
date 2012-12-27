@@ -295,7 +295,7 @@ int ASX_Parser::get_element(const char** _buffer, ASX_Element& _element) {
     return 1;
 }
 
-void ASX_Parser::param(ASX_Attrib& cattribs, play_tree_t* pt) const {
+void ASX_Parser::param(ASX_Attrib& cattribs, PlayTree* pt) const {
     std::string name,val;
 
     name = cattribs.get("NAME");
@@ -310,10 +310,10 @@ void ASX_Parser::param(ASX_Attrib& cattribs, play_tree_t* pt) const {
 	else		mpxp_warn<<std::endl;
 	return;
     }
-    play_tree_set_param(pt,name,val);
+    pt->set_param(name,val);
 }
 
-void ASX_Parser::ref(ASX_Attrib& cattribs, play_tree_t* pt) const {
+void ASX_Parser::ref(ASX_Attrib& cattribs, PlayTree* pt) const {
     std::string href;
 
     href = cattribs.get("HREF");
@@ -325,12 +325,12 @@ void ASX_Parser::ref(ASX_Attrib& cattribs, play_tree_t* pt) const {
     if (href.substr(0,7)=="http://") {
 	href = "mms"+href;
     }
-    play_tree_add_file(pt,href);
+    pt->add_file(href);
     mpxp_v<<"Adding file "<<href<<" to element entry"<<std::endl;
 }
 
-play_tree_t* ASX_Parser::entryref(libinput_t& libinput,const char* buffer,ASX_Attrib& _attribs) const {
-    play_tree_t* pt;
+PlayTree* ASX_Parser::entryref(libinput_t& libinput,const char* buffer,ASX_Attrib& _attribs) const {
+    PlayTree* pt;
     std::string href;
     Stream* stream;
     play_tree_parser_t* ptp;
@@ -363,13 +363,13 @@ play_tree_t* ASX_Parser::entryref(libinput_t& libinput,const char* buffer,ASX_At
     return pt;
 }
 
-play_tree_t* ASX_Parser::entry(const char* buffer,ASX_Attrib& _attribs) {
+PlayTree* ASX_Parser::entry(const char* buffer,ASX_Attrib& _attribs) {
     ASX_Element element;
     int r,nref=0;
-    play_tree_t *pt_ref;
+    PlayTree *pt_ref;
     UNUSED(_attribs);
 
-    pt_ref = play_tree_new();
+    pt_ref = new(zeromem) PlayTree;
 
     while(buffer && buffer[0] != '\0') {
 	r = get_element(&buffer,element);
@@ -386,28 +386,29 @@ play_tree_t* ASX_Parser::entry(const char* buffer,ASX_Attrib& _attribs) {
 	} else mpxp_dbg2<<"Ignoring element "<<element.name()<<std::endl;
     }
     if(nref <= 0) {
-	play_tree_free(pt_ref,1);
+	pt_ref->free(1);
+	delete pt_ref;
 	return NULL;
     }
     return pt_ref;
 }
 
-play_tree_t* ASX_Parser::repeat(libinput_t&libinput,const char* buffer,ASX_Attrib& _attribs) {
+PlayTree* ASX_Parser::repeat(libinput_t&libinput,const char* buffer,ASX_Attrib& _attribs) {
     ASX_Element element;
-    play_tree_t *pt_repeat, *list=NULL, *pt_entry;
+    PlayTree *pt_repeat, *list=NULL, *pt_entry;
     std::string count;
     int r;
 
-    pt_repeat = play_tree_new();
+    pt_repeat = new(zeromem) PlayTree;
 
     count = _attribs.get("COUNT");
     if(count.empty()) {
 	mpxp_dbg2<<"Setting element repeat loop to infinit"<<std::endl;
-	pt_repeat->loop = -1; // Infinit
+	pt_repeat->set_loop(-1); // Infinit
     } else {
-	pt_repeat->loop = ::atoi(count.c_str());
-	if(pt_repeat->loop == 0) pt_repeat->loop = 1;
-	mpxp_dbg2<<"Setting element repeat loop to "<<pt_repeat->loop<<std::endl;
+	pt_repeat->set_loop(::atoi(count.c_str()));
+	if(pt_repeat->get_loop() == 0) pt_repeat->set_loop(1);
+	mpxp_dbg2<<"Setting element repeat loop to "<<pt_repeat->get_loop()<<std::endl;
     }
 
     while(buffer && buffer[0] != '\0') {
@@ -422,21 +423,21 @@ play_tree_t* ASX_Parser::repeat(libinput_t&libinput,const char* buffer,ASX_Attri
 	    pt_entry = entry(element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
-		else play_tree_append_entry(list,pt_entry);
+		else list->append_entry(pt_entry);
 		mpxp_dbg2<<"Adding element "<<element.name()<<" to repeat"<<std::endl;
 	    }
 	} else if(uname=="ENTRYREF") {
 	    pt_entry = entryref(libinput,element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
-		else play_tree_append_entry(list,pt_entry);
+		else list->append_entry(pt_entry);
 		mpxp_dbg2<<"Adding element "<<element.name()<<" to repeat"<<std::endl;
 	    }
 	} else if(uname=="REPEAT") {
 	    pt_entry = repeat(libinput,element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
-		else play_tree_append_entry(list,pt_entry);
+		else list->append_entry(pt_entry);
 		mpxp_dbg2<<"Adding element "<<element.name()<<" to repeat"<<std::endl;
 	    }
 	} else if(uname=="PARAM") {
@@ -445,17 +446,18 @@ play_tree_t* ASX_Parser::repeat(libinput_t&libinput,const char* buffer,ASX_Attri
     }
 
     if(!list) {
-	play_tree_free(pt_repeat,1);
+	pt_repeat->free(1);
+	delete pt_repeat;
 	return NULL;
     }
-    play_tree_set_child(pt_repeat,list);
+    pt_repeat->set_child(list);
     return pt_repeat;
 }
 
-play_tree_t* ASX_Parser::build_tree(libinput_t&libinput,const char* buffer,int deep) {
+PlayTree* ASX_Parser::build_tree(libinput_t&libinput,const char* buffer,int deep) {
     ASX_Element asx_element,element;
     int r;
-    play_tree_t *asx,*pt_entry,*list = NULL;
+    PlayTree *asx,*pt_entry,*list = NULL;
     ASX_Parser& parser = *new(zeromem) ASX_Parser;
 
     parser.line = 1;
@@ -486,7 +488,7 @@ play_tree_t* ASX_Parser::build_tree(libinput_t&libinput,const char* buffer,int d
 	return NULL;
     }
 
-    asx = play_tree_new();
+    asx = new(zeromem) PlayTree;
     buffer = asx_element.body().c_str();
     while(buffer && buffer[0] != '\0') {
 	r = parser.get_element(&buffer,element);
@@ -501,21 +503,21 @@ play_tree_t* ASX_Parser::build_tree(libinput_t&libinput,const char* buffer,int d
 	    pt_entry = parser.entry(element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
-		else play_tree_append_entry(list,pt_entry);
+		else list->append_entry(pt_entry);
 		mpxp_dbg2<<"Adding element "<<element.name()<<" to asx"<<std::endl;
 	    }
 	} else if(uname=="ENTRYREF") {
 	    pt_entry = parser.entryref(libinput,element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
-		else play_tree_append_entry(list,pt_entry);
+		else list->append_entry(pt_entry);
 		mpxp_dbg2<<"Adding element "<<element.name()<<" to asx"<<std::endl;
 	    }
 	} else if(uname=="REPEAT") {
 	    pt_entry = parser.repeat(libinput,element.body().c_str(),element.attribs());
 	    if(pt_entry) {
 		if(!list) list = pt_entry;
-		else play_tree_append_entry(list,pt_entry);
+		else list->append_entry(pt_entry);
 		mpxp_dbg2<<"Adding element "<<element.name()<<" to asx"<<std::endl;
 	    }
 	} else mpxp_dbg2<<"Ignoring element "<<element.name()<<std::endl;
@@ -524,10 +526,11 @@ play_tree_t* ASX_Parser::build_tree(libinput_t&libinput,const char* buffer,int d
     delete &parser;
 
     if(!list) {
-	play_tree_free(asx,1);
+	asx->free(1);
+	delete asx;
 	return NULL;
     }
-    play_tree_set_child(asx,list);
+    asx->set_child(list);
     return asx;
 }
 } // namespace mpxp

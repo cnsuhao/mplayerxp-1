@@ -1,5 +1,6 @@
 TODO for mplayerxp:
 
+- remove m_config_t from libplaytree: implement config independed container
 - Implement libmpdemux3:
     class Demuxer_Driver {
 	Demuxer_Driver(Demuxer& parent);

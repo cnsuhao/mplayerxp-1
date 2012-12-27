@@ -10,8 +10,8 @@
 
 namespace mpxp {
     struct libinput_t;
+    struct PlayTree;
 }
-struct play_tree_t;
 /* config types */
 enum {
     CONF_TYPE_FLAG	=0,
@@ -64,9 +64,9 @@ struct m_config_t : public Opaque {
     int parser_mode;  /* COMMAND_LINE or CONFIG_FILE */
     int flags;
     const char* sub_conf; // When we save a subconfig
-    play_tree_t* pt; // play tree we use for playlist option, etc
-    play_tree_t* last_entry; // last added entry
-    play_tree_t* last_parent; // if last_entry is NULL we must create child of this
+    PlayTree* pt; // play tree we use for playlist option, etc
+    PlayTree* last_entry; // last added entry
+    PlayTree* last_parent; // if last_entry is NULL we must create child of this
     int recursion_depth;
     libinput_t&	libinput;
 };
@@ -96,7 +96,7 @@ namespace mpxp {
     MPXP_Rc mpxp_parse_command_line(m_config_t& config, const std::vector<std::string>& argv,const std::map<std::string,std::string>& envm);
 }
 
-m_config_t& m_config_new(play_tree_t* pt,libinput_t&libinput);
+m_config_t& m_config_new(PlayTree* pt,libinput_t&libinput);
 
 void m_config_free(m_config_t* config);
 

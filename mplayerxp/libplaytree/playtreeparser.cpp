@@ -116,7 +116,7 @@ static void __FASTCALL__ play_tree_parser_stop_keeping(play_tree_parser_t* p) {
 }
 
 
-static play_tree_t* parse_asx(libinput_t& libinput,play_tree_parser_t* p) {
+static PlayTree* parse_asx(libinput_t& libinput,play_tree_parser_t* p) {
   int comments = 0,get_line = 1;
   char* line = NULL;
 
@@ -224,12 +224,12 @@ static int __FASTCALL__ pls_read_entry(char* line,pls_entry_t** _e,int* _max_ent
 }
 
 
-play_tree_t*
+PlayTree*
 parse_pls(play_tree_parser_t* p) {
   char *line,*v;
   pls_entry_t* entries = NULL;
   int n_entries = 0,max_entry=0,num;
-  play_tree_t *list = NULL, *entry = NULL;
+  PlayTree *list = NULL, *entry = NULL;
 
   mpxp_v<<"Trying winamp playlist..."<<std::endl;
   line = play_tree_parser_get_line(p);
@@ -286,11 +286,11 @@ parse_pls(play_tree_parser_t* p) {
       mpxp_err<<"Entry "<<(num+1)<<" don't have a file !!!!"<<std::endl;
     else {
       mpxp_dbg2<<"Adding entry "<<entries[num].file<<std::endl;
-      entry = play_tree_new();
-      play_tree_add_file(entry,entries[num].file);
+      entry = new(zeromem) PlayTree;
+      entry->add_file(entries[num].file);
       delete entries[num].file;
       if(list)
-	play_tree_append_entry(list,entry);
+	list->append_entry(entry);
       else
 	list = entry;
     }
@@ -306,15 +306,15 @@ parse_pls(play_tree_parser_t* p) {
 
   delete entries;
 
-  entry = play_tree_new();
-  play_tree_set_child(entry,list);
+  entry = new(zeromem) PlayTree;
+  entry->set_child(list);
   return entry;
 }
 
-play_tree_t*
+PlayTree*
 parse_textplain(play_tree_parser_t* p) {
   char* line;
-  play_tree_t *list = NULL, *entry = NULL;
+  PlayTree *list = NULL, *entry = NULL;
 
   mpxp_v<<"Trying plaintext..."<<std::endl;
   play_tree_parser_stop_keeping(p);
@@ -323,23 +323,24 @@ parse_textplain(play_tree_parser_t* p) {
     strstrip(line);
     if(line[0] == '\0')
       continue;
-    entry = play_tree_new();
-    play_tree_add_file(entry,line);
+    entry = new(zeromem) PlayTree;
+    entry->add_file(line);
     if(!list)
       list = entry;
     else
-      play_tree_append_entry(list,entry);
+      list->append_entry(entry);
   }
 
   if(!list) return NULL;
-  entry = play_tree_new();
-  play_tree_set_child(entry,list);
+  entry = new(zeromem) PlayTree;
+  entry->set_child(list);
   return entry;
 }
 
-play_tree_t* parse_playtree(libinput_t&libinput,Stream* stream) {
+namespace mpxp {
+PlayTree* PlayTree::parse_playtree(libinput_t&libinput,Stream* stream) {
   play_tree_parser_t* p;
-  play_tree_t* ret;
+  PlayTree* ret;
 
   p = play_tree_parser_new(stream,0);
   if(!p)
@@ -351,9 +352,9 @@ play_tree_t* parse_playtree(libinput_t&libinput,Stream* stream) {
   return ret;
 }
 
-play_tree_t* parse_playlist_file(libinput_t&libinput,const std::string& file) {
+PlayTree* PlayTree::parse_playlist_file(libinput_t&libinput,const std::string& file) {
   Stream *stream;
-  play_tree_t* ret;
+  PlayTree* ret;
   int ff;
 
   mpxp_v<<"Parsing playlist file "<<file<<"..."<<std::endl;
@@ -361,12 +362,12 @@ play_tree_t* parse_playlist_file(libinput_t&libinput,const std::string& file) {
   stream = new(zeromem) Stream;
   stream->open(libinput,file,&ff);
   stream->type(Stream::Type_Text);
-  ret = parse_playtree(libinput,stream);
+  ret = PlayTree::parse_playtree(libinput,stream);
   delete stream;
 
   return ret;
-
 }
+} // namespace mpxp
 
 play_tree_parser_t* play_tree_parser_new(Stream* stream,int deep) {
   play_tree_parser_t* p;
@@ -390,9 +391,9 @@ play_tree_parser_free(play_tree_parser_t* p) {
   delete p;
 }
 
-play_tree_t*
+PlayTree*
 play_tree_parser_get_play_tree(libinput_t& libinput,play_tree_parser_t* p) {
-  play_tree_t* tree = NULL;
+  PlayTree* tree = NULL;
 
   while(play_tree_parser_get_line(p) != NULL) {
     play_tree_parser_reset(p);
@@ -415,10 +416,7 @@ play_tree_parser_get_play_tree(libinput_t& libinput,play_tree_parser_t* p) {
     mpxp_v<<"Playlist succefully parsed"<<std::endl;
   else mpxp_err<<"Error while parsing playlist"<<std::endl;
 
-  if(tree)
-    tree = play_tree_cleanup(tree);
-
-  if(!tree) mpxp_warn<<"Warning empty playlist"<<std::endl;
+  if(tree->cleanup()!=MPXP_Ok) mpxp_warn<<"Warning empty playlist"<<std::endl;
 
   return tree;
 }

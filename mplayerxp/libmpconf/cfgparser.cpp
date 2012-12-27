@@ -193,7 +193,7 @@ int m_config_pop(m_config_t& config) {
   return ret;
 }
 
-m_config_t& m_config_new(play_tree_t* pt,libinput_t&libinput) {
+m_config_t& m_config_new(PlayTree* pt,libinput_t&libinput) {
   m_config_t& config = *new(zeromem) m_config_t(libinput);
   config.config_stack = (config_save_t**)mp_calloc(1,sizeof(config_save_t*));
   SET_GLOBAL(config); // We always start with global options
@@ -228,13 +228,13 @@ static int init_conf(m_config_t& config, int mode)
 }
 
 static int config_is_entry_option(m_config_t& config,const std::string& opt,const std::string& param) {
-    play_tree_t* entry = NULL;
+    PlayTree* entry = NULL;
 
     std::string lopt=opt;
     std::transform(lopt.begin(),lopt.end(),lopt.begin(), ::tolower);
     if(lopt=="playlist") { // We handle playlist here
 	if(param.empty()) return ERR_MISSING_PARAM;
-	entry = parse_playlist_file(config.libinput,param);
+	entry = PlayTree::parse_playlist_file(config.libinput,param);
 	if(!entry) {
 	    mpxp_err<<"Playlist parsing failed: "<<param<<std::endl;
 	    return 1;
@@ -242,8 +242,8 @@ static int config_is_entry_option(m_config_t& config,const std::string& opt,cons
     }
 
     if(entry) {
-	if(config.last_entry)	play_tree_append_entry(config.last_entry,entry);
-	else			play_tree_set_child(config.pt,entry);
+	if(config.last_entry)	config.last_entry->append_entry(entry);
+	else			config.pt->set_child(entry);
 	config.last_entry = entry;
 	if(config.parser_mode == COMMAND_LINE) UNSET_GLOBAL(config);
 	return 1;
@@ -449,15 +449,15 @@ static int config_read_option(m_config_t& config,const std::vector<const config_
 	}
 out:
 	if(ret >= 0 && ! IS_RUNNING(config) && ! IS_GLOBAL(config) && ! (conf[i].flags & CONF_GLOBAL) && conf[i].type != CONF_TYPE_SUBCONFIG ) {
-	  play_tree_t* dest = config.last_entry ? config.last_entry : config.last_parent;
+	  PlayTree* dest = config.last_entry ? config.last_entry : config.last_parent;
 	  std::string o;
 	  if(config.sub_conf)	o=std::string(config.sub_conf)+":"+opt;
 	  else			o=opt;
 
 	  if(ret == 0)
-	    play_tree_set_param(dest,o,"");
+	    dest->set_param(o,"");
 	  else if(ret > 0)
-	    play_tree_set_param(dest,o,param);
+	    dest->set_param(o,param);
 	  m_config_pop(config);
 	}
 	return ret;
@@ -728,12 +728,12 @@ MPXP_Rc mpxp_parse_command_line(m_config_t& config, const std::vector<std::strin
 	    continue;
 	}
 	if(opt[0] == '{' && opt[1] == '\0') {
-	    play_tree_t* entry = play_tree_new();
+	    PlayTree* entry = new(zeromem) PlayTree;
 	    UNSET_GLOBAL(config);
 	    if(config.last_entry == NULL) {
-		play_tree_set_child(config.last_parent,entry);
+		config.last_parent->set_child(entry);
 	    } else {
-		play_tree_append_entry(config.last_entry,entry);
+		config.last_entry->append_entry(entry);
 		config.last_entry = NULL;
 	    }
 	    config.last_parent = entry;
@@ -741,12 +741,12 @@ MPXP_Rc mpxp_parse_command_line(m_config_t& config, const std::vector<std::strin
 	}
 
 	if(opt[0] == '}' && opt[1] == '\0') {
-	    if( ! config.last_parent || ! config.last_parent->parent) {
+	    if( ! config.last_parent || ! config.last_parent->get_parent()) {
 		mpxp_err<<"too much }-"<<std::endl;
 		goto err_out;
 	    }
 	    config.last_entry = config.last_parent;
-	    config.last_parent = config.last_entry->parent;
+	    config.last_parent = config.last_entry->get_parent();
 	    continue;
 	}
 
@@ -788,14 +788,14 @@ MPXP_Rc mpxp_parse_command_line(m_config_t& config, const std::vector<std::strin
 		    break;
 	    }
 	} else /* filename */ {
-	    play_tree_t* entry = play_tree_new();
+	    PlayTree* entry = new(zeromem) PlayTree;
 	    mpxp_dbg2<<"Adding file "<<argv[i]<<std::endl;
-	    play_tree_add_file(entry,argv[i]);
+	    entry->add_file(argv[i]);
 	    if(argv[i]=="-") m_config_set_option(config,"use-stdin",NULL);
 	    /* opt is not an option -> treat it as a filename */
 	    UNSET_GLOBAL(config); // We start entry specific options
-	    if(config.last_entry == NULL) play_tree_set_child(config.last_parent,entry);
-	    else play_tree_append_entry(config.last_entry,entry);
+	    if(config.last_entry == NULL) config.last_parent->set_child(entry);
+	    else config.last_entry->append_entry(entry);
 	    config.last_entry = entry;
 	}
     }

@@ -27,7 +27,7 @@ static inline std::string mp_basename(const std::string& s) {
 
 struct list_entry_s {
   struct list_entry p;
-  play_tree_t* pt;
+  PlayTree* pt;
 };
 
 
@@ -57,24 +57,24 @@ static void read_cmd(menu_t* menu,int cmd) {
   case MENU_CMD_OK: {
     int d = 1;
     char str[15];
-    play_tree_t* i;
+    PlayTree* i;
     mp_cmd_t* c;
     _PlayTree_Iter* _playtree_iter =mpxp_get_playtree_iter();
 
     if(_playtree_iter->get_tree() == mpriv->p.current->pt)
       break;
 
-    if(_playtree_iter->get_tree()->parent && mpriv->p.current->pt == _playtree_iter->get_tree()->parent)
+    if(_playtree_iter->get_tree()->get_parent() && mpriv->p.current->pt == _playtree_iter->get_tree()->get_parent())
       snprintf(str,15,"pt_up_step 1");
     else {
-      for(i = _playtree_iter->get_tree()->next; i != NULL ; i = i->next) {
+      for(i = _playtree_iter->get_tree()->get_next(); i != NULL ; i = i->get_next()) {
 	if(i == mpriv->p.current->pt)
 	  break;
 	d++;
       }
       if(i == NULL) {
 	d = -1;
-	for(i = _playtree_iter->get_tree()->prev; i != NULL ; i = i->prev) {
+	for(i = _playtree_iter->get_tree()->get_prev(); i != NULL ; i = i->get_prev()) {
 	  if(i == mpriv->p.current->pt)
 	    break;
 	  d--;
@@ -106,7 +106,7 @@ static void close_menu(menu_t* menu) {
 }
 
 static int op(menu_t* menu,const char* args) {
-  play_tree_t* i;
+  PlayTree* i;
   list_entry_t* e;
   _PlayTree_Iter* _playtree_iter = mpxp_get_playtree_iter();
 
@@ -121,19 +121,19 @@ static int op(menu_t* menu,const char* args) {
 
   mpriv->p.title = mpriv->title;
 
-  if(_playtree_iter->get_tree()->parent != _playtree_iter->get_root()) {
+  if(_playtree_iter->get_tree()->get_parent() != _playtree_iter->get_root()) {
     e = new(zeromem) list_entry_t;
     e->p.txt = "..";
-    e->pt = _playtree_iter->get_tree()->parent;
+    e->pt = _playtree_iter->get_tree()->get_parent();
     menu_list_add_entry(menu,e);
   }
 
-  for(i = _playtree_iter->get_tree() ; i->prev != NULL ; i = i->prev)
+  for(i = _playtree_iter->get_tree() ; i->get_prev() != NULL ; i = i->get_prev())
     /* NOP */;
-  for( ; i != NULL ; i = i->next ) {
+  for( ; i != NULL ; i = i->get_next() ) {
     e = new(zeromem) list_entry_t;
-    if(!i->files.empty())
-      e->p.txt = mp_basename(i->files[0]);
+    if(!i->get_files().empty())
+      e->p.txt = mp_basename(i->get_file(0));
     else
       e->p.txt = "Group ...";
     e->pt = i;

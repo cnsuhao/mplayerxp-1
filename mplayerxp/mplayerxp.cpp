@@ -154,7 +154,7 @@ struct MPXPSystem : public Opaque {
 	MPXP_Rc		ao_inited;
 	int		osd_show_framedrop;
 	int		osd_function;
-	play_tree_t*	playtree;
+	PlayTree*	playtree;
 	// for multifile support:
 	_PlayTree_Iter* playtree_iter;
     private:
@@ -935,11 +935,11 @@ int MPXPSystem::init_vobsub(const std::string& filename) {
 int MPXPSystem::handle_playlist(const std::string& filename) const {
     Stream* stream=static_cast<Stream*>(_demuxer->stream);
     int eof=0;
-    play_tree_t* entry;
+    PlayTree* entry;
     // Handle playlist
     MP_UNIT("handle_playlist");
     mpxp_v<<"Parsing playlist "<<filename<<"..."<<std::endl;
-    entry = parse_playtree(_libinput,stream);
+    entry = PlayTree::parse_playtree(_libinput,stream);
     if(!entry) {
       entry = playtree_iter->get_tree();
       if(playtree_iter->step(1,0) != PLAY_TREE_ITER_ENTRY) {
@@ -952,17 +952,17 @@ int MPXPSystem::handle_playlist(const std::string& filename) const {
 	  return eof;
 	}
       }
-      play_tree_remove(entry,1,1);
+      entry->remove(1,1);
       eof = PT_NEXT_SRC;
       return eof;
     }
-    play_tree_insert_entry(playtree_iter->get_tree(),entry);
+    playtree_iter->get_tree()->insert_entry(entry);
     entry = playtree_iter->get_tree();
     if(playtree_iter->step(1,0) != PLAY_TREE_ITER_ENTRY) {
       eof = PT_NEXT_ENTRY;
       return eof;
     }
-    play_tree_remove(entry,1,1);
+    entry->remove(1,1);
     eof = PT_NEXT_SRC;
     return eof;
 }
@@ -1681,7 +1681,7 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
     MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
     MPXPSys.init_keyboard_fifo();
 
-    MPXPSys.playtree = play_tree_new();
+    MPXPSys.playtree = new(zeromem) PlayTree;
 
     m_config_t& m_config=m_config_new(MPXPSys.playtree,MPXPSys.libinput());
     mpxp_context().mconfig = &m_config;
@@ -1708,10 +1708,10 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
     get_mmx_optimizations();
 #endif
-    if(mp_conf.shuffle_playback) MPXPSys.playtree->flags|=PLAY_TREE_RND;
-    else			 MPXPSys.playtree->flags&=~PLAY_TREE_RND;
+    if(mp_conf.shuffle_playback) MPXPSys.playtree->set_flags(MPXPSys.playtree->get_flags()|PLAY_TREE_RND);
+    else			 MPXPSys.playtree->set_flags(MPXPSys.playtree->get_flags()&~PLAY_TREE_RND);
 
-    MPXPSys.playtree = play_tree_cleanup(MPXPSys.playtree);
+//    MPXPSys.playtree = play_tree_cleanup(MPXPSys.playtree);
     if(MPXPSys.playtree) {
       MPXPSys.playtree_iter = new _PlayTree_Iter(MPXPSys.playtree,m_config);
       if(MPXPSys.playtree_iter) {

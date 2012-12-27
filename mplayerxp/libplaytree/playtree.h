@@ -44,29 +44,75 @@ enum {
 /// \defgroup Playtree
 ///@{
 
-struct play_tree_param_t {
-    std::string name;
-    std::string value;
-};
-
-struct play_tree_t {
-    play_tree_t* parent;
-    play_tree_t* child;
-    play_tree_t* next;
-    play_tree_t* prev;
-
-  //play_tree_info_t info;
-    std::vector<play_tree_param_t> params;
-    int loop;
-    std::vector<std::string> files;
-    int entry_type;
-    int flags;
-};
-
 namespace mpxp {
+    struct play_tree_param_t {
+	std::string name;
+	std::string value;
+    };
+
+    class PlayTree : public Opaque {
+	public:
+	    PlayTree();
+	    virtual ~PlayTree();
+
+	    static PlayTree*	parse_playtree(libinput_t& libinput,Stream* stream);
+	    static PlayTree*	parse_playlist_file(libinput_t&libinput,const std::string& file);
+	    virtual MPXP_Rc	cleanup();
+	    // If childs is true mp_free also the childs
+	    virtual void	free(int childs);
+	    virtual void	free_list(int childs);
+
+	    virtual void	set_child(PlayTree* child);
+	    virtual void	set_parent(PlayTree* parent);
+	    // Add at end
+	    virtual void	append_entry(PlayTree* entry);
+	    // And on begining
+	    virtual void	prepend_entry(PlayTree* entry);
+	    // Insert after
+	    virtual void	insert_entry(PlayTree* entry);
+	    // Detach from the tree
+	    virtual void	remove(int free_it,int with_childs);
+	    virtual void	add_file(const std::string& file);
+	    virtual MPXP_Rc	remove_file(const std::string& file);
+	    virtual void	set_param(const std::string& name,const std::string& val);
+	    virtual MPXP_Rc	unset_param(const std::string& name);
+	    /// Copy the config parameters from one item to another.
+	    virtual void	set_params_from(const PlayTree& src);
+	    virtual void	set_flag(int flags, int deep);
+	    virtual void	unset_flag(int flags, int deep);
+	    virtual MPXP_Rc	is_valid() const;
+
+	    PlayTree*		get_parent() const { return parent; }
+	    PlayTree*		get_child() const { return child; }
+	    PlayTree*		get_prev() const { return prev; }
+	    PlayTree*		get_next() const { return next; }
+	    void		set_prev(PlayTree* p) { prev=p; }
+	    void		set_next(PlayTree* p) { next=p; }
+	    const std::string&	get_file(size_t idx) const { return files[idx]; }
+	    const std::vector<std::string>&	get_files() const { return files; }
+	    const play_tree_param_t&		get_param(size_t idx) const { return params[idx]; }
+	    const std::vector<play_tree_param_t>&get_params() const { return params; }
+	    int			get_entry_type() const { return entry_type; }
+	    int			get_loop() const { return loop; }
+	    void		set_loop(int l) { loop=l; }
+	    int			get_flags() const { return flags; }
+	    void		set_flags(int f) { flags=f; }
+	private:
+	    PlayTree* parent;
+	    PlayTree* child;
+	    PlayTree* next;
+	    PlayTree* prev;
+
+	    std::vector<play_tree_param_t> params;
+	    int loop;
+	    std::vector<std::string> files;
+	    int entry_type;
+	    int flags;
+    };
+
     struct _PlayTree_Iter : public Opaque {
 	public:
-	    _PlayTree_Iter(play_tree_t* parent,m_config_t& config);
+	    _PlayTree_Iter(PlayTree* parent,m_config_t& config);
 	    _PlayTree_Iter(const _PlayTree_Iter& old);
 	    virtual ~_PlayTree_Iter();
 
@@ -79,16 +125,16 @@ namespace mpxp {
 	    virtual int		down_step(int d,int with_nodes);
 	    virtual std::string	get_file(int d);
 
-	    play_tree_t*	get_root() const { return root; }
-	    play_tree_t*	get_tree() const { return tree; }
-	    void		set_tree(play_tree_t* _tree) { tree=_tree; }
+	    PlayTree*		get_root() const { return root; }
+	    PlayTree*		get_tree() const { return tree; }
+	    void		set_tree(PlayTree* _tree) { tree=_tree; }
 	    void		reset_tree() { tree=root; }
 	    int			get_file() const { return file; }
 	    int			get_num_files() const { return num_files; }
 	private:
 	    void		push_params();
-	    play_tree_t*	root; // Iter root tree
-	    play_tree_t*	tree; // Current tree
+	    PlayTree*		root; // Iter root tree
+	    PlayTree*		tree; // Current tree
 	    m_config_t&		config;
 	    int			loop;  // Looping status
 	    int			file;
@@ -99,71 +145,12 @@ namespace mpxp {
 	    std::stack<int> status_stack;
     };
 } // namespace mpxp
-play_tree_t* parse_playtree(libinput_t& libinput,Stream* stream);
-
-play_tree_t* play_tree_cleanup(play_tree_t* pt);
-
-play_tree_t* parse_playlist_file(libinput_t&libinput,const std::string& file);
-
-play_tree_t* play_tree_new(void);
-
-// If childs is true mp_free also the childs
-void
-play_tree_free(play_tree_t* pt, int childs);
-
-
-void
-play_tree_free_list(play_tree_t* pt, int childs);
-
-
-// Childs
-void
-play_tree_set_child(play_tree_t* pt, play_tree_t* child);
-// Or parent
-void
-play_tree_set_parent(play_tree_t* pt, play_tree_t* parent);
-
-
-// Add at end
-void
-play_tree_append_entry(play_tree_t* pt, play_tree_t* entry);
-
-// And on begining
-void
-play_tree_prepend_entry(play_tree_t* pt, play_tree_t* entry);
-
-// Insert after
-void
-play_tree_insert_entry(play_tree_t* pt, play_tree_t* entry);
-
-// Detach from the tree
-void
-play_tree_remove(play_tree_t* pt, int free_it,int with_childs);
-
-
-void
-play_tree_add_file(play_tree_t* pt,const std::string& file);
-
-MPXP_Rc play_tree_remove_file(play_tree_t* pt,const std::string& file);
-
-// Val can be NULL
-void
-play_tree_set_param(play_tree_t* pt,const std::string& name,const std::string& val);
-
-MPXP_Rc play_tree_unset_param(play_tree_t* pt,const std::string& name);
-/// Copy the config parameters from one item to another.
-void
-play_tree_set_params_from(play_tree_t* dest,const play_tree_t* src);
-
 
 /// \defgroup PtAPI Playtree highlevel API
 /// \ingroup Playtree
 /// Highlevel API with pt-suffix to different from low-level API
 /// by Fabian Franz (mplayer@fabian-franz.de).
 ///@{
-
-// Cleans up pt and creates a new iter.
-_PlayTree_Iter* pt_iter_create(play_tree_t** pt, struct m_config* config);
 
 /// Frees the iter.
 void pt_iter_destroy(_PlayTree_Iter** iter);
@@ -176,21 +163,21 @@ static inline std::string pt_iter_get_next_file(_PlayTree_Iter* iter) { return p
 static inline std::string pt_iter_get_prev_file(_PlayTree_Iter* iter) { return pt_iter_get_file(iter, -1); }
 
 /// Inserts entry into the playtree.
-void pt_iter_insert_entry(_PlayTree_Iter* iter, play_tree_t* entry);
+void pt_iter_insert_entry(_PlayTree_Iter* iter, PlayTree* entry);
 
 /// Replaces current entry in playtree with entry by doing insert and remove.
-void pt_iter_replace_entry(_PlayTree_Iter* iter, play_tree_t* entry);
+void pt_iter_replace_entry(_PlayTree_Iter* iter, PlayTree* entry);
 
 /// Adds a new file to the playtree, if it is not valid it is created.
-void pt_add_file(play_tree_t** ppt,const std::string& filename);
+void pt_add_file(PlayTree** ppt,const std::string& filename);
 
 /// \brief Performs a convert to playtree-syntax, by concat path/file
 /// and performs pt_add_file
-void pt_add_gui_file(play_tree_t** ppt,const std::string& path,const std::string& file);
+void pt_add_gui_file(PlayTree** ppt,const std::string& path,const std::string& file);
 
 // Two macros to use only the iter and not the other things.
-static inline void pt_iter_add_file(_PlayTree_Iter* iter, const std::string& filename) { play_tree_t* tree=iter->get_tree();  pt_add_file(&tree, filename); }
-static inline void pt_iter_add_gui_file(_PlayTree_Iter* iter,const std::string& path,const std::string& name) { play_tree_t* tree=iter->get_tree(); pt_add_gui_file(&tree, path, name); }
+static inline void pt_iter_add_file(_PlayTree_Iter* iter, const std::string& filename) { PlayTree* tree=iter->get_tree();  pt_add_file(&tree, filename); }
+static inline void pt_iter_add_gui_file(_PlayTree_Iter* iter,const std::string& path,const std::string& name) { PlayTree* tree=iter->get_tree(); pt_add_gui_file(&tree, path, name); }
 
 /// Resets the iter and goes back to head.
 void pt_iter_goto_head(_PlayTree_Iter* iter);
