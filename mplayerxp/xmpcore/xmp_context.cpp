@@ -232,7 +232,7 @@ static const config_t playback_config[]={
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
 
-static const config_t mplayer_options[]={
+static const config_t mplayerxp_options[]={
 	/* name, pointer, type, flags, min, max, help */
 	{"include", NULL, CONF_TYPE_INCLUDE, CONF_NOSAVE, 0, 0, ""}, /* this don't need anymore to be the first!!! */
 
@@ -269,7 +269,7 @@ static const config_t mplayer_options[]={
 // ------------------------- codec/pp options --------------------
 	{NULL, NULL, 0, 0, 0, 0, NULL}
 };
-const config_t* mplayer_opts=mplayer_options;
+const config_t* mplayerxp_opts=mplayerxp_options;
 
 } // namespace mpxp
 extern void libmpcodecs_ad_register_options(m_config_t& cfg);

@@ -1685,7 +1685,7 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
 
     m_config_t& m_config=m_config_new(MPXPSys.playtree,MPXPSys.libinput());
     mpxp_context().mconfig = &m_config;
-    m_config_register_options(m_config,mplayer_opts);
+    m_config_register_options(m_config,mplayerxp_opts);
     // TODO : add something to let modules register their options
     mp_register_options(m_config);
     parse_cfgfiles(envm,m_config);

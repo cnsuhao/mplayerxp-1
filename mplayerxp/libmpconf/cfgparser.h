@@ -56,7 +56,7 @@ struct m_config_t : public Opaque {
     m_config_t(libinput_t& _libinput):libinput(_libinput) {}
     ~m_config_t() {}
 
-    const config_t** opt_list;
+    std::vector<const config_t*> opt_list;
     config_save_t** config_stack;
     any_t**dynamics;
     unsigned dynasize;

@@ -3,7 +3,7 @@
 
 struct config_t;
 namespace mpxp {
-    extern const config_t* mplayer_opts;
+    extern const config_t* mplayerxp_opts;
 }
 
 #endif
