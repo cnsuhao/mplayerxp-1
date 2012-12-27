@@ -10,6 +10,7 @@ using namespace mpxp;
 #include <errno.h>
 #include <time.h>
 #include "libmpstream2/stream.h"
+#include "libmpconf/cfgparser.h"
 #include "playtree.h"
 #include "playtree_msg.h"
 

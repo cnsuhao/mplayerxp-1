@@ -2,6 +2,7 @@
 #define __MPLAYERXP_MAIN 1
 
 #include <string>
+#include <map>
 
 #include <pthread.h>
 #include <stdint.h>
@@ -10,13 +11,13 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 #include "xmpcore/xmp_enums.h"
-#include "libmpconf/cfgparser.h"
 #include "libmpsub/subreader.h"
 #include "libao3/audio_out.h"
 #include "libvo2/video_out.h"
 
 struct audio_decoder_t;
 struct video_decoder_t;
+struct m_config_t;
 namespace mpxp {
     struct _PlayTree_Iter;
     /* List of all modules which require protection by pin-code */
