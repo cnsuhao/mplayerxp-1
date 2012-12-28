@@ -386,7 +386,7 @@ void exit_player(const std::string& why){
     MP_UNIT("exit_player");
 
     if(!why.empty()) mpxp_hint<<std::endl<<MSGTR_Exiting<<"...("<<why<<")"<<std::endl;
-    if(mpxp_context().mconfig) m_config_free(mpxp_context().mconfig);
+    if(mpxp_context().mconfig) delete mpxp_context().mconfig;
     mpxp_print_uninit();
     mpxp_uninit_structs();
     if(!why.empty()) ::exit(0);
@@ -412,34 +412,6 @@ void exit_sighandler(void)
 {
   xmp_killall_threads(pthread_self());
   __exit_sighandler();
-}
-
-static const char* default_config=
-"# Write your default config options here!\n"
-"\n"
-//"nosound=nein"
-"\n";
-
-void parse_cfgfiles(const std::map<std::string,std::string>& envm, m_config_t& conf )
-{
-    std::string conffile;
-    int conffile_fd;
-    conffile = get_path(envm);
-    if (conffile.empty()) mpxp_warn<<MSGTR_NoHomeDir<<std::endl;
-    else {
-	::mkdir(conffile.c_str(), 0777);
-	conffile = get_path(envm,"config");
-	if (conffile.empty()) {
-	    mpxp_err<<MSGTR_GetpathProblem<<std::endl;
-	    conffile="config";
-	}
-	if ((conffile_fd = ::open(conffile.c_str(), O_CREAT | O_EXCL | O_WRONLY, 0666)) != -1) {
-	    mpxp_info<<MSGTR_CreatingCfgFile<<": "<<conffile<<std::endl;
-	    ::write(conffile_fd, default_config, strlen(default_config));
-	    ::close(conffile_fd);
-	}
-	if (m_config_parse_config_file(conf, conffile.c_str()) != MPXP_Ok) exit(1);
-    }
 }
 
 // When libmpdemux perform a blocking operation (network connection or cache filling)
@@ -594,9 +566,9 @@ void show_help(void) {
     mpxp_info<<"Use --long-help option for full help"<<std::endl;
 }
 
-void show_long_help(const m_config_t& cfg,const std::map<std::string,std::string>& envm) {
+void show_long_help(const M_Config& cfg,const std::map<std::string,std::string>& envm) {
     MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
-    m_config_show_options(cfg);
+    cfg.show_options();
     mp_input_print_binds(MPXPSys.libinput());
     Stream::print_drivers();
     Video_Output::print_help();
@@ -1631,14 +1603,14 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
 
     MPXPSys.playtree = new(zeromem) PlayTree;
 
-    m_config_t& m_config=m_config_new(MPXPSys.playtree,MPXPSys.libinput());
+    M_Config& m_config=*new(zeromem) M_Config(MPXPSys.playtree,MPXPSys.libinput());
     mpxp_context().mconfig = &m_config;
-    m_config_register_options(m_config,mplayerxp_opts);
+    m_config.register_options(mplayerxp_opts);
     // TODO : add something to let modules register their options
     mp_register_options(m_config);
-    parse_cfgfiles(envm,m_config);
+    m_config.parse_cfgfiles(envm);
 
-    if(mpxp_parse_command_line(m_config, argv,envm)!=MPXP_Ok)
+    if(m_config.parse_command_line(argv,envm)!=MPXP_Ok)
 	exit_player("Error parse command line"); // error parsing cmdline
 
     if(!mp_conf.xp) {

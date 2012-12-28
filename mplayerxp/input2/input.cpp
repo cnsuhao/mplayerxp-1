@@ -1349,8 +1349,8 @@ void mp_input_close(libinput_t& handle) {
     delete &handle;
 }
 
-void mp_input_register_options(m_config_t& cfg) {
-    m_config_register_options(cfg,mp_input_opts);
+void mp_input_register_options(M_Config& cfg) {
+    cfg.register_options(mp_input_opts);
 }
 
 void mp_input_print_keys(libinput_t& handle) {

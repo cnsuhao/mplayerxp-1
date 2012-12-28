@@ -18,7 +18,7 @@
 struct audio_decoder_t;
 struct video_decoder_t;
 namespace mpxp {
-    struct m_config_t;
+    class M_Config;
     struct _PlayTree_Iter;
     /* List of all modules which require protection by pin-code */
     enum {
@@ -183,7 +183,7 @@ namespace mpxp {
 	    int			use_pts_fix2;
 	    unsigned		mplayer_accel;
 	    subtitle*		subtitles;
-	    m_config_t*		mconfig;
+	    M_Config*		mconfig;
 	    time_usage_t*	bench;
 	    any_t*		msg_priv;
 	private:
@@ -198,7 +198,7 @@ namespace mpxp {
 
     unsigned get_number_cpu(void);
     void show_help(void);
-    void show_long_help(const m_config_t& cfg,const std::map<std::string,std::string>& envm);
+    void show_long_help(const M_Config& cfg,const std::map<std::string,std::string>& envm);
 
     void update_osd( float v_pts );
 
@@ -228,6 +228,6 @@ namespace mpxp {
 
     void mplayer_put_key(int code);
 
-    void mp_register_options(m_config_t& cfg);
+    void mp_register_options(M_Config& cfg);
 }
 #endif

@@ -272,17 +272,17 @@ static const mpxp_option_t mplayerxp_options[]={
 const mpxp_option_t* mplayerxp_opts=mplayerxp_options;
 
 } // namespace mpxp
-extern void libmpcodecs_ad_register_options(m_config_t& cfg);
-extern void libmpcodecs_vd_register_options(m_config_t& cfg);
 
+extern void libmpcodecs_ad_register_options(M_Config& cfg);
+extern void libmpcodecs_vd_register_options(M_Config& cfg);
 namespace mpxp {
 #ifdef HAVE_LIBCDIO
-extern void cdda_register_options(m_config_t& cfg);
+extern void cdda_register_options(M_Config& cfg);
 #endif
-extern void mp_input_register_options(m_config_t& cfg);
-extern void libmpdemux_register_options(m_config_t& cfg);
-extern void demuxer_register_options(m_config_t& cfg);
-void mp_register_options(m_config_t& cfg)
+extern void mp_input_register_options(M_Config& cfg);
+extern void libmpdemux_register_options(M_Config& cfg);
+extern void demuxer_register_options(M_Config& cfg);
+void mp_register_options(M_Config& cfg)
 {
     mp_input_register_options(cfg);
     libmpdemux_register_options(cfg);

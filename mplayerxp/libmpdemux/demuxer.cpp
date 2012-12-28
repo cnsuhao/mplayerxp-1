@@ -121,12 +121,12 @@ struct demuxer_priv_t : public Opaque {
 	const demuxer_driver_t*	driver;	/**< driver associated with this demuxer */
 };
 
-void libmpdemux_register_options(m_config_t& cfg)
+void libmpdemux_register_options(M_Config& cfg)
 {
     unsigned i;
     for(i=0;ddrivers[i];i++) {
 	if(ddrivers[i]->options)
-	    m_config_register_options(cfg,ddrivers[i]->options);
+	    cfg.register_options(ddrivers[i]->options);
 	if(ddrivers[i]==&demux_null) break;
     }
 }
@@ -463,7 +463,7 @@ Demuxer* Demuxer::open(Stream *vs,libinput_t& libinput,int audio_id,int video_id
       delete ad; ad = NULL;
     }
     else if(ad->audio->sh && ((sh_audio_t*)ad->audio->sh)->wtag == 0x55) // MP3
-      m_config_set_flag(*mpxp_context().mconfig,"mp3.hr-seek",1); // Enable high res seeking
+      mpxp_context().mconfig->set_flag("mp3.hr-seek",1); // Enable high res seeking
   }
   if(ss) {
     sd = new(zeromem) Demuxer(ss,-2,-2,dvdsub_id);
@@ -528,8 +528,8 @@ static const mpxp_option_t demuxer_opts[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-void demuxer_register_options(m_config_t& cfg) {
-  m_config_register_options(cfg,demuxer_opts);
+void demuxer_register_options(M_Config& cfg) {
+    cfg.register_options(demuxer_opts);
 }
 
 int Demuxer::demux(Demuxer_Stream* ds) {

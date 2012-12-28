@@ -304,7 +304,7 @@ void ASX_Parser::param(ASX_Attrib& cattribs, PlayTree* pt) const {
 	return;
     }
     val = cattribs.get("VALUE");
-    if(m_config_get_option(*mpxp_context().mconfig,name) == NULL) {
+    if(mpxp_context().mconfig->get_option(name) == NULL) {
 	mpxp_warn<<"Found unknow param in asx: "<<name<<std::endl;
 	if(!val.empty())mpxp_warn<<"="<<val<<std::endl;
 	else		mpxp_warn<<std::endl;

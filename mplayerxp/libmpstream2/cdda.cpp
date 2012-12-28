@@ -33,8 +33,8 @@ static const mpxp_option_t cdda_conf[] = {
   { NULL,NULL, 0, 0, 0, 0, NULL}
 };
 
-void cdda_register_options(m_config_t& cfg) {
-  m_config_register_options(cfg,cdda_conf);
+void cdda_register_options(M_Config& cfg) {
+    cfg.register_options(cdda_conf);
 }
 
 static unsigned cdda_parse_tracks(unsigned char *arr,unsigned nelem,const std::string& arg)

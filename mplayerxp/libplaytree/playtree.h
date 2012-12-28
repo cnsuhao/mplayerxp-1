@@ -6,7 +6,7 @@
 #include <vector>
 #include <stack>
 
-struct m_config_t;
+struct M_Config;
 namespace mpxp {
     struct Stream;
     struct libinput_t;
@@ -112,7 +112,7 @@ namespace mpxp {
 
     struct _PlayTree_Iter : public Opaque {
 	public:
-	    _PlayTree_Iter(PlayTree* parent,m_config_t& config);
+	    _PlayTree_Iter(PlayTree* parent,M_Config& config);
 	    _PlayTree_Iter(const _PlayTree_Iter& old);
 	    virtual ~_PlayTree_Iter();
 
@@ -135,11 +135,10 @@ namespace mpxp {
 	    void		push_params();
 	    PlayTree*		root; // Iter root tree
 	    PlayTree*		tree; // Current tree
-	    m_config_t&		config;
+	    M_Config&		config;
 	    int			loop;  // Looping status
 	    int			file;
 	    int			num_files;
-	    int			entry_pushed;
 	    int			mode;
 
 	    std::stack<int> status_stack;

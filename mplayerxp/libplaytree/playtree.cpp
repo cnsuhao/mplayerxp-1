@@ -319,7 +319,7 @@ play_tree_rnd_step(PlayTree* pt) {
   return NULL;
 }
 
-_PlayTree_Iter::_PlayTree_Iter(PlayTree* pt,m_config_t& _config)
+_PlayTree_Iter::_PlayTree_Iter(PlayTree* pt,M_Config& _config)
 		:root(pt),
 		tree(NULL),
 		config(_config) {
@@ -342,20 +342,15 @@ void _PlayTree_Iter::push_params() {
 
     pt = tree;
 
-    // We always push a config because we can set some option
-    // while playing
-    m_config_push(config);
-
     if(pt->get_params().empty()) return;
     size_t n,sz=pt->get_params().size();
 
     for(n=0; n<sz; n++) {
 	int e;
-	if((e = m_config_set_option(config,pt->get_param(n).name,pt->get_param(n).value)) < 0)
+	if((e = config.set_option(pt->get_param(n).name,pt->get_param(n).value)) < 0)
 	    mpxp_err<<"Error "<<e<<" while setting option '"<<pt->get_param(n).name<<"' with value '"<<pt->get_param(n).value<<"'"<<std::endl;
     }
 
-    if(!pt->get_child()) entry_pushed = 1;
     return;
 }
 
@@ -366,11 +361,6 @@ int _PlayTree_Iter::step(int d,int with_nodes) {
     if(tree == NULL) {
 	tree = root;
 	return step(0,with_nodes);
-    }
-
-    if(entry_pushed > 0) {
-	entry_pushed = 0;
-	m_config_pop(config);
     }
 
     if(tree->get_parent() && (tree->get_parent()->get_flags() & PLAY_TREE_RND))
@@ -435,8 +425,6 @@ int _PlayTree_Iter::step(int d,int with_nodes) {
 
     num_files = tree->get_files().size();
 
-    push_params();
-    entry_pushed = 1;
     if(mode == PLAY_TREE_ITER_RND) pt->set_flags(pt->get_flags()|PLAY_TREE_RND_PLAYED);
 
     return PLAY_TREE_ITER_ENTRY;
@@ -449,8 +437,6 @@ int _PlayTree_Iter::up_step(int d,int with_nodes) {
     loop = status_stack.top(); status_stack.pop();
     tree = tree->get_parent();
 
-    // Pop subtree params
-    m_config_pop(config);
     if(mode == PLAY_TREE_ITER_RND) tree->set_flags(tree->get_flags()|PLAY_TREE_RND_PLAYED);
     return step(d,with_nodes);
 }
@@ -490,11 +476,11 @@ std::string _PlayTree_Iter::get_file(int d) {
     switch(tree->get_entry_type()) {
 	case PLAY_TREE_ENTRY_DVD :
 	    if(entry.length() == 0) entry = "1";
-	    m_config_set_option(config,"dvd",entry);
+	    config.set_option("dvd",entry);
 	    return std::string("DVD title ")+entry;
 	case PLAY_TREE_ENTRY_VCD :
 	    if(entry.length() == 0) entry = "1";
-	    m_config_set_option(config,"vcd",entry);
+	    config.set_option("vcd",entry);
 	    return std::string("vcd://")+entry;
 	case PLAY_TREE_ENTRY_TV: {
 	    if(entry.length() != 0) {
@@ -502,7 +488,7 @@ std::string _PlayTree_Iter::get_file(int d) {
 		size_t e;
 		std::string rs;
 		val="on:channel="+entry;
-		m_config_set_option(config,"tv",val);
+		config.set_option("tv",val);
 		rs="TV channel ";
 		e = entry.find(':');
 		if(e==std::string::npos) rs+=entry.substr(0,255-11);
@@ -511,7 +497,7 @@ std::string _PlayTree_Iter::get_file(int d) {
 		    rs+=entry.substr(0,e);
 		}
 		return rs;
-	    } else m_config_set_option(config,"tv","on");
+	    } else config.set_option("tv","on");
 	    return "TV";
 	}
         default: break;
