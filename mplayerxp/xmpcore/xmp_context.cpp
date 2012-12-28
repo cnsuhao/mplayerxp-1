@@ -20,7 +20,7 @@ extern int sdl_forcegl;
 #endif
 extern const char *oss_mixer_device;
 
-static const config_t xpcore_config[]={
+static const mpxp_option_t xpcore_config[]={
 	{"xp", &mp_conf.xp, CONF_TYPE_INT, CONF_RANGE, 0, UINT_MAX, "specifies number cpus to use for playback"},
 	{"dump", &mp_conf.stream_dump, CONF_TYPE_STRING, 0, 0, 0, "specifies dump type and name for the dump of stream"},
 	{"gomp", &mp_conf.gomp, CONF_TYPE_FLAG, 0, 0, 1, "enables usage of OpenMP extensions"},
@@ -38,7 +38,7 @@ static const config_t xpcore_config[]={
 };
 
 #ifdef HAVE_STREAMING
-static const config_t net_config[]={
+static const mpxp_option_t net_config[]={
 	{"ipv4", &net_conf.prefer_ipv4, CONF_TYPE_FLAG, 0, 0, 1, "forces mplayerxp to use IPv4 protocol over network"},
 #ifdef HAVE_AF_INET6
 	{"ipv6", &net_conf.prefer_ipv4, CONF_TYPE_FLAG, 0, 1, 0, "forces mplayerxp to use IPv6 protocol over network"},
@@ -57,7 +57,7 @@ static const config_t net_config[]={
 #endif
 
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
-static const config_t cpu_config[]={
+static const mpxp_option_t cpu_config[]={
 	{"simd", &mp_conf.x86.simd, CONF_TYPE_FLAG, 0, 0, 1, "enables using of SIMD extensions of CPU"},
 	{"nosimd", &mp_conf.x86.simd, CONF_TYPE_FLAG, 0, 1, 0, "disables using of SIMD extensions of CPU"},
 	{"mmx", &mp_conf.x86.mmx, CONF_TYPE_FLAG, 0, 0, 1, "enables using of MMX extensions of CPU"},
@@ -90,7 +90,7 @@ static const config_t cpu_config[]={
 };
 #endif
 
-static const config_t osd_config[]={
+static const mpxp_option_t osd_config[]={
 	{"level", &mp_conf.osd_level, CONF_TYPE_INT, CONF_RANGE, 0, 2 , "specifies initial mode of the OSD"},
 #ifdef USE_OSD
 	{"font", &mp_conf.font_name, CONF_TYPE_STRING, 0, 0, 0, "specifies an alternative directory of font.desc location"},
@@ -102,7 +102,7 @@ static const config_t osd_config[]={
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
 
-static const config_t veq_config[]={
+static const mpxp_option_t veq_config[]={
 	{"brightness",&vo_conf.gamma.brightness, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, "specifies brightness-level for output image"},
 	{"saturation",&vo_conf.gamma.saturation, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, "specifies saturation-level for output image"},
 	{"contrast",&vo_conf.gamma.contrast, CONF_TYPE_INT, CONF_RANGE, -1000, 1000, "specifies contrast-level for output image"},
@@ -114,7 +114,7 @@ static const config_t veq_config[]={
 };
 
 
-static const config_t avsync_config[]={
+static const mpxp_option_t avsync_config[]={
 	{"framedrop", &mp_conf.frame_dropping, CONF_TYPE_FLAG, 0, 0, 1, "enables frame-dropping on slow systems: decodes all video frames, but skips displaying some ones"},
 /*UD*/	{"hardframedrop", &mp_conf.frame_dropping, CONF_TYPE_FLAG, 0, 0, 2, "enables hard frame-dropping on slow systems: skips displaying and decoding of some frames"},
 	{"noframedrop", &mp_conf.frame_dropping, CONF_TYPE_FLAG, 0, 1, 0, "disables frame dropping"},
@@ -137,7 +137,7 @@ static const config_t avsync_config[]={
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
 
-static const config_t subtitle_config[]={
+static const mpxp_option_t subtitle_config[]={
 	{"on", &mp_conf.has_dvdsub, CONF_TYPE_FLAG, 0, 0, 1, "enables subtitle-steam playback"},
 	{"off", &mp_conf.has_dvdsub, CONF_TYPE_FLAG, 0, 1, 0, "disables subtitle-stream playback"},
 	{"vob", &mp_conf.vobsub_name, CONF_TYPE_STRING, 0, 0, 0, "specifies the VobSub files that are to be used for subtitle"},
@@ -164,7 +164,7 @@ static const config_t subtitle_config[]={
 };
 
 #ifdef HAVE_X11
-static const config_t x11_config[]={
+static const mpxp_option_t x11_config[]={
 	{"display", &vo_conf.mDisplayName, CONF_TYPE_STRING, 0, 0, 0, "specifies the hostname and display number of the X server"},
 #ifdef HAVE_XINERAMA
 	{"xinerama", &vo_conf.xinerama_screen, CONF_TYPE_INT, CONF_RANGE, 0, 32, "tells MPlayerXP the display for movie playback"},
@@ -173,7 +173,7 @@ static const config_t x11_config[]={
 };
 #endif
 
-static const config_t audio_config[]={
+static const mpxp_option_t audio_config[]={
 	{"on", &mp_conf.has_audio, CONF_TYPE_FLAG, 0, 0, 1, "enables audio-steam playback"},
 	{"off", &mp_conf.has_audio, CONF_TYPE_FLAG, 0, 1, 0, "disables audio-stream playback"},
 	{"mixer", &oss_mixer_device, CONF_TYPE_STRING, 0, 0, 0, "select audio-mixer device"},
@@ -184,7 +184,7 @@ static const config_t audio_config[]={
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
 
-static const config_t video_config[]={
+static const mpxp_option_t video_config[]={
 	{"on", &mp_conf.has_video, CONF_TYPE_FLAG, 0, 0, 1, "enables video-steam playback"},
 	{"off", &mp_conf.has_video, CONF_TYPE_FLAG, 0, 1, 0, "disables video-stream playback"},
 	{"width", &vo_conf.image_width, CONF_TYPE_INT, CONF_RANGE, 0, 4096, "scale output image to width (if driver supports)"},
@@ -220,7 +220,7 @@ static const config_t video_config[]={
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
 
-static const config_t playback_config[]={
+static const mpxp_option_t playback_config[]={
 	{"sb", &mp_conf.seek_to_byte, CONF_TYPE_INT, CONF_MIN, 0, 0, "seek to given byte position before playback"},
 	{"ss", &mp_conf.seek_to_sec, CONF_TYPE_STRING, CONF_MIN, 0, 0, "seek to given time position before playback"},
 	{"loop", &mp_conf.loop_times, CONF_TYPE_INT, CONF_RANGE, -1, 10000, "loops movie playback given number of times. 0 means forever"},
@@ -232,7 +232,7 @@ static const config_t playback_config[]={
 	{NULL, NULL, 0, 0, 0, 0, NULL},
 };
 
-static const config_t mplayerxp_options[]={
+static const mpxp_option_t mplayerxp_options[]={
 	/* name, pointer, type, flags, min, max, help */
 	{"include", NULL, CONF_TYPE_INCLUDE, CONF_NOSAVE, 0, 0, ""}, /* this don't need anymore to be the first!!! */
 
@@ -269,7 +269,7 @@ static const config_t mplayerxp_options[]={
 // ------------------------- codec/pp options --------------------
 	{NULL, NULL, 0, 0, 0, 0, NULL}
 };
-const config_t* mplayerxp_opts=mplayerxp_options;
+const mpxp_option_t* mplayerxp_opts=mplayerxp_options;
 
 } // namespace mpxp
 extern void libmpcodecs_ad_register_options(m_config_t& cfg);

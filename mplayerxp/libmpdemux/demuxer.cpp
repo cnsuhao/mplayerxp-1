@@ -516,14 +516,14 @@ int Demuxer::seek(const seek_args_t* seeka){
 
 /******************* Options stuff **********************/
 
-static const config_t demux_opts[] = {
+static const mpxp_option_t demux_opts[] = {
   { "audiofile", &demux_conf.audio_stream, CONF_TYPE_STRING, 0, 0, 0, "forces reading of audio-stream from other file" },
   { "subfile", &demux_conf.sub_stream, CONF_TYPE_STRING, 0, 0, 0, "forces reading of subtitles from other file" },
   { "type", &demux_conf.type, CONF_TYPE_STRING, 0, 0, 0, "forces demuxer by given name" },
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static const config_t demuxer_opts[] = {
+static const mpxp_option_t demuxer_opts[] = {
   { "demuxer", (any_t*)&demux_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Demuxer related options" },
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };

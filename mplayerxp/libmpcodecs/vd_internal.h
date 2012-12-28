@@ -6,7 +6,7 @@
 #include "vd_msg.h"
 // prototypes:
 //static vd_info_t info;
-//static const config_t options[];
+//static const mpxp_option_t options[];
 
 static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc);
 static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...);
@@ -17,7 +17,7 @@ static mp_image_t* __FASTCALL__ decode(Opaque& ctx,const enc_frame_t& frame);
 
 #define LIBVD_EXTERN(x) extern const vd_functions_t mpcodecs_vd_##x = {\
 	&info,\
-	(const config_t*)options,\
+	(const mpxp_option_t*)options,\
 	probe, \
 	preinit, \
 	init,\

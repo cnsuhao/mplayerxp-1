@@ -88,7 +88,7 @@ static const ad_info_t info = {
     "build-in"
 };
 
-static const config_t options[] = {
+static const mpxp_option_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 

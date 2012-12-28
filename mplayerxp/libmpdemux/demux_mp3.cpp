@@ -709,13 +709,13 @@ static MPXP_Rc mp3_control(const Demuxer *demuxer,int cmd,any_t*args)
 
 #include "libmpconf/cfgparser.h"
 
-static const config_t mp3_opts[] = {
+static const mpxp_option_t mp3_opts[] = {
   { "hr-seek", &hr_mp3_seek, CONF_TYPE_FLAG, 0, 0, 1, "enables hight-resolution mp3 seeking" },
   { "nohr-seek", &hr_mp3_seek, CONF_TYPE_FLAG, 0, 1, 0, "disables hight-resolution mp3 seeking"},
   {NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static const config_t mp3_options[] = {
+static const mpxp_option_t mp3_options[] = {
   { "mp3", (any_t*)&mp3_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, "MP3 related options" },
   {NULL, NULL, 0, 0, 0, 0, NULL}
 };

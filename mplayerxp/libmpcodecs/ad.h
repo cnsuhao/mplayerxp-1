@@ -48,7 +48,7 @@ struct audio_filter_info_t {
 struct ad_functions_t
 {
     const ad_info_t*	info;
-    const config_t*	options;/**< Optional: MPlayerXP's option related */
+    const mpxp_option_t*	options;/**< Optional: MPlayerXP's option related */
     const audio_probe_t*(* __FASTCALL__ probe)(uint32_t wtag);
     Opaque*		(* __FASTCALL__ preinit)(const audio_probe_t&,sh_audio_t*,audio_filter_info_t&);
     MPXP_Rc		(* __FASTCALL__ init)(Opaque& ctx);

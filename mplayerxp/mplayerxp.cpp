@@ -616,9 +616,9 @@ void show_help(void) {
     mpxp_info<<"Use --long-help option for full help"<<std::endl;
 }
 
-void show_long_help(const std::map<std::string,std::string>& envm) {
+void show_long_help(const m_config_t& cfg,const std::map<std::string,std::string>& envm) {
     MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
-    m_config_show_options(*mpxp_context().mconfig);
+    m_config_show_options(cfg);
     mp_input_print_binds(MPXPSys.libinput());
     Stream::print_drivers();
     Video_Output::print_help();
@@ -2171,9 +2171,9 @@ int main(int argc,char* args[], char *envp[])
 	}
 	return MPlayerXP(argv,envm);
     } catch(const std::string& what) {
-	std::cout<<"Exception '"<<what<<"'caught in module: MPlayerXP"<<std::endl;
-    } catch(...) {
-	std::cout<<"Exception caught in module: MPlayerXP"<<std::endl;
+	std::cout<<"[main_module] Exception '"<<what<<"'caught in module: MPlayerXP"<<std::endl;
+//    } catch(...) {
+//	std::cout<<"[main_module] Exception caught in module: MPlayerXP"<<std::endl;
     }
     return EXIT_FAILURE;
 }

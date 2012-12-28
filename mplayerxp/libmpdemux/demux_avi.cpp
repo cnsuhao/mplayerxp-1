@@ -1370,14 +1370,14 @@ static MPXP_Rc avi_control(const Demuxer *demuxer,int cmd,any_t*args)
     return MPXP_Unknown;
 }
 
-static const config_t avi_options[] = {
+static const mpxp_option_t avi_options[] = {
     {"noidx", &index_mode, CONF_TYPE_FLAG, 0, -1, 0, "disables INDEXES for AVI's demuxing"},
     {"idx", &index_mode, CONF_TYPE_FLAG, 0, -1, 1, "builds internal INDEXES of incomplete AVIs"},
     {"forceidx", &index_mode, CONF_TYPE_FLAG, 0, -1, 2, "forces rebuilding of INDEXES for broken AVIs"},
     { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static const config_t avi_opts[] = {
+static const mpxp_option_t avi_opts[] = {
     { "avi", (any_t*)&avi_options, CONF_TYPE_SUBCONFIG, 0, 0, 0, "AVI related options" },
     { NULL, NULL, 0, 0, 0, 0, NULL}
 };

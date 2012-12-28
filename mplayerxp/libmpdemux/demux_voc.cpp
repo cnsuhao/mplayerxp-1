@@ -262,7 +262,7 @@ static MPXP_Rc voc_control(const Demuxer *demuxer,int cmd,any_t*args)
 
 #include "libmpconf/cfgparser.h"
 
-static const config_t voc_opts[] = {
+static const mpxp_option_t voc_opts[] = {
   {NULL, NULL, 0, 0, 0, 0, NULL}
 };
 

@@ -249,7 +249,7 @@ static MPXP_Rc snd_au_control(const Demuxer *demuxer,int cmd,any_t*args)
 
 #include "libmpconf/cfgparser.h"
 
-static const config_t snd_au_opts[] = {
+static const mpxp_option_t snd_au_opts[] = {
   {NULL, NULL, 0, 0, 0, 0, NULL}
 };
 

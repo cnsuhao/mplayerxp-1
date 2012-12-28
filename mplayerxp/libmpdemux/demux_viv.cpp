@@ -105,7 +105,7 @@ vivo_priv_t::~vivo_priv_t() {
     if (producer) delete producer;
 }
 
-static const config_t vivoopts_conf[]={
+static const mpxp_option_t vivoopts_conf[]={
     {"version", &vivo_param.version, CONF_TYPE_INT, 0, 0, 0, "forces version of VIVO stream"},
     /* audio options */
     {"acodec", &vivo_param.acodec, CONF_TYPE_STRING, 0, 0, 0, "specifies audio-codec of VIVO stream"},
@@ -119,7 +119,7 @@ static const config_t vivoopts_conf[]={
     {NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static const config_t vivo_conf[] = {
+static const mpxp_option_t vivo_conf[] = {
     { "vivo", (any_t*)&vivoopts_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Vivo specific options"},
     { NULL,NULL, 0, 0, 0, 0, NULL}
 };

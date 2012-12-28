@@ -286,7 +286,7 @@ static MPXP_Rc flac_control(const Demuxer *demuxer,int cmd,any_t*args)
 
 #include "libmpconf/cfgparser.h"
 
-static const config_t flac_opts[] = {
+static const mpxp_option_t flac_opts[] = {
   {NULL, NULL, 0, 0, 0, 0, NULL}
 };
 

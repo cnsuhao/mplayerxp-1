@@ -20,7 +20,7 @@ static int samplerate = 44100;
 static int afmt = AFMT_S16_LE;
 static int wtag = 0x1; // Raw PCM
 
-static const config_t demux_rawaudio_opts[] = {
+static const mpxp_option_t demux_rawaudio_opts[] = {
   { "on", &use_rawaudio, CONF_TYPE_FLAG, 0,0, 1, "forces treating stream as raw-audio" },
   { "channels", &channels, CONF_TYPE_INT,CONF_RANGE,1,8, "specifies number of channels in raw-audio steram" },
   { "rate", &samplerate, CONF_TYPE_INT,CONF_RANGE,1000,8*48000, "specifies sample-rate of raw-audio steram" },
@@ -29,7 +29,7 @@ static const config_t demux_rawaudio_opts[] = {
   {NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static const config_t rawaudio_conf[] = {
+static const mpxp_option_t rawaudio_conf[] = {
   { "rawaudio", (any_t*)&demux_rawaudio_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Raw-audio specific commands"},
   { NULL,NULL, 0, 0, 0, 0, NULL}
 };

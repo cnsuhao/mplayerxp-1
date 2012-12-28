@@ -10,11 +10,11 @@ using namespace mpxp;
 #include "stheader.h"
 #include "libmpconf/cfgparser.h"
 
-static const config_t demux_null_opts[] = {
+static const mpxp_option_t demux_null_opts[] = {
   {NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static const config_t null_conf[] = {
+static const mpxp_option_t null_conf[] = {
   { "null", (any_t*)&demux_null_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Null specific commands"},
   { NULL,NULL, 0, 0, 0, 0, NULL}
 };

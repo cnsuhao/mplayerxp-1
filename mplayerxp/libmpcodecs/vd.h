@@ -53,7 +53,7 @@ struct put_slice_info_t {
 /* interface of video decoder drivers */
 struct vd_functions_t {
     const vd_info_t*	info;
-    const config_t*	options;/**< Optional: MPlayerXP's option related */
+    const mpxp_option_t*	options;/**< Optional: MPlayerXP's option related */
     const video_probe_t*(*__FASTCALL__ probe)(uint32_t fourcc);
     Opaque*		(*__FASTCALL__ preinit)(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi);
     MPXP_Rc		(*__FASTCALL__ init)(Opaque& ctx,video_decoder_t& opaque);

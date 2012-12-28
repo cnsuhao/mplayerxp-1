@@ -27,7 +27,7 @@ struct rawvideo_conf_t {
 };
 static rawvideo_conf_t priv;
 
-static const config_t demux_rawvideo_opts[] = {
+static const mpxp_option_t demux_rawvideo_opts[] = {
   { "on", &priv.use_rawvideo, CONF_TYPE_FLAG, 0,0, 1, "forces treating stream as raw-vidio" },
   // size:
   { "w", &priv.width, CONF_TYPE_INT,CONF_RANGE,1,8192, "specifies image width of raw-video stream" },
@@ -53,7 +53,7 @@ static const config_t demux_rawvideo_opts[] = {
   {NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static const config_t rawvideo_conf[] = {
+static const mpxp_option_t rawvideo_conf[] = {
   { "rawvideo", (any_t*)&demux_rawvideo_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Raw-video specific options"},
   { NULL,NULL, 0, 0, 0, 0, NULL}
 };

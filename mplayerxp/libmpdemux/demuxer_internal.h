@@ -7,7 +7,7 @@ struct demuxer_driver_t
     const char*		short_name; /**< for forcing through comand line */
     const char*		name;	/**< Name of driver ("Matroska MKV parser") */
     const char*		defext; /**< Default file extension for this movie type */
-    const config_t*	options;/**< Optional: MPlayerXP's option related */
+    const mpxp_option_t*	options;/**< Optional: MPlayerXP's option related */
 			/** Probing stream.
 			  * @param d	_this demuxer
 			 **/

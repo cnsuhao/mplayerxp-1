@@ -430,7 +430,7 @@ static mp_cmd_t* mp_cmd_clone(mp_cmd_t* cmd); // This create a copy of a command
 static int mp_input_print_key_list(libinput_t&);
 static int mp_input_print_cmd_list(libinput_t&);
 
-static const config_t joystick_conf[] = {
+static const mpxp_option_t joystick_conf[] = {
   { "on", &libinput_conf.use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, "enables using of joystick" },
   { "off", &libinput_conf.use_joystick,  CONF_TYPE_FLAG, CONF_GLOBAL, 1, 0, "disables using of joystick" },
   { "dev", &libinput_conf.js_dev, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifies the joystick device" },
@@ -439,7 +439,7 @@ static const config_t joystick_conf[] = {
 
 extern char *lirc_configfile;
 // Our command line options
-static const config_t input_conf[] = {
+static const mpxp_option_t input_conf[] = {
   { "conf", (any_t*)&config_file, CONF_TYPE_STRING, CONF_GLOBAL, 0, 0, "specifies alternative input.conf" },
   { "ar-delay", (any_t*)&libinput_conf.ar_delay, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "autorepeate a key delay in milliseconds (0 to disable)" },
   { "ar-rate", (any_t*)&libinput_conf.ar_rate, CONF_TYPE_INT, CONF_GLOBAL, 0, 0, "number of key-presses per second generating on autorepeat" },
@@ -457,7 +457,7 @@ static const config_t input_conf[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static const config_t mp_input_opts[] = {
+static const mpxp_option_t mp_input_opts[] = {
   { "input", (any_t*)&input_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, "Input specific options"},
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };

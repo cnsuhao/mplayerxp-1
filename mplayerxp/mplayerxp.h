@@ -17,8 +17,8 @@
 
 struct audio_decoder_t;
 struct video_decoder_t;
-struct m_config_t;
 namespace mpxp {
+    struct m_config_t;
     struct _PlayTree_Iter;
     /* List of all modules which require protection by pin-code */
     enum {
@@ -198,8 +198,7 @@ namespace mpxp {
 
     unsigned get_number_cpu(void);
     void show_help(void);
-    void show_long_help(const std::map<std::string,std::string>& envm);
-
+    void show_long_help(const m_config_t& cfg,const std::map<std::string,std::string>& envm);
 
     void update_osd( float v_pts );
 

@@ -20,7 +20,7 @@ static int speed = -1;
 static int search_overlap = -1;
 static int no_skip = 0;
 
-static const config_t cdda_opts[] = {
+static const mpxp_option_t cdda_opts[] = {
   { "speed", &speed, CONF_TYPE_INT, CONF_RANGE,1,100, "sets driver speed" },
   { "overlap", &search_overlap, CONF_TYPE_INT, CONF_RANGE,0,75, "reserved" },
   { "noskip", &no_skip, CONF_TYPE_FLAG, 0 , 0, 1, "reserved" },
@@ -28,7 +28,7 @@ static const config_t cdda_opts[] = {
   {NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static const config_t cdda_conf[] = {
+static const mpxp_option_t cdda_conf[] = {
   { "cdda", (any_t*)&cdda_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, "CD-DA related options"},
   { NULL,NULL, 0, 0, 0, 0, NULL}
 };

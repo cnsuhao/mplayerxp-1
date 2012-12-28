@@ -18,6 +18,12 @@ using namespace mpxp;
 #include <string.h>
 #include <errno.h>
 
+#include "mplayerxp.h"
+#include "cfgparser.h"
+#include "libplaytree/playtree.h"
+#include "parser_msg.h"
+
+namespace mpxp {
 enum {
     COMMAND_LINE=0,
     CONFIG_FILE=1,
@@ -27,10 +33,6 @@ enum {
 
     MAX_RECURSION_DEPTH=8
 };
-#include "mplayerxp.h"
-#include "cfgparser.h"
-#include "libplaytree/playtree.h"
-#include "parser_msg.h"
 
 inline void SET_GLOBAL(m_config_t& c) { c.flags |= CONFIG_GLOBAL; }
 inline void UNSET_GLOBAL(m_config_t& c) { c.flags &= (!CONFIG_GLOBAL); }
@@ -38,12 +40,12 @@ inline int  IS_GLOBAL(const m_config_t& c) { return c.flags & CONFIG_GLOBAL; }
 inline void SET_RUNNING(m_config_t& c) { c.flags |= CONFIG_RUNNING; }
 inline int  IS_RUNNING(const m_config_t& c) { return c.flags & CONFIG_RUNNING; }
 
-typedef int (*cfg_func_arg_param_t)(const config_t *,const std::string& ,const std::string& );
-typedef int (*cfg_func_param_t)(const config_t *,const std::string& );
-typedef int (*cfg_func_t)(const config_t *);
+typedef int (*cfg_func_arg_param_t)(const mpxp_option_t *,const std::string& ,const std::string& );
+typedef int (*cfg_func_param_t)(const mpxp_option_t *,const std::string& );
+typedef int (*cfg_func_t)(const mpxp_option_t *);
 
 static void
-m_config_save_option(m_config_t& config,const config_t* conf,const std::string& opt,const std::string& param) {
+m_config_save_option(m_config_t& config,const mpxp_option_t* conf,const std::string& opt,const std::string& param) {
   config_save_t* save;
   int sl=0;
 
@@ -242,14 +244,14 @@ static MPXP_Rc cfg_include(m_config_t& conf,const std::string& filename){
 
 static int cfg_inc_int(int value){ return ++value; }
 
-static int config_read_option(m_config_t& config,const std::vector<const config_t*>& conf_list,const std::string& opt,const std::string& param)
+static int config_read_option(m_config_t& config,const std::vector<const mpxp_option_t*>& conf_list,const std::string& opt,const std::string& param)
 {
 	int i=0,nconf = 0;
 	long tmp_int;
 	double tmp_float;
 	int ret = -1;
 	char *endptr;
-	const config_t* conf=NULL;
+	const mpxp_option_t* conf=NULL;
 
 	mpxp_dbg3<<"read_option: opt='"<<opt<<"' param='"<<param<<"'"<<std::endl;
 	std::string lopt=opt;
@@ -451,11 +453,11 @@ err_missing_param:
 	goto out;
 }
 
-static const config_t* m_config_find_option(const std::vector<const config_t*>& list,const std::string& name);
+static const mpxp_option_t* m_config_find_option(const std::vector<const mpxp_option_t*>& list,const std::string& name);
 
 int m_config_set_option(m_config_t& config,const std::string& _opt,const std::string& param) {
     size_t e;
-    std::vector<const config_t*> clist=config.opt_list;
+    std::vector<const mpxp_option_t*> clist=config.opt_list;
     std::string opt=_opt;
     std::string s;
     mpxp_dbg2<<"Setting option "<<opt<<"="<<param<<std::endl;
@@ -464,7 +466,7 @@ int m_config_set_option(m_config_t& config,const std::string& _opt,const std::st
     e=opt.find('.');
     if(e!=std::string::npos) {
 	int flg,ret;
-	const config_t *subconf=NULL;
+	const mpxp_option_t *subconf=NULL;
 	mpxp_dbg2<<"Parsing "<<opt<<" as subconfig"<<std::endl;
 	do {
 	    if((e = opt.find('.'))==std::string::npos) break;
@@ -474,7 +476,7 @@ int m_config_set_option(m_config_t& config,const std::string& _opt,const std::st
 	    clist.clear();
 	    if(!subconf) return ERR_NO_SUBCONF;
 	    if(subconf->type!=CONF_TYPE_SUBCONFIG) return ERR_NO_SUBCONF;
-	    clist.push_back(reinterpret_cast<const config_t*>(subconf->p));
+	    clist.push_back(reinterpret_cast<const mpxp_option_t*>(subconf->p));
 	    opt = opt.substr(e+1);
 	    mpxp_dbg2<<"switching next subconf="<<subconf->name<<std::endl;
 	}while(1);
@@ -488,10 +490,10 @@ int m_config_set_option(m_config_t& config,const std::string& _opt,const std::st
     e = opt.find(':');
     if(e!=std::string::npos && e<(opt.length()-1)) {
 	int ret;
-	const config_t* m_opt;
-	std::vector<const config_t*> opt_list;
+	const mpxp_option_t* m_opt;
+	std::vector<const mpxp_option_t*> opt_list;
 	s=opt.substr(0,e);
-	m_opt=(const config_t*)m_config_get_option_ptr(config,s);
+	m_opt=(const mpxp_option_t*)m_config_get_option_ptr(config,s);
 	if(!m_opt) {
 	    mpxp_err<<"m_config_set_option "<<opt<<"="<<param<<" : no "<<s<<" subconfig"<<std::endl;
 	    return ERR_NOT_AN_OPTION;
@@ -678,7 +680,6 @@ out:
     return ret;
 }
 
-namespace mpxp {
 MPXP_Rc mpxp_parse_command_line(m_config_t& config, const std::vector<std::string>& argv,const std::map<std::string,std::string>& envm)
 {
     size_t i,siz=argv.size();
@@ -699,7 +700,7 @@ MPXP_Rc mpxp_parse_command_line(m_config_t& config, const std::vector<std::strin
 	    exit(0);
 	}
 	if(opt=="--long-help") {
-	    show_long_help(envm);
+	    show_long_help(config,envm);
 	    exit(0);
 	}
 	/* check for -- (no more options id.) except --help! */
@@ -794,18 +795,15 @@ err_out:
     mpxp_err<<"command line: "<<argv[i]<<std::endl;
     return MPXP_False;
 }
-} // namespace mpxp
 
-int m_config_register_options(m_config_t& config,const config_t *args) {
-  std::vector<const config_t*>& conf_list = config.opt_list;
-  conf_list.push_back(args);
-
-  return 1;
+MPXP_Rc m_config_register_options(m_config_t& config,const mpxp_option_t *args) {
+  config.opt_list.push_back(args);
+  return MPXP_Ok;
 }
 
-static const config_t* m_config_find_option(const std::vector<const config_t*>& list,const std::string& name) {
+static const mpxp_option_t* m_config_find_option(const std::vector<const mpxp_option_t*>& list,const std::string& name) {
     unsigned i,j;
-    const config_t *conf;
+    const mpxp_option_t *conf;
     if(!list.empty()) {
 	std::string ln=name;
 	std::transform(ln.begin(),ln.end(),ln.begin(), ::tolower);
@@ -821,13 +819,13 @@ static const config_t* m_config_find_option(const std::vector<const config_t*>& 
     return NULL;
 }
 
-const config_t* m_config_get_option(const m_config_t& config,const std::string& arg) {
+const mpxp_option_t* m_config_get_option(const m_config_t& config,const std::string& arg) {
     size_t e;
 
     e = arg.find(':');
     if(e!=std::string::npos) {
-	std::vector<const config_t*> cl;
-	const config_t* opt;
+	std::vector<const mpxp_option_t*> cl;
+	const mpxp_option_t* opt;
 	std::string s;
 	s=arg.substr(0,e);
 	opt = m_config_get_option(config,s);
@@ -838,7 +836,7 @@ const config_t* m_config_get_option(const m_config_t& config,const std::string& 
 }
 
 any_t* m_config_get_option_ptr(const m_config_t& config,const std::string& arg) {
-  const config_t* conf;
+  const mpxp_option_t* conf;
 
   conf = m_config_get_option(config,arg);
   if(!conf) return NULL;
@@ -869,11 +867,11 @@ float m_config_get_float (const m_config_t& config,const std::string& arg,int& e
     return *ret;
 }
 
-inline int AS_INT(const config_t* c) { return *((int*)c->p); }
-inline void AS_INT(const config_t* c,int val) { *((int*)c->p)=val; }
+inline int AS_INT(const mpxp_option_t* c) { return *((int*)c->p); }
+inline void AS_INT(const mpxp_option_t* c,int val) { *((int*)c->p)=val; }
 
 int m_config_set_int(m_config_t& config,const std::string& arg,int val) {
-  const config_t* opt;
+  const mpxp_option_t* opt;
 
   opt = m_config_get_option(config,arg);
 
@@ -892,7 +890,7 @@ int m_config_set_int(m_config_t& config,const std::string& arg,int val) {
 }
 
 int m_config_set_float(m_config_t& config,const std::string& arg,float val) {
-  const config_t* opt;
+  const mpxp_option_t* opt;
 
   opt = m_config_get_option(config,arg);
 
@@ -912,7 +910,7 @@ int m_config_set_float(m_config_t& config,const std::string& arg,float val) {
 
 
 int m_config_switch_flag(m_config_t& config,const std::string& opt) {
-  const config_t *conf;
+  const mpxp_option_t *conf;
 
   conf = m_config_get_option(config,opt);
   if(!conf || conf->type != CONF_TYPE_FLAG) return 0;
@@ -924,7 +922,7 @@ int m_config_switch_flag(m_config_t& config,const std::string& opt) {
 }
 
 int m_config_set_flag(m_config_t& config,const std::string& opt, int state) {
-  const config_t *conf;
+  const mpxp_option_t *conf;
 
   conf = m_config_get_option(config,opt);
   if(!conf || conf->type != CONF_TYPE_FLAG) return 0;
@@ -935,7 +933,7 @@ int m_config_set_flag(m_config_t& config,const std::string& opt, int state) {
 
 int m_config_get_flag(const m_config_t& config,const std::string& opt) {
 
-  const config_t* conf = m_config_get_option(config,opt);
+  const mpxp_option_t* conf = m_config_get_option(config,opt);
   if(!conf || conf->type != CONF_TYPE_FLAG) return -1;
   if(AS_INT(conf) == conf->max) return 1;
   else if(AS_INT(conf) == conf->min) return 0;
@@ -943,7 +941,7 @@ int m_config_get_flag(const m_config_t& config,const std::string& opt) {
 }
 
 int m_config_is_option_set(const m_config_t& config,const std::string& arg) {
-  const config_t* opt;
+  const mpxp_option_t* opt;
   config_save_t* save;
   int l,i;
 
@@ -965,7 +963,7 @@ int m_config_is_option_set(const m_config_t& config,const std::string& arg) {
   return 0;
 }
 
-static void __m_config_show_options(unsigned ntabs,const std::string& pfx,const config_t* opts) {
+static void __m_config_show_options(unsigned ntabs,const std::string& pfx,const mpxp_option_t* opts) {
     unsigned i,n;
     i=0;
     while(opts[i].name) {
@@ -980,7 +978,7 @@ static void __m_config_show_options(unsigned ntabs,const std::string& pfx,const 
 	    else		newpfx="";
 	    newpfx+=opts[i].name;
 	    newpfx+=".";
-	    __m_config_show_options(ntabs+2,newpfx,(const config_t *)opts[i].p);
+	    __m_config_show_options(ntabs+2,newpfx,(const mpxp_option_t *)opts[i].p);
 	}
 	else
 	if(opts[i].type<=CONF_TYPE_PRINT) {
@@ -1053,12 +1051,13 @@ static void __m_config_show_options(unsigned ntabs,const std::string& pfx,const 
 }
 
 void m_config_show_options(const m_config_t& args) {
-    unsigned j;
-    const config_t *opts;
+    size_t j,sz=args.opt_list.size();
+    const mpxp_option_t *opts;
     j=0;
     mpxp_info<<"List of available command-line options:"<<std::endl;
-    while((opts=args.opt_list[j])!=NULL) {
-	__m_config_show_options(2,NULL,opts);
-	j++;
+    for(j=0;j<sz;j++) {
+	opts=args.opt_list[j];
+	__m_config_show_options(2,"",opts);
     };
 }
+} // namespace mpxp

@@ -50,7 +50,7 @@ static int lavc_param_threads=-1;
 static char *lavc_avopt = NULL;
 
 static int enable_ffslices=1;
-static const config_t ff_options[] = {
+static const mpxp_option_t ff_options[] = {
     {"slices", &enable_ffslices, CONF_TYPE_FLAG, 0, 0, 1, "enables slice-based method of frame rendering in lavc decoder"},
     {"noslices", &enable_ffslices, CONF_TYPE_FLAG, 0, 1, 0, "disables slice-based method of frame rendering in lavc decoder"},
     {"er", &lavc_param_error_resilience, CONF_TYPE_INT, CONF_RANGE, 0, 99, "specifies error resilience for lavc decoders"},
@@ -70,7 +70,7 @@ static const config_t ff_options[] = {
     { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static const config_t options[] = {
+static const mpxp_option_t options[] = {
     {"lavc", (any_t*)&ff_options, CONF_TYPE_SUBCONFIG, 0, 0, 0, "lavc specific options"},
     { NULL, NULL, 0, 0, 0, 0, NULL}
 };
