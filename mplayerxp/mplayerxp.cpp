@@ -243,22 +243,6 @@ static volatile char antiviral_hole4[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
 /**************************************************************************/
 MPXPContext& mpxp_context() { return *MPXPCtx; }
 
-static int mpxp_init_antiviral_protection(int verbose)
-{
-    int rc;
-    rc=mp_mprotect((any_t*)antiviral_hole1,sizeof(antiviral_hole1),MP_DENY_ALL);
-    rc|=mp_mprotect((any_t*)antiviral_hole2,sizeof(antiviral_hole2),MP_DENY_ALL);
-    rc|=mp_mprotect((any_t*)antiviral_hole3,sizeof(antiviral_hole3),MP_DENY_ALL);
-    rc|=mp_mprotect((any_t*)antiviral_hole4,sizeof(antiviral_hole4),MP_DENY_ALL);
-    if(verbose) {
-	if(rc)
-	    mpxp_err<<"*** Error! Cannot initialize antiviral protection: '"<<strerror(errno)<<"' ***!"<<std::endl;
-	else
-	    mpxp_ok<<"*** Antiviral protection was inited ***!!!"<<std::endl;
-    }
-    return rc;
-}
-
 static MPXP_Rc mpxp_test_antiviral_protection(int* verbose)
 {
     if(*verbose) mpxp_info<<"Your've specified test-av option!\nRight now MPlayerXP should make coredump!"<<std::endl;
@@ -279,12 +263,6 @@ unsigned get_number_cpu(void) {
 #else
     /* TODO ? */
     return 1;
-#endif
-}
-
-static void mpxp_init_structs(void) {
-#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
-    memset(&mp_conf.x86,-1,sizeof(x86_features_t));
 #endif
 }
 
@@ -1159,7 +1137,7 @@ MPXP_Rc MPXPSystem::find_vcodec(const std::map<std::string,std::string>& envm) {
     if(vo_conf.softzoom)	mpxp_context().video().output->ZOOM_SET();
     if(vo_conf.flip>0)		mpxp_context().video().output->FLIP_SET();
     if(vo_conf.vidmode)		mpxp_context().video().output->VM_SET();
-    if((mpxp_context().video().decoder=mpcv_init(sh_video,mp_conf.video_codec,mp_conf.video_family,-1,_libinput))) sh_video->inited=1;
+    if((mpxp_context().video().decoder=mpcv_init(sh_video,mp_conf.video_codec?mp_conf.video_codec:"",mp_conf.video_family?mp_conf.video_family:"",-1,_libinput))) sh_video->inited=1;
 #ifdef ENABLE_WIN32LOADER
     if(!sh_video->inited) {
 /* Go through the codec.conf and find the best codec...*/
@@ -1167,15 +1145,15 @@ MPXP_Rc MPXPSystem::find_vcodec(const std::map<std::string,std::string>& envm) {
 	if(mp_conf.video_codec) {
 	/* forced codec by name: */
 	    mpxp_info<<"Forced video codec: "<<mp_conf.video_codec<<std::endl;
-	    mpxp_context().video().decoder=mpcv_init(sh_video,mp_conf.video_codec,NULL,-1,_libinput);
+	    mpxp_context().video().decoder=mpcv_init(sh_video,video_codec?mp_conf.video_codec:"","",-1,_libinput);
 	} else {
 	    int status;
     /* try in stability order: UNTESTED, WORKING, BUGGY, BROKEN */
 	    if(mp_conf.video_family) mpxp_info<<MSGTR_TryForceVideoFmt<<": "<<mp_conf.video_family<<std::endl;
 	    for(status=CODECS_STATUS__MAX;status>=CODECS_STATUS__MIN;--status){
 		if(mp_conf.video_family) /* try first the preferred codec family:*/
-		    if((mpxp_context().video().decoder=mpcv_init(sh_video,NULL,mp_conf.video_family,status,_libinput))) break;
-		if((mpxp_context().video().decoder=mpcv_init(sh_video,NULL,NULL,status,_libinput))) break;
+		    if((mpxp_context().video().decoder=mpcv_init(sh_video,"",mp_conf.video_family?mp_conf.video_family:"",status,_libinput))) break;
+		if((mpxp_context().video().decoder=mpcv_init(sh_video,"","",status,_libinput))) break;
 	    }
 	}
     }
@@ -1232,7 +1210,7 @@ int MPXPSystem::configure_audio() {
 	    (int)(sh_audio->rate),
 	    sh_audio->nch, sh_audio->afmt,
 	    // output:
-	    &samplerate, &channels, &format)!=MPXP_Ok){
+	    samplerate, channels, format)!=MPXP_Ok){
 	    mpxp_err<<"Audio filter chain preinit failed"<<std::endl;
     } else {
 	mpxp_v<<"AF_pre: "<<samplerate<<"Hz "<<channels<<"ch ("
@@ -1614,37 +1592,11 @@ For future:
     return eof;
 }
 
-static void mpxp_config_malloc(const std::vector<std::string>& argv)
-{
-    size_t i,sz=argv.size();
-    mp_conf.malloc_debug=0;
-    mp_malloc_e flg=MPA_FLG_RANDOMIZER;
-    for(i=0;i<sz;i++) {
-	std::string s=argv[i];
-	if(s.substr(0,18)=="-core.malloc-debug") {
-	    size_t pos;
-	    if((pos=s.find('='))!=std::string::npos) {
-		mp_conf.malloc_debug=::atoi(s.substr(pos+1).c_str());
-	    }
-	    switch(mp_conf.malloc_debug) {
-		default:
-		case 0: flg=MPA_FLG_RANDOMIZER; break;
-		case 1: flg=MPA_FLG_BOUNDS_CHECK; break;
-		case 2: flg=MPA_FLG_BEFORE_CHECK; break;
-		case 3: flg=MPA_FLG_BACKTRACE; break;
-	    }
-	    break;
-	}
-    }
-    mp_init_malloc(argv[0],1000,10,flg);
-}
-
 _PlayTree_Iter* mpxp_get_playtree_iter() { return mpxp_context().engine().MPXPSys->playtree_iter; }
 /******************************************\
 * MAIN MPLAYERXP FUNCTION !!!              *
 \******************************************/
 int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,std::string>& envm){
-    mpxp_init_antiviral_protection(1);
 //    mpxp_test_backtrace();
     Stream* stream=NULL;
     int stream_dump_type=0;
@@ -1659,13 +1611,9 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
     int forced_subs_only=0;
     seek_args_t seek_args = { 0, DEMUX_SEEK_CUR|DEMUX_SEEK_SECONDS };
 
-    mpxp_config_malloc(argv);
-
     // Yes, it really must be placed in stack or in very secret place
     PointerProtector<MPXPSecureKeys> ptr_protector;
     secure_keys=ptr_protector.protect(new(zeromem) MPXPSecureKeys(10));
-
-    mpxp_init_structs();
 
     mpxp_context().video().output=new(zeromem) Video_Output;
     init_signal_handling();
@@ -2012,7 +1960,6 @@ main:
     while(!eof){
 	int in_pause=0;
 
-	eof |= mpxp_context().engine().xp_core->audio->eof;
 /*========================== UPDATE TIMERS ============================*/
 	MP_UNIT("Update timers");
 	if(sh_audio) eof = mpxp_context().engine().xp_core->audio->eof;
@@ -2030,7 +1977,7 @@ main:
 //================= Keyboard events, SEEKing ====================
 
 	memset(&input_state,0,sizeof(input_state_t));
-	eof=MPXPSys.handle_input(&seek_args,&osd,&input_state);
+	eof|=MPXPSys.handle_input(&seek_args,&osd,&input_state);
 	if(input_state.next_file) goto goto_next_file;
 
 	if (mp_conf.seek_to_sec) {
@@ -2169,11 +2116,46 @@ int main(int argc,char* args[], char *envp[])
 	    str=str.substr(0,pos);
 	    envm[str]=stmp;
 	}
+	/* init antiviral protection */
+	int rc;
+	rc=mp_mprotect((any_t*)antiviral_hole1,sizeof(antiviral_hole1),MP_DENY_ALL);
+	rc|=mp_mprotect((any_t*)antiviral_hole2,sizeof(antiviral_hole2),MP_DENY_ALL);
+	rc|=mp_mprotect((any_t*)antiviral_hole3,sizeof(antiviral_hole3),MP_DENY_ALL);
+	rc|=mp_mprotect((any_t*)antiviral_hole4,sizeof(antiviral_hole4),MP_DENY_ALL);
+	if(rc) {
+		mpxp_err<<"*** Error! Cannot initialize antiviral protection: '"<<strerror(errno)<<"' ***!"<<std::endl;
+		return EXIT_FAILURE;
+	}
+	mpxp_ok<<"*** Antiviral protection was inited ***!!!"<<std::endl;
+	/* init malloc */
+	size_t i,sz=argv.size();
+	mp_conf.malloc_debug=0;
+	mp_malloc_e flg=MPA_FLG_RANDOMIZER;
+	for(i=0;i<sz;i++) {
+	    std::string s=argv[i];
+	    if(s.substr(0,18)=="-core.malloc-debug") {
+		if((pos=s.find('='))!=std::string::npos) {
+		    mp_conf.malloc_debug=::atoi(s.substr(pos+1).c_str());
+		}
+		switch(mp_conf.malloc_debug) {
+		    default:
+		    case 0: flg=MPA_FLG_RANDOMIZER; break;
+		    case 1: flg=MPA_FLG_BOUNDS_CHECK; break;
+		    case 2: flg=MPA_FLG_BEFORE_CHECK; break;
+		    case 3: flg=MPA_FLG_BACKTRACE; break;
+		}
+		break;
+	    }
+	}
+	mp_init_malloc(argv[0],1000,10,flg);
+	/* init structs */
+#if defined( ARCH_X86 ) || defined(ARCH_X86_64)
+	memset(&mp_conf.x86,-1,sizeof(x86_features_t));
+#endif
+	/* call player */
 	return MPlayerXP(argv,envm);
     } catch(const std::string& what) {
 	std::cout<<"[main_module] Exception '"<<what<<"'caught in module: MPlayerXP"<<std::endl;
-//    } catch(...) {
-//	std::cout<<"[main_module] Exception caught in module: MPlayerXP"<<std::endl;
     }
     return EXIT_FAILURE;
 }

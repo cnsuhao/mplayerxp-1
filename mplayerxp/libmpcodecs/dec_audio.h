@@ -24,7 +24,7 @@ extern MPXP_Rc mpca_init_filters(audio_decoder_t& sh_audio,
 	unsigned out_minsize, unsigned out_maxsize);
 extern MPXP_Rc mpca_preinit_filters(audio_decoder_t& sh_audio,
 	unsigned in_samplerate, unsigned in_channels, unsigned in_format,
-	unsigned* out_samplerate, unsigned* out_channels, unsigned* out_format);
+	unsigned& out_samplerate, unsigned& out_channels, unsigned& out_format);
 extern MPXP_Rc mpca_reinit_filters(audio_decoder_t& sh_audio,
 	unsigned in_samplerate, unsigned in_channels, mpaf_format_e in_format,
 	unsigned out_samplerate, unsigned out_channels, mpaf_format_e out_format,

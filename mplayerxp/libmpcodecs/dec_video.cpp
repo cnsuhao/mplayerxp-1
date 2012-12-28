@@ -83,15 +83,15 @@ MPXP_Rc mpcv_set_quality(video_decoder_t& opaque,int quality){
     return MPXP_False;
 }
 
-MPXP_Rc mpcv_set_colors(video_decoder_t& opaque,const char *item,int value)
+MPXP_Rc mpcv_set_colors(video_decoder_t& opaque,const std::string& item,int value)
 {
     decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     vf_stream_t* vs=priv->vfilter;
     vf_equalizer_t eq;
-    eq.item=item;
+    eq.item=item.c_str();
     eq.value=value*10;
     if(vf_control(vs,VFCTRL_SET_EQUALIZER,&eq)!=MPXP_True) {
-	if(priv->mpvdec) return priv->mpvdec->control_vd(*priv->ctx,VDCTRL_SET_EQUALIZER,(any_t*)item,(int)value);
+	if(priv->mpvdec) return priv->mpvdec->control_vd(*priv->ctx,VDCTRL_SET_EQUALIZER,(any_t*)item.c_str(),(int)value);
     }
     return MPXP_False;
 }
@@ -169,7 +169,7 @@ video_decoder_t* mpcv_lavc_init(sh_video_t* sh_video,libinput_t& libinput) {
     return handle;
 }
 
-video_decoder_t* mpcv_init(sh_video_t *sh_video,const char* codecname,const char * vfm,int status,libinput_t&libinput){
+video_decoder_t* mpcv_init(sh_video_t *sh_video,const std::string& codecname,const std::string& family,int status,libinput_t&libinput){
     UNUSED(codecname);
     UNUSED(status);
     int done=0;
@@ -179,6 +179,7 @@ video_decoder_t* mpcv_init(sh_video_t *sh_video,const char* codecname,const char
     decvideo_priv_t* priv = new(zeromem) decvideo_priv_t(libinput);
     priv->parent=sh_video;
     handle->vd_private=priv;
+    std::string vfm=family;
 
     MP_UNIT("init_video_filters");
     if(priv->vfilter_inited<=0) {
@@ -190,7 +191,7 @@ video_decoder_t* mpcv_init(sh_video_t *sh_video,const char* codecname,const char
 	priv->vfilter_inited=1;
     }
 
-    if(vfm) {
+    if(!vfm.empty()) {
 	priv->mpvdec=vfm_find_driver(vfm);
 	if(priv->mpvdec) vprobe=priv->mpvdec->probe(sh_video->fourcc);
     }

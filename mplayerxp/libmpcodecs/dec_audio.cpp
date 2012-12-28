@@ -196,7 +196,7 @@ void mpca_uninit(audio_decoder_t& opaque)
  /* Init audio filters */
 MPXP_Rc mpca_preinit_filters(audio_decoder_t& opaque,
 	unsigned in_samplerate, unsigned in_channels, unsigned in_format,
-	unsigned* out_samplerate, unsigned* out_channels, unsigned* out_format){
+	unsigned& out_samplerate, unsigned& out_channels, unsigned& out_format){
     decaudio_priv_t* priv = reinterpret_cast<decaudio_priv_t*>(opaque.ad_private);
     sh_audio_t* sh_audio = priv->parent;
     char strbuf[200];
@@ -208,9 +208,9 @@ MPXP_Rc mpca_preinit_filters(audio_decoder_t& opaque,
     afs->input.format = afmt2mpaf(in_format);
 
     // output format: same as ao driver's input format (if missing, fallback to input)
-    afs->output.rate   = *out_samplerate ? *out_samplerate : afs->input.rate;
-    afs->output.nch    = *out_channels ? *out_channels : afs->input.nch;
-    if(*out_format)	afs->output.format = afmt2mpaf(*out_format);
+    afs->output.rate   = out_samplerate ? out_samplerate : afs->input.rate;
+    afs->output.nch    = out_channels ? out_channels : afs->input.nch;
+    if(out_format)	afs->output.format = afmt2mpaf(out_format);
     else		afs->output.format = afs->input.format;
 
     // filter config:
@@ -225,9 +225,9 @@ MPXP_Rc mpca_preinit_filters(audio_decoder_t& opaque,
 	return MPXP_False; // failed :(
     }
 
-    *out_samplerate=afs->output.rate;
-    *out_channels=afs->output.nch;
-    *out_format=mpaf2afmt(afs->output.format);
+    out_samplerate=afs->output.rate;
+    out_channels=afs->output.nch;
+    out_format=mpaf2afmt(afs->output.format);
 
     sh_audio->af_bps = afs->output.rate*afs->output.nch*(afs->output.format&MPAF_BPS_MASK);
 
