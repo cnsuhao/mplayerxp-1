@@ -64,7 +64,7 @@ using namespace mpxp;
 
 namespace mpxp {
 /* NAS_FRAG_SIZE must be a power-of-two value */
-#define NAS_FRAG_SIZE 4096
+static const int NAS_FRAG_SIZE=4096;
 
 static const char * const nas_event_types[] = {
     "Undefined",

@@ -42,8 +42,6 @@ using namespace mpxp;
 // get rtp packets reordered
 
 namespace mpxp {
-#define MAXRTPPACKETSIN 32   // The number of max packets being reordered
-
 struct rtpbits {
   unsigned int v:2;           /* version: 2 */
   unsigned int p:1;           /* is there padding appended: 0 */

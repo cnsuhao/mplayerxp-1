@@ -2,21 +2,21 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "osdep_msg.h"
 namespace mpxp {
-std::string get_path(const std::string& filename){
-    const char *homedir;
+
+std::string get_path(const std::map<std::string,std::string>& envm,const std::string& filename) {
+    std::map<std::string,std::string>::const_iterator it;
+    it = envm.find("HOME");
+    const std::string homedir = (*it).second;
     std::string rs;
     std::string config_dir = std::string("/.")+PROGNAME;
 
-    if ((homedir = ::getenv("HOME")) == NULL) throw "No 'HOME' environment found";
-    rs=std::string(homedir)+config_dir;
+    if (homedir.empty()) throw "No 'HOME' environment found";
+    rs=homedir+config_dir;
     if (!filename.empty()) rs+="/"+filename;
-    mpxp_v<<"get_path('"<<filename<<"') -> "<<rs<<std::endl;
+    mpxp_v<<"get_path('"<<homedir<<":"<<filename<<"') -> "<<rs<<std::endl;
     return rs;
 }
+
 }// namespace mpxp

@@ -17,7 +17,7 @@ namespace mpxp {
 // write rtp packets in cache
 // get rtp packets reordered
 
-#define MAXRTPPACKETSIN 32   // The number of max packets being reordered
+static const int MAXRTPPACKETSIN=32;   // The number of max packets being reordered
 
     class Rtp_Cache : public Opaque {
 	public:

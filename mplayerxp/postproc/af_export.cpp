@@ -31,7 +31,7 @@ using namespace mpxp;
 #include "pp_msg.h"
 
 static const int DEF_SZ=512; // default buffer size (in samples)
-static const char* SHARED_FILE="mplayer-af_export"; /* default file name (relative to ~/.mplayer/ */
+static const char* SHARED_FILE="mplayerxp-af_export"; /* default file name (relative to ~/.mplayer/ */
 static const int SIZE_HEADER=(2 * sizeof(int) + sizeof(unsigned long long));
 
 // Data for specific instances of this filter
@@ -122,7 +122,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
     char *str = reinterpret_cast<char*>(arg);
 
     if (!str){
-      s->filename = get_path(SHARED_FILE);
+      s->filename = get_path(mpxp_get_environment(),SHARED_FILE);
       return MPXP_Ok;
     }
 
@@ -228,7 +228,7 @@ static MPXP_Rc __FASTCALL__ af_open( af_instance_t* af )
   af->setup   = new(zeromem) af_export_t;
   if(af->setup == NULL) return MPXP_Error;
 
-  ((af_export_t *)af->setup)->filename = get_path(SHARED_FILE);
+  ((af_export_t *)af->setup)->filename = get_path(mpxp_get_environment(),SHARED_FILE);
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }

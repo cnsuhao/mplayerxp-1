@@ -8,10 +8,6 @@
 #include "win32loader/wine/vfw.h"
 #include "osdep/bswap.h"
 
-#ifndef MIN
-#define MIN(a,b) ((a<b)?a:b)
-#endif
-
 ///////////////////////
 // MS GUID definition
 ///////////////////////

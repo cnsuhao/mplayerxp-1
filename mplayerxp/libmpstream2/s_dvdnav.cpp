@@ -27,7 +27,7 @@ using namespace mpxp;
 #include "mrl.h"
 
 namespace mpxp {
-#define DVD_BLOCK_SIZE 2048
+static const int DVD_BLOCK_SIZE=2048;
     struct dvdnav_conf_t {
 	int skip_opening;     /* skip opening stalls? */
 	int title,chapter;

@@ -139,7 +139,7 @@ static void mrl_store_args(const std::string& arg,char *value, const mrl_config_
     if(!done) mpxp_warn<<" Can't handle argument: "<<arg<<std::endl;
 }
 
-#define MRL_ARG_SEP ','
+static const char MRL_ARG_SEP=',';
 
 const char * mrl_parse_params(const std::string& _param, const mrl_config_t * args)
 {

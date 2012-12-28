@@ -22,7 +22,7 @@ using namespace mpxp;
 #include "mp3_hdr.h"
 #include "demux_msg.h"
 
-#define HDR_SIZE 4
+static const int HDR_SIZE=4;
 
 struct musepack_priv_t : public Opaque {
     public:

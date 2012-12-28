@@ -28,9 +28,6 @@ using namespace mpxp;
 #include "mrl.h"
 
 namespace mpxp {
-#undef DVDREAD_VERSION
-#define	DVDREAD_VERSION(maj,min,micro)	((maj)*10000 + (min)*100 + (micro))
-
 /*
  * Try to autodetect the libdvd-0.9.0 library
  * (0.9.0 removed the <dvdread/dvd_udf.h> header, and moved the two defines
@@ -433,13 +430,8 @@ The substream id for PCI packet is 0x00 and 0x01 for DSI.
     if(data[38]==0 && data[39]==0 && data[40]==1 && data[41]==0xBF &&
        data[1024]==0 && data[1025]==0 && data[1026]==1 && data[1027]==0xBF){
 	// found a Navi packet!!!
-#if LIBDVDREAD_VERSION >= DVDREAD_VERSION(0,9,0)
 	navRead_DSI( &dsi_pack, &(data[DSI_START_BYTE]) );
 	navRead_PCI( &pci_pack, &(data[DSI_START_BYTE-0x3DA]) );
-#else
-	navRead_DSI( &dsi_pack, &(data[DSI_START_BYTE]), sizeof(dsi_t));
-	navRead_PCI( &pci_pack, &(data[DSI_START_BYTE-0x3DA]), sizeof(pci_t));
-#endif
 	/*
 	    TODO!: if num_angles!=0 and d->dsi_pack.sml_agli.data[dvd_angle].address
 	    doesn't work :(

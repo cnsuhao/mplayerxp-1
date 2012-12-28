@@ -35,9 +35,8 @@ using namespace mpxp;
 #include "libao3/afmt.h"
 #include "demux_msg.h"
 
-#define PROBE_BUF_SIZE 2048
-
-#define BIO_BUFFER_SIZE 32768
+static const int PROBE_BUF_SIZE=2048;
+static const int BIO_BUFFER_SIZE=32768;
 
 struct lavf_priv_t : public Opaque {
     public:

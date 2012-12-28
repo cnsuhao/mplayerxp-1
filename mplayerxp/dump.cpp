@@ -71,9 +71,11 @@ void dump_stream(Stream *stream)
   exit_player(MSGTR_Exit_eof);
 }
 
-#define MUX_HAVE_AUDIO 0x01
-#define MUX_HAVE_VIDEO 0x02
-#define MUX_HAVE_SUBS  0x04
+enum {
+    MUX_HAVE_AUDIO=0x01,
+    MUX_HAVE_VIDEO=0x02,
+    MUX_HAVE_SUBS=0x04
+};
 struct dump_priv_t : public Opaque {
     public:
 	dump_priv_t(libinput_t& l):libinput(l) {}

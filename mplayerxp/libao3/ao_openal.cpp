@@ -37,9 +37,9 @@ using namespace mpxp;
 #include "ao_msg.h"
 
 namespace mpxp {
-#define MAX_CHANS 8
-#define NUM_BUF 128
-#define CHUNK_SIZE 512
+static const int MAX_CHANS=8;
+static const int NUM_BUF=128;
+static const int CHUNK_SIZE=512;
 class OpenAL_AO_Interface : public AO_Interface {
     public:
 	OpenAL_AO_Interface(const std::string& subdevice);

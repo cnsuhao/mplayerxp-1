@@ -488,7 +488,7 @@ int PlayTree_Iter::down_step(int d,int with_nodes) {
     return step(0,with_nodes);
 }
 
-std::string PlayTree_Iter::get_file(int d) {
+std::string PlayTree_Iter::get_playable_source_name(int d) {
     std::string entry;
 
     if(tree->get_files().empty()) return "";

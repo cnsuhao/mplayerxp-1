@@ -33,7 +33,7 @@ sh_video_t::~sh_video_t(){
 }
 
 /* biCompression constant */
-#define BI_RGB        0L
+static const int BI_RGB=0L;
 
 static mp_mpeg_header_t picture;
 static int telecine=0;

@@ -65,11 +65,11 @@ Ftp_Stream_Interface::~Ftp_Stream_Interface() {
     if(buf) delete buf;
 }
 
-#define BUFSIZE 8192
+static const int BUFSIZE=8192;
 
-#define TELNET_IAC      255             /* interpret as command: */
-#define TELNET_IP       244             /* interrupt process--permanently */
-#define TELNET_SYNCH    242             /* for telfunc calls */
+static const int TELNET_IAC   =255; /* interpret as command: */
+static const int TELNET_IP    =244; /* interrupt process--permanently */
+static const int TELNET_SYNCH =242; /* for telfunc calls */
 
 /*
  * read a line of text

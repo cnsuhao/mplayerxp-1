@@ -28,7 +28,7 @@ using namespace mpxp;
 #include "libvo2/video_out.h"
 #include "libvo2/sub.h"
 
-#define CC_MAX_LINE_LENGTH 64
+static const int CC_MAX_LINE_LENGTH=64;
 
 static char chartbl[128];
 
@@ -39,8 +39,10 @@ static unsigned int cursor_pos=0;
 
 static int inited=0;
 
-#define CC_ROLLON 1
-#define CC_ROLLUP 2
+enum {
+    CC_ROLLON=1,
+    CC_ROLLUP=2
+};
 
 static int cc_mode=CC_ROLLON;
 static int cc_lines=4; ///< number of visible rows in CC roll-up mode, not used in CC roll-on mode

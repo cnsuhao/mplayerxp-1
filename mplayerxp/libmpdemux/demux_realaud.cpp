@@ -22,11 +22,11 @@ using namespace mpxp;
 #include "aviprint.h"
 #include "demux_msg.h"
 
-#define FOURCC_DOTRA mmioFOURCC('.','r','a', 0xfd)
-#define FOURCC_144 mmioFOURCC('1','4','_','4')
-#define FOURCC_288 mmioFOURCC('2','8','_','8')
-#define FOURCC_DNET mmioFOURCC('d','n','e','t')
-#define FOURCC_LPCJ mmioFOURCC('l','p','c','J')
+static const uint32_t FOURCC_DOTRA=mmioFOURCC('.','r','a', 0xfd);
+static const uint32_t FOURCC_144=mmioFOURCC('1','4','_','4');
+static const uint32_t FOURCC_288=mmioFOURCC('2','8','_','8');
+static const uint32_t FOURCC_DNET=mmioFOURCC('d','n','e','t');
+static const uint32_t FOURCC_LPCJ=mmioFOURCC('l','p','c','J');
 
 struct realaud_priv_t : public Opaque {
     public:

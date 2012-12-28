@@ -69,8 +69,10 @@ static vivo_param vivo_param;
 
 //enum { VIVO_AUDIO_G723, VIVO_AUDIO_SIREN };
 
-#define VIVO_AUDIO_G723 1
-#define VIVO_AUDIO_SIREN 2
+enum {
+    VIVO_AUDIO_G723=1,
+    VIVO_AUDIO_SIREN
+};
 
 struct vivo_priv_t : public Opaque {
     public:
@@ -126,8 +128,8 @@ static const mpxp_option_t vivo_conf[] = {
 
 /* parse all possible extra headers */
 /* (audio headers are seperate - mostly with recordtype=3 or 4) */
-#define TEXTPARSE_ALL 1
 
+#define TEXTPARSE_ALL
 static void vivo_parse_text_header(Demuxer *demux, int header_len)
 {
     vivo_priv_t* priv = static_cast<vivo_priv_t*>(demux->priv);

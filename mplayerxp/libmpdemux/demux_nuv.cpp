@@ -64,9 +64,9 @@ nuv_priv_t::~nuv_priv_t() {
 /**
  * Seek to a position relative to the current position, indicated in time.
  */
+static const int MAX_TIME=1000000;
 static void nuv_seek ( Demuxer *demuxer, const seek_args_t* seeka )
 {
-#define MAX_TIME 1000000
 	nuv_priv_t* priv = static_cast<nuv_priv_t*>(demuxer->priv);
 	struct rtframeheader rtjpeg_frameheader;
 	off_t orig_pos;

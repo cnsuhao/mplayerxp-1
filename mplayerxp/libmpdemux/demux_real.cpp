@@ -40,7 +40,7 @@ Video codecs: (supported by RealPlayer8 for Linux)
 
 #define MKTAG(a, b, c, d) (a | (b << 8) | (c << 16) | (d << 24))
 
-#define MAX_STREAMS 32
+static const int MAX_STREAMS=32;
 
 typedef struct {
     int		timestamp;

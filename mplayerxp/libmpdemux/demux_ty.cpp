@@ -72,14 +72,16 @@ int sub_justify;
 // e/02: Extended data services data
 
 
-#define TIVO_PES_FILEID   0xf5467abd
-#define TIVO_PART_LENGTH  0x20000000
+static const int TIVO_PES_FILEID=0xf5467abd;
+static const int TIVO_PART_LENGTH=0x20000000;
 
-#define CHUNKSIZE        ( 128 * 1024 )
-#define MAX_AUDIO_BUFFER ( 16 * 1024 )
+static const int CHUNKSIZE        =( 128 * 1024 );
+static const int MAX_AUDIO_BUFFER =( 16 * 1024 );
 
-#define TY_V             1
-#define TY_A             2
+enum {
+    TY_V=1,
+    TY_A=2
+};
 
 typedef struct
 {
@@ -88,7 +90,7 @@ typedef struct
     int   chunks;
 } tmf_fileParts;
 
-#define MAX_TMF_PARTS 16
+static const int MAX_TMF_PARTS=16;
 
 struct TiVoInfo : public Opaque {
     public:
@@ -112,7 +114,7 @@ off_t vstream_streamsize( );
 void ty_ClearOSD( int start );
 
 // ===========================================================================
-#define TMF_SIG "showing.xml"
+static const char* TMF_SIG="showing.xml";
 
 // ===========================================================================
 static int ty_tmf_filetoparts( Demuxer *demux, TiVoInfo *tivo )
@@ -228,12 +230,12 @@ static int tmf_load_chunk( Demuxer *demux, TiVoInfo *tivo,
 // SA TiVo 864
 // DTiVo AC-3 1550
 //
-#define SERIES1_PTS_LENGTH           11
-#define SERIES1_PTS_OFFSET            6
-#define SERIES2_PTS_LENGTH           16
-#define SERIES2_PTS_OFFSET            9
-#define AC3_PTS_LENGTH               16
-#define AC3_PTS_OFFSET                9
+static const int SERIES1_PTS_LENGTH=11;
+static const int SERIES1_PTS_OFFSET=6;
+static const int SERIES2_PTS_LENGTH=16;
+static const int SERIES2_PTS_OFFSET=9;
+static const int AC3_PTS_LENGTH=16;
+static const int AC3_PTS_OFFSET=9;
 
 static int IsValidAudioPacket( int size, int *ptsOffset, int *ptsLen )
 {
@@ -332,9 +334,11 @@ static void demux_ty_FindESPacket( uint8_t nal,
     *esOffset2 += *esOffset1 + 1;
 }
 
-#define VIDEO_NAL 0xe0
-#define AUDIO_NAL 0xc0
-#define AC3_NAL 0xbd
+enum {
+    VIDEO_NAL=0xe0,
+    AUDIO_NAL=0xc0,
+    AC3_NAL=0xbd
+};
 
 static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 {

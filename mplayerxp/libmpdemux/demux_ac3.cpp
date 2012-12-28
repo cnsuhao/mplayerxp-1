@@ -22,7 +22,7 @@ using namespace mpxp;
 #include "mp3_hdr.h"
 #include "demux_msg.h"
 
-#define HDR_SIZE 4
+static const int HDR_SIZE=4;
 
 struct ac3_priv_t : public Opaque {
     public:
@@ -43,20 +43,22 @@ struct ac3_priv_t : public Opaque {
 	unsigned char	toc[100]; /* like AVI's indexes */
 };
 
-#define AC3_CHANNEL 0
-#define AC3_MONO 1
-#define AC3_STEREO 2
-#define AC3_3F 3
-#define AC3_2F1R 4
-#define AC3_3F1R 5
-#define AC3_2F2R 6
-#define AC3_3F2R 7
-#define AC3_CHANNEL1 8
-#define AC3_CHANNEL2 9
-#define AC3_DOLBY 10
-#define AC3_CHANNEL_MASK 15
-#define AC3_LFE 16
-#define AC3_ADJUST_LEVEL 32
+enum {
+    AC3_CHANNEL=0,
+    AC3_MONO=1,
+    AC3_STEREO=2,
+    AC3_3F=3,
+    AC3_2F1R=4,
+    AC3_3F1R=5,
+    AC3_2F2R=6,
+    AC3_3F2R=7,
+    AC3_CHANNEL1=8,
+    AC3_CHANNEL2=9,
+    AC3_DOLBY=10,
+    AC3_CHANNEL_MASK=15,
+    AC3_LFE=16,
+    AC3_ADJUST_LEVEL=32
+};
 static int ac3_decode_header (const uint8_t * buf,unsigned* sample_rate,unsigned* bit_rate,unsigned* channels)
 {
     static int rate[] = { 32,  40,  48,  56,  64,  80,  96, 112,

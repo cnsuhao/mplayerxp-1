@@ -33,7 +33,7 @@
 #include "rmff.h"
 #include "../librtsp/rtsp.h"
 
-#define HEADER_SIZE 4096
+static const int HEADER_SIZE=4096;
 
 struct real_rtsp_session_t {
   /* receive buffer */

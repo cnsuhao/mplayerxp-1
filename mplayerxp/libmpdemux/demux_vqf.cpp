@@ -16,9 +16,9 @@ using namespace mpxp;
 #include "libao3/afmt.h"
 #include "demux_msg.h"
 
-#define	KEYWORD_BYTES	4
-#define	VERSION_BYTES	8
-#define ELEM_BYTES      sizeof(unsigned long)
+static const int KEYWORD_BYTES=4;
+static const int VERSION_BYTES=8;
+static const int ELEM_BYTES=sizeof(unsigned long);
 typedef struct{
 	char		ID[KEYWORD_BYTES+VERSION_BYTES+1];
 	int size;

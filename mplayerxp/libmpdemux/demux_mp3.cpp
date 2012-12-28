@@ -23,10 +23,12 @@ using namespace mpxp;
 #include "mp3_hdr.h"
 #include "demux_msg.h"
 
-#define RAW_MP1 1
-#define RAW_MP2 2
-#define RAW_MP3 3
-#define HDR_SIZE 4
+enum {
+    RAW_MP1=1,
+    RAW_MP2=2,
+    RAW_MP3=3,
+    HDR_SIZE=4
+};
 
 struct mp3_priv_t : public Opaque {
     public:
@@ -121,21 +123,22 @@ static int read_mp3v1_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos )
 }
 
 /* id3v2 */
-#define FOURCC_TAG BE_FOURCC
-#define ID3V22_TAG FOURCC_TAG('I', 'D', '3', 2)  /* id3 v2.2 tags */
-#define ID3V23_TAG FOURCC_TAG('I', 'D', '3', 3)  /* id3 v2.3 tags */
-#define ID3V24_TAG FOURCC_TAG('I', 'D', '3', 4)  /* id3 v2.4 tags */
+static const uint32_t ID3V22_TAG=FOURCC_TAG('I', 'D', '3', 2);  /* id3 v2.2 tags */
+static const uint32_t ID3V23_TAG=FOURCC_TAG('I', 'D', '3', 3);  /* id3 v2.3 tags */
+static const uint32_t ID3V24_TAG=FOURCC_TAG('I', 'D', '3', 4);  /* id3 v2.4 tags */
 
 /*
  *  ID3 v2.2
  */
 /* tag header */
-#define ID3V22_UNSYNCH_FLAG               0x80
-#define ID3V22_COMPRESS_FLAG              0x40
-#define ID3V22_ZERO_FLAG                  0x3F
+enum {
+    ID3V22_UNSYNCH_FLAG=0x80,
+    ID3V22_COMPRESS_FLAG=0x40,
+    ID3V22_ZERO_FLAG=0x3F
+};
 
 /* frame header */
-#define ID3V22_FRAME_HEADER_SIZE             6
+static const int ID3V22_FRAME_HEADER_SIZE=6;
 static int read_id3v22_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 {
     off_t pos,epos;
@@ -186,20 +189,24 @@ static int read_id3v22_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
  *  ID3 v2.3
  */
 /* tag header */
-#define ID3V23_UNSYNCH_FLAG               0x80
-#define ID3V23_EXT_HEADER_FLAG            0x40
-#define ID3V23_EXPERIMENTAL_FLAG          0x20
-#define ID3V23_ZERO_FLAG                  0x1F
+enum {
+    ID3V23_UNSYNCH_FLAG=0x80,
+    ID3V23_EXT_HEADER_FLAG=0x40,
+    ID3V23_EXPERIMENTAL_FLAG=0x20,
+    ID3V23_ZERO_FLAG=0x1F
+};
 
 /* frame header */
-#define ID3V23_FRAME_HEADER_SIZE            10
-#define ID3V23_FRAME_TAG_PRESERV_FLAG   0x8000
-#define ID3V23_FRAME_FILE_PRESERV_FLAG  0x4000
-#define ID3V23_FRAME_READ_ONLY_FLAG     0x2000
-#define ID3V23_FRAME_COMPRESS_FLAG      0x0080
-#define ID3V23_FRAME_ENCRYPT_FLAG       0x0040
-#define ID3V23_FRAME_GROUP_ID_FLAG      0x0020
-#define ID3V23_FRAME_ZERO_FLAG          0x1F1F
+enum {
+    ID3V23_FRAME_HEADER_SIZE	=10,
+    ID3V23_FRAME_TAG_PRESERV_FLAG=0x8000,
+    ID3V23_FRAME_FILE_PRESERV_FLAG=0x4000,
+    ID3V23_FRAME_READ_ONLY_FLAG	=0x2000,
+    ID3V23_FRAME_COMPRESS_FLAG	=0x0080,
+    ID3V23_FRAME_ENCRYPT_FLAG	=0x0040,
+    ID3V23_FRAME_GROUP_ID_FLAG	=0x0020,
+    ID3V23_FRAME_ZERO_FLAG	=0x1F1F
+};
 
 static int read_id3v23_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 {
@@ -259,23 +266,27 @@ static int read_id3v23_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
  *  ID3 v2.4
  */
 /* tag header */
-#define ID3V24_UNSYNCH_FLAG               0x80
-#define ID3V24_EXT_HEADER_FLAG            0x40
-#define ID3V24_EXPERIMENTAL_FLAG          0x20
-#define ID3V24_FOOTER_FLAG                0x10
-#define ID3V24_ZERO_FLAG                  0x0F
+enum {
+    ID3V24_UNSYNCH_FLAG=0x80,
+    ID3V24_EXT_HEADER_FLAG=0x40,
+    ID3V24_EXPERIMENTAL_FLAG=0x20,
+    ID3V24_FOOTER_FLAG=0x10,
+    ID3V24_ZERO_FLAG=0x0F
+};
 
 /* frame header */
-#define ID3V24_FRAME_HEADER_SIZE            10
-#define ID3V24_FRAME_TAG_PRESERV_FLAG   0x4000
-#define ID3V24_FRAME_FILE_PRESERV_FLAG  0x2000
-#define ID3V24_FRAME_READ_ONLY_FLAG     0x1000
-#define ID3V24_FRAME_GROUP_ID_FLAG      0x0040
-#define ID3V24_FRAME_COMPRESS_FLAG      0x0008
-#define ID3V24_FRAME_ENCRYPT_FLAG       0x0004
-#define ID3V24_FRAME_UNSYNCH_FLAG       0x0002
-#define ID3V24_FRAME_DATA_LEN_FLAG      0x0001
-#define ID3V24_FRAME_ZERO_FLAG          0x8FB0
+enum {
+    ID3V24_FRAME_HEADER_SIZE	=10,
+    ID3V24_FRAME_TAG_PRESERV_FLAG=0x4000,
+    ID3V24_FRAME_FILE_PRESERV_FLAG=0x2000,
+    ID3V24_FRAME_READ_ONLY_FLAG	=0x1000,
+    ID3V24_FRAME_GROUP_ID_FLAG	=0x0040,
+    ID3V24_FRAME_COMPRESS_FLAG	=0x0008,
+    ID3V24_FRAME_ENCRYPT_FLAG	=0x0004,
+    ID3V24_FRAME_UNSYNCH_FLAG	=0x0002,
+    ID3V24_FRAME_DATA_LEN_FLAG	=0x0001,
+    ID3V24_FRAME_ZERO_FLAG	=0x8FB0
+};
 
 static int read_id3v24_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 {
@@ -392,12 +403,14 @@ static MPXP_Rc mp3_probe(Demuxer* demuxer)
   return MPXP_False;
 }
 
-#define FRAMES_FLAG     0x0001
-#define BYTES_FLAG      0x0002
-#define TOC_FLAG        0x0004
-#define VBR_SCALE_FLAG  0x0008
-#define FRAMES_AND_BYTES (FRAMES_FLAG | BYTES_FLAG)
-#define MPG_MD_MONO     3
+enum {
+    FRAMES_FLAG	=0x0001,
+    BYTES_FLAG	=0x0002,
+    TOC_FLAG	=0x0004,
+    VBR_SCALE_FLAG=0x0008,
+    FRAMES_AND_BYTES=(FRAMES_FLAG | BYTES_FLAG)
+};
+static const int MPG_MD_MONO=3;
 
 static void  Xing_test(Stream *s,uint8_t *hdr,mp3_priv_t *priv)
 {

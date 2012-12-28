@@ -113,7 +113,7 @@ struct input_state_t {
 
 struct MPXPSystem : public Opaque {
     public:
-	MPXPSystem():inited_flags(0),osd_function(OSD_PLAY),_libinput(mp_input_open()) { }
+	MPXPSystem(const std::map<std::string,std::string>& _envm):inited_flags(0),osd_function(OSD_PLAY),envm(_envm),_libinput(mp_input_open(_envm)) { }
 	virtual ~MPXPSystem() {}
 
 	void		uninit_player(unsigned int mask);
@@ -135,12 +135,12 @@ struct MPXPSystem : public Opaque {
 	void		print_stream_formats() const;
 	void		print_audio_status() const;
 	void		read_video_properties() const;
-	void		read_subtitles(const std::map<std::string,std::string>& envm,const std::string& filename,int forced_subs_only,int stream_dump_type);
+	void		read_subtitles(const std::string& filename,int forced_subs_only,int stream_dump_type);
 
-	void		find_acodec(const std::map<std::string,std::string>& envm,const char *ao_subdevice);
+	void		find_acodec(const char *ao_subdevice);
 	int		configure_audio();
 
-	MPXP_Rc		find_vcodec(const std::map<std::string,std::string>& envm);
+	MPXP_Rc		find_vcodec();
 
 	void		run_ahead_engine();
 
@@ -157,6 +157,7 @@ struct MPXPSystem : public Opaque {
 	PlayTree*	playtree;
 	// for multifile support:
 	PlayTree_Iter* playtree_iter;
+	const std::map<std::string,std::string>& envm;
     private:
 	Opaque		unusable;
 	Demuxer*	_demuxer;
@@ -199,21 +200,6 @@ MP_Config::MP_Config() {
     max_trace=10;
 }
 MP_Config mp_conf;
-
-__always_inline std::string get_path(const std::map<std::string,std::string>& envm,const std::string& filename="") {
-    std::map<std::string,std::string>::const_iterator it;
-    it = envm.find("HOME");
-    const std::string homedir = (*it).second;
-    std::string rs;
-    std::string config_dir = std::string("/.")+PROGNAME;
-
-    if (homedir.empty()) throw "No 'HOME' environment found";
-    rs=homedir+config_dir;
-    if (!filename.empty()) rs+="/"+filename;
-    mpxp_v<<"get_path('"<<homedir<<":"<<filename<<"') -> "<<rs<<std::endl;
-    return rs;
-}
-
 
 MPXPContext::MPXPContext()
 	    :_engine(new(zeromem) mpxp_engine_t),
@@ -987,7 +973,7 @@ void MPXPSystem::read_video_properties() const {
     }
 }
 
-void MPXPSystem::read_subtitles(const std::map<std::string,std::string>& envm,const std::string& filename,int forced_subs_only,int stream_dump_type) {
+void MPXPSystem::read_subtitles(const std::string& filename,int forced_subs_only,int stream_dump_type) {
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     Stream* stream=static_cast<Stream*>(_demuxer->stream);
     if (mp_conf.spudec_ifo) {
@@ -1036,7 +1022,7 @@ void MPXPSystem::read_subtitles(const std::map<std::string,std::string>& envm,co
 #endif
 }
 
-void MPXPSystem::find_acodec(const std::map<std::string,std::string>& envm,const char *ao_subdevice) {
+void MPXPSystem::find_acodec(const char *ao_subdevice) {
     int found=0;
     audio_decoder_t* mpca=0;
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
@@ -1097,7 +1083,7 @@ void MPXPSystem::find_acodec(const std::map<std::string,std::string>& envm,const
     }
 }
 
-MPXP_Rc MPXPSystem::find_vcodec(const std::map<std::string,std::string>& envm) {
+MPXP_Rc MPXPSystem::find_vcodec() {
     Demuxer_Stream *d_video=_demuxer->video;
     sh_video_t* sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
     MPXP_Rc rc=MPXP_Ok;
@@ -1565,6 +1551,7 @@ For future:
 }
 
 PlayTree_Iter& mpxp_get_playtree_iter() { return *(mpxp_context().engine().MPXPSys->playtree_iter); }
+const std::map<std::string,std::string>& mpxp_get_environment() { return mpxp_context().engine().MPXPSys->envm; }
 /******************************************\
 * MAIN MPLAYERXP FUNCTION !!!              *
 \******************************************/
@@ -1597,11 +1584,11 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
     for(unsigned j=0;banner_text[j];j++)  mpxp_info<<banner_text[j]<<std::endl;
 
     /* currently it's lowest point of MPXPSystem initialization */
-    mpxp_context().engine().MPXPSys = new(zeromem) MPXPSystem;
+    mpxp_context().engine().MPXPSys = new(zeromem) MPXPSystem(envm);
     MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
     MPXPSys.init_keyboard_fifo();
 
-    MPXPSys.playtree = new(zeromem) PlayTree;
+    MPXPSys.playtree = new(zeromem) PlayTree();
 
     M_Config& m_config=*new(zeromem) M_Config(MPXPSys.playtree,MPXPSys.libinput());
     mpxp_context().mconfig = &m_config;
@@ -1639,7 +1626,7 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
 	  delete MPXPSys.playtree_iter;
 	  MPXPSys.playtree_iter = NULL;
 	}
-	filename = MPXPSys.playtree_iter->get_file(1);
+	filename = MPXPSys.playtree_iter->get_playable_source_name(1);
       }
     }
 
@@ -1768,12 +1755,12 @@ play_next_file:
     }
 
 //================== Read SUBTITLES (DVD & TEXT) ==========================
-    if(sh_video) MPXPSys.read_subtitles(envm,filename,forced_subs_only,stream_dump_type);
+    if(sh_video) MPXPSys.read_subtitles(filename,forced_subs_only,stream_dump_type);
 
 //================== Init AUDIO (codec) ==========================
     MP_UNIT("init_audio_codec");
 
-    if(sh_audio) MPXPSys.find_acodec(envm,ao_subdevice);
+    if(sh_audio) MPXPSys.find_acodec(ao_subdevice);
     sh_audio=reinterpret_cast<sh_audio_t*>(MPXPSys.demuxer()->audio->sh);
 
     if(stream_dump_type>1) {
@@ -1810,7 +1797,7 @@ play_next_file:
 /*================== Init VIDEO (codec & libvo) ==========================*/
     if(!sh_video) goto main;
 
-    if((MPXPSys.find_vcodec(envm))!=MPXP_Ok) {
+    if((MPXPSys.find_vcodec())!=MPXP_Ok) {
 	sh_video=reinterpret_cast<sh_video_t*>(MPXPSys.demuxer()->video->sh);
 	if(!sh_audio) goto goto_next_file;
 	goto main;
@@ -2038,7 +2025,7 @@ goto_next_file:  // don't jump here after ao/vo/getch initialization!
 
     if(!input_state.after_dvdmenu)
 	while(MPXPSys.playtree_iter != NULL) {
-	    filename = MPXPSys.playtree_iter->get_file(eof);
+	    filename = MPXPSys.playtree_iter->get_playable_source_name(eof);
 	    if(filename.empty()) {
 		if( MPXPSys.playtree_iter->step(eof,0) != PLAY_TREE_ITER_ENTRY) {
 		    delete MPXPSys.playtree_iter;

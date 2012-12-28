@@ -54,8 +54,8 @@ using namespace mpxp;
 inline uint16_t BE_16(uint16_t x) { return be2me_16(x); }
 inline uint32_t BE_32(uint32_t x) { return be2me_32(x); }
 
-#define char2short(x,y)	BE_16(*((uint16_t *)&(((unsigned char *)(x))[(y)])))
-#define char2int(x,y) 	BE_32(*((uint32_t *)&(((unsigned char *)(x))[(y)])))
+static uint16_t char2short(unsigned char* x,int y) { return BE_16(*((uint16_t *)&x[y])); }
+static uint32_t char2int(unsigned char* x, int y)  { return BE_32(*((uint32_t *)&x[y])); }
 
 typedef struct {
     unsigned int pts; // duration
@@ -92,12 +92,14 @@ typedef struct {
     int pts_offset;
 } mov_editlist_t;
 
-#define MOV_TRAK_UNKNOWN 0
-#define MOV_TRAK_VIDEO 1
-#define MOV_TRAK_AUDIO 2
-#define MOV_TRAK_FLASH 3
-#define MOV_TRAK_GENERIC 4
-#define MOV_TRAK_CODE 5
+enum {
+    MOV_TRAK_UNKNOWN=0,
+    MOV_TRAK_VIDEO=1,
+    MOV_TRAK_AUDIO=2,
+    MOV_TRAK_FLASH=3,
+    MOV_TRAK_GENERIC=4,
+    MOV_TRAK_CODE=5
+};
 
 typedef struct {
     int id;
@@ -281,11 +283,10 @@ static void mov_build_index(mov_track_t* trak,int timescale){
 		(float)(el->dur)/(float)timescale, el->pts_offset);
 	}
     }
-
 }
 
-#define MOV_MAX_TRACKS 256
-#define MOV_MAX_SUBLEN 1024
+static const int MOV_MAX_TRACKS=256;
+static const int MOV_MAX_SUBLEN=1024;
 
 struct mov_priv_t : public Opaque {
     public:

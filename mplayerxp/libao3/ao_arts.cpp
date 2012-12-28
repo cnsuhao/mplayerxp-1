@@ -34,8 +34,8 @@ using namespace mpxp;
 
 namespace mpxp {
 /* Feel mp_free to experiment with the following values: */
-#define ARTS_PACKETS 10 /* Number of audio packets */
-#define ARTS_PACKET_SIZE_LOG2 11 /* Log2 of audio packet size */
+static const int ARTS_PACKETS=10; /* Number of audio packets */
+static const int ARTS_PACKET_SIZE_LOG2=11; /* Log2 of audio packet size */
 
 class Arts_AO_Interface : public AO_Interface {
     public:

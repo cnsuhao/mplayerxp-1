@@ -51,8 +51,8 @@ using namespace mpxp;
 
 namespace mpxp {
 
-#define DEFAULT_FREEDB_SERVER	"freedb.freedb.org"
-#define DEFAULT_CACHE_DIR	"/.cddb/"
+static const char* DEFAULT_FREEDB_SERVER="freedb.freedb.org";
+static const char* DEFAULT_CACHE_DIR	="/.cddb/";
 
 static cd_toc_t cdtoc[100];
 
@@ -193,9 +193,9 @@ static int __FASTCALL__ cddb_read_cache(cddb_data_t *cddb_data) {
     int file_fd, ret;
     size_t file_size;
 
-    if( cddb_data==NULL || cddb_data->cache_dir==NULL ) return -1;
+    if( cddb_data==NULL || cddb_data->cache_dir.empty()) return -1;
 
-    sprintf( file_name, "%s%08lx", cddb_data->cache_dir, cddb_data->disc_id);
+    sprintf( file_name, "%s%08lx", cddb_data->cache_dir.c_str(), cddb_data->disc_id);
 
     file_fd = ::open(file_name, O_RDONLY);
     if( file_fd<0 ) {
@@ -233,9 +233,9 @@ static int __FASTCALL__ cddb_write_cache(cddb_data_t *cddb_data) {
     int file_fd;
     int wrote=0;
 
-    if( cddb_data==NULL || cddb_data->cache_dir==NULL ) return -1;
+    if( cddb_data==NULL || cddb_data->cache_dir.empty() ) return -1;
 
-    sprintf( file_name, "%s%08lx", cddb_data->cache_dir, cddb_data->disc_id);
+    sprintf( file_name, "%s%08lx", cddb_data->cache_dir.c_str(), cddb_data->disc_id);
 
     file_fd = ::creat(file_name, S_IREAD|S_IWRITE);
     if( file_fd<0 ) {
@@ -514,32 +514,23 @@ static int __FASTCALL__ cddb_retrieve(cddb_data_t *cddb_data) {
 	i = cddb_http_request(command, cddb_query_parse, cddb_data);
 	if( i<0 ) return -1;
 
-	if( cddb_data->cache_dir!=NULL ) {
-		delete cddb_data->cache_dir;
-	}
 	return 0;
 }
 
 static MPXP_Rc __FASTCALL__ cddb_resolve(libinput_t&libinput,char **xmcd_file) {
-    char cddb_cache_dir[] = DEFAULT_CACHE_DIR;
-    char *home_dir = NULL;
+    std::string cddb_cache_dir = DEFAULT_CACHE_DIR;
+    std::string home_dir;
     cddb_data_t cddb_data(libinput);
 
     cddb_data.tracks = read_toc();
     cddb_data.disc_id = cddb_discid(cddb_data.tracks);
     cddb_data.anonymous = 1;	// Don't send user info by default
 
-    home_dir = getenv("HOME");
-    if( home_dir==NULL ) {
-	    cddb_data.cache_dir = NULL;
-    } else {
-	cddb_data.cache_dir = (char*)mp_malloc(strlen(home_dir)+strlen(cddb_cache_dir)+1);
-	if( cddb_data.cache_dir==NULL ) {
-	    mpxp_fatal<<"Memory allocation failed"<<std::endl;
-	    return MPXP_False;
-	}
-	sprintf(cddb_data.cache_dir, "%s%s", home_dir, cddb_cache_dir );
-    }
+    const std::map<std::string,std::string>& envm=mpxp_get_environment();
+    std::map<std::string,std::string>::const_iterator it;
+    it = envm.find("HOME");
+    home_dir = (*it).second;
+    if( !home_dir.empty() ) cddb_data.cache_dir=home_dir+cddb_cache_dir;
     // Check for a cached file
     if( cddb_read_cache(&cddb_data)<0 ) {
 	// No Cache found

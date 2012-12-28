@@ -40,12 +40,12 @@ namespace mpxp {
 	RTSP_STATUS_OK			=200,
 	RTSP_MAX_FIELDS			=256
     };
-#define RTSP_METHOD_OPTIONS "OPTIONS"
-#define RTSP_METHOD_DESCRIBE "DESCRIBE"
-#define RTSP_METHOD_SETUP "SETUP"
-#define RTSP_METHOD_PLAY "PLAY"
-#define RTSP_METHOD_TEARDOWN "TEARDOWN"
-#define RTSP_METHOD_SET_PARAMETER "SET_PARAMETER"
+static const char* RTSP_METHOD_OPTIONS="OPTIONS";
+static const char* RTSP_METHOD_DESCRIBE="DESCRIBE";
+static const char* RTSP_METHOD_SETUP="SETUP";
+static const char* RTSP_METHOD_PLAY="PLAY";
+static const char* RTSP_METHOD_TEARDOWN="TEARDOWN";
+static const char* RTSP_METHOD_SET_PARAMETER="SET_PARAMETER";
 
     class Rtsp : public Opaque {
 	public:

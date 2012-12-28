@@ -27,22 +27,22 @@ using namespace mpxp;
 #include "libmpcodecs/dec_audio.h"
 #include "demux_msg.h"
 
-//#define MAX_PS_PACKETSIZE 2048
-#define MAX_PS_PACKETSIZE (224*1024)
+static const int MAX_PS_PACKETSIZE=(224*1024);
 
-#define UNKNOWN         0
-#define VIDEO_MPEG1     0x10000001
-#define VIDEO_MPEG2     0x10000002
-#define VIDEO_MPEG4     0x10000004
-#define VIDEO_H264      0x10000005
-#define AUDIO_MP2       0x50
-#define AUDIO_MP3       0x55
-#define AUDIO_A52       0x2000
-#define AUDIO_DTS       0x2001
-#define AUDIO_LPCM_BE   0x10001
-#define AUDIO_AAC       mmioFOURCC('M', 'P', '4', 'A')
-
-#define MPGPES_BAD_PTS -1
+enum {
+    UNKNOWN         =0,
+    VIDEO_MPEG1     =0x10000001,
+    VIDEO_MPEG2     =0x10000002,
+    VIDEO_MPEG4     =0x10000004,
+    VIDEO_H264      =0x10000005,
+    AUDIO_MP2       =0x50,
+    AUDIO_MP3       =0x55,
+    AUDIO_A52       =0x2000,
+    AUDIO_DTS       =0x2001,
+    AUDIO_LPCM_BE   =0x10001,
+    AUDIO_AAC       =mmioFOURCC('M', 'P', '4', 'A')
+};
+static const int MPGPES_BAD_PTS=-1;
 
 typedef int (*alt_demuxer_t)(Demuxer *demux,Demuxer_Stream *__ds);
 struct mpg_demuxer_t : public Opaque {

@@ -195,6 +195,7 @@ namespace mpxp {
     MPXPContext& mpxp_context();
 
     PlayTree_Iter& mpxp_get_playtree_iter();
+    const std::map<std::string,std::string>& mpxp_get_environment();
 
     unsigned get_number_cpu(void);
     void show_help(void);

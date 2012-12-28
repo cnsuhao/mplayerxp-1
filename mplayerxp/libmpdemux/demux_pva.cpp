@@ -43,10 +43,12 @@ using namespace mpxp;
  * #defines below taken from PVA spec (see URL above)
  */
 
-#define PVA_MAX_VIDEO_PACK_LEN 6*1024
+static const int PVA_MAX_VIDEO_PACK_LEN=6*1024;
 
-#define VIDEOSTREAM 0x01
-#define MAINAUDIOSTREAM 0x02
+enum {
+    VIDEOSTREAM=0x01,
+    MAINAUDIOSTREAM=0x02
+};
 
 typedef struct {
 	off_t offset;

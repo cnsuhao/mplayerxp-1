@@ -42,7 +42,7 @@ using namespace mpxp;
 namespace mpxp {
 
 //! maximum number of channels supported, avoids lots of mallocs
-#define MAX_CHANS 6
+static const int MAX_CHANS=6;
 class Jack_AO_Interface : public AO_Interface {
     public:
 	Jack_AO_Interface(const std::string& subdevice);
@@ -90,10 +90,10 @@ class Jack_AO_Interface : public AO_Interface {
 };
 //! size of one chunk, if this is too small MPlayer will start to "stutter"
 //! after a short time of playback
-#define CHUNK_SIZE (16 * 1024)
+static const int CHUNK_SIZE=(16 * 1024);
 //! number of "virtual" chunks the priv->buffer consists of
-#define NUM_CHUNKS 8
-#define BUFFSIZE (NUM_CHUNKS * CHUNK_SIZE)
+static const int NUM_CHUNKS=8;
+static const int BUFFSIZE=(NUM_CHUNKS * CHUNK_SIZE);
 Jack_AO_Interface::Jack_AO_Interface(const std::string& _subdevice)
 		:AO_Interface(_subdevice) {}
 Jack_AO_Interface::~Jack_AO_Interface() {

@@ -29,7 +29,7 @@ using namespace mpxp;
 #include "mpxpav64.h"
 #include "demux_msg.h"
 
-#define MAX_AV_STREAMS MAX_V_STREAMS+MAX_A_STREAMS+MAX_S_STREAMS
+static const int MAX_AV_STREAMS=MAX_V_STREAMS+MAX_A_STREAMS+MAX_S_STREAMS;
 
 struct mpxpav64_priv_t : public Opaque {
     public:
@@ -71,7 +71,7 @@ static void le2me_ImageDesc(ImageDescription* h) {
     h->clutID = le2me_16(h->clutID);
 }
 
-#define MAX_PACKS 4096
+static const int MAX_PACKS=4096;
 
 static void print_FileProp(mpxpav64FileProperties_t *fp)
 {
@@ -773,7 +773,7 @@ static int mpxpav64_sync(Demuxer *demuxer)
     return 0;
 }
 
-#define USE_INDEXES 1
+static const int USE_INDEXES=1;
 static void mpxpav64_seek(Demuxer *demuxer,const seek_args_t* seeka){
     mpxpav64_priv_t *priv=static_cast<mpxpav64_priv_t*>(demuxer->priv);
     float brate=priv->fprop.AveBitrate;

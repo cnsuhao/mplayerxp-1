@@ -24,7 +24,7 @@
 #include "rtsp.h"
 
 namespace mpxp {
-#define MAX_PREVIEW_SIZE 4096
+static const int MAX_PREVIEW_SIZE=4096;
     class Rtp_Rtsp_Session : public Opaque {
 	public:
 	    Rtp_Rtsp_Session();

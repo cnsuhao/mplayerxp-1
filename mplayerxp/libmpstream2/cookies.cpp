@@ -24,9 +24,8 @@ using namespace mpxp;
 #include "network.h"
 #include "stream_msg.h"
 
-#define MAX_COOKIES 20
-
 namespace mpxp {
+static const int MAX_COOKIES=20;
 typedef struct cookie_list_type {
     char *name;
     char *value;

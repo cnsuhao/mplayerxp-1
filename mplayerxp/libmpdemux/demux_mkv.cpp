@@ -55,63 +55,62 @@ enum {
 
 #define EBML_UINT_INVALID   std::numeric_limits<uint64_t>::max()
 #define EBML_INT_INVALID    std::numeric_limits<int64_t>::max()
-#define EBML_FLOAT_INVALID  -1000000000.0
+static const float EBML_FLOAT_INVALID=-1000000000.0f;
 
 
-#define MKV_A_AAC_2MAIN  "A_AAC/MPEG2/MAIN"
-#define MKV_A_AAC_2LC    "A_AAC/MPEG2/LC"
-#define MKV_A_AAC_2SBR   "A_AAC/MPEG2/LC/SBR"
-#define MKV_A_AAC_2SSR   "A_AAC/MPEG2/SSR"
-#define MKV_A_AAC_4MAIN  "A_AAC/MPEG4/MAIN"
-#define MKV_A_AAC_4LC    "A_AAC/MPEG4/LC"
-#define MKV_A_AAC_4SBR   "A_AAC/MPEG4/LC/SBR"
-#define MKV_A_AAC_4SSR   "A_AAC/MPEG4/SSR"
-#define MKV_A_AAC_4LTP   "A_AAC/MPEG4/LTP"
-#define MKV_A_AAC        "A_AAC"
-#define MKV_A_AC3        "A_AC3"
-#define MKV_A_DTS        "A_DTS"
-#define MKV_A_MP2        "A_MPEG/L2"
-#define MKV_A_MP3        "A_MPEG/L3"
-#define MKV_A_PCM        "A_PCM/INT/LIT"
-#define MKV_A_PCM_BE     "A_PCM/INT/BIG"
-#define MKV_A_VORBIS     "A_VORBIS"
-#define MKV_A_ACM        "A_MS/ACM"
-#define MKV_A_REAL28     "A_REAL/28_8"
-#define MKV_A_REALATRC   "A_REAL/ATRC"
-#define MKV_A_REALCOOK   "A_REAL/COOK"
-#define MKV_A_REALDNET   "A_REAL/DNET"
-#define MKV_A_REALSIPR   "A_REAL/SIPR"
-#define MKV_A_QDMC       "A_QUICKTIME/QDMC"
-#define MKV_A_QDMC2      "A_QUICKTIME/QDM2"
-#define MKV_A_FLAC       "A_FLAC"
-#define MKV_A_WAVPACK    "A_WAVPACK4"
+static const char* MKV_A_AAC_2MAIN  ="A_AAC/MPEG2/MAIN";
+static const char* MKV_A_AAC_2LC    ="A_AAC/MPEG2/LC";
+static const char* MKV_A_AAC_2SBR   ="A_AAC/MPEG2/LC/SBR";
+static const char* MKV_A_AAC_2SSR   ="A_AAC/MPEG2/SSR";
+static const char* MKV_A_AAC_4MAIN  ="A_AAC/MPEG4/MAIN";
+static const char* MKV_A_AAC_4LC    ="A_AAC/MPEG4/LC";
+static const char* MKV_A_AAC_4SBR   ="A_AAC/MPEG4/LC/SBR";
+static const char* MKV_A_AAC_4SSR   ="A_AAC/MPEG4/SSR";
+static const char* MKV_A_AAC_4LTP   ="A_AAC/MPEG4/LTP";
+static const char* MKV_A_AAC        ="A_AAC";
+static const char* MKV_A_AC3        ="A_AC3";
+static const char* MKV_A_DTS        ="A_DTS";
+static const char* MKV_A_MP2        ="A_MPEG/L2";
+static const char* MKV_A_MP3        ="A_MPEG/L3";
+static const char* MKV_A_PCM        ="A_PCM/INT/LIT";
+static const char* MKV_A_PCM_BE     ="A_PCM/INT/BIG";
+static const char* MKV_A_VORBIS     ="A_VORBIS";
+static const char* MKV_A_ACM        ="A_MS/ACM";
+static const char* MKV_A_REAL28     ="A_REAL/28_8";
+static const char* MKV_A_REALATRC   ="A_REAL/ATRC";
+static const char* MKV_A_REALCOOK   ="A_REAL/COOK";
+static const char* MKV_A_REALDNET   ="A_REAL/DNET";
+static const char* MKV_A_REALSIPR   ="A_REAL/SIPR";
+static const char* MKV_A_QDMC       ="A_QUICKTIME/QDMC";
+static const char* MKV_A_QDMC2      ="A_QUICKTIME/QDM2";
+static const char* MKV_A_FLAC       ="A_FLAC";
+static const char* MKV_A_WAVPACK    ="A_WAVPACK4";
 
-#define MKV_V_MSCOMP     "V_MS/VFW/FOURCC"
-#define MKV_V_REALV10    "V_REAL/RV10"
-#define MKV_V_REALV20    "V_REAL/RV20"
-#define MKV_V_REALV30    "V_REAL/RV30"
-#define MKV_V_REALV40    "V_REAL/RV40"
-#define MKV_V_SORENSONV1 "V_SORENSON/V1"
-#define MKV_V_SORENSONV2 "V_SORENSON/V2"
-#define MKV_V_SORENSONV3 "V_SORENSON/V3"
-#define MKV_V_CINEPAK    "V_CINEPAK"
-#define MKV_V_QUICKTIME  "V_QUICKTIME"
-#define MKV_V_MPEG1      "V_MPEG1"
-#define MKV_V_MPEG2      "V_MPEG2"
-#define MKV_V_MPEG4_SP   "V_MPEG4/ISO/SP"
-#define MKV_V_MPEG4_ASP  "V_MPEG4/ISO/ASP"
-#define MKV_V_MPEG4_AP   "V_MPEG4/ISO/AP"
-#define MKV_V_MPEG4_AVC  "V_MPEG4/ISO/AVC"
-#define MKV_V_THEORA     "V_THEORA"
+static const char* MKV_V_MSCOMP     ="V_MS/VFW/FOURCC";
+static const char* MKV_V_REALV10    ="V_REAL/RV10";
+static const char* MKV_V_REALV20    ="V_REAL/RV20";
+static const char* MKV_V_REALV30    ="V_REAL/RV30";
+static const char* MKV_V_REALV40    ="V_REAL/RV40";
+static const char* MKV_V_SORENSONV1 ="V_SORENSON/V1";
+static const char* MKV_V_SORENSONV2 ="V_SORENSON/V2";
+static const char* MKV_V_SORENSONV3 ="V_SORENSON/V3";
+static const char* MKV_V_CINEPAK    ="V_CINEPAK";
+static const char* MKV_V_QUICKTIME  ="V_QUICKTIME";
+static const char* MKV_V_MPEG1      ="V_MPEG1";
+static const char* MKV_V_MPEG2      ="V_MPEG2";
+static const char* MKV_V_MPEG4_SP   ="V_MPEG4/ISO/SP";
+static const char* MKV_V_MPEG4_ASP  ="V_MPEG4/ISO/ASP";
+static const char* MKV_V_MPEG4_AP   ="V_MPEG4/ISO/AP";
+static const char* MKV_V_MPEG4_AVC  ="V_MPEG4/ISO/AVC";
+static const char* MKV_V_THEORA     ="V_THEORA";
 
-#define MKV_S_TEXTASCII  "S_TEXT/ASCII"
-#define MKV_S_TEXTUTF8   "S_TEXT/UTF8"
-#define MKV_S_TEXTSSA    "S_TEXT/SSA"
-#define MKV_S_TEXTASS    "S_TEXT/ASS"
-#define MKV_S_VOBSUB     "S_VOBSUB"
-#define MKV_S_SSA        "S_SSA" // Deprecated
-#define MKV_S_ASS        "S_ASS" // Deprecated
-
+static const char* MKV_S_TEXTASCII  ="S_TEXT/ASCII";
+static const char* MKV_S_TEXTUTF8   ="S_TEXT/UTF8";
+static const char* MKV_S_TEXTSSA    ="S_TEXT/SSA";
+static const char* MKV_S_TEXTASS    ="S_TEXT/ASS";
+static const char* MKV_S_VOBSUB     ="S_VOBSUB";
+static const char* MKV_S_SSA        ="S_SSA"; // Deprecated
+static const char* MKV_S_ASS        ="S_ASS"; // Deprecated
 
 static uint32_t
 ebml_read_id (Stream *s, int *length)
@@ -466,9 +465,11 @@ static unsigned char sipr_swaps[38][2]={
     {77,80} };
 
 // Map flavour to bytes per second
-#define SIPR_FLAVORS 4
-#define ATRC_FLAVORS 8
-#define COOK_FLAVORS 34
+enum {
+    SIPR_FLAVORS=4,
+    ATRC_FLAVORS=8,
+    COOK_FLAVORS=34
+};
 static int sipr_fl2bps[SIPR_FLAVORS] = {813, 1062, 625, 2000};
 static int atrc_fl2bps[ATRC_FLAVORS] = {8269, 11714, 13092, 16538, 18260, 22050, 33075, 44100};
 static int cook_fl2bps[COOK_FLAVORS] = {1000, 1378, 2024, 2584, 4005, 5513, 8010, 4005, 750, 2498,
@@ -676,10 +677,10 @@ static int mkv_add_chapter(mkv_demuxer_t* demuxer, const char* name, uint64_t st
 
 static int dvd_last_chapter;
 static int dvd_chapter;
-#define REALHEADER_SIZE    16
-#define RVPROPERTIES_SIZE  34
-#define RAPROPERTIES4_SIZE 56
-#define RAPROPERTIES5_SIZE 70
+static const int REALHEADER_SIZE    =16;
+static const int RVPROPERTIES_SIZE  =34;
+static const int RAPROPERTIES4_SIZE =56;
+static const int RAPROPERTIES5_SIZE =70;
 
 /**
  * \brief ensures there is space for at least one additional element
@@ -739,9 +740,8 @@ add_cluster_position (mkv_demuxer_t *mkv_d, uint64_t position)
 }
 
 
-#define AAC_SYNC_EXTENSION_TYPE 0x02b7
-static int
-aac_get_sample_rate_index (uint32_t sample_rate)
+static const int AAC_SYNC_EXTENSION_TYPE=0x02b7;
+static int aac_get_sample_rate_index (uint32_t sample_rate)
 {
   if (92017 <= sample_rate)
     return 0;

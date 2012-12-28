@@ -23,12 +23,12 @@
 #define __YUV4MPEG_INTERN_H__
 
 
-#define Y4M_MAGIC "YUV4MPEG2"
-#define Y4M_FRAME_MAGIC "FRAME"
+static const char* Y4M_MAGIC="YUV4MPEG2";
+static const char* Y4M_FRAME_MAGIC="FRAME";
 
-#define Y4M_DELIM " "  /* single-character(space) separating tagged fields */
+static const char* Y4M_DELIM=" ";  /* single-character(space) separating tagged fields */
 
-#define Y4M_LINE_MAX 256   /* max number of characters in a header line
+static const int Y4M_LINE_MAX=256;   /* max number of characters in a header line
 			       (including the '\n', but not the '\0') */
 
 

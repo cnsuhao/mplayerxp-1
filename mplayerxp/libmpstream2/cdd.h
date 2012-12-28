@@ -13,7 +13,7 @@ namespace mpxp {
 	std::string	cddb_hello;
 	unsigned long	disc_id;
 	unsigned int	tracks;
-	char*		cache_dir;
+	std::string	cache_dir;
 	const char*	freedb_server;
 	int		freedb_proto_level;
 	int		anonymous;

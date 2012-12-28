@@ -58,7 +58,7 @@ using namespace mpxp;
 
 
 namespace mpxp {
-#define ESD_RESAMPLES 0
+static const int ESD_RESAMPLES=0;
 #define ESD_DEBUG 0
 
 #if	ESD_DEBUG
@@ -67,8 +67,8 @@ namespace mpxp {
 #define	dprintf(...)	/**/
 #endif
 
-#define	ESD_CLIENT_NAME	"MPlayerXP"
-#define	ESD_MAX_DELAY	(1.0f)	/* max amount of data buffered in esd (#sec) */
+static const char* ESD_CLIENT_NAME="MPlayerXP";
+static const float ESD_MAX_DELAY=1.0f;	/* max amount of data buffered in esd (#sec) */
 
 class Esd_AO_Interface : public AO_Interface {
     public:

@@ -19,11 +19,11 @@ using namespace mpxp;
 #include "ao_msg.h"
 
 namespace mpxp {
-#define WAV_ID_RIFF FOURCC_TAG(0x46,0x46,0x49,0x52) /* "RIFF" */
-#define WAV_ID_WAVE FOURCC_TAG(0x45,0x56,0x41,0x57) /* "WAVE" */
-#define WAV_ID_FMT  FOURCC_TAG(0x20,0x74,0x6d,0x66) /* "fmt " */
-#define WAV_ID_DATA FOURCC_TAG(0x61,0x74,0x61,0x64) /* "data" */
-#define WAV_ID_PCM  TWOCC_TAG (0x00,0x01)
+static const uint32_t WAV_ID_RIFF=FOURCC_TAG(0x46,0x46,0x49,0x52); /* "RIFF" */
+static const uint32_t WAV_ID_WAVE=FOURCC_TAG(0x45,0x56,0x41,0x57); /* "WAVE" */
+static const uint32_t WAV_ID_FMT =FOURCC_TAG(0x20,0x74,0x6d,0x66); /* "fmt " */
+static const uint32_t WAV_ID_DATA=FOURCC_TAG(0x61,0x74,0x61,0x64); /* "data" */
+static const uint32_t WAV_ID_PCM =TWOCC_TAG (0x00,0x01);
 struct WaveHeader {
     uint32_t riff;
     uint32_t file_length;

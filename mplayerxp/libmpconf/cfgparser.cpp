@@ -26,6 +26,7 @@ using namespace mpxp;
 #include "cfgparser.h"
 #include "libplaytree2/playtree.h"
 #include "parser_msg.h"
+#include "osdep/get_path.h"
 
 namespace mpxp {
 static const int MAX_RECURSION_DEPTH=8;
@@ -86,7 +87,7 @@ MPXP_Rc M_Config::cfg_include(const std::string& filename){
 int M_Config::cfg_inc_int(int value){ return ++value; }
 
 int M_Config::read_option(const std::vector<const mpxp_option_t*>& conf_list,const std::string& opt,const std::string& param) {
-	int i=0,nconf = 0;
+	int i=0;
 	long tmp_int;
 	double tmp_float;
 	int ret = -1;
@@ -96,7 +97,8 @@ int M_Config::read_option(const std::vector<const mpxp_option_t*>& conf_list,con
 	mpxp_dbg3<<"read_option: opt='"<<opt<<"' param='"<<param<<"'"<<std::endl;
 	std::string lopt=opt;
 	std::transform(lopt.begin(),lopt.end(),lopt.begin(), ::tolower);
-	for(nconf = 0 ;  conf_list[nconf] != NULL; nconf++) {
+	size_t nconf,sz = conf_list.size();
+	for(nconf = 0 ; nconf<sz ; nconf++) {
 	  conf = conf_list[nconf];
 		for (i = 0; conf[i].name != NULL; i++) {
 		    std::string lname=conf[i].name;
@@ -629,12 +631,13 @@ MPXP_Rc M_Config::register_options(const mpxp_option_t *args) {
 }
 
 const mpxp_option_t* M_Config::find_option(const std::vector<const mpxp_option_t*>& list,const std::string& name) const {
-    unsigned i,j;
+    unsigned i;
     const mpxp_option_t *conf;
     if(!list.empty()) {
 	std::string ln=name;
 	std::transform(ln.begin(),ln.end(),ln.begin(), ::tolower);
-	for(j = 0; list[j] != NULL ; j++) {
+	size_t j,sz=list.size();
+	for(j = 0; j<sz ; j++) {
 	    conf = list[j];
 	    for(i=0; conf[i].name != NULL; i++) {
 		std::string lcn=conf[i].name;
@@ -859,20 +862,6 @@ static const char* default_config=
 "\n"
 //"nosound=nein"
 "\n";
-
-__always_inline std::string get_path(const std::map<std::string,std::string>& envm,const std::string& filename="") {
-    std::map<std::string,std::string>::const_iterator it;
-    it = envm.find("HOME");
-    const std::string homedir = (*it).second;
-    std::string rs;
-    std::string config_dir = std::string("/.")+PROGNAME;
-
-    if (homedir.empty()) throw "No 'HOME' environment found";
-    rs=homedir+config_dir;
-    if (!filename.empty()) rs+="/"+filename;
-    mpxp_v<<"get_path('"<<homedir<<":"<<filename<<"') -> "<<rs<<std::endl;
-    return rs;
-}
 
 void M_Config::parse_cfgfiles(const std::map<std::string,std::string>& envm)
 {

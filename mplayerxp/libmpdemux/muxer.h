@@ -76,11 +76,11 @@ struct muxer_t {
 };
 
 muxer_t *muxer_new_muxer(const char *type,const char *subtype,FILE *f);
-#define muxer_new_stream(muxer,a) muxer->cont_new_stream(muxer,a)
-#define muxer_write_chunk(a,b,c,d) a->muxer->cont_write_chunk(a,b,c,d)
-#define muxer_write_header(muxer,info) if(muxer->cont_write_header) muxer->cont_write_header(muxer,info)
-#define muxer_write_index(muxer) if(muxer->cont_write_index) muxer->cont_write_index(muxer)
-#define muxer_fix_parameters(muxer) if(muxer->fix_parameters) muxer->fix_parameters(muxer)
+inline muxer_stream_t* muxer_new_stream(muxer_t* muxer,int a) { return muxer->cont_new_stream(muxer,a); }
+inline void muxer_write_chunk(muxer_stream_t* a,size_t b,unsigned c,float d) { a->muxer->cont_write_chunk(a,b,c,d); }
+inline void muxer_write_header(muxer_t* muxer,Demuxer* info) { if(muxer->cont_write_header) muxer->cont_write_header(muxer,info); }
+inline void muxer_write_index(muxer_t* muxer) { if(muxer->cont_write_index) muxer->cont_write_index(muxer); }
+inline void muxer_fix_parameters(muxer_t* muxer) { if(muxer->fix_parameters) muxer->fix_parameters(muxer); }
 extern void muxer_init_muxer_raw(muxer_t *);
 extern void muxer_init_muxer_mpxp64(muxer_t *);
 extern int  muxer_init_muxer_lavf(muxer_t *,const char *);

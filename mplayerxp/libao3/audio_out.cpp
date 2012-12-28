@@ -327,7 +327,7 @@ void Audio_Output::mixer_setvolume(float l,float r) const {
     ctrl(AOCONTROL_SET_VOLUME,(long)&vol);
 }
 
-#define MIXER_CHANGE 3
+static const int MIXER_CHANGE=3;
 
 void Audio_Output::mixer_incvolume() const {
     float mixer_l, mixer_r;

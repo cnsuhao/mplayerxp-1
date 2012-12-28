@@ -52,8 +52,8 @@ typedef struct priv_mpxpav64_stream_s
     float	prev_xpts;
 }priv_mpxpav64_stream_t;
 
-#define SEEKPOINT_THRESHOLD 1.0
-#define PTS2INT(pts) (lrint(pts*1000))
+static const float SEEKPOINT_THRESHOLD=1.0f;
+static int PTS2INT(float pts) { return lrint(pts*1000); }
 
 typedef struct priv_mpxpav64_s
 {
@@ -270,28 +270,28 @@ static unsigned int avi_aspect(float aspect)
     return MAKE_AVI_ASPECT(x, y);
 }
 
-#define le2me_ImageDesc(h) {						\
-    (h)->idSize = le2me_32((h)->idSize);				\
-    (h)->cType = le2me_32((h)->cType);					\
-    (h)->resvd1 = le2me_32((h)->resvd1);				\
-    (h)->resvd2 = le2me_16((h)->resvd2);				\
-    (h)->dataRefIndex = le2me_16((h)->dataRefIndex);			\
-    (h)->version = le2me_16((h)->version);				\
-    (h)->revisionLevel = le2me_16((h)->revisionLevel);			\
-    (h)->vendor = le2me_32((h)->vendor);				\
-    (h)->temporalQuality = le2me_32((h)->temporalQuality);		\
-    (h)->spatialQuality = le2me_32((h)->spatialQuality);		\
-    (h)->width = le2me_16((h)->width);					\
-    (h)->height = le2me_16((h)->height);				\
-    (h)->vRes = le2me_32((h)->vRes);					\
-    (h)->hRes = le2me_32((h)->hRes);					\
-    (h)->dataSize = le2me_32((h)->dataSize);				\
-    (h)->frameCount = le2me_16((h)->frameCount);			\
-    (h)->depth = le2me_16((h)->depth);					\
-    (h)->clutID = le2me_16((h)->clutID);				\
+static void le2me_ImageDesc(ImageDescription* h) {
+    h->idSize = le2me_32(h->idSize);
+    h->cType = le2me_32(h->cType);
+    h->resvd1 = le2me_32(h->resvd1);
+    h->resvd2 = le2me_16(h->resvd2);
+    h->dataRefIndex = le2me_16(h->dataRefIndex);
+    h->version = le2me_16(h->version);
+    h->revisionLevel = le2me_16(h->revisionLevel);
+    h->vendor = le2me_32(h->vendor);
+    h->temporalQuality = le2me_32(h->temporalQuality);
+    h->spatialQuality = le2me_32(h->spatialQuality);
+    h->width = le2me_16(h->width);
+    h->height = le2me_16(h->height);
+    h->vRes = le2me_32(h->vRes);
+    h->hRes = le2me_32(h->hRes);
+    h->dataSize = le2me_32(h->dataSize);
+    h->frameCount = le2me_16(h->frameCount);
+    h->depth = le2me_16(h->depth);
+    h->clutID = le2me_16(h->clutID);
 }
 
-#define WFSIZE(wf) (sizeof(WAVEFORMATEX)+(((wf)->cbSize)?((wf)->cbSize):0))
+static int WFSIZE(WAVEFORMATEX* wf) { return sizeof(WAVEFORMATEX)+(wf->cbSize?wf->cbSize:0); }
 static void mpxpav64_put_st64(muxer_t *muxer,muxer_stream_t* s)
 {
     priv_mpxpav64_stream_t *privs=(priv_mpxpav64_stream_t *)s->priv;

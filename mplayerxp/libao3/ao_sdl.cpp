@@ -28,12 +28,12 @@ using namespace mpxp;
 
 namespace mpxp {
 // Samplesize used by the SDLlib AudioSpec struct
-#define SAMPLESIZE 1024
+static const int SAMPLESIZE=1024;
 
 // General purpose Ring-buffering routines
 
-#define BUFFSIZE 4096
-#define NUM_BUFS 16
+static const int BUFFSIZE=4096;
+static const int NUM_BUFS=16;
 class SDL_AO_Interface : public AO_Interface {
     public:
 	SDL_AO_Interface(const std::string& subdevice);

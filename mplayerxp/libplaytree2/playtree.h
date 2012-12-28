@@ -124,7 +124,7 @@ namespace mpxp {
 	    virtual int		up_step(int d,int with_nodes);
 	    // Enter a node child list
 	    virtual int		down_step(int d,int with_nodes);
-	    virtual std::string	get_file(int d);
+	    virtual std::string	get_playable_source_name(int d);
 
 	    PlayTree*		get_root() const { return root; }
 	    PlayTree*		get_tree() const { return tree; }

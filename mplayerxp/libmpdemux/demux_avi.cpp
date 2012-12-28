@@ -59,7 +59,7 @@ avi_priv_t::~avi_priv_t() {
     if(idx_size > 0) delete idx;
 }
 
-#define MAX_PACKS 4096
+static const int MAX_PACKS=4096;
 inline uint64_t avi_idx_offset(AVIINDEXENTRY* x) { return  ((x->dwFlags&0xffff0000)<<16)+x->dwChunkOffset; }
 
 static int odml_get_vstream_id(int id, unsigned char res[])
@@ -815,15 +815,14 @@ static Demuxer_Stream* demux_avi_select_stream(Demuxer *demux,unsigned int id){
   return NULL;
 }
 
+static int FCC_CHR_CHECK(char x) { return (x<48 || x>=96); }
 static int valid_fourcc(unsigned int id){
     unsigned char* fcc=(unsigned char*)(&id);
-#define FCC_CHR_CHECK(x) (x<48 || x>=96)
     if(FCC_CHR_CHECK(fcc[0])) return 0;
     if(FCC_CHR_CHECK(fcc[1])) return 0;
     if(FCC_CHR_CHECK(fcc[2])) return 0;
     if(FCC_CHR_CHECK(fcc[3])) return 0;
     return 1;
-#undef FCC_CHR_CHECK
 }
 
 static int choose_chunk_len(unsigned int len1,unsigned int len2){
@@ -1339,7 +1338,7 @@ static void avi_seek(Demuxer *demuxer,const seek_args_t* seeka){
     d_video->pts=priv->avi_video_pts; // OSD
 }
 
-#define formtypeON2             mmioFOURCC('O', 'N', '2', 'f')
+static const uint32_t formtypeON2=mmioFOURCC('O', 'N', '2', 'f');
 static MPXP_Rc avi_probe(Demuxer *demuxer)
 {
   uint32_t riff,id;

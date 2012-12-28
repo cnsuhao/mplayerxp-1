@@ -37,8 +37,8 @@ using namespace mpxp;
 #include "demuxer_internal.h"
 #include "stheader.h"
 
-#define DV_PAL_FRAME_SIZE  144000
-#define DV_NTSC_FRAME_SIZE 122000
+static const int DV_PAL_FRAME_SIZE =144000;
+static const int DV_NTSC_FRAME_SIZE=122000;
 
 struct rawdv_frames_t : public Opaque
 {

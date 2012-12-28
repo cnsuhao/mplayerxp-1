@@ -43,21 +43,22 @@ using namespace mpxp;
 #include "mpeg_hdr.h"
 #include "demux_msg.h"
 
+static const int TS_PH_PACKET_SIZE=192;
+static const int TS_FEC_PACKET_SIZE=204;
+static const int TS_PACKET_SIZE=188;
+static const int NB_PID_MAX=8192;
 
-#define TS_PH_PACKET_SIZE 192
-#define TS_FEC_PACKET_SIZE 204
-#define TS_PACKET_SIZE 188
-#define NB_PID_MAX 8192
+static const int MAX_HEADER_SIZE=6;			/* enough for PES header + length */
+static const int MAX_CHECK_SIZE=65535;
+static const int TS_MAX_PROBE_SIZE=2000000; /* dont forget to change this in cfg-common.h too */
+static const int NUM_CONSECUTIVE_TS_PACKETS=32;
+static const int NUM_CONSECUTIVE_AUDIO_PACKETS=348;
+static const int MAX_A52_FRAME_SIZE=3840;
 
-#define MAX_HEADER_SIZE 6			/* enough for PES header + length */
-#define MAX_CHECK_SIZE	65535
-#define TS_MAX_PROBE_SIZE 2000000 /* dont forget to change this in cfg-common.h too */
-#define NUM_CONSECUTIVE_TS_PACKETS 32
-#define NUM_CONSECUTIVE_AUDIO_PACKETS 348
-#define MAX_A52_FRAME_SIZE 3840
-
-#define TYPE_AUDIO 1
-#define TYPE_VIDEO 2
+enum {
+    TYPE_AUDIO=1,
+    TYPE_VIDEO=2
+};
 
 int ts_prog;
 int ts_keep_broken=0;
@@ -127,7 +128,7 @@ typedef struct {
 	int offset, buffer_size;
 } av_fifo_t;
 
-#define MAX_EXTRADATA_SIZE 64*1024
+static const int MAX_EXTRADATA_SIZE=64*1024;
 typedef struct {
 	int32_t object_type;	//aka codec used
 	int32_t stream_type;	//video, audio etc.

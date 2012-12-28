@@ -107,7 +107,7 @@ Alsa_AO_Interface::~Alsa_AO_Interface() {
     snd_pcm_sw_params_free(swparams);
 }
 
-#define ALSA_DEVICE_SIZE	48
+static const int ALSA_DEVICE_SIZE=48;
 
 #define BUFFERTIME // else SET_CHUNK_SIZE
 #undef USE_POLL

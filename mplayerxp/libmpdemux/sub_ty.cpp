@@ -25,8 +25,10 @@ using namespace mpxp;
 
 extern int sub_justify;
 
-#define TY_TEXT_MODE        ( 1 << 0 )
-#define TY_OSD_MODE         ( 1 << 1 )
+enum {
+    TY_TEXT_MODE=( 1 << 0 ),
+    TY_OSD_MODE =( 1 << 1 )
+};
 
 static int TY_OSD_flags = TY_TEXT_MODE | TY_OSD_MODE;
 static int TY_OSD_debug = 0;
@@ -34,13 +36,13 @@ static int TY_OSD_debug = 0;
 // ===========================================================================
 // Closed Caption Decoding and OSD Presentation
 // ===========================================================================
-#define TY_CCNONE     ( -3 )
-#define TY_CCTEXTMODE ( -2 )
-#define TY_CCPOPUPNB  ( -1 )
-#define TY_CCPOPUP    (  0 )
-#define TY_CCPAINTON  (  1 )
+static const int TY_CCNONE     =( -3 );
+static const int TY_CCTEXTMODE =( -2 );
+static const int TY_CCPOPUPNB  =( -1 );
+static const int TY_CCPOPUP    =(  0 );
+static const int TY_CCPAINTON  =(  1 );
 
-#define TY_CC_MAX_X   ( 45 )
+static const int TY_CC_MAX_X   =( 45 );
 
 static int      TY_CC_CUR_X;
 static int      TY_CC_CUR_Y;
@@ -182,6 +184,7 @@ static int CC_row[] =
 
 // char specialchar[] = { '®', '°', '½', '¿', '*', '¢', '£', 14, 'à', ' ', 'è', 'â', 'ê', 'î', 'ô', 'û' };
 
+#define CURRENT ((b1&0x08)>>3)
 static int ty_CCdecode( char b1, char b2 )
 {
    int x;
@@ -201,7 +204,6 @@ static int ty_CCdecode( char b1, char b2 )
    }
    else if ( ( b1 & 0x10 ) && ( b2 > 0x1F ) && ( data != CC_last ) )
    {
-#define CURRENT ( ( b1 & 0x08 ) >> 3 )
 
       if ( CC_mode != CURRENT && TY_CC_stat != TY_CCNONE )
       {
@@ -465,12 +467,11 @@ static int ty_CCdecode( char b1, char b2 )
 // ===========================================================================
 // Extended Data Service Decoding and OSD Presentation
 // ===========================================================================
-#define XDS_BUFFER_LENGTH     ( 16 )
-#define XDS_DISPLAY_FRAMES    ( 120 )
+static const int XDS_BUFFER_LENGTH=( 16 );
+static const int XDS_DISPLAY_FRAMES=( 120 );
 static char *ty_XDS_Display[ XDS_BUFFER_LENGTH ];
 static int ty_XDSAddLine = -1;
 static int ty_XDSDisplayCount = -1;
-
 
 static void ty_AddXDSToDisplay( const char *format, ... )
 {

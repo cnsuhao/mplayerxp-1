@@ -27,8 +27,8 @@ using namespace mpxp;
 #include "mpsub_msg.h"
 
 /* Maximal length of line of a subtitle */
-#define LINE_LEN 1000
-#define ERR ((subtitle*) -1)
+static const int LINE_LEN=1000;
+static const subtitle* ERR=(subtitle*)-1;
 
 static float mpsub_position=0;
 
@@ -186,7 +186,7 @@ static subtitle * __FASTCALL__ sub_read_line_microdvd(FILE *fd,subtitle *current
 
     next=p, i=0;
     while ((next =sub_readtext (next, &(current->text[i])))) {
-	if (current->text[i]==(char*)ERR) {return ERR;}
+	if (current->text[i]==(char*)ERR) {return (subtitle*)ERR;}
 	i++;
 	if (i>=SUB_MAX_TEXT) { MSG_ERR ("Too many lines in a subtitle\n");current->lines=i;return current;}
     }
@@ -213,7 +213,7 @@ static subtitle * __FASTCALL__ sub_read_line_subrip(FILE *fd, subtitle *current)
 	for (current->lines=1; current->lines < SUB_MAX_TEXT; current->lines++) {
 	    for (q=p,len=0; *p && *p!='\r' && *p!='\n' && strncmp(p,"[br]",4); p++,len++);
 	    current->text[current->lines-1]=(char *)mp_malloc (len+1);
-	    if (!current->text[current->lines-1]) return ERR;
+	    if (!current->text[current->lines-1]) return (subtitle*)ERR;
 	    strncpy (current->text[current->lines-1], q, len);
 	    current->text[current->lines-1][len]='\0';
 	    if (!*p || *p=='\r' || *p=='\n') break;
@@ -242,7 +242,7 @@ static subtitle * __FASTCALL__ sub_read_line_subviewer(FILE *fd,subtitle *curren
 	    for (p=line; *p!='\n' && *p!='\r' && *p; p++,len++);
 	    if (len) {
 		current->text[i]=(char *)mp_malloc (len+1);
-		if (!current->text[i]) return ERR;
+		if (!current->text[i]) return (subtitle*)ERR;
 		strncpy (current->text[i], line, len); current->text[i][len]='\0';
 		i++;
 	    } else {
@@ -278,7 +278,7 @@ static subtitle * __FASTCALL__ sub_read_line_vplayer(FILE *fd,subtitle *current)
 			//
 			next = p,i=0;
 			while ((next =sub_readtext (next, &(current->text[i])))) {
-				if (current->text[i]==(char*)ERR) {return ERR;}
+				if (current->text[i]==(char*)ERR) {return (subtitle*)ERR;}
 				i++;
 				if (i>=SUB_MAX_TEXT) { MSG_ERR ("Too many lines in a subtitle\n");current->lines=i;return current;}
 			}
@@ -318,7 +318,7 @@ static subtitle * __FASTCALL__ sub_read_line_rt(FILE *fd,subtitle *current) {
 	// TODO: I don't know what kind of convention is here for marking multiline subs, maybe <br/> like in xml?
 	next = strstr(line,"<clear/>")+8;i=0;
 	while ((next =sub_readtext (next, &(current->text[i])))) {
-		if (current->text[i]==(char*)ERR) {return ERR;}
+		if (current->text[i]==(char*)ERR) {return (subtitle*)ERR;}
 		i++;
 		if (i>=SUB_MAX_TEXT) { MSG_ERR ("Too many lines in a subtitle\n");current->lines=i;return current;}
 	}
@@ -377,7 +377,7 @@ static subtitle * __FASTCALL__ sub_read_line_dunnowhat(FILE *fd,subtitle *curren
 	return NULL;
     if (sscanf (line, "%ld,%ld,\"%[^\"]", &(current->start),
 		&(current->end), text) <3)
-	return ERR;
+	return (subtitle*)ERR;
     current->text[0] = mp_strdup(text);
     current->lines = 1;
 
@@ -533,7 +533,7 @@ void	subcp_close (void)
 	}
 }
 
-#define ICBUFFSIZE 512
+static const int ICBUFFSIZE=512;
 static char icbuffer[ICBUFFSIZE];
 
 subtitle* subcp_recode (subtitle *sub)
@@ -567,7 +567,7 @@ subtitle* subcp_recode (subtitle *sub)
 	if (l){
 		for (l = sub->lines; l;)
 			delete sub->text[--l];
-		return ERR;
+		return (subtitle*)ERR;
 	}
 	return sub;
 }

@@ -40,12 +40,12 @@ using namespace mpxp;
 #endif
 
 namespace mpxp {
-#define WAV_ID_RIFF 0x46464952 /* "RIFF" */
-#define WAV_ID_WAVE 0x45564157 /* "WAVE" */
-#define WAV_ID_FMT  0x20746d66 /* "fmt " */
-#define WAV_ID_DATA 0x61746164 /* "data" */
-#define WAV_ID_PCM  0x0001
-#define WAV_ID_FLOAT_PCM  0x0003
+static const uint32_t WAV_ID_RIFF=0x46464952; /* "RIFF" */
+static const uint32_t WAV_ID_WAVE=0x45564157; /* "WAVE" */
+static const uint32_t WAV_ID_FMT =0x20746d66; /* "fmt " */
+static const uint32_t WAV_ID_DATA=0x61746164; /* "data" */
+static const uint32_t WAV_ID_PCM =0x0001;
+static const uint32_t WAV_ID_FLOAT_PCM=0x0003;
 
 struct WaveHeader
 {

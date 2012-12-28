@@ -156,7 +156,6 @@ void GetCpuCaps( CpuCaps *caps)
 	<<std::endl;
 }
 
-
 #define CPUID_EXTFAMILY	((regs2[0] >> 20)&0xFF) /* 27..20 */
 #define CPUID_EXTMODEL	((regs2[0] >> 16)&0x0F) /* 19..16 */
 #define CPUID_TYPE	((regs2[0] >> 12)&0x04) /* 13..12 */

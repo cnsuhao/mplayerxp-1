@@ -28,7 +28,7 @@ using namespace mpxp;
 #include "osdep/keycodes.h"
 #include "pp_msg.h"
 
-#define MENU_KEEP_PATH "/tmp/mp_current_path"
+static const char* MENU_KEEP_PATH="/tmp/mpxp_current_path";
 
 int file_filter=0;
 int menu_keepdir = 0;

@@ -22,7 +22,7 @@ using namespace mpxp;
 #include "mp3_hdr.h"
 #include "demux_msg.h"
 
-#define HDR_SIZE 4
+static const int HDR_SIZE=4;
 
 struct dca_priv_t : public Opaque {
     public:
@@ -43,26 +43,27 @@ struct dca_priv_t : public Opaque {
 	unsigned char	toc[100]; /* like AVI's indexes */
 };
 
-#define DDCA_MONO 0
-#define DDCA_CHANNEL 1
-#define DDCA_STEREO 2
-#define DDCA_STEREO_SUMDIFF 3
-#define DDCA_STEREO_TOTAL 4
-#define DDCA_3F 5
-#define DDCA_2F1R 6
-#define DDCA_3F1R 7
-#define DDCA_2F2R 8
-#define DDCA_3F2R 9
-#define DDCA_4F2R 10
+enum {
+    DDCA_MONO=0,
+    DDCA_CHANNEL=1,
+    DDCA_STEREO=2,
+    DDCA_STEREO_SUMDIFF=3,
+    DDCA_STEREO_TOTAL=4,
+    DDCA_3F=5,
+    DDCA_2F1R=6,
+    DDCA_3F1R=7,
+    DDCA_2F2R=8,
+    DDCA_3F2R=9,
+    DDCA_4F2R=10,
+    DDCA_DOLBY=101, /* FIXME */
+    DDCA_CHANNEL_MAX=DDCA_3F2R /* We don't handle anything above that */
+};
 
-#define DDCA_DOLBY 101 /* FIXME */
+static const int DDCA_CHANNEL_BITS=6;
+static const int DDCA_CHANNEL_MASK=0x3F;
 
-#define DDCA_CHANNEL_MAX  DDCA_3F2R /* We don't handle anything above that */
-#define DDCA_CHANNEL_BITS 6
-#define DDCA_CHANNEL_MASK 0x3F
-
-#define DDCA_LFE 0x80
-#define DDCA_ADJUST_LEVEL 0x100
+static const int DDCA_LFE=0x80;
+static const int DDCA_ADJUST_LEVEL=0x100;
 
 typedef struct ddca_state_s
 {

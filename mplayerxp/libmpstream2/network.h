@@ -27,7 +27,7 @@ using namespace mpxp;
 #include "http.h"
 #include "stream.h"
 
-#define BUFFER_SIZE		2048
+static const int BUFFER_SIZE=2048;
 
 namespace mpxp {
     struct Stream;

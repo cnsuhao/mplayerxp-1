@@ -23,14 +23,18 @@ using namespace mpxp;
 #include "stheader.h"
 #include "demux_msg.h"
 
-#define RoQ_INFO           0x1001
-#define RoQ_QUAD_CODEBOOK  0x1002
-#define RoQ_QUAD_VQ        0x1011
-#define RoQ_SOUND_MONO     0x1020
-#define RoQ_SOUND_STEREO   0x1021
+enum {
+    RoQ_INFO           =0x1001,
+    RoQ_QUAD_CODEBOOK  =0x1002,
+    RoQ_QUAD_VQ        =0x1011,
+    RoQ_SOUND_MONO     =0x1020,
+    RoQ_SOUND_STEREO   =0x1021
+};
 
-#define CHUNK_TYPE_AUDIO 0
-#define CHUNK_TYPE_VIDEO 1
+enum {
+    CHUNK_TYPE_AUDIO=0,
+    CHUNK_TYPE_VIDEO=1
+};
 
 typedef struct roq_chunk_t
 {

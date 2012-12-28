@@ -29,9 +29,9 @@ using namespace mpxp;
 #include "libao3/afmt.h"
 #include "demux_msg.h"
 
-#define BLOCK_SIZE 4096
-#define FOURCC_VORBIS mmioFOURCC('v', 'r', 'b', 's')
-#define FOURCC_THEORA mmioFOURCC('t', 'h', 'e', 'o')
+static const int BLOCK_SIZE=4096;
+static const uint32_t FOURCC_VORBIS=mmioFOURCC('v', 'r', 'b', 's');
+static const uint32_t FOURCC_THEORA=mmioFOURCC('t', 'h', 'e', 'o');
 
 /// Vorbis decoder context : we need the vorbis_info for vorbis timestamping
 /// Shall we put this struct def in a common header ?
@@ -163,21 +163,22 @@ ogg_demuxer_t::~ogg_demuxer_t() {
     delete ov;
 }
 
-#define NUM_VORBIS_HDR_PACKETS 3
+static const int NUM_VORBIS_HDR_PACKETS=3;
 
 /// Some defines from OggDS
-#define PACKET_TYPE_HEADER   0x01
-#define PACKET_TYPE_BITS         0x07
-#define PACKET_LEN_BITS01       0xc0
-#define PACKET_LEN_BITS2         0x02
-#define PACKET_IS_SYNCPOINT  0x08
-
+enum {
+    PACKET_TYPE_HEADER	=0x01,
+    PACKET_TYPE_BITS	=0x07,
+    PACKET_LEN_BITS01	=0xc0,
+    PACKET_LEN_BITS2	=0x02,
+    PACKET_IS_SYNCPOINT	=0x08
+};
 //-------- subtitle support - should be moved to decoder layer, and queue
 //                          - subtitles up in demuxer buffer...
 
 #include "libmpsub/subreader.h"
 #include "libvo2/sub.h"
-#define OGG_SUB_MAX_LINE 128
+static const int OGG_SUB_MAX_LINE=128;
 
 static subtitle ogg_sub;
 static float clear_sub;

@@ -4,6 +4,8 @@
 #include "osdep/mplib.h"
 using namespace mpxp;
 
+#include <map>
+
 #include "xmpcore/xmp_enums.h"
 
 namespace mpxp {
@@ -155,7 +157,7 @@ namespace mpxp {
     extern void mp_cmd_free(mp_cmd_t* cmd);
 
     // When you create a new driver you should add it in this 2 functions.
-    extern libinput_t& mp_input_open();
+    extern libinput_t& mp_input_open(const std::map<std::string,std::string>& envm);
     extern void   mp_input_close(libinput_t& handle);
 
     extern void mp_input_print_keys(libinput_t& handle);

@@ -39,21 +39,18 @@ using namespace mpxp;
 
 namespace mpxp {
 
-#ifndef MP_MAX_KEY_FD
-#define MP_MAX_KEY_FD 10
-#endif
+static const int MP_MAX_KEY_FD=10;
+static const int MP_MAX_CMD_FD=10;
 
-#ifndef MP_MAX_CMD_FD
-#define MP_MAX_CMD_FD 10
-#endif
+enum {
+    MP_FD_EOF=(1<<0),
+    MP_FD_DROP=(1<<1),
+    MP_FD_DEAD=(1<<2),
+    MP_FD_GOT_CMD=(1<<3),
+    MP_FD_NO_SELECT=(1<<4)
+};
 
-#define MP_FD_EOF (1<<0)
-#define MP_FD_DROP (1<<1)
-#define MP_FD_DEAD (1<<2)
-#define MP_FD_GOT_CMD (1<<3)
-#define MP_FD_NO_SELECT (1<<4)
-
-#define CMD_QUEUE_SIZE 100
+static const int CMD_QUEUE_SIZE=100;
 
 typedef int (*mp_key_func_t)(any_t* ctx); // These functions should return the key code or one of the error code
 typedef int (*mp_cmd_func_t)(any_t* ctx,char* dest,int size); // These functions should act like read but they must use our error code (if needed ;-)
@@ -90,7 +87,7 @@ struct mp_cmd_filter_t {
 };
 
 struct libinput_t : public Opaque {
-    libinput_t() {}
+    libinput_t(const std::map<std::string,std::string>& _envm):envm(_envm) {}
     virtual ~libinput_t() {}
 
     Opaque		unusable;
@@ -115,6 +112,7 @@ struct libinput_t : public Opaque {
     int			in_file_fd;
     int			tim; //for getch2
     char		key_str[12];
+    const std::map<std::string,std::string>& envm;
 };
 
 struct input_conf_t {
@@ -656,7 +654,7 @@ static int mp_input_default_key_func(any_t* fd) {
     return code;
 }
 
-#define MP_CMD_MAX_SIZE 256
+static const int MP_CMD_MAX_SIZE=256;
 static int mp_input_read_cmd(mp_input_fd_t* mp_fd, char** ret) {
     char* end;
     (*ret) = NULL;
@@ -1124,8 +1122,8 @@ static void mp_input_free_binds(mp_cmd_bind_t* binds) {
     delete binds;
 }
 
-#define BS_MAX 256
-#define SPACE_CHAR " \n\r\t"
+static const int BS_MAX=256;
+static const char* SPACE_CHAR=" \n\r\t";
 
 static int mp_input_parse_config(libinput_t& priv,const std::string& file) {
     int fd;
@@ -1268,7 +1266,7 @@ static int mp_input_parse_config(libinput_t& priv,const std::string& file) {
 static void mp_input_init(libinput_t& priv) {
     std::string file;
 
-    file = config_file[0] != '/' ? get_path(config_file) : config_file;
+    file = config_file[0] != '/' ? get_path(priv.envm,config_file) : config_file;
     if(file.empty()) return;
 
     if(! mp_input_parse_config(priv,file)) {
@@ -1334,8 +1332,8 @@ static void mp_input_uninit(libinput_t& priv) {
     if(priv.in_file_fd==0) getch2_disable();
 }
 
-libinput_t& mp_input_open() {
-    libinput_t& priv=*new(zeromem) libinput_t;
+libinput_t& mp_input_open(const std::map<std::string,std::string>& envm) {
+    libinput_t& priv=*new(zeromem) libinput_t(envm);
     priv.ar_state=-1;
     priv.in_file_fd=-1;
     mp_input_init(priv);

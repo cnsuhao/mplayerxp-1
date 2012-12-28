@@ -28,9 +28,9 @@ using namespace mpxp;
 #include "demux_msg.h"
 
 // chunk types found in a FILM file
-#define CHUNK_FILM mmioFOURCC('F', 'I', 'L', 'M')
-#define CHUNK_FDSC mmioFOURCC('F', 'D', 'S', 'C')
-#define CHUNK_STAB mmioFOURCC('S', 'T', 'A', 'B')
+static const uint32_t CHUNK_FILM=mmioFOURCC('F', 'I', 'L', 'M');
+static const uint32_t CHUNK_FDSC=mmioFOURCC('F', 'D', 'S', 'C');
+static const uint32_t CHUNK_STAB=mmioFOURCC('S', 'T', 'A', 'B');
 
 typedef struct _film_chunk_t
 {

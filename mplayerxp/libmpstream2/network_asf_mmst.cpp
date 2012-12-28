@@ -47,15 +47,14 @@ using namespace mpxp;
 #include "stream_msg.h"
 
 namespace mpxp {
-#define BUF_SIZE 102400
-#define HDR_BUF_SIZE 8192
-#define MAX_STREAMS 20
+static const int BUF_SIZE=102400;
+static const int HDR_BUF_SIZE=8192;
+static const int MAX_STREAMS=20;
 
-typedef struct {
-  uint8_t buf[BUF_SIZE];
-  int     num_bytes;
-
-} command_t;
+struct command_t {
+    uint8_t buf[BUF_SIZE];
+    int     num_bytes;
+};
 
 static int seq_num;
 static int num_stream_ids;
