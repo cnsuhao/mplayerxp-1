@@ -17,7 +17,7 @@ using namespace mpxp;
 #include "libmpconf/m_struct.h"
 #include "libmpconf/m_option.h"
 #include "libmpconf/m_property.h"
-#include "libplaytree/asxparser.h"
+#include "libplaytree2/asxparser.h"
 
 #include "libvo2/img_format.h"
 #include "xmpcore/xmp_image.h"

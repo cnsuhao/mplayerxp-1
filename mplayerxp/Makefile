@@ -11,7 +11,7 @@ include mpxp_config.mak
 
 TARGET_EXE = $(PROGNAME)
 # these subdirectories required installation due binaries within them
-SUBDIRS = libmpdemux libmpstream2 libmpsub libplaytree libmpcodecs libmpconf libao3 osdep postproc input2 nls libvo2 xmpcore
+SUBDIRS = libmpdemux libmpstream2 libmpsub libplaytree2 libmpcodecs libmpconf libao3 osdep postproc input2 nls libvo2 xmpcore
 ifeq ($(ENABLE_WIN32LOADER),yes)
 SUBDIRS+=win32loader
 endif
@@ -36,7 +36,7 @@ MP_LIBS = libmpstream2/libmpstream2.a \
 	  libmpdemux/libmpdemux.a \
 	  libmpcodecs/libmpcodecs.a \
 	  libmpsub/libmpsub.a \
-	  libplaytree/libplaytree.a \
+	  libplaytree2/libplaytree2.a \
 	  libao3/libao3.a \
 	  postproc/libpostproc.a \
 	  input2/libinput2.a \

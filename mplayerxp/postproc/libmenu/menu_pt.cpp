@@ -15,7 +15,7 @@ using namespace mpxp;
 #include "menu.h"
 #include "menu_list.h"
 
-#include "libplaytree/playtree.h"
+#include "libplaytree2/playtree.h"
 #include "input2/input.h"
 #include "pp_msg.h"
 

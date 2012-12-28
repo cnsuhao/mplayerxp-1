@@ -24,7 +24,7 @@ using namespace mpxp;
 #include "mplayerxp.h"
 #include "mpxp_help.h"
 #include "cfgparser.h"
-#include "libplaytree/playtree.h"
+#include "libplaytree2/playtree.h"
 #include "parser_msg.h"
 
 namespace mpxp {

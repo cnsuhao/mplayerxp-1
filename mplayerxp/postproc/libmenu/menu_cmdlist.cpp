@@ -14,7 +14,7 @@ using namespace mpxp;
 
 #include "libmpconf/m_option.h"
 #include "libmpconf/m_struct.h"
-#include "libplaytree/asxparser.h"
+#include "libplaytree2/asxparser.h"
 #include "menu.h"
 #include "menu_list.h"
 

@@ -15,7 +15,7 @@ using namespace mpxp;
 #include "libvo2/font_load.h"
 #include "libvo2/sub.h"
 #include "osdep/keycodes.h"
-#include "libplaytree/asxparser.h"
+#include "libplaytree2/asxparser.h"
 #include "nls/nls.h"
 
 #include "libvo2/img_format.h"

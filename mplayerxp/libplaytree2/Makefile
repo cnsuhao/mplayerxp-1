@@ -1,5 +1,5 @@
 
-LIBNAME = libplaytree.a
+LIBNAME = libplaytree2.a
 
 include ../mpxp_config.mak
 

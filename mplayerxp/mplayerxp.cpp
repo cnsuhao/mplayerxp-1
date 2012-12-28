@@ -41,7 +41,7 @@ using namespace mpxp;
 #include "libmpdemux/demuxer.h"
 
 #include "libmpconf/codec-cfg.h"
-#include "libplaytree/playtree.h"
+#include "libplaytree2/playtree.h"
 
 #include "libmpcodecs/dec_video.h"
 #include "libmpcodecs/dec_audio.h"
