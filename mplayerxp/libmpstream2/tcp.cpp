@@ -99,6 +99,8 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
 	case Tcp::IP6: our_s_addr = (any_t*) &server_address.six.sin6_addr; break;
 	default:
 	    mpxp_err<<"[tcp"<<af2String(af)<<"] UnknownAF: "<<af<<std::endl;
+	    ::closesocket(_fd);
+	    _fd=-1;
 	    _error=Tcp::Err_Fatal;
 	    return;
     }
@@ -125,6 +127,8 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
 #endif
 	if( hp==NULL ) {
 	    mpxp_v<<"[tcp"<<af2String(af)<<"] Can't resolv: "<<_url.host()<<std::endl;
+	    ::closesocket(_fd);
+	    _fd=-1;
 	    _error=Tcp::Err_Fatal;
 	    return;
 	}
@@ -151,6 +155,8 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
 	    break;
 	default:
 	    mpxp_err<<"[tcp"<<af2String(af)<<"] UnknownAF: "<<af<<std::endl;
+	    ::closesocket(_fd);
+	    _fd=-1;
 	    _error = Tcp::Err_Fatal;
 	    return;
     }
@@ -216,6 +222,8 @@ void Tcp::open(const URL& __url, tcp_af_e af) {
     ret = ::getsockopt(_fd,SOL_SOCKET,SO_ERROR,&_error,&err_len);
     if(ret < 0) {
 	mpxp_err<<"[tcp"<<af2String(af)<<"] Get socket option failed: "<<strerror(errno)<<std::endl;
+	::closesocket(_fd);
+	_fd=-1;
 	_error=Tcp::Err_Fatal;
 	return;
     }
@@ -267,7 +275,7 @@ Tcp& Tcp::operator=(net_fd_t fd) { _url.redirect(""); _fd=fd; _error=Tcp::Err_No
 
 int Tcp::read(uint8_t* buf,unsigned len,int flags) { return ::recv(_fd,buf,len,flags); }
 int Tcp::write(const uint8_t* buf,unsigned len,int flags) const { return ::send(_fd,buf,len,flags); }
-int Tcp::established() const { return _fd > 0; }
+int Tcp::established() const { return _fd > 0 && _error==Tcp::Err_None; }
 Tcp::tcp_error_e Tcp::error() const { return _error; }
 libinput_t& Tcp::get_libinput() const { return libinput; }
 const URL& Tcp::url() const { return _url; }
