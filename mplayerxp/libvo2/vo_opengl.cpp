@@ -33,7 +33,6 @@ using namespace mpxp;
 #include "video_out_internal.h"
 #include "font_load.h"
 #include "sub.h"
-#include "libmpconf/subopt-helper.h"
 #include "postproc/swscale.h" /* for MODE_RGB(BGR) definitions */
 
 #ifdef GL_WIN32
