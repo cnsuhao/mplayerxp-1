@@ -110,11 +110,11 @@ namespace mpxp {
 	    int flags;
     };
 
-    struct _PlayTree_Iter : public Opaque {
+    struct PlayTree_Iter : public Opaque {
 	public:
-	    _PlayTree_Iter(PlayTree* parent,M_Config& config);
-	    _PlayTree_Iter(const _PlayTree_Iter& old);
-	    virtual ~_PlayTree_Iter();
+	    PlayTree_Iter(PlayTree* parent,M_Config& config);
+	    PlayTree_Iter(const PlayTree_Iter& old);
+	    virtual ~PlayTree_Iter();
 
 	    // d is the direction : d > 0 == next , d < 0 == prev
 	    // with_node : TRUE == stop on nodes with childs, FALSE == go directly to the next child
@@ -141,46 +141,7 @@ namespace mpxp {
 	    int			num_files;
 	    int			mode;
 
-	    std::stack<int> status_stack;
+	    std::stack<int>	status_stack;
     };
 } // namespace mpxp
-
-/// \defgroup PtAPI Playtree highlevel API
-/// \ingroup Playtree
-/// Highlevel API with pt-suffix to different from low-level API
-/// by Fabian Franz (mplayer@fabian-franz.de).
-///@{
-
-/// Frees the iter.
-void pt_iter_destroy(_PlayTree_Iter** iter);
-
-/// Gets the next available file in the direction (d=-1 || d=+1).
-std::string pt_iter_get_file(_PlayTree_Iter* iter, int d);
-
-// Two Macros that implement forward and backward direction.
-static inline std::string pt_iter_get_next_file(_PlayTree_Iter* iter) { return pt_iter_get_file(iter, 1); }
-static inline std::string pt_iter_get_prev_file(_PlayTree_Iter* iter) { return pt_iter_get_file(iter, -1); }
-
-/// Inserts entry into the playtree.
-void pt_iter_insert_entry(_PlayTree_Iter* iter, PlayTree* entry);
-
-/// Replaces current entry in playtree with entry by doing insert and remove.
-void pt_iter_replace_entry(_PlayTree_Iter* iter, PlayTree* entry);
-
-/// Adds a new file to the playtree, if it is not valid it is created.
-void pt_add_file(PlayTree** ppt,const std::string& filename);
-
-/// \brief Performs a convert to playtree-syntax, by concat path/file
-/// and performs pt_add_file
-void pt_add_gui_file(PlayTree** ppt,const std::string& path,const std::string& file);
-
-// Two macros to use only the iter and not the other things.
-static inline void pt_iter_add_file(_PlayTree_Iter* iter, const std::string& filename) { PlayTree* tree=iter->get_tree();  pt_add_file(&tree, filename); }
-static inline void pt_iter_add_gui_file(_PlayTree_Iter* iter,const std::string& path,const std::string& name) { PlayTree* tree=iter->get_tree(); pt_add_gui_file(&tree, path, name); }
-
-/// Resets the iter and goes back to head.
-void pt_iter_goto_head(_PlayTree_Iter* iter);
-
-///@}
-
 #endif

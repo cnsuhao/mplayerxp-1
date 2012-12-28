@@ -19,7 +19,7 @@ struct audio_decoder_t;
 struct video_decoder_t;
 namespace mpxp {
     class M_Config;
-    struct _PlayTree_Iter;
+    struct PlayTree_Iter;
     /* List of all modules which require protection by pin-code */
     enum {
 	Module_Stream=0,
@@ -194,7 +194,7 @@ namespace mpxp {
 
     MPXPContext& mpxp_context();
 
-    _PlayTree_Iter* mpxp_get_playtree_iter();
+    PlayTree_Iter& mpxp_get_playtree_iter();
 
     unsigned get_number_cpu(void);
     void show_help(void);

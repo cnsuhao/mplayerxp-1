@@ -319,14 +319,14 @@ play_tree_rnd_step(PlayTree* pt) {
   return NULL;
 }
 
-_PlayTree_Iter::_PlayTree_Iter(PlayTree* pt,M_Config& _config)
+PlayTree_Iter::PlayTree_Iter(PlayTree* pt,M_Config& _config)
 		:root(pt),
 		tree(NULL),
 		config(_config) {
     if(pt->get_parent()) loop = pt->get_parent()->get_loop();
 }
 
-_PlayTree_Iter::_PlayTree_Iter(const _PlayTree_Iter& old)
+PlayTree_Iter::PlayTree_Iter(const PlayTree_Iter& old)
 		:root(old.root),
 		tree(old.tree),
 		config(old.config),
@@ -335,9 +335,9 @@ _PlayTree_Iter::_PlayTree_Iter(const _PlayTree_Iter& old)
 		num_files(old.num_files),
 		mode(old.mode) {}
 
-_PlayTree_Iter::~_PlayTree_Iter() {}
+PlayTree_Iter::~PlayTree_Iter() {}
 
-void _PlayTree_Iter::push_params() {
+void PlayTree_Iter::push_params() {
     PlayTree* pt;
 
     pt = tree;
@@ -354,7 +354,7 @@ void _PlayTree_Iter::push_params() {
     return;
 }
 
-int _PlayTree_Iter::step(int d,int with_nodes) {
+int PlayTree_Iter::step(int d,int with_nodes) {
     PlayTree* pt;
     int rnd;
 
@@ -430,7 +430,7 @@ int _PlayTree_Iter::step(int d,int with_nodes) {
     return PLAY_TREE_ITER_ENTRY;
 }
 
-int _PlayTree_Iter::up_step(int d,int with_nodes) {
+int PlayTree_Iter::up_step(int d,int with_nodes) {
     file = -1;
     if(tree->get_parent() == root->get_parent()) return PLAY_TREE_ITER_END;
 
@@ -441,7 +441,7 @@ int _PlayTree_Iter::up_step(int d,int with_nodes) {
     return step(d,with_nodes);
 }
 
-int _PlayTree_Iter::down_step(int d,int with_nodes) {
+int PlayTree_Iter::down_step(int d,int with_nodes) {
     file = -1;
 
     //  Push subtree params
@@ -459,7 +459,7 @@ int _PlayTree_Iter::down_step(int d,int with_nodes) {
     return step(0,with_nodes);
 }
 
-std::string _PlayTree_Iter::get_file(int d) {
+std::string PlayTree_Iter::get_file(int d) {
     std::string entry;
 
     if(tree->get_files().empty()) return "";
@@ -506,79 +506,3 @@ std::string _PlayTree_Iter::get_file(int d) {
 }
 
 } // namespace mpxp
-
-void pt_iter_destroy(_PlayTree_Iter** iter)
-{
-  if (iter && *iter)
-  {
-    delete *iter;
-    iter=NULL;
-  }
-}
-
-std::string pt_iter_get_file(_PlayTree_Iter* iter, int d)
-{
-  int i=0;
-  std::string r;
-
-  if (iter==NULL)
-    return NULL;
-
-  r = iter->get_file(d);
-
-  while (r.empty() && d!=0)
-  {
-    if (iter->step(d,0) != PLAY_TREE_ITER_ENTRY) break;
-    r=iter->get_file(d);
-    i++;
-  }
-
-  return r;
-}
-
-void pt_iter_insert_entry(_PlayTree_Iter* iter, PlayTree* entry)
-{
-  PlayTree *pt = iter->get_tree();
-
-  pt->insert_entry(entry);
-  entry->set_params_from(*pt);
-}
-
-void pt_iter_replace_entry(_PlayTree_Iter* iter, PlayTree* entry)
-{
-  PlayTree *pt = iter->get_tree();
-
-  pt_iter_insert_entry(iter, entry);
-  pt->remove(1, 1);
-  iter->set_tree(entry);
-}
-
-//Add a new file as a new entry
-void pt_add_file(PlayTree** ppt,const std::string& filename)
-{
-  PlayTree *pt = *ppt, *entry = new(zeromem) PlayTree;
-
-  entry->add_file(filename);
-  if (pt)
-    pt->append_entry(entry);
-  else
-  {
-    pt=entry;
-    *ppt=pt;
-  }
-  entry->set_params_from(*pt);
-}
-
-void pt_add_gui_file(PlayTree** ppt,const std::string& path,const std::string& file)
-{
-    std::string wholename;
-
-    wholename=path+"/"+file;
-    pt_add_file(ppt, wholename);
-}
-
-void pt_iter_goto_head(_PlayTree_Iter* iter)
-{
-  iter->reset_tree();
-  iter->step(0, 0);
-}

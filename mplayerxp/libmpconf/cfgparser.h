@@ -132,7 +132,6 @@ namespace mpxp {
 	    std::vector<const mpxp_option_t*>	opt_list;
 	    mode_e	parser_mode;
 	    flags_e	flags;
-	    const char*	sub_conf; // When we save a subconfig
 	    PlayTree*	pt; // play tree we use for playlist option, etc
 	    PlayTree*	last_entry; // last added entry
 	    PlayTree*	last_parent; // if last_entry is NULL we must create child of this

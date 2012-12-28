@@ -156,7 +156,7 @@ struct MPXPSystem : public Opaque {
 	int		osd_function;
 	PlayTree*	playtree;
 	// for multifile support:
-	_PlayTree_Iter* playtree_iter;
+	PlayTree_Iter* playtree_iter;
     private:
 	Opaque		unusable;
 	Demuxer*	_demuxer;
@@ -1395,7 +1395,7 @@ For future:
 		 exit_player(MSGTR_Exit_quit);
 	    case MP_CMD_PLAY_TREE_STEP : {
 		int n = cmd->args[0].v.i > 0 ? 1 : -1;
-		_PlayTree_Iter* it = new _PlayTree_Iter(*playtree_iter);
+		PlayTree_Iter* it = new PlayTree_Iter(*playtree_iter);
 
 		if(it->step(n,0) == PLAY_TREE_ITER_ENTRY)
 		    eof = (n > 0) ? PT_NEXT_ENTRY : PT_PREV_ENTRY;
@@ -1403,7 +1403,7 @@ For future:
 	    } break;
 	    case MP_CMD_PLAY_TREE_UP_STEP : {
 		int n = cmd->args[0].v.i > 0 ? 1 : -1;
-		_PlayTree_Iter* it = new _PlayTree_Iter(*playtree_iter);
+		PlayTree_Iter* it = new PlayTree_Iter(*playtree_iter);
 		if(it->up_step(n,0) == PLAY_TREE_ITER_ENTRY)
 		    eof = (n > 0) ? PT_UP_NEXT : PT_UP_PREV;
 		delete it;
@@ -1564,7 +1564,7 @@ For future:
     return eof;
 }
 
-_PlayTree_Iter* mpxp_get_playtree_iter() { return mpxp_context().engine().MPXPSys->playtree_iter; }
+PlayTree_Iter& mpxp_get_playtree_iter() { return *(mpxp_context().engine().MPXPSys->playtree_iter); }
 /******************************************\
 * MAIN MPLAYERXP FUNCTION !!!              *
 \******************************************/
@@ -1633,7 +1633,7 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
 
 //    MPXPSys.playtree = play_tree_cleanup(MPXPSys.playtree);
     if(MPXPSys.playtree) {
-      MPXPSys.playtree_iter = new _PlayTree_Iter(MPXPSys.playtree,m_config);
+      MPXPSys.playtree_iter = new PlayTree_Iter(MPXPSys.playtree,m_config);
       if(MPXPSys.playtree_iter) {
 	if(MPXPSys.playtree_iter->step(0,0) != PLAY_TREE_ITER_ENTRY) {
 	  delete MPXPSys.playtree_iter;

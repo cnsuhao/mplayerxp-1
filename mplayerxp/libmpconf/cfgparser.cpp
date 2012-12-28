@@ -271,14 +271,9 @@ int M_Config::read_option(const std::vector<const mpxp_option_t*>& conf_list,con
 out:
 	if(ret >= 0 && ! is_running() && !is_global() && ! (conf[i].flags & CONF_GLOBAL) && conf[i].type != CONF_TYPE_SUBCONFIG ) {
 	  PlayTree* dest = last_entry ? last_entry : last_parent;
-	  std::string o;
-	  if(sub_conf)	o=std::string(sub_conf)+":"+opt;
-	  else		o=opt;
 
-	  if(ret == 0)
-	    dest->set_param(o,"");
-	  else if(ret > 0)
-	    dest->set_param(o,param);
+	  if(ret == 0)		dest->set_param(opt,"");
+	  else if(ret > 0)	dest->set_param(opt,param);
 	}
 	return ret;
 err_missing_param:
@@ -395,13 +390,13 @@ MPXP_Rc M_Config::parse_config_file(const std::string& conffile)
 	line_pos = 0;
 
 	/* skip whitespaces */
-	while (isspace(line[line_pos])) ++line_pos;
+	while (::isspace(line[line_pos])) ++line_pos;
 
 	/* EOL / comment */
 	if (line[line_pos] == '\0' || line[line_pos] == '#') continue;
 
 	/* read option. */
-	for (opt_pos = 0; isprint(line[line_pos]) &&
+	for (opt_pos = 0; ::isprint(line[line_pos]) &&
 		line[line_pos] != ' ' &&
 		line[line_pos] != '#' &&
 		line[line_pos] != '='; /* NOTHING */) {
@@ -424,7 +419,7 @@ MPXP_Rc M_Config::parse_config_file(const std::string& conffile)
 	opt[opt_pos] = '\0';
 
 	/* skip whitespaces */
-	while (isspace(line[line_pos])) ++line_pos;
+	while (::isspace(line[line_pos])) ++line_pos;
 
 	/* check '=' */
 	if (line[line_pos++] != '=') {
@@ -436,7 +431,7 @@ MPXP_Rc M_Config::parse_config_file(const std::string& conffile)
 	}
 
 	/* whitespaces... */
-	while (isspace(line[line_pos])) ++line_pos;
+	while (::isspace(line[line_pos])) ++line_pos;
 
 	/* read the parameter */
 	if (line[line_pos] == '"' || line[line_pos] == '\'') {
@@ -454,7 +449,7 @@ MPXP_Rc M_Config::parse_config_file(const std::string& conffile)
 	    }
 	    line_pos++;	/* skip the closing " or ' */
 	} else {
-	    for (param_pos = 0; isprint(line[line_pos]) && !isspace(line[line_pos])
+	    for (param_pos = 0; ::isprint(line[line_pos]) && !::isspace(line[line_pos])
 			&& line[line_pos] != '#'; /* NOTHING */) {
 		param[param_pos++] = line[line_pos++];
 		if (param_pos >= MAX_PARAM_LEN) {
@@ -479,7 +474,7 @@ MPXP_Rc M_Config::parse_config_file(const std::string& conffile)
 
 	/* now, check if we have some more chars on the line */
 	/* whitespace... */
-	while (isspace(line[line_pos])) ++line_pos;
+	while (::isspace(line[line_pos])) ++line_pos;
 
 	/* EOL / comment */
 	if (line[line_pos] != '\0' && line[line_pos] != '#') {
@@ -897,7 +892,7 @@ void M_Config::parse_cfgfiles(const std::map<std::string,std::string>& envm)
 	    ::write(conffile_fd, default_config, strlen(default_config));
 	    ::close(conffile_fd);
 	}
-	if (parse_config_file(conffile) != MPXP_Ok) exit(1);
+	if (parse_config_file(conffile) != MPXP_Ok) ::exit(1);
     }
 }
 
