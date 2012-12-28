@@ -7,7 +7,7 @@ using namespace mpxp;
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include "ad_internal.h"
 #include "mpxp_help.h"
-#include "loader/dshow/DS_AudioDecoder.h"
+#include "win32loader/dshow/DS_AudioDecoder.h"
 #include "codecs_ld.h"
 
 static const ad_info_t info = {

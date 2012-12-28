@@ -13,7 +13,7 @@ using namespace mpxp;
 #include "codecs_ld.h"
 
 #ifdef WIN32_LOADER
-#include "loader/ldt_keeper.h"
+#include "win32loader/ldt_keeper.h"
 #endif
 #include "codecs_ld.h"
 #include "vd_msg.h"
@@ -38,7 +38,7 @@ LIBVD_EXTERN(qtvideo)
 #include <QuickTime/ImageCodec.h>
 #define dump_ImageDescription(x)
 #else
-#include "loader/qtx/qtxsdk/components.h"
+#include "win32loader/qtx/qtxsdk/components.h"
 #endif
 
 //#include "wine/windef.h"

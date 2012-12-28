@@ -3,9 +3,9 @@
 
 //#include "cp_config.h"	/* for WORDS_BIGENDIAN */
 #include <inttypes.h>
-#include "loader/wine/mmreg.h"
-#include "loader/wine/avifmt.h"
-#include "loader/wine/vfw.h"
+#include "win32loader/wine/mmreg.h"
+#include "win32loader/wine/avifmt.h"
+#include "win32loader/wine/vfw.h"
 #include "osdep/bswap.h"
 
 #ifndef MIN

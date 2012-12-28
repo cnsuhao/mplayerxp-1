@@ -5,9 +5,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "loader/wine/mmreg.h"
-#include "loader/wine/avifmt.h"
-#include "loader/wine/vfw.h"
+#include "win32loader/wine/mmreg.h"
+#include "win32loader/wine/avifmt.h"
+#include "win32loader/wine/vfw.h"
 #ifdef __cplusplus
 }
 #endif

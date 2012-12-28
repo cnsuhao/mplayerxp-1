@@ -1,5 +1,5 @@
 #ifdef __AD_ACM /* simply ugly hack */
-#include "loader/wine/msacm.h"
+#include "win32loader/wine/msacm.h"
 #endif
 #include "libmpconf/codec-cfg.h"
 #include "libmpdemux/demuxer_r.h"

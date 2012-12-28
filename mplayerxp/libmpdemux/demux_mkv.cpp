@@ -41,7 +41,7 @@ using namespace mpxp;
 #include "libao3/afmt.h"
 #include "demux_msg.h"
 
-#include "loader/qtx/qtxsdk/components.h"
+#include "win32loader/qtx/qtxsdk/components.h"
 #include "demux_msg.h"
 
 enum {

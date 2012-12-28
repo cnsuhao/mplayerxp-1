@@ -21,7 +21,7 @@ using namespace mpxp;
 #include <string.h>
 
 // for mmioFOURCC:
-#include "loader/wine/avifmt.h"
+#include "win32loader/wine/avifmt.h"
 #include "libvo2/img_format.h"
 #include "codec-cfg.h"
 #include "parser_msg.h"

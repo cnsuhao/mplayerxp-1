@@ -26,7 +26,7 @@ static const config_t options[] = {
 
 LIBAD_EXTERN(dmo)
 
-#include "loader/dmo/DMO_AudioDecoder.h"
+#include "win32loader/dmo/DMO_AudioDecoder.h"
 
 struct admo_private_t : public Opaque {
     admo_private_t();

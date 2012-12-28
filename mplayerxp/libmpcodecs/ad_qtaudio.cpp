@@ -13,7 +13,7 @@ using namespace mpxp;
 #include "mplayerxp.h"
 #include "libao3/afmt.h"
 #ifdef WIN32_LOADER
-#include "loader/ldt_keeper.h"
+#include "win32loader/ldt_keeper.h"
 #endif
 
 #ifdef MACOSX

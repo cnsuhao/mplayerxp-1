@@ -12,7 +12,7 @@ using namespace mpxp;
 
 #include "vd_internal.h"
 
-#include "loader/dshow/DS_VideoDecoder.h"
+#include "win32loader/dshow/DS_VideoDecoder.h"
 #include "codecs_ld.h"
 #include "osdep/bswap.h"
 

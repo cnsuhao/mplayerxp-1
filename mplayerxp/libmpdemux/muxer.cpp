@@ -10,9 +10,9 @@ using namespace mpxp;
 
 #include "version.h"
 
-#include "loader/wine/mmreg.h"
-#include "loader/wine/avifmt.h"
-#include "loader/wine/vfw.h"
+#include "win32loader/wine/mmreg.h"
+#include "win32loader/wine/avifmt.h"
+#include "win32loader/wine/vfw.h"
 #include "muxer.h"
 
 muxer_packet_t* new_muxer_packet(float pts,any_t*data,unsigned length,unsigned flags)

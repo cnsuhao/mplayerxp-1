@@ -18,10 +18,10 @@ using namespace mpxp;
 
 #include "nls/nls.h"
 
-#include "loader/wine/mmreg.h"
-#include "loader/wine/avifmt.h"
-#include "loader/wine/vfw.h"
-#include "loader/qtx/qtxsdk/components.h"
+#include "win32loader/wine/mmreg.h"
+#include "win32loader/wine/avifmt.h"
+#include "win32loader/wine/vfw.h"
+#include "win32loader/qtx/qtxsdk/components.h"
 #include "osdep/bswap.h"
 
 #include "libmpstream2/stream.h"

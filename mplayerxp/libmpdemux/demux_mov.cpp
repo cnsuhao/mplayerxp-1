@@ -39,7 +39,7 @@ using namespace mpxp;
 #include "qtpalette.h"
 #include "parse_mp4.h" // .MP4 specific stuff
 
-#include "loader/qtx/qtxsdk/components.h"
+#include "win32loader/qtx/qtxsdk/components.h"
 #include "demux_msg.h"
 #include "libao3/afmt.h"
 

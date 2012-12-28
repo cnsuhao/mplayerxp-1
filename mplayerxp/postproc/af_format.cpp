@@ -18,7 +18,7 @@ using namespace mpxp;
 #include "af_internal.h"
 #include "osdep/bswap.h"
 #include "aflib.h"
-#include "loader/wine/mmreg.h"
+#include "win32loader/wine/mmreg.h"
 #include "pp_msg.h"
 
 // Integer to float conversion through lrintf()

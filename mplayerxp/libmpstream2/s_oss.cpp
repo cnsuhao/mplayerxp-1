@@ -21,7 +21,7 @@ using namespace mpxp;
 #include "postproc/af.h"
 #include "libao3/afmt.h"
 #include "libao3/audio_out.h"
-#include "loader/wine/mmreg.h"
+#include "win32loader/wine/mmreg.h"
 #include "stream.h"
 #include "stream_internal.h"
 #include "mrl.h"

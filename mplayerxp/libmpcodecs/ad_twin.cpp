@@ -7,8 +7,8 @@ using namespace mpxp;
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include "ad_internal.h"
 #include "codecs_ld.h"
-#include "loader/ldt_keeper.h"
-#include "loader/wine/windef.h"
+#include "win32loader/ldt_keeper.h"
+#include "win32loader/wine/windef.h"
 #include "libao3/afmt.h"
 #include "libmpdemux/aviprint.h"
 #include "mpxp_help.h"

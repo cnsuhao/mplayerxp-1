@@ -1,7 +1,7 @@
 include ../mpxp_config.mak
 
 ifeq ($(ENABLE_WIN32LOADER),yes)
-LIBNAME=libloader.a
+LIBNAME=libwin32loader.a
 SUBDIRS=dshow dmo
 else
 LIBNAME=

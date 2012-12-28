@@ -11,8 +11,8 @@ using namespace mpxp;
 
 #include "vd_internal.h"
 #include "codecs_ld.h"
-#include "loader/wine/vfw.h"
-#include "loader/wine/driver.h"
+#include "win32loader/wine/vfw.h"
+#include "win32loader/wine/driver.h"
 #include "libmpdemux/aviprint.h"
 
 static const vd_info_t info_vfw = {

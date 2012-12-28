@@ -11,7 +11,7 @@ using namespace mpxp;
 
 #include "vd_internal.h"
 #include "codecs_ld.h"
-#include "loader/dmo/DMO_VideoDecoder.h"
+#include "win32loader/dmo/DMO_VideoDecoder.h"
 #include "vd_msg.h"
 
 static const vd_info_t info = {

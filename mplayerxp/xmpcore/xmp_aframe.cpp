@@ -6,7 +6,7 @@ using namespace mpxp;
 
 #include "xmp_aframe.h"
 #include "libao3/afmt.h"
-#include "loader/wine/mmreg.h"
+#include "win32loader/wine/mmreg.h"
 #include "player_msg.h"
 
 namespace mpxp {

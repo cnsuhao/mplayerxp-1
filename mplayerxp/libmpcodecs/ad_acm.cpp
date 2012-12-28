@@ -8,7 +8,7 @@ using namespace mpxp;
 #define __AD_ACM
 #include "ad_internal.h"
 #include "codecs_ld.h"
-#include "loader/wineacm.h"
+#include "win32loader/wineacm.h"
 #include "libmpdemux/aviprint.h"
 #include "libao3/afmt.h"
 #include "mpxp_help.h"
