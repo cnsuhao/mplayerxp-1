@@ -60,7 +60,6 @@ namespace mpxp {
 	    virtual MPXP_Rc	cleanup();
 	    // If childs is true mp_free also the childs
 	    virtual void	free(int childs);
-	    virtual void	free_list(int childs);
 
 	    virtual void	set_child(PlayTree* child);
 	    virtual void	set_parent(PlayTree* parent);
@@ -98,6 +97,8 @@ namespace mpxp {
 	    int			get_flags() const { return flags; }
 	    void		set_flags(int f) { flags=f; }
 	private:
+	    void		free_list(int childs);
+
 	    PlayTree* parent;
 	    PlayTree* child;
 	    PlayTree* next;

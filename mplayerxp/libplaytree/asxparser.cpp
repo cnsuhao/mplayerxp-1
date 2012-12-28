@@ -333,7 +333,7 @@ PlayTree* ASX_Parser::entryref(libinput_t& libinput,const char* buffer,ASX_Attri
     PlayTree* pt;
     std::string href;
     Stream* stream;
-    play_tree_parser_t* ptp;
+    PlayTree_Parser* ptp;
     int f;
     UNUSED(buffer);
 
@@ -356,9 +356,9 @@ PlayTree* ASX_Parser::entryref(libinput_t& libinput,const char* buffer,ASX_Attri
 	return NULL;
     }
     mpxp_v<<"Adding playlist "<<href<<" to element entryref"<<std::endl;
-    ptp = play_tree_parser_new(stream,deep+1);
-    pt = play_tree_parser_get_play_tree(libinput,ptp);
-    play_tree_parser_free(ptp);
+    ptp = new(zeromem) PlayTree_Parser(stream,deep+1);
+    pt = ptp->get_play_tree(libinput);
+    delete ptp;
     delete stream;
     return pt;
 }
@@ -386,7 +386,6 @@ PlayTree* ASX_Parser::entry(const char* buffer,ASX_Attrib& _attribs) {
 	} else mpxp_dbg2<<"Ignoring element "<<element.name()<<std::endl;
     }
     if(nref <= 0) {
-	pt_ref->free(1);
 	delete pt_ref;
 	return NULL;
     }
@@ -446,7 +445,6 @@ PlayTree* ASX_Parser::repeat(libinput_t&libinput,const char* buffer,ASX_Attrib& 
     }
 
     if(!list) {
-	pt_repeat->free(1);
 	delete pt_repeat;
 	return NULL;
     }
@@ -526,7 +524,6 @@ PlayTree* ASX_Parser::build_tree(libinput_t&libinput,const char* buffer,int deep
     delete &parser;
 
     if(!list) {
-	asx->free(1);
 	delete asx;
 	return NULL;
     }

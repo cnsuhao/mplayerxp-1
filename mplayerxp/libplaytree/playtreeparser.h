@@ -1,19 +1,32 @@
 #ifndef __PLAYTREEPARSER_H
 #define __PLAYTREEPARSER_H
+#include "osdep/mplib.h"
 
 #include "playtree.h"
 
-struct play_tree_parser_t {
-  Stream* stream;
-  char *buffer,*iter,*line;
-  int buffer_size , buffer_end;
-  int deep,keep;
-};
+namespace mpxp {
+    class PlayTree_Parser : public Opaque {
+	public:
+	    PlayTree_Parser(Stream* _stream,int _deep);
+	    virtual ~PlayTree_Parser();
 
-play_tree_parser_t* play_tree_parser_new(Stream * stream,int deep);
+	    virtual PlayTree*	get_play_tree(libinput_t&libinput);
+	private:
+	    void		reset();
+	    char*		get_line();
+	    void		stop_keeping();
+	    PlayTree*		parse_asx(libinput_t& libinput);
+	    PlayTree*		parse_pls();
+	    PlayTree*		parse_textplain();
 
-void play_tree_parser_free(play_tree_parser_t* p);
-
-PlayTree* play_tree_parser_get_play_tree(libinput_t&libinput,play_tree_parser_t* p);
-
+	    Stream*	stream;
+	    char*	buffer;
+	    char*	iter;
+	    char*	line;
+	    int		buffer_size;
+	    int		buffer_end;
+	    int		deep;
+	    int		keep;
+    };
+}// namespace mpxp
 #endif

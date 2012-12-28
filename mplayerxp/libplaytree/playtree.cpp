@@ -12,13 +12,42 @@ using namespace mpxp;
 #include "libmpstream2/stream.h"
 #include "libmpconf/cfgparser.h"
 #include "playtree.h"
+#include "playtreeparser.h"
 #include "playtree_msg.h"
 
 namespace mpxp {
+PlayTree* PlayTree::parse_playtree(libinput_t&libinput,Stream* stream) {
+    PlayTree_Parser* p;
+    PlayTree* ret;
+
+    p = new(zeromem) PlayTree_Parser(stream,0);
+    if(!p) return NULL;
+
+    ret = p->get_play_tree(libinput);
+    delete p;
+
+    return ret;
+}
+
+PlayTree* PlayTree::parse_playlist_file(libinput_t&libinput,const std::string& file) {
+  Stream *stream;
+  PlayTree* ret;
+  int ff;
+
+  mpxp_v<<"Parsing playlist file "<<file<<"..."<<std::endl;
+  ff=0;
+  stream = new(zeromem) Stream;
+  stream->open(libinput,file,&ff);
+  stream->type(Stream::Type_Text);
+  ret = PlayTree::parse_playtree(libinput,stream);
+  delete stream;
+
+  return ret;
+}
 
 PlayTree::PlayTree()
 	:entry_type(PLAY_TREE_ENTRY_NODE) {}
-PlayTree::~PlayTree() {}
+PlayTree::~PlayTree() { free_list(1); }
 
 void PlayTree::free(int childs) {
     PlayTree* iter;
