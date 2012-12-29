@@ -74,6 +74,8 @@ namespace mpxp {
 	print_backtrace(why,stack,ncalls);
     }
     any_t*	__FASTCALL__ rnd_fill(any_t* buffer,size_t size);
+    any_t*	__FASTCALL__ make_false_pointer(any_t* tmplt);
+    any_t*	__FASTCALL__ make_false_pointer_to(any_t* tmplt,unsigned size);
     any_t*	__FASTCALL__ fill_false_pointers(any_t* buffer,size_t size);
     any_t* get_caller_address(unsigned num_caller=0);
 

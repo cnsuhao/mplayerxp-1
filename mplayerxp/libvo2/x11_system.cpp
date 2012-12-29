@@ -1021,8 +1021,10 @@ void Xv_System::getMyXImage(unsigned idx,Visual *visual,unsigned format,unsigned
     ::shmctl(Shminfo[idx].shmid, IPC_RMID, 0);
 }
 void Xv_System::freeMyXImage(unsigned idx) {
-    ::XShmDetach( get_display(),&Shminfo[idx]);
-    ::shmdt( Shminfo[idx].shmaddr );
+    if(Shminfo[idx].shmid) {
+	::XShmDetach( get_display(),&Shminfo[idx]);
+	::shmdt( Shminfo[idx].shmaddr );
+    }
 }
 
 void Xv_System::put_image(XvImage*image,const vo_rect_t& r) const {

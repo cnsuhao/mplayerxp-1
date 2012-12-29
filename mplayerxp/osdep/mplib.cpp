@@ -27,16 +27,28 @@ any_t* rnd_fill(any_t* buffer,size_t size)
     return buffer;
 }
 
+any_t* make_false_pointer(any_t* tmplt) {
+    long lo_mask=(sizeof(any_t*)*8/2)-1;
+    long hi_mask=~lo_mask;
+    long false_pointer;
+    false_pointer=::rand()&lo_mask;
+    false_pointer|=(reinterpret_cast<long>(tmplt)&hi_mask);
+    return reinterpret_cast<any_t*>(false_pointer);
+}
+
+any_t*	__FASTCALL__ make_false_pointer_to(any_t* tmplt,unsigned size) {
+    long false_pointer=reinterpret_cast<long>(tmplt);
+    false_pointer+=::rand()%size;
+    return reinterpret_cast<any_t*>(false_pointer);
+}
+
 any_t* fill_false_pointers(any_t* buffer,size_t size)
 {
     unsigned i,psize=(size/sizeof(any_t*))*sizeof(any_t*);
-    long lo_mask=(sizeof(any_t*)*8/2)-1;
-    long hi_mask=~lo_mask;
-    long filler;
+    any_t* filler;
     for(i=0;i<psize/sizeof(long);i++) {
-	filler=::rand()&lo_mask;
-	filler|=(reinterpret_cast<long>(buffer)&hi_mask);
-	((long *)buffer)[i]=::rand()%2?filler:0;
+	filler=make_false_pointer(buffer);
+	((long *)buffer)[i]=::rand()%2?reinterpret_cast<long>(filler):0;
     }
     ::memset(&((char *)buffer)[psize],0,size-psize);
     return buffer;
