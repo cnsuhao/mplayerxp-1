@@ -150,7 +150,7 @@ struct MPXPSystem : public Opaque {
 	int		handle_input(seek_args_t* seek,osd_args_t* osd,input_state_t* state);
 
 	unsigned	inited_flags;
-	int		vo_inited;
+	MPXP_Rc		vo_inited;
 	MPXP_Rc		ao_inited;
 	int		osd_show_framedrop;
 	int		osd_function;
@@ -324,6 +324,7 @@ void MPXPSystem::uninit_player(unsigned int mask){
 	MP_UNIT("uninit_vo");
 	delete mpxp_context().video().output;
 	mpxp_context().video().output=NULL;
+	vo_inited=MPXP_False;
     }
 
     if(mask&INITED_ACODEC){
@@ -338,6 +339,7 @@ void MPXPSystem::uninit_player(unsigned int mask){
 	MP_UNIT("uninit_ao");
 	delete mpxp_context().audio().output;
 	mpxp_context().audio().output=NULL;
+	ao_inited=MPXP_False;
     }
 
     if(mask&INITED_DEMUXER) uninit_demuxer();
@@ -818,9 +820,12 @@ char* MPXPSystem::init_output_subsystems() {
     unsigned i;
     // check video_out driver name:
     MP_UNIT("vo_init");
-    vo_inited = (mpxp_context().video().output->init(mp_conf.video_driver?mp_conf.video_driver:"")==MPXP_Ok)?1:0;
+    if(vo_inited==MPXP_False) {
+	if(!mpxp_context().video().output) mpxp_context().video().output=new(zeromem) Video_Output;
+	vo_inited = mpxp_context().video().output->init(mp_conf.video_driver?mp_conf.video_driver:"");
+    }
 
-    if(!vo_inited){
+    if(vo_inited==MPXP_False){
 	mpxp_fatal<<MSGTR_InvalidVOdriver<<": "<<(mp_conf.video_driver?mp_conf.video_driver:"?")<<std::endl;
 	exit_player(MSGTR_Fatal_error);
     }
@@ -860,8 +865,7 @@ int MPXPSystem::init_vobsub(const std::string& filename) {
       std::string buf = filename.substr(0,filename.length()-4);
       mpxp_context().video().output->vobsub=vobsub_open(buf,mp_conf.spudec_ifo,0,&mpxp_context().video().output->spudec);
     }
-    if(mpxp_context().video().output->vobsub)
-    {
+    if(mpxp_context().video().output->vobsub) {
       mp_conf.sub_auto=0; // don't do autosub for textsubs if vobsub found
       inited_flags|=INITED_VOBSUB;
     }
@@ -1574,7 +1578,6 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
     PointerProtector<MPXPSecureKeys> ptr_protector;
     secure_keys=ptr_protector.protect(new(zeromem) MPXPSecureKeys(10));
 
-    mpxp_context().video().output=new(zeromem) Video_Output;
     init_signal_handling();
 
     xmp_init();
@@ -1651,6 +1654,7 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
 	mpxp_info<<std::endl;
     }
 
+    mpxp_context().video().output=new(zeromem) Video_Output;
 //------ load global data first ------
     mpxp_init_osd(envm);
 // ========== Init keyboard FIFO (connection to libvo) ============
@@ -1923,6 +1927,7 @@ main:
 	MP_UNIT("Update timers");
 	if(sh_audio) eof = mpxp_context().engine().xp_core->audio->eof;
 	if(sh_video) eof|=dae_played_eof(mpxp_context().engine().xp_core->video);
+	if(eof) break;
 	if(!sh_video) {
 	    if(mp_conf.benchmark && mp_conf.verbose) show_benchmark_status();
 	    else MPXPSys.print_audio_status();
@@ -2038,19 +2043,16 @@ goto_next_file:  // don't jump here after ao/vo/getch initialization!
 	int flg;
 	flg=INITED_ALL;
 	if(input_state.after_dvdmenu) flg &=~(INITED_STREAM|INITED_DEMUXER);
-	MPXPSys.uninit_player(flg&(~INITED_INPUT)); /* TODO: |(~INITED_AO)|(~INITED_VO) */
-	MPXPSys.vo_inited=0;
-	MPXPSys.ao_inited=MPXP_False;
+	MPXPSys.uninit_player(flg&(~(INITED_INPUT|INITED_VO|INITED_SPUDEC))); /* TODO: |(~INITED_AO)|(~INITED_VO) */
 	eof = 0;
-	mpxp_context().engine().xp_core->audio->eof=0;
 	goto play_next_file;
     }
 
     if(stream_dump_type>1) dump_mux_close(MPXPSys.demuxer());
-    exit_player(MSGTR_Exit_eof);
 
     mpxp_uninit_structs();
     delete ptr_protector.unprotect(secure_keys);
+    exit_player(MSGTR_Exit_eof);
     return EXIT_SUCCESS;
 }
 } // namespace mpxp

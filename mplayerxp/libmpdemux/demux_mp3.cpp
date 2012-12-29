@@ -525,7 +525,7 @@ static Opaque* mp3_open(Demuxer* demuxer) {
     sh_audio->rate=mp3_samplerate;
     sh_audio->nch=mp3_channels;
     demuxer->movi_start-=HDR_SIZE;
-    if(!read_mp3v1_tags(demuxer,hdr,pos)) return 0; /* id3v1 may coexist with id3v2 */
+    read_mp3v1_tags(demuxer,hdr,pos); /* id3v1 may coexist with id3v2 */
     break;
   case RAW_MP3:
     sh_audio->wtag = 0x55;
@@ -533,7 +533,7 @@ static Opaque* mp3_open(Demuxer* demuxer) {
     sh_audio->rate=mp3_samplerate;
     sh_audio->nch=mp3_channels;
     demuxer->movi_start-=HDR_SIZE;
-    if(!read_mp3v1_tags(demuxer,hdr,pos)) return 0; /* id3v1 may coexist with id3v2 */
+    read_mp3v1_tags(demuxer,hdr,pos); /* id3v1 may coexist with id3v2 */
     break;
   }
 
