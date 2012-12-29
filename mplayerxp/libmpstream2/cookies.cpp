@@ -95,55 +95,55 @@ static int parse_line(char **ptr, char *cols[6])
 }
 
 /* Loads a file into RAM */
-static char *load_file(const char *filename, off_t * length)
+static char *load_file(const std::string& filename, off_t * length)
 {
     int fd;
     char *buffer;
 
     mpxp_v<<"Loading cookie file: "<<filename<<std::endl;
 
-    fd = open(filename, O_RDONLY);
+    fd = ::open(filename.c_str(), O_RDONLY);
     if (fd < 0) {
 	mpxp_v<<"Could not open"<<std::endl;
 	return NULL;
     }
 
-    *length = lseek(fd, 0, SEEK_END);
+    *length = ::lseek(fd, 0, SEEK_END);
 
     if (*length < 0) {
 	mpxp_v<<"Could not find EOF"<<std::endl;
-	close(fd);
+	::close(fd);
 	return NULL;
     }
 
     if (unsigned(*length) > std::numeric_limits<size_t>::max() - 1) {
 	mpxp_v<<"File too big, could not mp_malloc"<<std::endl;
-	close(fd);
+	::close(fd);
 	return NULL;
     }
 
-    lseek(fd, SEEK_SET, 0);
+    ::lseek(fd, SEEK_SET, 0);
 
     if (!(buffer = new char [*length + 1])) {
 	mpxp_v<<"Could not mp_malloc"<<std::endl;
-	close(fd);
+	::close(fd);
 	return NULL;
     }
 
-    if (read(fd, buffer, *length) != *length) {
+    if (::read(fd, buffer, *length) != *length) {
 	delete buffer;
 	mpxp_v<<"Read is behaving funny"<<std::endl;
-	close(fd);
+	::close(fd);
 	return NULL;
     }
-    close(fd);
+    ::close(fd);
     buffer[*length] = 0;
 
     return buffer;
 }
 
 /* Loads a cookies.txt file into a linked list. */
-static struct cookie_list_type *load_cookies_from(const char *filename,
+static struct cookie_list_type *load_cookies_from(const std::string& filename,
 						  struct cookie_list_type
 						  *list)
 {
@@ -179,42 +179,33 @@ static struct cookie_list_type *load_cookies(void)
     DIR *dir;
     struct dirent *ent;
     struct cookie_list_type *list = NULL;
-    char *buf;
-
-    char *homedir;
+    std::string homedir,buf;
 
     if (net_conf.cookies_file)
 	return load_cookies_from(net_conf.cookies_file, list);
 
-    homedir = getenv("HOME");
-    if (!homedir)
-	return list;
+    const std::map<std::string,std::string>& envm=mpxp_get_environment();
+    std::map<std::string,std::string>::const_iterator it;
+    it = envm.find("HOME");
+    if(it==envm.end()) throw "No 'HOME' environment found";
+    homedir = (*it).second;
+    buf=homedir+"/.mozilla/default";
 
-
-    buf = new char [strlen(homedir) + sizeof("/.mozilla/default") + 1];
-    sprintf(buf, "%s/.mozilla/default", homedir);
-    dir = opendir(buf);
-    delete buf;
+    dir = ::opendir(buf.c_str());
 
     if (dir) {
-	while ((ent = readdir(dir)) != NULL) {
+	while ((ent = ::readdir(dir)) != NULL) {
 	    if ((ent->d_name)[0] != '.') {
-		buf = new char [strlen(getenv("HOME")) +
-			     sizeof("/.mozilla/default/") +
-			     strlen(ent->d_name) + sizeof("cookies.txt") + 1];
-		sprintf(buf, "%s/.mozilla/default/%s/cookies.txt",
-			 getenv("HOME"), ent->d_name);
-		list = load_cookies_from(buf, list);
-		delete buf;
+		std::string buf2;
+		buf2=buf+"/"+std::string(ent->d_name)+"/cookies.txt";
+		list = load_cookies_from(buf2, list);
 	    }
 	}
-	closedir(dir);
+	::closedir(dir);
     }
 
-    buf = new char [strlen(homedir) + sizeof("/.netscape/cookies.txt") + 1];
-    sprintf(buf, "%s/.netscape/cookies.txt", homedir);
+    buf=homedir+"/.netscape/cookies.txt";
     list = load_cookies_from(buf, list);
-    delete buf;
 
     return list;
 }

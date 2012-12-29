@@ -86,7 +86,7 @@ int XShmGetEventBase(Display*);
 Xv_VO_Interface::Xv_VO_Interface(const std::string& arg)
 		:VO_Interface(arg),
 		aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
-		xv(new(zeromem) Xv_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
+		xv(new(zeromem) Xv_System(vo_conf.mDisplayName?vo_conf.mDisplayName:"",vo_conf.xinerama_screen))
 {
     num_buffers=1;
     if(!arg.empty()) {

@@ -44,7 +44,7 @@ static int x11_errorhandler(::Display *display,::XErrorEvent *event)
     return 0;
 }
 
-X11_System::X11_System(const char* DisplayName,int xinerama_screen)
+X11_System::X11_System(const std::string& DisplayName,int xinerama_screen)
 	    :screenwidth(0),
 	     screenheight(0)
 {
@@ -53,7 +53,7 @@ X11_System::X11_System(const char* DisplayName,int xinerama_screen)
 // char    * DisplayName = ":0.0";
     ::XImage  * mXImage = NULL;
     ::XWindowAttributes attribs;
-    const char* dispName;
+    std::string dispName;
 
     MotifHints = None;
 
@@ -62,14 +62,19 @@ X11_System::X11_System(const char* DisplayName,int xinerama_screen)
 #endif
     ::XSetErrorHandler(x11_errorhandler);
 
-    if (!DisplayName)
-	if (!(DisplayName=getenv("DISPLAY")))
-	    DisplayName=":0.0";
-    dispName = ::XDisplayName(DisplayName);
+    dispName=DisplayName;
+    if (dispName.empty()) {
+	const std::map<std::string,std::string>& envm=mpxp_get_environment();
+	std::map<std::string,std::string>::const_iterator it;
+	it = envm.find("DISPLAY");
+	if(it!=envm.end()) dispName = (*it).second;
+	if(dispName.empty()) dispName =":0.0";
+    }
+    dispName = ::XDisplayName(dispName.c_str());
 
     mpxp_v<<"X11 opening display: "<<dispName<<std::endl;
 
-    if(!(mDisplay=::XOpenDisplay(dispName))) {
+    if(!(mDisplay=::XOpenDisplay(dispName.c_str()))) {
 	mpxp_err<<"X11_System: couldn't open the X11 display: "<<dispName<<std::endl;
 	exit_player("X11_System error");
     }
@@ -141,9 +146,10 @@ X11_System::X11_System(const char* DisplayName,int xinerama_screen)
 	else if(mask==0xFFFF) _depth=16;
     }
 /* slightly improved local display detection AST */
-    if ( strncmp(dispName, "unix:", 5) == 0) dispName += 4;
-    else if ( strncmp(dispName, "localhost:", 10) == 0) dispName += 9;
-    if (*dispName==':')	mLocalDisplay=1;
+    char ch=dispName[0];
+    if ( dispName.substr(0,5)=="unix:") ch=dispName[4];
+    else if ( dispName.substr(0,10)=="localhost:") ch=dispName[9];
+    if (ch==':')	mLocalDisplay=1;
     else		mLocalDisplay=0;
     XA_NET_WM_STATE=::XInternAtom(mDisplay,"_NET_WM_STATE",0 );
     XA_NET_WM_STATE_FULLSCREEN=::XInternAtom(mDisplay,"_NET_WM_STATE_FULLSCREEN",0 );
@@ -153,7 +159,7 @@ X11_System::X11_System(const char* DisplayName,int xinerama_screen)
 X11_System::~X11_System() {
     ::XSetErrorHandler(NULL);
     /* and -wid is set */
-    ::XDestroyWindow(mDisplay, window);
+    if(window) ::XDestroyWindow(mDisplay, window);
     ::XCloseDisplay(mDisplay);
 }
 
@@ -950,7 +956,7 @@ void X11_System::vm_close()
 
 #ifdef HAVE_XV
 #include "img_format.h"
-Xv_System::Xv_System(const char* DisplayName,int xinerama_screen)
+Xv_System::Xv_System(const std::string& DisplayName,int xinerama_screen)
 	    :X11_System(DisplayName,xinerama_screen) {}
 Xv_System::~Xv_System() {}
 
@@ -1166,7 +1172,7 @@ int Xv_System::reset_video_eq() const
 #endif
 
 #ifdef HAVE_OPENGL
-GLX_System::GLX_System(const char* DisplayName,int xinerama_screen)
+GLX_System::GLX_System(const std::string& DisplayName,int xinerama_screen)
 	    :X11_System(DisplayName,xinerama_screen)
 {
     static int visual_attribs[] = {

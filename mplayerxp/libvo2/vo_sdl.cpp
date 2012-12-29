@@ -266,7 +266,7 @@ SDL_VO_Interface::SDL_VO_Interface(const std::string& arg)
 		:VO_Interface(arg),
 		aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect))
 #ifdef HAVE_X11
-		,x11(new(zeromem) X11_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
+		,x11(new(zeromem) X11_System(vo_conf.mDisplayName?vo_conf.mDisplayName:"",vo_conf.xinerama_screen))
 #endif
 {
     std::string vidix_name;

@@ -907,7 +907,7 @@ void MPXPSystem::init_dvd_nls() const {
 /* Add NLS support here */
     Stream* stream=static_cast<Stream*>(_demuxer->stream);
     char *lang;
-    if(!mp_conf.audio_lang) mp_conf.audio_lang=nls_get_screen_cp();
+    if(!mp_conf.audio_lang) mp_conf.audio_lang=nls_get_screen_cp(envm);
     MP_UNIT("dvd lang->id");
     if(mp_conf.audio_lang) {
 	lang=new char [std::max(strlen(mp_conf.audio_lang)+1,size_t(4))];

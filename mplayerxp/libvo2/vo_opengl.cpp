@@ -96,7 +96,7 @@ class OpenGL_VO_Interface : public VO_Interface {
 OpenGL_VO_Interface::OpenGL_VO_Interface(const std::string& arg)
 			    :VO_Interface(arg),
 			    aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
-			    glx(new(zeromem) GLX_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
+			    glx(new(zeromem) GLX_System(vo_conf.mDisplayName?vo_conf.mDisplayName:"",vo_conf.xinerama_screen))
 {
     num_buffers=1;
     glx->saver_off();

@@ -237,7 +237,7 @@ int mpxp_printf( unsigned x, const std::string& format, ... ){
     va_start(va, format);
     ssize=vsprintf(sbuf,format.c_str(), va);
     va_end(va);
-    if(strcmp(nls_get_screen_cp(),"UTF-8")!=0) {
+    if(strcmp(nls_get_screen_cp(mpxp_get_environment()),"UTF-8")!=0) {
 	char *obuf;
 	obuf=nls_recode2screen_cp("UTF-8",sbuf,ssize);
 	rc=fputs(obuf,stderr);

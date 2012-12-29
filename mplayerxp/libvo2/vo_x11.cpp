@@ -130,7 +130,7 @@ std::string X11_VO_Interface::parse_sub_device(const std::string& sd)
 X11_VO_Interface::X11_VO_Interface(const std::string& arg)
 		:VO_Interface(arg),
 		aspect(new(zeromem) Aspect(mp_conf.monitor_pixel_aspect)),
-		x11(new(zeromem) X11_System(vo_conf.mDisplayName,vo_conf.xinerama_screen))
+		x11(new(zeromem) X11_System(vo_conf.mDisplayName?vo_conf.mDisplayName:"",vo_conf.xinerama_screen))
 {
     std::string vidix_name;
     num_buffers=1;

@@ -365,7 +365,7 @@ int xacodec_query(xacodec_driver_t *codec_driver, XA_CODEC_HDR *codec_hdr)
     }
 }
 
-const char *xacodec_def_path = "/usr/lib/xanim/mods";
+static std::string xacodec_def_path = "/usr/lib/xanim/mods";
 
 static int xacodec_init_video(xa_private_t& priv, int out_format)
 {
@@ -387,10 +387,12 @@ static int xacodec_init_video(xa_private_t& priv, int out_format)
     for (i=0; i < XA_CLOSE_FUNCS; i++)
 	priv.xacodec_driver->close_func[i] = NULL;
 
-    if (getenv("XANIM_MOD_DIR"))
-	xacodec_def_path = ::getenv("XANIM_MOD_DIR");
+    const std::map<std::string,std::string>& envm=mpxp_get_environment();
+    std::map<std::string,std::string>::const_iterator it;
+    it = envm.find("XANIM_MOD_DIR");
+    if(it!=envm.end()) xacodec_def_path = (*it).second;
 
-    snprintf(dll, 1024, "%s/%s", xacodec_def_path, sh_video->codec->dll_name);
+    snprintf(dll, 1024, "%s/%s", xacodec_def_path.c_str(), sh_video->codec->dll_name);
     if (xacodec_init(dll, priv.xacodec_driver) == 0)
 	return 0;
 

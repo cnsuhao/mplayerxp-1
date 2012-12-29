@@ -69,51 +69,57 @@ static char term_buffer2[4096];
 static char *term_p=term_buffer2;
 
 static void termcap_add(char *id,int code){
-char *p=tgetstr(id,&term_p);
-  if(!p) return;
-  if(getch2_key_db>=MAX_KEYS) return;
-  getch2_keys[getch2_key_db].len=strlen(p);
-  strncpy(getch2_keys[getch2_key_db].chars,p,8);
-  getch2_keys[getch2_key_db].code=code;
-  ++getch2_key_db;
+    char *p=::tgetstr(id,&term_p);
+    if(!p) return;
+    if(getch2_key_db>=MAX_KEYS) return;
+    getch2_keys[getch2_key_db].len=strlen(p);
+    strncpy(getch2_keys[getch2_key_db].chars,p,8);
+    getch2_keys[getch2_key_db].code=code;
+    ++getch2_key_db;
 }
 
 static int success=0;
 
-int load_termcap(const char *termtype){
-  if(!termtype) termtype=getenv("TERM");
-  success=tgetent(term_buffer, termtype);
-  if(success<0){ mpxp_err<<"Could not access the 'termcap' data base"<<std::endl; return 0; }
-  if(success==0){ mpxp_err<<"Terminal type `"<<termtype<<"' is not defined"<<std::endl; return 0;}
+int load_termcap(const std::string& _termtype,const std::map<std::string,std::string>& envm){
+    std::string termtype=_termtype;
+    if(termtype.empty()) {
+	std::map<std::string,std::string>::const_iterator it;
+	it = envm.find("TERM");
+	if(it!=envm.end()) termtype = (*it).second;
+    }
 
-  screen_width=tgetnum("co");
-  screen_height=tgetnum("li");
-  if(screen_width<1 || screen_width>255) screen_width=80;
-  if(screen_height<1 || screen_height>255) screen_height=24;
+    success=::tgetent(term_buffer, termtype);
+    if(success<0){ mpxp_err<<"Could not access the 'termcap' data base"<<std::endl; return 0; }
+    if(success==0){ mpxp_err<<"Terminal type `"<<termtype<<"' is not defined"<<std::endl; return 0;}
 
-  termcap_add("kP",KEY_PGUP);
-  termcap_add("kN",KEY_PGDWN);
-  termcap_add("kh",KEY_HOME);
-  termcap_add("kH",KEY_END);
-  termcap_add("kI",KEY_INS);
-  termcap_add("kD",KEY_DEL);
-  termcap_add("kb",KEY_BS);
-  termcap_add("kl",KEY_LEFT);
-  termcap_add("kd",KEY_DOWN);
-  termcap_add("ku",KEY_UP);
-  termcap_add("kr",KEY_RIGHT);
-  termcap_add("k0",KEY_F+0);
-  termcap_add("k1",KEY_F+1);
-  termcap_add("k2",KEY_F+2);
-  termcap_add("k3",KEY_F+3);
-  termcap_add("k4",KEY_F+4);
-  termcap_add("k5",KEY_F+5);
-  termcap_add("k6",KEY_F+6);
-  termcap_add("k7",KEY_F+7);
-  termcap_add("k8",KEY_F+8);
-  termcap_add("k9",KEY_F+9);
-  termcap_add("k;",KEY_F+10);
-  return getch2_key_db;
+    screen_width=::tgetnum("co");
+    screen_height=::tgetnum("li");
+    if(screen_width<1 || screen_width>255) screen_width=80;
+    if(screen_height<1 || screen_height>255) screen_height=24;
+
+    termcap_add("kP",KEY_PGUP);
+    termcap_add("kN",KEY_PGDWN);
+    termcap_add("kh",KEY_HOME);
+    termcap_add("kH",KEY_END);
+    termcap_add("kI",KEY_INS);
+    termcap_add("kD",KEY_DEL);
+    termcap_add("kb",KEY_BS);
+    termcap_add("kl",KEY_LEFT);
+    termcap_add("kd",KEY_DOWN);
+    termcap_add("ku",KEY_UP);
+    termcap_add("kr",KEY_RIGHT);
+    termcap_add("k0",KEY_F+0);
+    termcap_add("k1",KEY_F+1);
+    termcap_add("k2",KEY_F+2);
+    termcap_add("k3",KEY_F+3);
+    termcap_add("k4",KEY_F+4);
+    termcap_add("k5",KEY_F+5);
+    termcap_add("k6",KEY_F+6);
+    termcap_add("k7",KEY_F+7);
+    termcap_add("k8",KEY_F+8);
+    termcap_add("k9",KEY_F+9);
+    termcap_add("k;",KEY_F+10);
+    return getch2_key_db;
 }
 
 #endif

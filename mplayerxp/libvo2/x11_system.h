@@ -1,6 +1,8 @@
 #ifndef X11_COMMON_H
 #define X11_COMMON_H
 
+#include <string>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #ifdef HAVE_SHM
@@ -31,7 +33,7 @@ namespace mpxp {
 
     class X11_System {
 	public:
-	    X11_System(const char* DisplayName,int ximerama_screen);
+	    X11_System(const std::string& DisplayName,int ximerama_screen);
 	    virtual ~X11_System();
 
 	    unsigned		screen_width() const;
@@ -121,7 +123,7 @@ namespace mpxp {
 #include <sys/shm.h>
     class Xv_System : public X11_System {
 	public:
-	    Xv_System(const char* DisplayName,int ximerama_screen);
+	    Xv_System(const std::string& DisplayName,int ximerama_screen);
 	    virtual ~Xv_System();
 
 	    unsigned		query_port(uint32_t fourcc);
@@ -150,7 +152,7 @@ namespace mpxp {
 #include <GL/glut.h>
     class GLX_System : public X11_System {
 	public:
-	    GLX_System(const char* DisplayName,int ximerama_screen);
+	    GLX_System(const std::string& DisplayName,int ximerama_screen);
 	    virtual ~GLX_System();
 
 	    virtual void	create_window(const XSizeHints& hint,XVisualInfo* visual,unsigned flags,unsigned depth,const std::string& title);

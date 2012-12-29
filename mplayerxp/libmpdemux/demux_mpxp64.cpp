@@ -410,7 +410,7 @@ static void mpxpav64_read_fcnt(Demuxer* demuxer,unsigned fsize)
 	{
 	    str=new char [len];
 	    s->read(str,len);
-	    sub_data.cp=nls_get_screen_cp();
+	    sub_data.cp=nls_get_screen_cp(mpxp_get_environment());
 	    demuxer->info().add(infot,nls_recode2screen_cp(codepage,str,len));
 	    delete str;
 	}

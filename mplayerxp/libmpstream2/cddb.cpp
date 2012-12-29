@@ -46,6 +46,7 @@ using namespace mpxp;
 #include "cdd.h"
 #include "tcp.h"
 #include "version.h"
+#include "osdep/get_path.h"
 #include "network.h"
 #include "stream_msg.h"
 
@@ -467,7 +468,7 @@ static int __FASTCALL__ cddb_get_freedb_sites(cddb_data_t *cddb_data) {
 
 static void __FASTCALL__ cddb_create_hello(cddb_data_t *cddb_data) {
     char host_name[51];
-    const char *user_name;
+    std::string user_name;
 
     if( cddb_data->anonymous ) {	// Default is anonymous
 	/* Note from Eduardo Pérez Ureta <eperez@it.uc3m.es> :
@@ -481,7 +482,10 @@ static void __FASTCALL__ cddb_create_hello(cddb_data_t *cddb_data) {
 	if( gethostname(host_name, 50)<0 ) {
 	    strcpy(host_name, "localhost");
 	}
-	user_name = getenv("LOGNAME");
+	const std::map<std::string,std::string>& envm=mpxp_get_environment();
+	std::map<std::string,std::string>::const_iterator it;
+	it = envm.find("LOGNAME");
+	if(it!=envm.end()) user_name = (*it).second;
     }
     cddb_data->cddb_hello=std::string("&hello=")+user_name+"+"+host_name+"+"+"MPlayerXP"+"+"+VERSION;
 }
@@ -526,11 +530,7 @@ static MPXP_Rc __FASTCALL__ cddb_resolve(libinput_t&libinput,char **xmcd_file) {
     cddb_data.disc_id = cddb_discid(cddb_data.tracks);
     cddb_data.anonymous = 1;	// Don't send user info by default
 
-    const std::map<std::string,std::string>& envm=mpxp_get_environment();
-    std::map<std::string,std::string>::const_iterator it;
-    it = envm.find("HOME");
-    home_dir = (*it).second;
-    if( !home_dir.empty() ) cddb_data.cache_dir=home_dir+cddb_cache_dir;
+    cddb_data.cache_dir=get_path(mpxp_get_environment(),cddb_cache_dir);
     // Check for a cached file
     if( cddb_read_cache(&cddb_data)<0 ) {
 	// No Cache found

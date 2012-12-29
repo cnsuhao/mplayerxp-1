@@ -16,6 +16,7 @@ using namespace mpxp;
 #include "nls.h"
 #include "nls_msg.h"
 
+namespace mpxp {
 /*
  *We have to proceed with the POSIX methods of looking to `LANG'.
   On some systems this can be done by the `setlocale' function itself.
@@ -28,20 +29,21 @@ using namespace mpxp;
  LINGUAS=ru
  Output of locale program contains `LANG' variable only!
 */
-static const char * langs[] = { "LANG", "LANGUAGE", "LINGUAS" };
+static const char* langs[] = { "LANG", "LANGUAGE", "LINGUAS" };
 
-char *nls_get_screen_cp(void)
+char *nls_get_screen_cp(const std::map<std::string,std::string>& envm)
 {
     unsigned i;
-    char *nls;
+    std::string nls;
     static char to_cp[256];
     strcpy(to_cp,"UTF-8");
-    for(i=0;i<sizeof(langs)/sizeof(char *);i++)
-    {
-	if((nls=getenv(langs[i]))!=NULL)
-	{
-		nls=strchr(nls,'.');
-		if(nls) strcpy(to_cp,nls+1);
+    for(i=0;i<sizeof(langs)/sizeof(char *);i++) {
+	std::map<std::string,std::string>::const_iterator it;
+	it = envm.find(langs[i]);
+	if(it!=envm.end()) {
+	    nls = (*it).second;
+		nls=nls.substr(nls.find('.')+1);
+		if(!nls.empty()) strcpy(to_cp,nls.c_str());
 		break;
 	}
     }
@@ -58,7 +60,7 @@ char *nls_recode2screen_cp(const char *src_cp,const char *param,unsigned len)
 	const char *ibuff,*ib;
 	char *ob,*to_cp;
 	size_t inb,outb;
-	to_cp=nls_get_screen_cp();
+	to_cp=nls_get_screen_cp(mpxp_get_environment());
 	errno=0;
 	ic=iconv_open(to_cp,src_cp);
 	if(errno)
@@ -133,7 +135,7 @@ char *nls_recode_from_screen_cp(const char *to_cp,const char *param,size_t *outb
 	const char *ibuff,*ib;
 	char *ob,*src_cp;
 	size_t inb;
-	src_cp=nls_get_screen_cp();
+	src_cp=nls_get_screen_cp(mpxp_get_environment());
 	errno=0;
 	ic=iconv_open(to_cp,src_cp);
 	if(errno)
@@ -175,3 +177,4 @@ char *nls_recode_from_screen_cp(const char *to_cp,const char *param,size_t *outb
 #endif
     return obuff;
 }
+} // namespace mpxp

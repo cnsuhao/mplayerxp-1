@@ -183,6 +183,7 @@ class FBDev_VO_Interface : public VO_Interface {
 #endif
 	int		fb_preinit_done;
 	MPXP_Rc		fb_works;
+	std::string	dev_name;
 };
 
 std::string FBDev_VO_Interface::parse_sub_device(const std::string& sd)
@@ -207,8 +208,14 @@ MPXP_Rc FBDev_VO_Interface::fb_preinit()
 
     if (fb_preinit_done) return fb_works;
 
-    if (!priv_conf.dev_name && !(priv_conf.dev_name = getenv("FRAMEBUFFER")))
-    priv_conf.dev_name = (char *)"/dev/fb0";
+    dev_name="";
+    const std::map<std::string,std::string>& envm=mpxp_get_environment();
+    std::map<std::string,std::string>::const_iterator it;
+    it = envm.find("FRAMEBUFFER");
+    if(it!=envm.end()) dev_name = (*it).second;
+
+    if(dev_name.empty()) dev_name = "/dev/fb0";
+    priv_conf.dev_name = const_cast<char*>(dev_name.c_str());
     mpxp_dbg2<<FBDEV<< "using "<<priv_conf.dev_name<<std::endl;
 
     if ((dev_fd = ::open(priv_conf.dev_name, O_RDWR)) == -1) {

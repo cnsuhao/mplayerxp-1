@@ -435,7 +435,7 @@ MPXP_Rc Nas_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
     unsigned char auformat = nas_aformat_to_auformat(&f);
     unsigned bytes_per_sample = _channels * AuSizeofFormat(auformat);
     unsigned buffer_size;
-    char *server;
+    std::string server;
 
     _format = f;
     _samplerate = r;
@@ -462,15 +462,22 @@ MPXP_Rc Nas_AO_Interface::configure(unsigned r,unsigned c,unsigned f)
 	return MPXP_False;
     }
 
-    if (!(server = ::getenv("AUDIOSERVER")) &&
-	    !(server = ::getenv("DISPLAY"))) {
+    const std::map<std::string,std::string>& envm=mpxp_get_environment();
+    std::map<std::string,std::string>::const_iterator it;
+    it = envm.find("AUDIOSERVER");
+    if(it!=envm.end()) server = (*it).second;
+    if(server.empty()) {
+	it = envm.find("DISPLAY");
+	if(it!=envm.end()) server = (*it).second;
+    }
+    if (server.empty()) {
 	mpxp_err<<"ao_nas: init(): AUDIOSERVER environment variable not set -> nosound"<<std::endl;
 	return MPXP_False;
     }
 
     mpxp_v<<"ao_nas: init(): Using audioserver "<<server<<std::endl;
 
-    aud = AuOpenServer(server, 0, NULL, 0, NULL, NULL);
+    aud = AuOpenServer(server.c_str(), 0, NULL, 0, NULL, NULL);
     if (!aud) {
 	mpxp_err<<"ao_nas: init(): Can't open nas audio server -> nosound"<<std::endl;
 	return MPXP_False;

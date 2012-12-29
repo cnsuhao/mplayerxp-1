@@ -6,9 +6,10 @@ using namespace mpxp;
 namespace mpxp {
 
 std::string get_path(const std::map<std::string,std::string>& envm,const std::string& filename) {
+    std::string homedir;
     std::map<std::string,std::string>::const_iterator it;
     it = envm.find("HOME");
-    const std::string homedir = (*it).second;
+    if(it!=envm.end()) homedir = (*it).second;
     std::string rs;
     std::string config_dir = std::string("/.")+PROGNAME;
 

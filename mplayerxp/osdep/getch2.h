@@ -4,7 +4,7 @@ namespace mpxp {
     /* GyS-TermIO v2.0 (for GySmail v3)          (C) 1999 A'rpi/ESP-team */
     /* a very small replacement of ncurses library */
     /* Load key definitions from the TERMCAP database. 'termtype' can be NULL */
-    int load_termcap(const char *termtype);
+    int load_termcap(const std::string& termtype,const std::map<std::string,std::string>& envm);
 
     /* Enable and disable STDIN line-buffering */
     void getch2_enable();

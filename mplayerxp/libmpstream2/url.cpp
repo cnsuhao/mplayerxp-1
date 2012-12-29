@@ -170,10 +170,14 @@ MPXP_Rc URL::check4proxies() {
     }
     // Check if the http_proxy environment variable is set.
     if( protocol2lower()=="http") {
-	const char *proxy;
-	proxy = getenv("http_proxy");
-	if( proxy!=NULL ) {
+	std::string proxy;
+	const std::map<std::string,std::string>& envm=mpxp_get_environment();
+	std::map<std::string,std::string>::const_iterator it;
+	it = envm.find("http_proxy");
+	if(it!=envm.end()) proxy = (*it).second;
+	if( !proxy.empty() ) {
 	    std::string new_url=proxy;
+	    mpxp_v<<"Using "<<proxy<<" as http_proxy"<<std::endl;
 	    URL proxy_url(new_url);
 #ifdef HAVE_AF_INET6
 	    if (net_conf.ipv4_only_proxy && (::gethostbyname(_host.c_str())==NULL)) {
