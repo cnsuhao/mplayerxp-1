@@ -1629,7 +1629,7 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
 	  delete MPXPSys.playtree_iter;
 	  MPXPSys.playtree_iter = NULL;
 	}
-	filename = MPXPSys.playtree_iter->get_playable_source_name(1);
+	else filename = MPXPSys.playtree_iter->get_playable_source_name(1);
       }
     }
 

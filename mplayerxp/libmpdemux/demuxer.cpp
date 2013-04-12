@@ -347,8 +347,10 @@ static const struct mime_type_table_t {
     // Real Media
     { "audio/x-pn-realaudio", &demux_realaud },
     // OGG Streaming
+#ifdef HAVE_LIBVORBIS
     { "application/ogg", &demux_ogg },
     { "application/x-ogg", &demux_ogg },
+#endif
     // NullSoft Streaming Video
     { "video/nsv", &demux_nsv},
     { "misc/ultravox", &demux_nsv},
