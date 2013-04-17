@@ -2078,7 +2078,6 @@ int main(int argc,char* args[], char *envp[])
 	    str=str.substr(0,pos);
 	    envm[str]=stmp;
 	}
-	envp[j+1] = NULL;
 	/* init antiviral protection */
 	int rc;
 	rc=mp_mprotect((any_t*)antiviral_hole1,sizeof(antiviral_hole1),MP_DENY_ALL);

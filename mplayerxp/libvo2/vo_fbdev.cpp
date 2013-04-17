@@ -252,6 +252,7 @@ MPXP_Rc FBDev_VO_Interface::fb_preinit()
     }
 
     fb_preinit_done = 1;
+    pre_init_err= MPXP_Ok;
     fb_works = MPXP_Ok;
     return MPXP_Ok;
 err_out_tty_fd:
@@ -263,6 +264,7 @@ err_out_fd:
 err_out:
     fb_preinit_done = 1;
     fb_works = MPXP_False;
+    pre_init_err= MPXP_Error;
     return MPXP_False;
 }
 
@@ -889,7 +891,10 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
 	mpxp_err<<FBDEV<< "Internal fatal error: init() was called before preinit()"<<std::endl;
 	return MPXP_False;
     }
-    if (pre_init_err!=MPXP_Ok) return MPXP_False;
+    if (pre_init_err!=MPXP_Ok) {
+	mpxp_err<<FBDEV<<"fb_prenit() was failed"<<std::endl;
+	return MPXP_False;
+    }
 
     if (priv_conf.mode_name && !flags&VOFLAG_MODESWITCHING) {
 	mpxp_err<<FBDEV<< "-fbmode can only be used with -vm"<<std::endl;
