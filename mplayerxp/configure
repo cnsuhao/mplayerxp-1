@@ -644,7 +644,7 @@ if test "$fbdev_nocopy" = yes ; then
 fi
 
 if enabled png; then
-require2 png png.h PNG_LIBPNG_VER_STRING -lpng
+require3 png png.h Z_BEST_SPEED PNG_LIBPNG_VER_STRING -lpng
 print_config HAVE_ mpxp_config.h mpxp_config.mak png
 disabled png	&& require2 libpng_png libpng/png.h PNG_LIBPNG_VER_STRING -lpng -lm
 print_config HAVE_ mpxp_config.h mpxp_config.mak libpng_png
