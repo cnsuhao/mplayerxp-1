@@ -112,7 +112,7 @@ int M_Config::read_option(const std::vector<const mpxp_option_t*>& conf_list,con
 			if (lopt==lname) goto option_found;
 		}
 	}
-	mpxp_err<<"invalid option: "<<opt<<std::endl;
+	mpxp_err<<"read_option: invalid option: "<<opt<<std::endl;
 	ret = ERR_NOT_AN_OPTION;
 	goto out;
 	option_found :
@@ -124,7 +124,7 @@ int M_Config::read_option(const std::vector<const mpxp_option_t*>& conf_list,con
 		goto out;
 	}
 	if (conf[i].flags & CONF_NOCMD && parser_mode == M_Config::CmdLine) {
-		mpxp_err<<"this option can only be used in config file:"<<opt<<std::endl;
+		mpxp_err<<"read_option: this option can only be used in config file:"<<opt<<std::endl;
 		ret = ERR_NOT_AN_OPTION;
 		goto out;
 	}
@@ -156,14 +156,14 @@ int M_Config::read_option(const std::vector<const mpxp_option_t*>& conf_list,con
 				    lparm=="0")
 					*((int *) conf[i].p) = conf[i].min;
 				else {
-					mpxp_err<<"invalid parameter for flag: "<<param<<std::endl;
+					mpxp_err<<"read_option: invalid parameter for flag: "<<param<<std::endl;
 					ret = ERR_OUT_OF_RANGE;
 					goto out;
 				}
 				ret = 1;
 			} else {	/* parser_mode == COMMAND_LINE */
 				*((int *) conf[i].p) = conf[i].max;
-				mpxp_dbg3<<"assigning "<<conf[i].name<<"="<<conf[i].max<<" as flag value"<<std::endl;
+				mpxp_dbg3<<"read_option: assigning "<<conf[i].name<<"="<<conf[i].max<<" as flag value"<<std::endl;
 				ret = 0;
 			}
 			break;
@@ -173,27 +173,27 @@ int M_Config::read_option(const std::vector<const mpxp_option_t*>& conf_list,con
 
 			tmp_int = ::strtol(param.c_str(), &endptr, 0);
 			if (*endptr) {
-				mpxp_err<<"parameter must be an integer: "<<param<<std::endl;
+				mpxp_err<<"read_option: parameter must be an integer: "<<param<<std::endl;
 				ret = ERR_OUT_OF_RANGE;
 				goto out;
 			}
 
 			if (conf[i].flags & CONF_MIN)
 				if (tmp_int < conf[i].min) {
-					mpxp_err<<"parameter must be >= "<<(int) conf[i].min<<": "<<param<<std::endl;
+					mpxp_err<<"read_option: parameter must be >= "<<(int) conf[i].min<<": "<<param<<std::endl;
 					ret = ERR_OUT_OF_RANGE;
 					goto out;
 				}
 
 			if (conf[i].flags & CONF_MAX)
 				if (tmp_int > conf[i].max) {
-					mpxp_err<<"parameter must be <= "<<(int) conf[i].max<<": "<<param<<std::endl;
+					mpxp_err<<"read_option: parameter must be <= "<<(int) conf[i].max<<": "<<param<<std::endl;
 					ret = ERR_OUT_OF_RANGE;
 					goto out;
 				}
 
 			*((int *) conf[i].p) = tmp_int;
-			mpxp_dbg3<<"assigning "<<conf[i].name<<"="<<tmp_int<<" as int value"<<std::endl;
+			mpxp_dbg3<<"read_option: assigning "<<conf[i].name<<"="<<tmp_int<<" as int value"<<std::endl;
 			ret = 1;
 			break;
 		case CONF_TYPE_FLOAT:
@@ -206,27 +206,27 @@ int M_Config::read_option(const std::vector<const mpxp_option_t*>& conf_list,con
 				tmp_float /= ::strtod(endptr+1, &endptr);
 
 			if (*endptr) {
-				mpxp_err<<"parameter must be a floating point number or a ratio (numerator[:/]denominator): "<<param<<std::endl;
+				mpxp_err<<"read_option: parameter must be a floating point number or a ratio (numerator[:/]denominator): "<<param<<std::endl;
 				ret = ERR_MISSING_PARAM;
 				goto out;
 			}
 
 			if (conf[i].flags & CONF_MIN)
 				if (tmp_float < conf[i].min) {
-					mpxp_err<<"parameter must be >= "<<(float)conf[i].min<<": "<<param<<std::endl;
+					mpxp_err<<"read_option: parameter must be >= "<<(float)conf[i].min<<": "<<param<<std::endl;
 					ret = ERR_OUT_OF_RANGE;
 					goto out;
 				}
 
 			if (conf[i].flags & CONF_MAX)
 				if (tmp_float > conf[i].max) {
-					mpxp_err<<"parameter must be <= "<<(float)conf[i].max<<": "<<param<<std::endl;
+					mpxp_err<<"read_option: parameter must be <= "<<(float)conf[i].max<<": "<<param<<std::endl;
 					ret = ERR_OUT_OF_RANGE;
 					goto out;
 				}
 
 			*((float *) conf[i].p) = tmp_float;
-			mpxp_dbg3<<"assigning "<<conf[i].name<<"="<<tmp_float<<" as float value"<<std::endl;
+			mpxp_dbg3<<"read_option: assigning "<<conf[i].name<<"="<<tmp_float<<" as float value"<<std::endl;
 			ret = 1;
 			break;
 		case CONF_TYPE_STRING:
@@ -235,19 +235,19 @@ int M_Config::read_option(const std::vector<const mpxp_option_t*>& conf_list,con
 
 			if (conf[i].flags & CONF_MIN)
 				if (param.length() < conf[i].min) {
-					mpxp_err<<"parameter must be >= "<<(int) conf[i].min<<" chars: "<<param<<std::endl;
+					mpxp_err<<"read_option: parameter must be >= "<<(int) conf[i].min<<" chars: "<<param<<std::endl;
 					ret = ERR_OUT_OF_RANGE;
 					goto out;
 				}
 
 			if (conf[i].flags & CONF_MAX)
 				if (param.length() > conf[i].max) {
-					mpxp_err<<"parameter must be <= "<<(int) conf[i].max<<" chars: "<<param<<std::endl;
+					mpxp_err<<"read_option: parameter must be <= "<<(int) conf[i].max<<" chars: "<<param<<std::endl;
 					ret = ERR_OUT_OF_RANGE;
 					goto out;
 				}
 			*((char **) conf[i].p) = mp_strdup(param.c_str());
-			mpxp_dbg3<<"assigning "<<conf[i].name<<"="<<param<<" as string value"<<std::endl;
+			mpxp_dbg3<<"read_option: assigning "<<conf[i].name<<"="<<param<<" as string value"<<std::endl;
 			ret = 1;
 			break;
 		case CONF_TYPE_INC:
@@ -267,7 +267,7 @@ int M_Config::read_option(const std::vector<const mpxp_option_t*>& conf_list,con
 			mpxp_info<<(char *)conf[i].p;
 			exit(1);
 		default:
-			mpxp_err<<"Unknown config type specified in conf-mplayerxp.h!"<<std::endl;
+			mpxp_err<<"read_option: Unknown config type specified in conf-mplayerxp.h!"<<std::endl;
 			break;
 	}
 out:
@@ -279,7 +279,7 @@ out:
 	}
 	return ret;
 err_missing_param:
-	mpxp_err<<"missing parameter for option: "<<opt<<std::endl;
+	mpxp_err<<"read_option: missing parameter for option: "<<opt<<std::endl;
 	ret = ERR_MISSING_PARAM;
 	goto out;
 }
