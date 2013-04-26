@@ -220,7 +220,7 @@ static void __prot_free_append(any_t*ptr) {
     any_t *page_ptr=prot_page_align(ptr);
     mp_slot_t* slot=prot_find_slot(&priv->mallocs,page_ptr);
     if(!slot) {
-	::printf("[__prot_free_append] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
+	mpxp_info<<"[__prot_free_append] suspect call found! Can't find slot for address: "<<ptr<<" [aligned: "<<page_ptr<<"]"<<std::endl;
 	__prot_print_slots(&priv->mallocs);
 	__print_backtrace(Max_BackTraces);
 	::kill(::getpid(), SIGILL);
@@ -236,7 +236,7 @@ static any_t* __prot_realloc_append(any_t*ptr,size_t size) {
     if((rp=__prot_malloc_append(size))!=NULL && ptr) {
 	mp_slot_t* slot=prot_find_slot(&priv->mallocs,prot_page_align(ptr));
 	if(!slot) {
-	    ::printf("[__prot_realloc_append] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,prot_page_align(ptr));
+	    mpxp_info<<"[__prot_realloc_append] suspect call found! Can't find slot for address: "<<ptr<<" [aligned: "<<prot_page_align(ptr)<<"]"<<std::endl;
 	    __prot_print_slots(&priv->mallocs);
 	    __print_backtrace(Max_BackTraces);
 	    ::kill(::getpid(), SIGILL);
@@ -270,7 +270,7 @@ static void __prot_free_prepend(any_t*ptr) {
     any_t *page_ptr=pre_page_align(ptr);
     mp_slot_t* slot=prot_find_slot(&priv->mallocs,page_ptr);
     if(!slot) {
-	::printf("[__prot_free_prepend] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,page_ptr);
+	mpxp_info<<"[__prot_free_prepend] suspect call found! Can't find slot for address: "<<ptr<<" [aligned: "<<page_ptr<<"]"<<std::endl;
 	__prot_print_slots(&priv->mallocs);
 	__print_backtrace(Max_BackTraces);
 	::kill(::getpid(), SIGILL);
@@ -285,7 +285,7 @@ static any_t* __prot_realloc_prepend(any_t*ptr,size_t size) {
     if((rp=__prot_malloc_prepend(size))!=NULL && ptr) {
 	mp_slot_t* slot=prot_find_slot(&priv->mallocs,pre_page_align(ptr));
 	if(!slot) {
-	    ::printf("[__prot_realloc_prepend] suspect call found! Can't find slot for address: %p [aligned: %p]\n",ptr,pre_page_align(ptr));
+	    mpxp_info<<"[__prot_realloc_prepend] suspect call found! Can't find slot for address: "<<ptr<<" [aligned: "<<pre_page_align(ptr)<<"]"<<std::endl;
 	    __prot_print_slots(&priv->mallocs);
 	    __print_backtrace(Max_BackTraces);
 	    ::kill(getpid(), SIGILL);
@@ -536,7 +536,7 @@ int __FASTCALL__ mp_mprotect(any_t* addr,size_t len,enum mp_prot_e flags)
 using namespace mpxp;
 #include <new>
 
-any_t*	SECURE_NAME0(_mp_malloc)(size_t size) {
+extern "C" any_t*	SECURE_NAME0(_mp_malloc)(size_t size) {
     any_t* ptr;
     ptr = mp_malloc(size);
     if(!ptr) {
@@ -546,7 +546,7 @@ any_t*	SECURE_NAME0(_mp_malloc)(size_t size) {
     return ptr;
 }
 
-any_t*	SECURE_NAME1(_mp_mallocz)(size_t size) {
+extern "C" any_t*	SECURE_NAME1(_mp_mallocz)(size_t size) {
     any_t* ptr;
     ptr = mp_mallocz(size);
     if(!ptr) {
@@ -556,7 +556,7 @@ any_t*	SECURE_NAME1(_mp_mallocz)(size_t size) {
     return ptr;
 }
 
-any_t*	SECURE_NAME2(_mp_memalign)(size_t boundary,size_t size) {
+extern "C" any_t*	SECURE_NAME2(_mp_memalign)(size_t boundary,size_t size) {
     any_t* ptr;
     ptr = mp_memalign(boundary,size);
     if(!ptr) {
@@ -566,7 +566,7 @@ any_t*	SECURE_NAME2(_mp_memalign)(size_t boundary,size_t size) {
     return ptr;
 }
 
-void	SECURE_NAME3(_mp_free)(any_t* ptr) {
+extern "C" void	SECURE_NAME3(_mp_free)(any_t* ptr) {
     mp_free(ptr);
 }
 

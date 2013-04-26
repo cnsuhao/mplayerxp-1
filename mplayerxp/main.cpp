@@ -2060,6 +2060,27 @@ goto_next_file:  // don't jump here after ao/vo/getch initialization!
 int main(int argc,char* args[], char *envp[])
 {
     try {
+	/* init malloc */
+	size_t pos;
+	mp_conf.malloc_debug=0;
+	mp_malloc_e flg=MPA_FLG_RANDOMIZER;
+	for(int i=0;i<argc;i++) {
+	    std::string s=args[i];
+	    if(s.substr(0,18)=="-core.malloc-debug") {
+		if((pos=s.find('='))!=std::string::npos) {
+		    mp_conf.malloc_debug=::atoi(s.substr(pos+1).c_str());
+		}
+		switch(mp_conf.malloc_debug) {
+		    default:
+		    case 0: flg=MPA_FLG_RANDOMIZER; break;
+		    case 1: flg=MPA_FLG_BOUNDS_CHECK; break;
+		    case 2: flg=MPA_FLG_BEFORE_CHECK; break;
+		    case 3: flg=MPA_FLG_BACKTRACE; break;
+		}
+		break;
+	    }
+	}
+	mp_init_malloc(args[0],1000,10,flg);
 	std::vector<std::string> argv;
 	std::string str,stmp;
 	for(int i=0;i<argc;i++) {
@@ -2069,7 +2090,6 @@ int main(int argc,char* args[], char *envp[])
 	args[argc] = (char*)make_false_pointer((any_t*)antiviral_hole1);
 	std::map<std::string,std::string> envm;
 	unsigned j=0;
-	size_t pos;
 	while(envp[j]) {
 	    str=envp[j++];
 	    pos=str.find('=');
@@ -2090,27 +2110,6 @@ int main(int argc,char* args[], char *envp[])
 		return EXIT_FAILURE;
 	}
 	mpxp_ok<<"*** Antiviral protection was inited ***!!!"<<std::endl;
-	/* init malloc */
-	size_t i,sz=argv.size();
-	mp_conf.malloc_debug=0;
-	mp_malloc_e flg=MPA_FLG_RANDOMIZER;
-	for(i=0;i<sz;i++) {
-	    std::string s=argv[i];
-	    if(s.substr(0,18)=="-core.malloc-debug") {
-		if((pos=s.find('='))!=std::string::npos) {
-		    mp_conf.malloc_debug=::atoi(s.substr(pos+1).c_str());
-		}
-		switch(mp_conf.malloc_debug) {
-		    default:
-		    case 0: flg=MPA_FLG_RANDOMIZER; break;
-		    case 1: flg=MPA_FLG_BOUNDS_CHECK; break;
-		    case 2: flg=MPA_FLG_BEFORE_CHECK; break;
-		    case 3: flg=MPA_FLG_BACKTRACE; break;
-		}
-		break;
-	    }
-	}
-	mp_init_malloc(argv[0],1000,10,flg);
 	/* init structs */
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
 	memset(&mp_conf.x86,-1,sizeof(x86_features_t));
