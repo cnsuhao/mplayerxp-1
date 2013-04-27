@@ -98,9 +98,9 @@ namespace mpxp {
     inline Stream::type_e operator|(Stream::type_e a, Stream::type_e b) { return static_cast<Stream::type_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
     inline Stream::type_e operator&(Stream::type_e a, Stream::type_e b) { return static_cast<Stream::type_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
     inline Stream::type_e operator^(Stream::type_e a, Stream::type_e b) { return static_cast<Stream::type_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b)); }
-    inline Stream::type_e operator|=(Stream::type_e a, Stream::type_e b) { return (a=static_cast<Stream::type_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
-    inline Stream::type_e operator&=(Stream::type_e a, Stream::type_e b) { return (a=static_cast<Stream::type_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
-    inline Stream::type_e operator^=(Stream::type_e a, Stream::type_e b) { return (a=static_cast<Stream::type_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
+    inline Stream::type_e operator|=(Stream::type_e& a, Stream::type_e b) { return (a=static_cast<Stream::type_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
+    inline Stream::type_e operator&=(Stream::type_e& a, Stream::type_e b) { return (a=static_cast<Stream::type_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
+    inline Stream::type_e operator^=(Stream::type_e& a, Stream::type_e b) { return (a=static_cast<Stream::type_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
     struct Memory_Stream : public Stream {
 	public:

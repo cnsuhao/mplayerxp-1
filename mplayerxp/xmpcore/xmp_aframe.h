@@ -45,9 +45,9 @@ namespace mpxp {
     inline mpaf_format_e operator|(mpaf_format_e a, mpaf_format_e b) { return static_cast<mpaf_format_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
     inline mpaf_format_e operator&(mpaf_format_e a, mpaf_format_e b) { return static_cast<mpaf_format_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
     inline mpaf_format_e operator^(mpaf_format_e a, mpaf_format_e b) { return static_cast<mpaf_format_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b)); }
-    inline mpaf_format_e operator|=(mpaf_format_e a, mpaf_format_e b) { return (a=static_cast<mpaf_format_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
-    inline mpaf_format_e operator&=(mpaf_format_e a, mpaf_format_e b) { return (a=static_cast<mpaf_format_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
-    inline mpaf_format_e operator^=(mpaf_format_e a, mpaf_format_e b) { return (a=static_cast<mpaf_format_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
+    inline mpaf_format_e operator|=(mpaf_format_e& a, mpaf_format_e b) { return (a=static_cast<mpaf_format_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
+    inline mpaf_format_e operator&=(mpaf_format_e& a, mpaf_format_e b) { return (a=static_cast<mpaf_format_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
+    inline mpaf_format_e operator^=(mpaf_format_e& a, mpaf_format_e b) { return (a=static_cast<mpaf_format_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
     /* Decodes the format from mplayer format to libaf format */
     mpaf_format_e __FASTCALL__ afmt2mpaf(unsigned format);

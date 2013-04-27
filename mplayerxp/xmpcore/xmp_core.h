@@ -69,9 +69,9 @@ namespace mpxp {
     inline xmp_model_e operator|(xmp_model_e a, xmp_model_e b) { return static_cast<xmp_model_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
     inline xmp_model_e operator&(xmp_model_e a, xmp_model_e b) { return static_cast<xmp_model_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
     inline xmp_model_e operator^(xmp_model_e a, xmp_model_e b) { return static_cast<xmp_model_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b)); }
-    inline xmp_model_e operator|=(xmp_model_e a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
-    inline xmp_model_e operator&=(xmp_model_e a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
-    inline xmp_model_e operator^=(xmp_model_e a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
+    inline xmp_model_e operator|=(xmp_model_e& a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
+    inline xmp_model_e operator&=(xmp_model_e& a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
+    inline xmp_model_e operator^=(xmp_model_e& a, xmp_model_e b) { return (a=static_cast<xmp_model_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
     struct mpxp_thread_t {
 	unsigned	p_idx;

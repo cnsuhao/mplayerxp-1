@@ -20,9 +20,9 @@ namespace mpxp {
     inline dp_flags_e operator|(dp_flags_e a, dp_flags_e b) { return static_cast<dp_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
     inline dp_flags_e operator&(dp_flags_e a, dp_flags_e b) { return static_cast<dp_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
     inline dp_flags_e operator^(dp_flags_e a, dp_flags_e b) { return static_cast<dp_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b)); }
-    inline dp_flags_e operator|=(dp_flags_e a, dp_flags_e b) { return (a=static_cast<dp_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
-    inline dp_flags_e operator&=(dp_flags_e a, dp_flags_e b) { return (a=static_cast<dp_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
-    inline dp_flags_e operator^=(dp_flags_e a, dp_flags_e b) { return (a=static_cast<dp_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
+    inline dp_flags_e operator|=(dp_flags_e& a, dp_flags_e b) { return (a=static_cast<dp_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
+    inline dp_flags_e operator&=(dp_flags_e& a, dp_flags_e b) { return (a=static_cast<dp_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
+    inline dp_flags_e operator^=(dp_flags_e& a, dp_flags_e b) { return (a=static_cast<dp_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
     /** Describes demuxer's packet */
     class Demuxer_Packet : public Opaque {

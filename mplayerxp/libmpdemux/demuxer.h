@@ -147,9 +147,9 @@ namespace mpxp {
     inline Demuxer::demuxer_flags_e operator|(Demuxer::demuxer_flags_e a, Demuxer::demuxer_flags_e b) { return static_cast<Demuxer::demuxer_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
     inline Demuxer::demuxer_flags_e operator&(Demuxer::demuxer_flags_e a, Demuxer::demuxer_flags_e b) { return static_cast<Demuxer::demuxer_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
     inline Demuxer::demuxer_flags_e operator^(Demuxer::demuxer_flags_e a, Demuxer::demuxer_flags_e b) { return static_cast<Demuxer::demuxer_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b)); }
-    inline Demuxer::demuxer_flags_e operator|=(Demuxer::demuxer_flags_e a, Demuxer::demuxer_flags_e b) { return (a=static_cast<Demuxer::demuxer_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
-    inline Demuxer::demuxer_flags_e operator&=(Demuxer::demuxer_flags_e a, Demuxer::demuxer_flags_e b) { return (a=static_cast<Demuxer::demuxer_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
-    inline Demuxer::demuxer_flags_e operator^=(Demuxer::demuxer_flags_e a, Demuxer::demuxer_flags_e b) { return (a=static_cast<Demuxer::demuxer_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
+    inline Demuxer::demuxer_flags_e operator|=(Demuxer::demuxer_flags_e& a, Demuxer::demuxer_flags_e b) { return (a=static_cast<Demuxer::demuxer_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
+    inline Demuxer::demuxer_flags_e operator&=(Demuxer::demuxer_flags_e& a, Demuxer::demuxer_flags_e b) { return (a=static_cast<Demuxer::demuxer_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
+    inline Demuxer::demuxer_flags_e operator^=(Demuxer::demuxer_flags_e& a, Demuxer::demuxer_flags_e b) { return (a=static_cast<Demuxer::demuxer_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
     Demuxer*			new_demuxers_demuxer(Demuxer* vd, Demuxer* ad, Demuxer* sd);
 }// namespace mpxp

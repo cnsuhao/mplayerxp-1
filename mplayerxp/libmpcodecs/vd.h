@@ -19,9 +19,9 @@ inline video_flags_e operator~(video_flags_e a) { return static_cast<video_flags
 inline video_flags_e operator|(video_flags_e a, video_flags_e b) { return static_cast<video_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
 inline video_flags_e operator&(video_flags_e a, video_flags_e b) { return static_cast<video_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
 inline video_flags_e operator^(video_flags_e a, video_flags_e b) { return static_cast<video_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b)); }
-inline video_flags_e operator|=(video_flags_e a, video_flags_e b) { return (a=static_cast<video_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
-inline video_flags_e operator&=(video_flags_e a, video_flags_e b) { return (a=static_cast<video_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
-inline video_flags_e operator^=(video_flags_e a, video_flags_e b) { return (a=static_cast<video_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
+inline video_flags_e operator|=(video_flags_e& a, video_flags_e b) { return (a=static_cast<video_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
+inline video_flags_e operator&=(video_flags_e& a, video_flags_e b) { return (a=static_cast<video_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
+inline video_flags_e operator^=(video_flags_e& a, video_flags_e b) { return (a=static_cast<video_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
 typedef enum {
     VCodecStatus_Working	=3,

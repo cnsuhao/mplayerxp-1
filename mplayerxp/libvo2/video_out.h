@@ -70,9 +70,9 @@ namespace mpxp {
     inline vo_flags_e operator|(vo_flags_e a, vo_flags_e b) { return static_cast<vo_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
     inline vo_flags_e operator&(vo_flags_e a, vo_flags_e b) { return static_cast<vo_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
     inline vo_flags_e operator^(vo_flags_e a, vo_flags_e b) { return static_cast<vo_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b)); }
-    inline vo_flags_e operator|=(vo_flags_e a, vo_flags_e b) { return (a=static_cast<vo_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
-    inline vo_flags_e operator&=(vo_flags_e a, vo_flags_e b) { return (a=static_cast<vo_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
-    inline vo_flags_e operator^=(vo_flags_e a, vo_flags_e b) { return (a=static_cast<vo_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
+    inline vo_flags_e operator|=(vo_flags_e& a, vo_flags_e b) { return (a=static_cast<vo_flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
+    inline vo_flags_e operator&=(vo_flags_e& a, vo_flags_e b) { return (a=static_cast<vo_flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
+    inline vo_flags_e operator^=(vo_flags_e& a, vo_flags_e b) { return (a=static_cast<vo_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
     /** Request for supported FOURCC by VO-driver */
     struct vo_query_fourcc_t {

@@ -142,9 +142,9 @@ namespace mpxp {
     inline M_Config::flags_e operator|(M_Config::flags_e a, M_Config::flags_e b) { return static_cast<M_Config::flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b)); }
     inline M_Config::flags_e operator&(M_Config::flags_e a, M_Config::flags_e b) { return static_cast<M_Config::flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b)); }
     inline M_Config::flags_e operator^(M_Config::flags_e a, M_Config::flags_e b) { return static_cast<M_Config::flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b)); }
-    inline M_Config::flags_e operator|=(M_Config::flags_e a, M_Config::flags_e b) { return (a=static_cast<M_Config::flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
-    inline M_Config::flags_e operator&=(M_Config::flags_e a, M_Config::flags_e b) { return (a=static_cast<M_Config::flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
-    inline M_Config::flags_e operator^=(M_Config::flags_e a, M_Config::flags_e b) { return (a=static_cast<M_Config::flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
+    inline M_Config::flags_e operator|=(M_Config::flags_e& a, M_Config::flags_e b) { return (a=static_cast<M_Config::flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
+    inline M_Config::flags_e operator&=(M_Config::flags_e& a, M_Config::flags_e b) { return (a=static_cast<M_Config::flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
+    inline M_Config::flags_e operator^=(M_Config::flags_e& a, M_Config::flags_e b) { return (a=static_cast<M_Config::flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 } // namespace mpxp
 
 #endif /* __CONFIG_H */
