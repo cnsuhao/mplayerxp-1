@@ -406,6 +406,12 @@ print_config HAVE_ mpxp_config.h mpxp_config.mak nanosleep
 check_func2 execinfo.h backtrace
 print_config HAVE_ mpxp_config.h mpxp_config.mak backtrace
 
+check_header endian.h
+print_config HAVE_ mpxp_config.h mpxp_config.mak endian_h
+
+check_header byteswap.h
+print_config HAVE_ mpxp_config.h mpxp_config.mak byteswap_h
+
 disable inet_pton
 if enabled streaming ; then
 disable socklib

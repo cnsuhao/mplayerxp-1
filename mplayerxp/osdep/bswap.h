@@ -1,16 +1,18 @@
 #ifndef __BSWAP_H__
 #define __BSWAP_H__
+#include "mpxp_config.h"
 
+#ifdef HAVE_ENDIAN_H
+#include <endian.h>
+#endif
 #ifdef HAVE_BYTESWAP_H
 #include <byteswap.h>
-#else
-
+#endif
 #include <inttypes.h> /* for __WORDSIZE */
-#include "mpxp_config.h"
 
 namespace mpxp {
 
-#ifdef WORDS_BIGENDIAN
+#if __BYTE_ORDER == __BIG_ENDIAN
 #define FOURCC_TAG(ch0,ch1,ch2,ch3) (((uint32_t)(ch3)|((uint32_t)ch2<<8)|(uint32_t)ch1<<16)|((uint32_t)ch0<<24))
 #define TWOCC_TAG(ch0,ch1) ((uint16_t)ch0|((uint16_t)ch1)<<8)
 #else
@@ -28,6 +30,7 @@ namespace mpxp {
 	return  (uint16_t)ch0|((uint16_t)ch1)<<8;
     }
 
+#ifndef HAVE_BYTESWAP_H
 #if defined(__i386__)
     inline uint16_t bswap_16(uint16_t x) {
 	__asm("xchgb %b0,%h0"	:
@@ -154,7 +157,7 @@ namespace mpxp {
 // be2me ... BigEndian to MachineEndian
 // le2me ... LittleEndian to MachineEndian
 
-#ifdef WORDS_BIGENDIAN
+#if __BYTE_ORDER == __BIG_ENDIAN
     inline uint16_t be2me_16(uint16_t x) { return x; }
     inline uint32_t be2me_32(uint32_t x) { return x; }
     inline uint64_t be2me_64(uint64_t x) { return x; }
