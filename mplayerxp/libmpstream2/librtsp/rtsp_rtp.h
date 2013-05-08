@@ -23,7 +23,7 @@
 
 #include "rtsp.h"
 
-namespace mpxp {
+namespace	usr {
 static const int MAX_PREVIEW_SIZE=4096;
     class Rtp_Rtsp_Session : public Opaque {
 	public:
@@ -48,6 +48,6 @@ static const int MAX_PREVIEW_SIZE=4096;
 	    int		rtsp_port;
 	    char*	rtsp_destination;
     };
-} // namespace mpxp
+} // namespace	usr
 #endif /* HAVE_RTSP_RTP_H */
 

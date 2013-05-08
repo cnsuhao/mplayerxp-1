@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * vo_xv.c, X11 Xv interface
  *
@@ -39,7 +39,7 @@ using namespace mpxp;
 
 #include "vo_msg.h"
 
-namespace mpxp {
+namespace	usr {
 class Xv_VO_Interface : public VO_Interface {
     public:
 	Xv_VO_Interface(const std::string& args);

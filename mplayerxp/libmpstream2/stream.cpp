@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <algorithm>
 #include <iomanip>
 
@@ -27,7 +27,7 @@ using namespace mpxp;
 #include "stream_internal.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 #ifdef HAVE_LIBCDIO_CDDA
 extern const stream_interface_info_t cdda_stream;
 extern const stream_interface_info_t cddb_stream;
@@ -283,4 +283,4 @@ void	Memory_Stream::eof(int e) { e?_pos=_len+1:_pos=0; }
 void	Memory_Stream::reset() { _pos=0; }
 std::string	Memory_Stream::mime_type() const { return "application/octet-stream"; }
 
-} //namespace mpxp
+} //namespace	usr

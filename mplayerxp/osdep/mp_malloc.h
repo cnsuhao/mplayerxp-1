@@ -14,7 +14,7 @@
 #include <sys/mman.h>
 #include "mpxp_config.h"
 
-namespace mpxp {
+namespace	usr {
 
     extern volatile unsigned long long int my_profile_start,my_profile_end,my_profile_total;
 
@@ -77,7 +77,7 @@ namespace mpxp {
     any_t*	__FASTCALL__ fill_false_pointers(any_t* buffer,size_t size);
     any_t* get_caller_address(unsigned num_caller=0);
 
-} // namespace mpxp
+} // namespace	usr
 
 /* Note: it seems that compiler cannot distinguish which version of operators
    new and delete to use: from global namespace or from user specified */

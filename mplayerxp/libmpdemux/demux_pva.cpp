@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * demuxer for PVA files, such as the ones produced by software to manage DVB boards
  * like the Hauppauge WinTV DVBs, for MPlayer.

@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
   This video filter exports the incoming signal to raw file
   TODO: add length + pts to export into sockets

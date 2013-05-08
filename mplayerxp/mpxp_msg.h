@@ -12,7 +12,7 @@
 #define MSGT_CLASS MSGT_CPLAYER
 #endif
 
-namespace mpxp {
+namespace	usr {
 
     enum mpxp_msgl_e {
 	MSGL_FATAL	=0U, /* will exit/abort			LightRed */
@@ -269,6 +269,6 @@ __always_inline int MSG_DBG4(const std::string& args,...) {
 #define MSG_DBG4(args...) mpxp_print_dummy();
 #endif
 #endif // __va_arg_pack
-} // namespace mpxp
+} // namespace	usr
 
 #endif // __MP_MSG_H

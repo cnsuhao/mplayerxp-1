@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     MPG/VOB file parser for DEMUXER v2.5  by A'rpi/ESP-team
     Some code was borrowed from ffmpeg project by Nick.

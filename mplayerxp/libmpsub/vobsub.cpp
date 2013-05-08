@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * Some code freely inspired from VobSub <URL:http://vobsub.edensrising.com>,
  * with kind permission from Gabest <gabest@freemail.hu>

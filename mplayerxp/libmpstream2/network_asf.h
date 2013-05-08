@@ -2,13 +2,13 @@
 #define __NETWORK_ASF_H_INCLUDED 1
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include "stream.h"
 #include "network_nop.h"
 
 struct Networking;
-namespace mpxp {
+namespace	usr {
     class Tcp;
 
     // Definition of the differents type of ASF streaming
@@ -40,6 +40,6 @@ namespace mpxp {
 	    int *audio_streams,n_audio,*video_streams,n_video;
 	    int audio_id, video_id;
     };
-} // namespace mpxp
+} // namespace	usr
 
 #endif

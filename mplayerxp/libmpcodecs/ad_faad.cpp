@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* ad_faad.c - MPlayer AAC decoder using libfaad2
  * This file is part of MPlayer, see http://mplayerhq.hu/ for info.
  * (c)2002 by Felix Buenemann <atmosfear at users.sourceforge.net>

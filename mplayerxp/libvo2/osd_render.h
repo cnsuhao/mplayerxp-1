@@ -3,7 +3,7 @@
 
 /* Generic alpha renderers for all YUV modes and RGB depths. */
 /* These are "reference implementations", should be optimized later (MMX, etc) */
-namespace mpxp {
+namespace	usr {
     class OSD_Render : public Opaque {
 	public:
 	    OSD_Render(unsigned fourcc);
@@ -22,6 +22,6 @@ namespace mpxp {
 	    draw_alpha_f	draw_alpha_rgb15_ptr;
 	    draw_alpha_f	draw_alpha_rgb16_ptr;
     };
-} // namespace mpxp
+} // namespace	usr
 
 #endif

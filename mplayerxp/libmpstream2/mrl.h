@@ -4,7 +4,7 @@
 
 #include "mpxp_config.h"
 #include <string>
-namespace mpxp {
+namespace	usr {
 /** Parses line which contains MRL and splits it on components.
   * @param line		source line to be parsed
   * @param user		buffer which will contain username if present (maybe NULL)
@@ -53,5 +53,5 @@ namespace mpxp {
   * @see		mrl_parse_line
 **/
     extern const char *	mrl_parse_params(const std::string& param,const mrl_config_t * args);
-} // namespace mpxp
+} // namespace	usr
 #endif

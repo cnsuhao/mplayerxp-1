@@ -1,6 +1,6 @@
 #ifndef MOUSE_H_INCLUDED
 #define MOUSE_H_INCLUDED 1
-namespace mpxp {
+namespace	usr {
     enum {
 	MOUSE_BASE=((0x100+256)|MP_NO_REPEAT_KEY),
 	MOUSE_BTN0=(MOUSE_BASE+0),
@@ -27,5 +27,5 @@ namespace mpxp {
 	MOUSE_BTN8_DBL=(MOUSE_BASE_DBL+8),
 	MOUSE_BTN9_DBL=(MOUSE_BASE_DBL+9)
     };
-} // namespace mpxp
+} // namespace	usr
 #endif

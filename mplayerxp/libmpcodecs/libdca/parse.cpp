@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * parse.c
  * Copyright (C) 2004 Gildas Bazin <gbazin@videolan.org>

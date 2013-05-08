@@ -1,7 +1,7 @@
 /*  KEY code definitions for GyS-TermIO v2.0  (C) 1999 A'rpi/ESP-team */
 #ifndef KEYCODES_H_INCLUDED
 #define KEYCODES_H_INCLUDED 1
-namespace mpxp {
+namespace	usr {
     enum {
 	KEY_ENTER		=13,
 	KEY_TAB			=9,
@@ -70,5 +70,5 @@ namespace mpxp {
 	KEY_KPDEL		=(KEY_KEYPAD+12),
 	KEY_KPENTER		=(KEY_KEYPAD+13)
     };
-} // namespace mpxp
+} // namespace	usr
 #endif

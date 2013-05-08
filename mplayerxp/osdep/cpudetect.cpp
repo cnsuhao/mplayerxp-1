@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include "cpudetect.h"
 #include "mpxp_help.h"
@@ -10,7 +10,7 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <string.h>
 
-namespace mpxp {
+namespace	usr {
     CpuCaps gCpuCaps;
 }
 
@@ -27,7 +27,7 @@ namespace mpxp {
 #include <signal.h>
 #endif
 
-namespace mpxp {
+namespace	usr {
 //#define X86_FXSR_MAGIC
 /* Thanks to the FreeBSD project for some of this cpuid code, and
  * help understanding how to use it.  Thanks to the Mesa
@@ -339,9 +339,9 @@ static void check_os_katmai_support( void )
 #endif /* __linux__ */
 #endif /*ARCH_X86_64*/
 }
-} //namespace mpxp
+} //namespace	usr
 #else /* ARCH_X86 */
-namespace mpxp {
+namespace	usr {
 void GetCpuCaps( CpuCaps *caps)
 {
 	caps->cpuType=0;
@@ -354,5 +354,5 @@ void GetCpuCaps( CpuCaps *caps)
 	caps->hasSSE2=0;
 	caps->isX86=0;
 }
-} // namespace mpxp
+} // namespace	usr
 #endif /* !ARCH_X86 */

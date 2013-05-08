@@ -25,7 +25,7 @@
 #include "dri_vo.h"
 #include <string>
 
-namespace mpxp {
+namespace	usr {
 class VO_Interface : public Opaque {
     public:
 	VO_Interface(const std::string& args) { UNUSED(args); };

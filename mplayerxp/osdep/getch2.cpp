@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* GyS-TermIO v2.0 (for GySmail v3)          (C) 1999 A'rpi/ESP-team */
 //#define HAVE_TERMCAP
 #define USE_IOCTL
@@ -44,7 +44,7 @@ using namespace mpxp;
 #endif
 #endif
 
-namespace mpxp {
+namespace	usr {
 #ifdef HAVE_TERMIOS
 static struct termios tio_orig;
 #endif
@@ -261,4 +261,4 @@ void getch2_disable(){
     getch2_status=0;
 }
 
-} // namespace mpxp
+} // namespace	usr

@@ -1,12 +1,12 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include "udp.h"
 #include "tcp.h"
 #include "network_rtp.h"
 
-namespace mpxp {
+namespace	usr {
 int Rtp_Networking::seek(Tcp& tcp, off_t pos) {
     UNUSED(tcp);
     UNUSED(pos);
@@ -36,4 +36,4 @@ Networking* Rtp_Networking::start(Tcp& tcp,network_protocol_t& protocol, int raw
 
 Rtp_Networking::Rtp_Networking() {}
 Rtp_Networking::~Rtp_Networking() {}
-} // namespace mpxp
+} // namespace	usr

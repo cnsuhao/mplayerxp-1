@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* SPUdec.c
    Skeleton of function spudec_process_controll() is from xine sources.
    Further works:

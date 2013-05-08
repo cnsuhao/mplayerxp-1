@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include "mplayerxp.h"
 
 #include <dlfcn.h>
@@ -10,7 +10,7 @@ using namespace mpxp;
 #include "stream_internal.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
     class Lavs_Stream_Interface : public Stream_Interface {
 	public:
 	    Lavs_Stream_Interface(libinput_t& libinput);
@@ -95,4 +95,4 @@ extern const stream_interface_info_t lavs_stream =
     "reads multimedia stream through lavc library",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr

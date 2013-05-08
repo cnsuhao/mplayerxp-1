@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  *  yuv4mpeg_ratio.c:  Functions for dealing with y4m_ratio_t datatype.
  *

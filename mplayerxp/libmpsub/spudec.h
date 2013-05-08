@@ -8,10 +8,10 @@ extern int spu_alignment;
 extern int spu_aamode;
 extern float spu_gaussvar;
 
-namespace mpxp {
+namespace	usr {
     class Video_Output;
 }
-using namespace mpxp;
+using namespace	usr;
 
 void __FASTCALL__ spudec_heartbeat(any_t*__self, unsigned int pts100);
 void __FASTCALL__ spudec_now_pts(any_t*__self, unsigned int pts100);

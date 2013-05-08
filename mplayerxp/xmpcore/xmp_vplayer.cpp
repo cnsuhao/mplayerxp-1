@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <stdio.h>
 #include <math.h>
 
@@ -21,7 +21,7 @@ using namespace mpxp;
 #include "xmp_vplayer.h"
 
 float max_pts_correction=0;
-namespace mpxp {
+namespace	usr {
 
 static void __show_status_line(float a_pts,float v_pts,float delay,float AV_delay) {
     mpxp_status <<"A:"<<(a_pts-delay)
@@ -296,4 +296,4 @@ void sig_video_play( void )
     __exit_sighandler();
 }
 
-} // namespace mpxp
+} // namespace	usr

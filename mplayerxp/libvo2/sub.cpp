@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +16,7 @@ using namespace mpxp;
 #include "libmpsub/vobsub.h"
 #include "vo_msg.h"
 
-namespace mpxp {
+namespace	usr {
 
 static const char * __sub_osd_names[]={
     "Seekbar",
@@ -594,4 +594,4 @@ int __FASTCALL__ vo_osd_check_range_update(int x1,int y1,int x2,int y2){
     }
     return 0;
 }
-} // namespace mpxp
+} // namespace	usr

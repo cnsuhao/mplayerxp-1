@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #ifdef HAVE_LIRC
 
@@ -17,7 +17,7 @@ using namespace mpxp;
 #include "input.h"
 #include "in_msg.h"
 
-namespace mpxp {
+namespace	usr {
 static struct lirc_config *lirc_config;
 char *lirc_configfile;
 
@@ -114,5 +114,5 @@ void mp_input_lirc_close(any_t* ctx) {
     lirc_deinit();
     delete priv;
 }
-}// namespace mpxp
+}// namespace	usr
 #endif

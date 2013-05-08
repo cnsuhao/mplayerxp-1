@@ -14,7 +14,7 @@
 
 #include "url.h"
 
-namespace mpxp {
+namespace	usr {
     class HTTP_Header : public Opaque {
 	public:
 	    HTTP_Header();
@@ -62,5 +62,5 @@ namespace mpxp {
     };
 
     extern int		base64_encode(const any_t*enc, int encLen, char *out, int outMax);
-} // namespace mpxp
+} // namespace	usr
 #endif // __HTTP_H

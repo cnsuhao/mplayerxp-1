@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <algorithm>
 
 #include <stdio.h>
@@ -25,7 +25,7 @@ static const float MIN_AUDIO_TIME=0.05f;
 static const float NOTHING_PLAYED=-1.0f;
 static const float XP_MIN_TIMESLICE=0.010f; /* under Linux on x86 min time_slice = 10 ms */
 
-namespace mpxp {
+namespace	usr {
 
 static int decore_audio(Demuxer_Stream *d_audio,sh_audio_t* sh_audio,sh_video_t*sh_video)
 {
@@ -294,4 +294,4 @@ void sig_audio_play( void )
     __exit_sighandler();
 }
 
-} // namespace mpxp
+} // namespace	usr

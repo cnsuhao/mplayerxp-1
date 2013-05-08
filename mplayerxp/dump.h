@@ -4,7 +4,7 @@
 #ifndef DUMP_H_INCLUDED
 #define DUMP_H_INCLUDED 1
 #include "libmpdemux/demuxer_r.h"
-namespace mpxp {
+namespace	usr {
     int  dump_parse(const char *param);
     void dump_stream(Stream *stream);
     void dump_mux_init(Demuxer *demuxer,libinput_t&libinput);

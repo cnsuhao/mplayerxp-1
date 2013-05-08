@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * HTTP Cookies
  * Reads Netscape and Mozilla cookies.txt files
@@ -24,7 +24,7 @@ using namespace mpxp;
 #include "network.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 static const int MAX_COOKIES=20;
 typedef struct cookie_list_type {
     char *name;
@@ -275,4 +275,4 @@ void HTTP_Header::cookies_set(const std::string& domain, const std::string& url)
     else
 	delete buf;
 }
-} // namespace mpxp
+} // namespace	usr

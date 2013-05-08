@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     s_dvdread - DVDREAD stream interface
 */
@@ -27,7 +27,7 @@ using namespace mpxp;
 #include <dvdread/nav_read.h>
 #include "mrl.h"
 
-namespace mpxp {
+namespace	usr {
 /*
  * Try to autodetect the libdvd-0.9.0 library
  * (0.9.0 removed the <dvdread/dvd_udf.h> header, and moved the two defines
@@ -767,6 +767,6 @@ extern const stream_interface_info_t dvdread_stream =
     "reads multimedia stream using low-level libdvdread access",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr
 #endif
 

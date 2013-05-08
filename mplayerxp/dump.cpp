@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     dump.c - stream dumper
 */
@@ -20,7 +20,7 @@ using namespace mpxp;
 #include "global_msg.h"
 #include "dump.h"
 
-namespace mpxp {
+namespace	usr {
 
 static char *media=NULL,*port=NULL;
 
@@ -464,4 +464,4 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
   ,priv->asize);
 }
 
-} // namespace mpxp
+} // namespace	usr

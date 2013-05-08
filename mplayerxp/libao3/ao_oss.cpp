@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,7 +18,7 @@ using namespace mpxp;
 #include "audio_out_internal.h"
 #include "ao_msg.h"
 
-namespace mpxp {
+namespace	usr {
 const char *oss_mixer_device = PATH_DEV_MIXER;
 /* Support for >2 output channels added 2001-11-25 - Steve Davies <steve@daviesfam.org> */
 class Oss_AO_Interface : public AO_Interface {
@@ -445,4 +445,4 @@ extern const ao_info_t audio_out_oss = {
     "",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr

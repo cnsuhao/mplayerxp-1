@@ -2,12 +2,12 @@
 #define ASXPARSER_H 1
 #include "osdep/mplib.h"
 #include "playtree.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include <string>
 #include <map>
 
-namespace mpxp {
+namespace	usr {
     struct ASX_LineSave_t {
 	const char* buffer;
 	int line;
@@ -74,5 +74,5 @@ namespace mpxp {
 	    char*		last_body;
 	    int			deep;
     };
-} // namespace mpxp
+} // namespace	usr
 #endif

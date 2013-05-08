@@ -11,7 +11,7 @@
 #include <string>
 //#define __URL_DEBUG
 
-namespace mpxp {
+namespace	usr {
     struct URL : public Opaque {
 	public:
 	    URL(const std::string& url="");

@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 // mmst implementation taken from the xine-mms plugin made by majormms (http://geocities.com/majormms/)
 //
 // ported to mplayer by Abhijeet Phatak <abhijeetphatak@yahoo.com>
@@ -46,7 +46,7 @@ using namespace mpxp;
 #endif
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 static const int BUF_SIZE=102400;
 static const int HDR_BUF_SIZE=8192;
 static const int MAX_STREAMS=20;
@@ -624,4 +624,4 @@ Networking* Asf_Mmst_Networking::start(Tcp& tcp, network_protocol_t& protocol)
 }
 Asf_Mmst_Networking::Asf_Mmst_Networking() {}
 Asf_Mmst_Networking::~Asf_Mmst_Networking() {}
-} // namespace mpxp
+} // namespace	usr

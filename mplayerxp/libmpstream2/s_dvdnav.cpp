@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     s_dvdnav - DVDNAV's stream interface
 */
@@ -26,7 +26,7 @@ using namespace mpxp;
 #include "osdep/timer.h"
 #include "mrl.h"
 
-namespace mpxp {
+namespace	usr {
 static const int DVD_BLOCK_SIZE=2048;
     struct dvdnav_conf_t {
 	int skip_opening;     /* skip opening stalls? */
@@ -580,5 +580,5 @@ extern const stream_interface_info_t dvdnav_stream =
     "reads multimedia stream with using of libdvdnav library",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr
 #endif

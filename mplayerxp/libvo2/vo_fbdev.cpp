@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * Video driver for Framebuffer device
  * by Szabolcs Berecz <szabi@inf.elte.hu>
@@ -38,7 +38,7 @@ static const char* FBDEV= "fbdev: ";
 #include "libmpstream2/mrl.h"
 #include "vo_msg.h"
 
-namespace mpxp {
+namespace	usr {
 struct priv_conf_t {
     priv_conf_t();
     ~priv_conf_t() {}

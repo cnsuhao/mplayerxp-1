@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -9,7 +9,7 @@ using namespace mpxp;
 #include "stheader.h"
 #include "demux_msg.h"
 
-namespace mpxp {
+namespace	usr {
 struct dd_priv_t : public Opaque {
     public:
 	dd_priv_t() {}
@@ -101,4 +101,4 @@ static void demux_close_demuxers(Demuxer* demuxer) {
   delete priv;
   delete demuxer;
 }
-} // namespace mpxp
+} // namespace	usr

@@ -9,7 +9,7 @@
 
 #include "mpxp_config.h"
 
-namespace mpxp {
+namespace	usr {
 /* Note: every pointer within structures is 32-bit protected mode pointer.
    So you don't need to convert it from real mode. */
 
@@ -224,5 +224,5 @@ namespace mpxp {
     /* Misc stuff (For portability only) */
     any_t* vbeMapVideoBuffer(unsigned long phys_addr,unsigned long size);
     void vbeUnmapVideoBuffer(unsigned long linear_addr,unsigned long size);
-} // namespace mpxp
+} // namespace	usr
 #endif

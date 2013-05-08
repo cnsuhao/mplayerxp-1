@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 // Precise timer routines for LINUX  (C) LGB & A'rpi/ASTRAL
 
 #include <unistd.h>
@@ -17,7 +17,7 @@ using namespace mpxp;
 #include "timer.h"
 #include "osdep_msg.h"
 
-namespace mpxp {
+namespace	usr {
 int usec_sleep(int usec_delay)
 {
 #ifdef HAVE_NANOSLEEP
@@ -118,4 +118,4 @@ float SleepTime(int rtc_fd,int softsleep,float time_frame)
     }
     return time_frame;
 }
-} // namespace mpxp
+} // namespace	usr

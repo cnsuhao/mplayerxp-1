@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <algorithm>
 
 #include <ctype.h>
@@ -17,7 +17,7 @@ using namespace mpxp;
 #include "mplayerxp.h"
 #include "playtree_msg.h"
 
-namespace mpxp {
+namespace	usr {
 
 void ASX_Parser::warning_attrib_required(const char *e, const char *a) const {
     mpxp_warn<<"At line "<<line<<" : element "<<e<<" don't have the required attribute "<<a;
@@ -530,4 +530,4 @@ PlayTree* ASX_Parser::build_tree(libinput_t&libinput,const char* buffer,int deep
     asx->set_child(list);
     return asx;
 }
-} // namespace mpxp
+} // namespace	usr

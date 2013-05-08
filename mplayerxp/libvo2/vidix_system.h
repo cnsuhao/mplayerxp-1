@@ -20,7 +20,7 @@
 #include <vidix/vidixlibxx.h>
 
 using namespace vidix;
-using namespace mpxp;
+using namespace	usr;
 
 #define NUM_FRAMES MAX_DRI_BUFFERS /* Temporary: driver will overwrite it */
 

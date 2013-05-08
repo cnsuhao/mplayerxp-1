@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 //=================== DEMUXER v2.5 =========================
 #include <iomanip>
 
@@ -66,7 +66,7 @@ extern const demuxer_driver_t demux_ty;
 extern const demuxer_driver_t demux_lavf;
 extern const demuxer_driver_t demux_null;
 
-namespace mpxp {
+namespace	usr {
 static const demuxer_driver_t *ddrivers[] =
 {
     &demux_rawaudio,
@@ -576,4 +576,4 @@ int Demuxer::switch_subtitle(int id) const
     return id;
 }
 
-} // namespace mpxp
+} // namespace	usr

@@ -3,7 +3,7 @@
 
 #include "network_nop.h"
 
-namespace mpxp {
+namespace	usr {
     struct Asf_Mmst_Networking : public Nop_Networking {
 	public:
 	    virtual ~Asf_Mmst_Networking();
@@ -16,6 +16,6 @@ namespace mpxp {
 	    int		get_header (Tcp& tcp, uint8_t *header);
 	    int		get_media_packet (Tcp& tcp, int padding);
     };
-} // namespace mpxp
+} // namespace	usr
 #endif
 

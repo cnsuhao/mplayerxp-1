@@ -2,10 +2,10 @@
 #define __STREAM_INTERNAL_H_INCLUDED 1
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <string>
 
-namespace mpxp {
+namespace	usr {
     struct libinput_t;
 
     /** Stream-driver interface */
@@ -70,5 +70,5 @@ namespace mpxp {
 	const char*		descr;	/**< description of the driver */
 	Stream_Interface*	(*query_interface)(libinput_t&);
     };
-} // namespace mpxp
+} // namespace	usr
 #endif

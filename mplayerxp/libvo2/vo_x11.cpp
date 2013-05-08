@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 /*
  * video_out_x11.c,X11 interface
@@ -51,7 +51,7 @@ using namespace mpxp;
 #include "xmpcore/xmp_image.h"
 #include "vo_msg.h"
 
-namespace mpxp {
+namespace	usr {
 class X11_VO_Interface : public VO_Interface {
     public:
 	X11_VO_Interface(const std::string& args);

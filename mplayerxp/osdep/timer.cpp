@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* POSIX compatible timer callback */
 #include <sys/time.h>
 #include <signal.h>

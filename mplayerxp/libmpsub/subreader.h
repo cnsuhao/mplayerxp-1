@@ -1,10 +1,10 @@
 #ifndef __MPLAYER_SUBREADER_H
 #define __MPLAYER_SUBREADER_H
 
-namespace mpxp {
+namespace	usr {
     class Video_Output;
 }
-using namespace mpxp;
+using namespace	usr;
 
 extern int sub_uses_time;
 extern int sub_errs;

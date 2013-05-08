@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * Copyright (C) 2000-2002 the xine project
  *
@@ -51,7 +51,7 @@ using namespace mpxp;
 #include "pnm.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 #define FOURCC_TAG( ch0, ch1, ch2, ch3 ) \
 	(((long)(unsigned char)(ch3)       ) | \
 	( (long)(unsigned char)(ch2) << 8  ) | \
@@ -783,4 +783,4 @@ int Pnm::peek_header (char *data) const {
 void Pnm::close() {
   if (tcp.established()) tcp.close();
 }
-} // namespace mpxp
+} // namespace	usr

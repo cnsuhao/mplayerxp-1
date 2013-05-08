@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
    Decoding ahead
    Licence: GPL v2
@@ -48,7 +48,7 @@ int audio_play_in_sleep=0;
 static const int MIN_BUFFER_RESERV=8;
 /* Min audio buffer to keep mp_free, used to tell differ between full and empty buffer */
 
-namespace mpxp {
+namespace	usr {
 void xmp_init(void) {
     mpxp_context().engine().xp_core=new(zeromem) xp_core_t;
     mpxp_context().engine().xp_core->initial_apts=HUGE;

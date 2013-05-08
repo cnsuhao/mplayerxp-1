@@ -3,7 +3,7 @@
 
 #include "network.h"
 
-namespace mpxp {
+namespace	usr {
     struct Nop_Networking : public Networking {
 	public:
 	    Nop_Networking();
@@ -13,6 +13,6 @@ namespace mpxp {
 	    virtual int read( Tcp& fd, char *buffer, int buffer_size);
 	    virtual int seek( Tcp& fd, off_t pos);
     };
-} // namespace mpxp
+} // namespace	usr
 #endif
 

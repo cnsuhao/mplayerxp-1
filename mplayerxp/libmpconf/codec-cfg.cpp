@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * codec.conf parser
  * by Szabolcs Berecz <szabi@inf.elte.hu>

@@ -1,9 +1,9 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include "osdep_msg.h"
-namespace mpxp {
+namespace	usr {
 
 std::string get_path(const std::map<std::string,std::string>& envm,const std::string& filename) {
     std::string homedir;
@@ -20,4 +20,4 @@ std::string get_path(const std::map<std::string,std::string>& envm,const std::st
     return rs;
 }
 
-}// namespace mpxp
+}// namespace	usr

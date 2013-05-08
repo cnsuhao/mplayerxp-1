@@ -5,7 +5,7 @@
 
 #include <string>
 
-namespace mpxp {
+namespace	usr {
     class AO_Interface;
 
     /** Text description of AO-driver */
@@ -73,5 +73,5 @@ namespace mpxp {
     /* prototypes */
     extern const char *	 __FASTCALL__ ao_format_name(int format);
     extern int		 __FASTCALL__ ao_format_bits(int format);
-} // namespace mpxp
+} // namespace	usr
 #endif

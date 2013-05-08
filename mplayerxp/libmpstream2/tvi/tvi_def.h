@@ -1,7 +1,7 @@
 #include <stdlib.h> /* mp_malloc */
 #include <string.h>
 
-namespace mpxp {
+namespace	usr {
     struct priv_t;
 }
 static int init(priv_t *priv);
@@ -31,7 +31,7 @@ static const tvi_functions_t functions =
     get_audio_framesize
 };
 
-namespace mpxp {
+namespace	usr {
     tvi_handle_t *new_handle();
     void free_handle(tvi_handle_t *h);
-} // namespace mpxp
+} // namespace	usr

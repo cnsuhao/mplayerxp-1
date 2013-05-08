@@ -2,7 +2,7 @@
 #define MPXP_MENU_H 1
 #include <string>
 
-namespace mpxp {
+namespace	usr {
     struct libinput_t;
 }
 

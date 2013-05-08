@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * OpenAL audio output driver for MPlayerXP
  *
@@ -36,7 +36,7 @@ using namespace mpxp;
 #include "osdep/timer.h"
 #include "ao_msg.h"
 
-namespace mpxp {
+namespace	usr {
 static const int MAX_CHANS=8;
 static const int NUM_BUF=128;
 static const int CHUNK_SIZE=512;
@@ -273,4 +273,4 @@ extern  const ao_info_t audio_out_openal = {
     "",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr

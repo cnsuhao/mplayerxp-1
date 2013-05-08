@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
    codecs_ld - light interface to codec loader
 */
@@ -13,7 +13,7 @@ using namespace mpxp;
 #include "mpxp_help.h"
 #include "global_msg.h"
 
-namespace mpxp {
+namespace	usr {
 any_t* ld_codec(const std::string& name,const std::string& url_hint)
 {
     any_t*dll_handle;
@@ -63,4 +63,4 @@ any_t* ld_aliased_sym(any_t*handle,const std::string& sym_name,...)
     if(!rval) mpxp_err<<"[codec_ld] "<<MSGTR_CODEC_DLL_SYM_ERR<<":"<<sym_name<<std::endl;
     return rval;
 }
-} // namespace mpxp
+} // namespace	usr

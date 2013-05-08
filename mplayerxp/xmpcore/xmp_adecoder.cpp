@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <algorithm>
 
 #include <errno.h>
@@ -20,7 +20,7 @@ using namespace mpxp;
 
 /* Audio stuff */
 volatile float dec_ahead_audio_delay;
-namespace mpxp {
+namespace	usr {
 extern int get_free_audio_buffer(void);
 
 /************************************************************************
@@ -526,4 +526,4 @@ void sig_audio_decode( void )
     __exit_sighandler();
 }
 
-} // namespace mpxp
+} // namespace	usr

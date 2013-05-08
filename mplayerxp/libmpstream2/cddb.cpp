@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * CDDB HTTP protocol
  * by Bertrand Baudet <bertrand_baudet@yahoo.com>
@@ -50,7 +50,7 @@ using namespace mpxp;
 #include "network.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 
 static const char* DEFAULT_FREEDB_SERVER="freedb.freedb.org";
 static const char* DEFAULT_CACHE_DIR	="/.cddb/";
@@ -732,5 +732,5 @@ MPXP_Rc CDD_Interface::open_cddb(libinput_t& libinput,const std::string& dev, co
     }
     return open_cdda(dev, track);
 }
-} // namespace mpxp
+} // namespace	usr
 #endif

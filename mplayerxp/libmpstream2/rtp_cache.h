@@ -10,7 +10,7 @@
 #include "tcp.h"
 #include <stdint.h>
 
-namespace mpxp {
+namespace	usr {
 // RTP reorder routines
 // Also handling of repeated UDP packets (a bug of ExtremeNetworks switches firmware)
 // rtpreord procedures
@@ -37,5 +37,5 @@ static const int MAXRTPPACKETSIN=32;   // The number of max packets being reorde
 	    uint16_t	rtp_len[MAXRTPPACKETSIN];
 	    uint16_t	rtp_first;
     };
-} // namespace mpxp
+} // namespace	usr
 #endif

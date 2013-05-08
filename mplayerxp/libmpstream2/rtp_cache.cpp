@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* Imported from the dvbstream-0.2 project
  *
  * Modified for use with MPlayer, for details see the changelog at
@@ -41,7 +41,7 @@ using namespace mpxp;
 // write rtp packets in cache
 // get rtp packets reordered
 
-namespace mpxp {
+namespace	usr {
 struct rtpbits {
   unsigned int v:2;           /* version: 2 */
   unsigned int p:1;           /* is there padding appended: 0 */
@@ -229,4 +229,4 @@ int Rtp_Cache::getrtp2(struct rtpheader *rh, char** data, int* lengthData) const
 }
 Rtp_Cache::Rtp_Cache(Tcp& _tcp):tcp(_tcp) {}
 Rtp_Cache::~Rtp_Cache() {}
-} // namespace mpxp
+} // namespace	usr

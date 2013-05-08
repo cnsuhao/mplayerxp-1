@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     s_file - stream interface for file i/o.
 */
@@ -19,7 +19,7 @@ using namespace mpxp;
 #include "stream_internal.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
     class File_Stream_Interface : public Stream_Interface {
 	public:
 	    File_Stream_Interface(libinput_t& libinput);

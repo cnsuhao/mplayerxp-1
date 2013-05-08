@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include <string.h>
 #include <stdlib.h>
@@ -16,7 +16,7 @@ using namespace mpxp;
 #include "nls.h"
 #include "nls_msg.h"
 
-namespace mpxp {
+namespace	usr {
 /*
  *We have to proceed with the POSIX methods of looking to `LANG'.
   On some systems this can be done by the `setlocale' function itself.
@@ -177,4 +177,4 @@ char *nls_recode_from_screen_cp(const char *to_cp,const char *param,size_t *outb
 #endif
     return obuff;
 }
-} // namespace mpxp
+} // namespace	usr

@@ -2,11 +2,11 @@
 #define __DEMUX_PACKET_H_INCLUDED 1
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <stdint.h>
 #include <unistd.h>
 
-namespace mpxp {
+namespace	usr {
     enum dp_flags_e {
 	DP_NONKEYFRAME		=0x00000000UL,
 	DP_KEYFRAME		=0x00000001UL,

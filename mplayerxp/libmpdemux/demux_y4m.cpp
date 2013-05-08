@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
   Y4M file parser by Rik Snel (using yuv4mpeg*.[ch] from
   mjpeg.sourceforge.net) (derived from demux_viv.c)

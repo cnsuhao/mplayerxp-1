@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     (c)2006 MPlayer / Reynaldo H. Verdejo Pinochet
 	Based on code by Alex Beregszaszi for his 'center' filter

@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 // Most of this was written by mbm@linux.com and released on the GPL2 License.
 //
 // Modifications and SEVERE cleanup of the code was done by

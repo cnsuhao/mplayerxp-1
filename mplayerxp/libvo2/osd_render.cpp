@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
    Generic alpha renderers for all YUV modes and RGB depths.
    These are "reference implementations", should be optimized later (MMX, etc)
@@ -26,7 +26,7 @@ static const unsigned long long mask24hl  __attribute__((used)) __attribute__((a
 #define PVECTOR_ACCEL_H "osd_render_template.h"
 #include "pvector/pvector_inc.h"
 
-namespace mpxp {
+namespace	usr {
 #ifdef FAST_OSD_TABLE
 static unsigned short fast_osd_15bpp_table[256];
 static unsigned short fast_osd_16bpp_table[256];

@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * PCM audio output driver
  *
@@ -39,7 +39,7 @@ using namespace mpxp;
 #include <windows.h>
 #endif
 
-namespace mpxp {
+namespace	usr {
 static const uint32_t WAV_ID_RIFF=0x46464952; /* "RIFF" */
 static const uint32_t WAV_ID_WAVE=0x45564157; /* "WAVE" */
 static const uint32_t WAV_ID_FMT =0x20746d66; /* "fmt " */

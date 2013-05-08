@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*  vosub_vidix.c
  *
  *	Copyright (C) Nickols_K <nickols_k@mail.ru> - 2002

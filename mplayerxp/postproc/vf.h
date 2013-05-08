@@ -7,7 +7,7 @@
 #include "vfcap.h"
 
 struct vf_instance_t;
-namespace mpxp {
+namespace	usr {
     enum {
 	VF_FLAGS_THREADS	=0x00000001UL, /**< Thread safe plugin (requires to be applied within of threads) */
 	VF_FLAGS_OSD	=0x00000002UL, /**< requires to be applied during page flipping */

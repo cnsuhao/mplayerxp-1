@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
    This is an libaf filter to do simple decoding of matrixed surround
    sound.  This will provide a (basic) surround-sound effect from

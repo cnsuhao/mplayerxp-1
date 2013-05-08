@@ -1,7 +1,7 @@
 #ifndef TV_H
 #define TV_H
 
-namespace mpxp {
+namespace	usr {
     extern int tv_param_on;
 
 #ifdef USE_TV
@@ -126,5 +126,5 @@ namespace mpxp {
     int __FASTCALL__ tv_step_norm(tvi_handle_t *tvh);
     int __FASTCALL__ tv_step_chanlist(tvi_handle_t *tvh);
 #endif /* USE_TV */
-} // namespace mpxp
+} // namespace	usr
 #endif /* TV_H */

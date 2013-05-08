@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * JACK audio output driver for MPlayer
  *
@@ -39,7 +39,7 @@ using namespace mpxp;
 #include "mpxp_conf_lavc.h"
 #include <jack/jack.h>
 
-namespace mpxp {
+namespace	usr {
 
 //! maximum number of channels supported, avoids lots of mallocs
 static const int MAX_CHANS=6;
@@ -365,4 +365,4 @@ extern const ao_info_t audio_out_jack = {
     "based on ao_sdl.c",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr

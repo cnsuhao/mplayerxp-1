@@ -3,7 +3,7 @@
 #include "xmpcore/xmp_enums.h"
 #include "libmpdemux/demuxer_r.h"
 
-namespace mpxp {
+namespace	usr {
     struct libinput_t;
 }
 

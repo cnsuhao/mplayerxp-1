@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     s_tv - TV stream interface
     --------------------------
@@ -38,7 +38,7 @@ using namespace mpxp;
 
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
     /* some default values */
     struct tv_param : public Opaque {
 	public:
@@ -661,6 +661,6 @@ extern const stream_interface_info_t tv_stream =
     "reads multimedia stream directly from TV tunner",
     query_interface,
 };
-} // namespace mpxp
+} // namespace	usr
 #endif
 

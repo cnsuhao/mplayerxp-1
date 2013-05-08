@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* This audio output filter changes the format of a data block. Valid
    formats are: AFMT_U8, AFMT_S8, AFMT_S16_LE, AFMT_S16_BE
    AFMT_U16_LE, AFMT_U16_BE, AFMT_S32_LE and AFMT_S32_BE.

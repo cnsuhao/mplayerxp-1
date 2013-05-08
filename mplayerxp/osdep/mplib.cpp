@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  *  my_profile.c
  *
@@ -12,7 +12,7 @@ using namespace mpxp;
 #include <stdlib.h>
 #include <string.h>
 
-namespace mpxp {
+namespace	usr {
 
 volatile unsigned long long int my_profile_start,my_profile_end,my_profile_total;
 
@@ -66,4 +66,4 @@ Opaque::Opaque() {
 }
 
 Opaque::~Opaque() {}
-} // namespace mpxp
+} // namespace	usr

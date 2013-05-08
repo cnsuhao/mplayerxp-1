@@ -3,7 +3,7 @@
 
 #include "network.h"
 
-namespace mpxp {
+namespace	usr {
     struct Rtsp_Networking : public Networking {
 	public:
 	    virtual ~Rtsp_Networking();
@@ -14,5 +14,5 @@ namespace mpxp {
 	private:
 	    Rtsp_Networking();
     };
-} // namespace mpxp
+} // namespace	usr
 #endif

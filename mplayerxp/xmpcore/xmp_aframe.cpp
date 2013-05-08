@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <string.h>
 #include <stdio.h>
 
@@ -9,7 +9,7 @@ using namespace mpxp;
 #include "win32loader/wine/mmreg.h"
 #include "player_msg.h"
 
-namespace mpxp {
+namespace	usr {
 
 enum { AFMT_AF_FLAGS=0x70000000 };
 
@@ -325,4 +325,4 @@ mp_aframe_t* new_mp_aframe_genome(const mp_aframe_t* in) {
 
 void mp_alloc_aframe(mp_aframe_t* it) { it->audio = new uint8_t[it->len]; }
 
-} // namespace mpxp
+} // namespace	usr

@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* This file contains reenterable interface to demuxer */
 #include <stdlib.h>
 #define __USE_ISOC99 1 /* for lrint */

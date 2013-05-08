@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* Straightforward (to be) optimized JPEG encoder for the YUV422 format
  * based on mjpeg code from ffmpeg.
  *

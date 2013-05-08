@@ -1,6 +1,6 @@
 #ifndef XMP_ADECODER_H_INCLUDED
 #define XMP_ADECODER_H_INCLUDED 1
-namespace mpxp {
+namespace	usr {
     int		get_len_audio_buffer(void);
     float	get_delay_audio_buffer(void);
     int		init_audio_buffer(int size, int min_reserv, int indices, sh_audio_t *sh_audio);

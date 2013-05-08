@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * URL Helper
  * by Bertrand Baudet <bertrand_baudet@yahoo.com>
@@ -22,7 +22,7 @@ using namespace mpxp;
 #include "stream_msg.h"
 #include "mplayerxp.h"
 
-namespace mpxp {
+namespace	usr {
 URL::URL(const std::string& __url):_url(__url) { _build(); }
 URL::~URL() {}
 MPXP_Rc URL::redirect(const std::string& _redir) { _url=_redir; return _build(); }
@@ -341,4 +341,4 @@ void URL::debug() const {
     mpxp_v<<"username="<<_user<<std::endl;
     mpxp_v<<"password="<<_password<<std::endl;
 }
-} // namespace mpxp
+} // namespace	usr

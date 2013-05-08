@@ -3,7 +3,7 @@
 
 #include "network.h"
 
-namespace mpxp {
+namespace	usr {
     struct RealRtsp_Networking : public Networking {
 	public:
 	    virtual ~RealRtsp_Networking();

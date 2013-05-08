@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* The name speaks for itself this filter is a dummy and will not blow
    up regardless of what you do with it. */
 #include <stdio.h>

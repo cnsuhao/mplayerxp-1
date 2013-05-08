@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include "mplayerxp.h"
 
 #ifdef HAVE_LIBCDIO
@@ -15,7 +15,7 @@ using namespace mpxp;
 #include "cdd.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 static int speed = -1;
 static int search_overlap = -1;
 static int no_skip = 0;
@@ -214,5 +214,5 @@ void CDD_Interface::close() {
 
 CDD_Interface::CDD_Interface() {}
 CDD_Interface::~CDD_Interface() {}
-} // namespace mpxp
+} // namespace	usr
 #endif

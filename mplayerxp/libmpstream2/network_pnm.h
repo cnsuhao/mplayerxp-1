@@ -3,7 +3,7 @@
 
 #include "network.h"
 
-namespace mpxp {
+namespace	usr {
     struct Pnm_Networking : public Networking {
     public:
 	virtual ~Pnm_Networking();
@@ -14,6 +14,6 @@ namespace mpxp {
     private:
 	Pnm_Networking();
     };
-} // namespace mpxp
+} // namespace	usr
 #endif
 

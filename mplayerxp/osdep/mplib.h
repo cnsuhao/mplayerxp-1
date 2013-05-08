@@ -17,7 +17,7 @@
 #include "mpxp_config.h"
 #include "mp_malloc.h"
 
-namespace mpxp {
+namespace	usr {
     class Opaque {
 	public:
 	    Opaque();
@@ -43,5 +43,5 @@ namespace mpxp {
 	    T* ptr;
 	    Opaque	opaque2;
     };
-} // namespace mpxp
+} // namespace	usr
 #endif

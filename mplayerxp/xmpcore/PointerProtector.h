@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-namespace mpxp {
+namespace	usr {
 
     template <typename T>
     class PointerProtector {

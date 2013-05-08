@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <algorithm>
 #include <limits>
 
@@ -28,7 +28,7 @@ using namespace mpxp;
 #include "network.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
 static inline uint32_t ASF_LOAD_GUID_PREFIX(uint8_t* guid) { return *(uint32_t*)guid; }
 #else
@@ -765,4 +765,4 @@ Networking* Asf_Networking::start(Tcp& tcp, network_protocol_t& protocol) {
 
 Asf_Networking::Asf_Networking() {}
 Asf_Networking::~Asf_Networking() {}
-} // namespace mpxp
+} // namespace	usr

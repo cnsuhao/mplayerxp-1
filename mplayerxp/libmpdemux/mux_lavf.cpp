@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include <stdio.h>
 #include <stdlib.h>

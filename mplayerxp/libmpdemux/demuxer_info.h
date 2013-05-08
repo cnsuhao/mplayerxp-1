@@ -2,11 +2,11 @@
 #define __DEMUXER_INFO_H_INCLUDED 1
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include "xmpcore/xmp_enums.h"
 #include <string>
 
-namespace mpxp {
+namespace	usr {
     enum {
 	INFOT_NULL		=0,
 	INFOT_AUTHOR		=1,
@@ -39,5 +39,5 @@ namespace mpxp {
 	private:
 	    char *id[INFOT_MAX];
     };
-} // namespace mpxp
+} // namespace	usr
 #endif

@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
    HACKING notes:
    first time it was OpenDivx project by Mayo (unsupported by mplayerxp)

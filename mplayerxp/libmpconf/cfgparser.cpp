@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * command line and config file parser
  * by Szabolcs Berecz <szabi@inf.elte.hu>
@@ -28,7 +28,7 @@ using namespace mpxp;
 #include "parser_msg.h"
 #include "osdep/get_path.h"
 
-namespace mpxp {
+namespace	usr {
 static const int MAX_RECURSION_DEPTH=8;
 
 typedef int (*cfg_func_arg_param_t)(const mpxp_option_t *,const std::string& ,const std::string& );
@@ -885,4 +885,4 @@ void M_Config::parse_cfgfiles(const std::map<std::string,std::string>& envm)
     }
 }
 
-} // namespace mpxp
+} // namespace	usr

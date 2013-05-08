@@ -1,12 +1,12 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <stdio.h>
 #include "tcp.h"
 #include "network_rtsp.h"
 #include "librtsp/rtsp_session.h"
 
-namespace mpxp {
+namespace	usr {
 Networking* Rtsp_Networking::start(Tcp& tcp, URL& url,unsigned bandwidth)
 {
     Rtsp_Session *rtsp;
@@ -77,4 +77,4 @@ Rtsp_Networking::~Rtsp_Networking() {
     Rtsp_Session* rtsp = static_cast<Rtsp_Session*>(data);
     if (rtsp) rtsp->end();
 }
-} // namespace mpxp
+} // namespace	usr

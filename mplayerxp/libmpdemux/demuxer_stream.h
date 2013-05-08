@@ -2,12 +2,12 @@
 #define __DEMUX_STREAM_H_INCLUDED 1
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include <stdint.h>
 #include "demuxer_packet.h"
 
-namespace mpxp {
+namespace	usr {
     struct Demuxer;
     struct Stream;
     class Demuxer_Stream : public Opaque {
@@ -63,5 +63,5 @@ namespace mpxp {
 	    int			_buffer_size;	/**< current buffer size */
 	    uint8_t*		_buffer;	/**< current buffer */
     };
-} // namespace mpxp
+} // namespace	usr
 #endif

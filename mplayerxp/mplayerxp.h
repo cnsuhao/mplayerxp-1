@@ -17,7 +17,7 @@
 
 struct audio_decoder_t;
 struct video_decoder_t;
-namespace mpxp {
+namespace	usr {
     class M_Config;
     struct PlayTree_Iter;
     /* List of all modules which require protection by pin-code */

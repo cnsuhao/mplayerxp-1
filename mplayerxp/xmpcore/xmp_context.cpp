@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include "mplayerxp.h"
 #include "xmp_context.h"
@@ -10,7 +10,7 @@ using namespace mpxp;
 #include "libmpsub/spudec.h"
 #include "libmpstream2/network.h"
 
-namespace mpxp {
+namespace	usr {
 #ifdef HAVE_SDL
 //extern char *sdl_driver;
 extern int sdl_noxv;
@@ -271,11 +271,11 @@ static const mpxp_option_t mplayerxp_options[]={
 };
 const mpxp_option_t* mplayerxp_opts=mplayerxp_options;
 
-} // namespace mpxp
+} // namespace	usr
 
 extern void libmpcodecs_ad_register_options(M_Config& cfg);
 extern void libmpcodecs_vd_register_options(M_Config& cfg);
-namespace mpxp {
+namespace	usr {
 #ifdef HAVE_LIBCDIO
 extern void cdda_register_options(M_Config& cfg);
 #endif
@@ -294,4 +294,4 @@ void mp_register_options(M_Config& cfg)
     libmpcodecs_vd_register_options(cfg);
 }
 
-} // namespace mpxp
+} // namespace	usr

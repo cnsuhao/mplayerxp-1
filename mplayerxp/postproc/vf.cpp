@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -663,7 +663,7 @@ vf_instance_t* __FASTCALL__ vf_last(const vf_instance_t* it) {
     return curr;
 }
 /*----------------------------------------*/
-namespace mpxp {
+namespace	usr {
 
 void vf_help(){
     int i=0;
@@ -758,4 +758,4 @@ const char * __FASTCALL__ vf_get_first_name(vf_stream_t* s) {
     return first->info->name;
 }
 vf_cfg_t vf_cfg;
-} // namespace mpxp
+} // namespace	usr

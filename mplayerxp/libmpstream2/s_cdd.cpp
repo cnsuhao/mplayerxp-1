@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     s_cdd - cdda & cddb streams interface
 */
@@ -17,7 +17,7 @@ using namespace mpxp;
 #include "cdd.h"
 #include "mrl.h"
 
-namespace mpxp {
+namespace	usr {
     class Cdda_Stream_Interface : public Stream_Interface {
 	public:
 	    Cdda_Stream_Interface(libinput_t& libinput);
@@ -170,4 +170,4 @@ extern const stream_interface_info_t cddb_stream =
     query_cddb_interface
 };
 #endif
-} // namespace mpxp
+} // namespace	usr

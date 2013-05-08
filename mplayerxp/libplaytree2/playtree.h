@@ -7,7 +7,7 @@
 #include <stack>
 
 struct M_Config;
-namespace mpxp {
+namespace	usr {
     struct Stream;
     struct libinput_t;
 }
@@ -44,7 +44,7 @@ enum {
 /// \defgroup Playtree
 ///@{
 
-namespace mpxp {
+namespace	usr {
     struct play_tree_param_t {
 	std::string name;
 	std::string value;
@@ -144,5 +144,5 @@ namespace mpxp {
 
 	    std::stack<int>	status_stack;
     };
-} // namespace mpxp
+} // namespace	usr
 #endif

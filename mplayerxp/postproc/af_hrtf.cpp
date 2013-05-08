@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* Experimental audio filter that mixes 5.1 and 5.1 with matrix
    encoded rear channels into headphone signal using FIR filtering
    with HRTF.

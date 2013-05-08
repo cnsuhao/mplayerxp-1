@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* This audio filter delays the output signal for the different
    channels and can be used for simple position panning. Extension for
    this filter would be a reverb.

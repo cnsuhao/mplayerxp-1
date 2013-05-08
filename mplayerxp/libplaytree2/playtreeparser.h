@@ -4,7 +4,7 @@
 
 #include "playtree.h"
 
-namespace mpxp {
+namespace	usr {
     class PlayTree_Parser : public Opaque {
 	public:
 	    PlayTree_Parser(Stream* _stream,int _deep);
@@ -28,5 +28,5 @@ namespace mpxp {
 	    int		deep;
 	    int		keep;
     };
-}// namespace mpxp
+}// namespace	usr
 #endif

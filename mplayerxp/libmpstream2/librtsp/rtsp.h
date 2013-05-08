@@ -33,7 +33,7 @@
 #define HAVE_RTSP_H
 #include "libmpstream2/tcp.h"
 
-namespace mpxp {
+namespace	usr {
 /* some codes returned by rtsp_request_* functions */
     enum {
 	RTSP_STATUS_SET_PARAMETER	=10,
@@ -108,6 +108,6 @@ static const char* RTSP_METHOD_SET_PARAMETER="SET_PARAMETER";
 	    char*	answers[RTSP_MAX_FIELDS];   /* data of last message */
 	    char*	scheduled[RTSP_MAX_FIELDS]; /* will be sent with next message */
     };
-} // namespace mpxp
+} // namespace	usr
 #endif
 

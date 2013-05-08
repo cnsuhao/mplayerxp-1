@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
   MplayerXP's Signal handling
 */
@@ -23,7 +23,7 @@ using namespace mpxp;
 
 #include <execinfo.h>
 
-namespace mpxp {
+namespace	usr {
 /* A dummy function to make the backtrace more interesting. */
 static void dump_trace (void) {
     show_backtrace("Obtained %zd stack frames.\n",mp_conf.max_trace);
@@ -78,4 +78,4 @@ void init_signal_handling( void )
 #endif
 }
 
-} // namespace mpxp
+} // namespace	usr

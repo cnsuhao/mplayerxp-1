@@ -7,7 +7,7 @@
  *
  * Frequencies are given in kHz
  */
-namespace mpxp {
+namespace	usr {
     enum {
 	NTSC_AUDIO_CARRIER		=4500,
 	PAL_AUDIO_CARRIER_I		=6000,
@@ -113,5 +113,5 @@ namespace mpxp {
     extern int                chantab;
     extern const struct CHANLIST   *chanlist;
     extern int                chancount;
-} // namespace mpxp
+} // namespace	usr
 #endif

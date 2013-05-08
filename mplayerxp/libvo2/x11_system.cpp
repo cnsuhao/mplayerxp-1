@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <iomanip>
 
 #include <errno.h>
@@ -31,7 +31,7 @@ using namespace mpxp;
 /* since it doesn't seem to be defined on some platforms */
 extern int XShmGetEventBase( Display* );
 #endif
-namespace mpxp {
+namespace	usr {
 static int x11_errorhandler(::Display *display,::XErrorEvent *event)
 {
     char msg[256];

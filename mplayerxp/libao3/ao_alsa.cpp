@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
   ao_alsa9 - ALSA-0.9.x output plugin for MPlayer
 
@@ -31,7 +31,7 @@ using namespace mpxp;
 #include "ao_msg.h"
 #include "libmpstream2/mrl.h"
 
-namespace mpxp {
+namespace	usr {
 typedef struct priv_conf_s {
     int mmap;
     int noblock;
@@ -1004,5 +1004,5 @@ extern const ao_info_t audio_out_alsa =
     "under developement",
     query_interface
 };
-} //namespace mpxp
+} //namespace	usr
 

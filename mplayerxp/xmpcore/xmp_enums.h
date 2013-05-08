@@ -1,7 +1,7 @@
 #ifndef XMP_ENUMS_H_INCLUDED
 #define XMP_ENUMS_H_INCLUDED
 
-namespace mpxp {
+namespace	usr {
     typedef enum MPXP_RC_e{
 	MPXP_Detach	=2,
 	MPXP_True	=1,

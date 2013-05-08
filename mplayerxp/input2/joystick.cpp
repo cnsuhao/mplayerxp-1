@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #ifdef HAVE_JOYSTICK
 #include "joystick.h"
@@ -27,7 +27,7 @@ using namespace mpxp;
 
 #include "in_msg.h"
 
-namespace mpxp {
+namespace	usr {
 typedef struct priv_s {
     int axis[10];
     int btns;
@@ -146,11 +146,11 @@ int mp_input_joystick_read(any_t* ctx) {
     }
     return MP_INPUT_NOTHING;
 }
-} // namespace mpxp
+} // namespace	usr
 #else
-namespace mpxp {
+namespace	usr {
 any_t* mp_input_joystick_open(const char* dev) { UNUNSED(dev); return NULL; }
 void   mp_input_joystick_close(any_t* ctx) { UNUSED(ctx); }
 int    mp_input_joystick_read(any_t* ctx) { UNUSED(ctx); return MP_INPUT_NOTHING; }
-} // namespace mpxp
+} // namespace	usr
 #endif

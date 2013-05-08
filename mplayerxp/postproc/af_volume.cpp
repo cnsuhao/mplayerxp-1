@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*=============================================================================
 //
 //  This software has been released under the terms of the GNU General Public

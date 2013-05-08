@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "mpxp_config.h"
 
-namespace mpxp {
+namespace	usr {
     class Aspect : public Opaque {
 	public:
 	    Aspect(float moitor_pixel_aspect);
@@ -31,7 +31,7 @@ namespace mpxp {
 	    float	monitor_aspect;
 	    float	monitor_pixel_aspect;
     };
-} // namespace mpxp
+} // namespace	usr
 
 #endif
 

@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 // dca_resample_init should find the requested converter (from type flags ->
 // given number of channels) and set up some function pointers...

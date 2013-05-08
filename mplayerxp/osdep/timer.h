@@ -1,7 +1,7 @@
 #ifndef __TIMER_H
 #define __TIMER_H
 
-namespace mpxp {
+namespace	usr {
     int InitTimer(void);
     unsigned int GetTimerMS(void);
     //int uGetTimer();
@@ -15,5 +15,5 @@ namespace mpxp {
 
     unsigned int GetTimer(void);
     int usec_sleep(int usec_delay);
-} // namespace mpxp
+} // namespace	usr
 #endif

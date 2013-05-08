@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * imdct.c
  * Copyright (C) 2000-2002 Michel Lespinasse <walken@zoy.org>

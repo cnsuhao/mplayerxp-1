@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     Copyright (C) 2002 Rémi Guyomarch <rguyom@pobox.com>
 

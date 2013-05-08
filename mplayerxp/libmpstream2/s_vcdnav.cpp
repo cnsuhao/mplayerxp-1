@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     s_vcdnav - libVCD's stream interface (based on xine's input plugin)
 */
@@ -17,7 +17,7 @@ using namespace mpxp;
 #include "mrl.h"
 #include "mpxp_help.h"
 
-namespace mpxp {
+namespace	usr {
     struct vcdsector_t {
 	uint8_t		subheader[CDIO_CD_SUBHEADER_SIZE];
 	uint8_t		data[M2F2_SECTOR_SIZE];
@@ -273,5 +273,5 @@ extern const stream_interface_info_t vcdnav_stream =
     "reads multimedia stream from libVCD's interface",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr
 #endif

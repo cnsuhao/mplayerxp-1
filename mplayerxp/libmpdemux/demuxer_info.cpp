@@ -5,7 +5,7 @@
 #include "demux_msg.h"
 
 
-namespace mpxp {
+namespace	usr {
 static const char *info_names[INFOT_MAX] =
 {
     "Author",

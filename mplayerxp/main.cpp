@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* MplayerXP (C) 2000-2002. by A'rpi/ESP-team (C) 2002. by Nickols_K */
 #include <algorithm>
 #include <iostream>
@@ -66,7 +66,7 @@ using namespace mpxp;
 #include "xmpcore/PointerProtector.h"
 #include "dump.h"
 
-namespace mpxp {
+namespace	usr {
 /**************************************************************************
 	     Private data
 **************************************************************************/
@@ -2059,7 +2059,7 @@ goto_next_file:  // don't jump here after ao/vo/getch initialization!
     exit_player(MSGTR_Exit_eof);
     return EXIT_SUCCESS;
 }
-} // namespace mpxp
+} // namespace	usr
 
 int main(int argc,char* args[], char *envp[])
 {

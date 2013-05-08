@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * NAS audio output driver
  *
@@ -62,7 +62,7 @@ using namespace mpxp;
 #include "afmt.h"
 #include "ao_msg.h"
 
-namespace mpxp {
+namespace	usr {
 /* NAS_FRAG_SIZE must be a power-of-two value */
 static const int NAS_FRAG_SIZE=4096;
 
@@ -634,4 +634,4 @@ extern const ao_info_t audio_out_nas = {
     "",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr

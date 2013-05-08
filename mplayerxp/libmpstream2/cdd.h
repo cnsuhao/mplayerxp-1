@@ -3,7 +3,7 @@
 #include <cdio/cdda.h>
 #include "libmpconf/cfgparser.h"
 
-namespace mpxp {
+namespace	usr {
     struct libinput_t;
 
     struct cddb_data_t {
@@ -101,5 +101,5 @@ namespace mpxp {
     };
 
     void cdda_register_options(M_Config& cfg);
-} // namespace mpxp
+} // namespace	usr
 #endif // __CDD_H__

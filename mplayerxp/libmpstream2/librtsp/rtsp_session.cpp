@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * This file was ported to MPlayer from xine CVS rtsp_session.c,v 1.9 2003/02/11 16:20:40
  */
@@ -58,7 +58,7 @@ using namespace mpxp;
 #include "realrtsp/xbuffer.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 /*
 #define LOG
 */
@@ -273,4 +273,4 @@ void Rtsp_Session::end() {
 
 Rtsp_Session::Rtsp_Session() {}
 Rtsp_Session::~Rtsp_Session() { end(); if(rtp) delete rtp; }
-} // namespace mpxp
+} // namespace	usr

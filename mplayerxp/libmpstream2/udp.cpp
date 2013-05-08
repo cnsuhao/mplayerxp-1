@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  *  Copyright (C) 2006 Benjamin Zores
  *   Network helpers for UDP connections (originally borrowed from rtp.c).
@@ -43,7 +43,7 @@ using namespace mpxp;
 #include "udp.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 /* Start listening on a UDP port. If multicast, join the group. */
 void Udp::open(const URL& url,int reuse_socket)
 {
@@ -188,4 +188,4 @@ Udp::Udp(net_fd_t fd)
 }
 Udp::~Udp() {}
 int	Udp::established() const { return _fd>0; }
-} // namespace mpxp
+} // namespace	usr

@@ -12,12 +12,12 @@
 
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include "libvo2/video_out.h"
 #include "libmpdemux/stheader.h"
 
-namespace mpxp {
+namespace	usr {
     enum xp_modes { XP_NA=0, XP_UniCore, XP_DualCore, XP_TripleCore, XP_MultiCore };
 
     struct xmp_frame_t {
@@ -166,7 +166,7 @@ namespace mpxp {
     int		dae_decoded_eof(const dec_ahead_engine_t* it);
     void	dae_decoded_mark_eof(dec_ahead_engine_t* it);
     inline void dae_decoded_clear_eof(dec_ahead_engine_t* it) { UNUSED(it); }
-} // namespace mpxp;
+} // namespace	usr;
 
 extern pthread_mutex_t audio_play_mutex;
 extern pthread_cond_t audio_play_cond;

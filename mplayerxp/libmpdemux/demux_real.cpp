@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*     Real parser & demuxer
 
     (C) Alex Beregszaszi <alex@naxine.org>

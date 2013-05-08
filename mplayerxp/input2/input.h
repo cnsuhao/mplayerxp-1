@@ -2,13 +2,13 @@
 #define INPUT_H_INCLUDED 1
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include <map>
 
 #include "xmpcore/xmp_enums.h"
 
-namespace mpxp {
+namespace	usr {
     // All commands id
     enum {
 	MP_CMD_SEEK		=0,
@@ -166,5 +166,5 @@ namespace mpxp {
     extern void mp_input_print_binds(libinput_t& handle);
     // Interruptible usleep:  (used by libmpdemux)
     extern MPXP_Rc mp_input_check_interrupt(libinput_t& handle,int time);
-} // namespace mpxp
+} // namespace	usr
 #endif

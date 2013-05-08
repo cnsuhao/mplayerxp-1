@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #define __STDC_FORMAT_MACROS
 #include <stdio.h>
 #include <stdlib.h>

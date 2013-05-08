@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     Realaudio demuxer for MPlayer
 		(c) 2003 Roberto Togni

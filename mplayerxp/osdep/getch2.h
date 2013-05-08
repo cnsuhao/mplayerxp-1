@@ -1,6 +1,6 @@
 #ifndef __GETCH2_H_INCLUDED
 #define __GETCH2_H_INCLUDED 1
-namespace mpxp {
+namespace	usr {
     /* GyS-TermIO v2.0 (for GySmail v3)          (C) 1999 A'rpi/ESP-team */
     /* a very small replacement of ncurses library */
     /* Load key definitions from the TERMCAP database. 'termtype' can be NULL */
@@ -12,5 +12,5 @@ namespace mpxp {
 
     /* Read a character or a special key code (see keycodes.h) */
     int getch2(int halfdelay_time);
-} // namespace mpxp
+} // namespace	usr
 #endif

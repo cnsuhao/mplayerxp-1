@@ -2,7 +2,7 @@
 #define __DEMUXER_H 1
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include "xmpcore/xmp_enums.h"
 #include "libmpconf/cfgparser.h"
@@ -12,7 +12,7 @@ using namespace mpxp;
 
 struct demuxer_driver_t;
 extern int index_mode;  /**< -1=untouched  0=don't use index  1=use (geneate) index */
-namespace mpxp {
+namespace	usr {
 /** Describes interface to stream associated with this demuxer */
     enum {
 	DS_PIN=RND_NUMBER1+RND_CHAR1
@@ -152,5 +152,5 @@ namespace mpxp {
     inline Demuxer::demuxer_flags_e operator^=(Demuxer::demuxer_flags_e& a, Demuxer::demuxer_flags_e b) { return (a=static_cast<Demuxer::demuxer_flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
 
     Demuxer*			new_demuxers_demuxer(Demuxer* vd, Demuxer* ad, Demuxer* sd);
-}// namespace mpxp
+}// namespace	usr
 #endif

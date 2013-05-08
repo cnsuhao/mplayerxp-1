@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include <errno.h>
 #include "tcp.h"
@@ -9,7 +9,7 @@ using namespace mpxp;
 #include "mpxp_help.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 int Nop_Networking::read(Tcp& tcp, char *_buffer, int size) {
     int len=0;
     if( buffer_size!=0 ) {
@@ -119,4 +119,4 @@ Networking* Nop_Networking::start(Tcp& tcp,network_protocol_t& protocol) {
 
 Nop_Networking::Nop_Networking() {}
 Nop_Networking::~Nop_Networking() {}
-} // namespace mpxp
+} // namespace	usr

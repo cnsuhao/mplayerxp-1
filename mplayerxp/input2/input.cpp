@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <iomanip>
 
 #include <stdlib.h>
@@ -37,7 +37,7 @@ using namespace mpxp;
 #include "joystick.h"
 #include "osdep/getch2.h"
 
-namespace mpxp {
+namespace	usr {
 
 static const int MP_MAX_KEY_FD=10;
 static const int MP_MAX_CMD_FD=10;
@@ -1428,4 +1428,4 @@ MPXP_Rc mp_input_check_interrupt(libinput_t& handle,int tim) {
     return MPXP_False;
 }
 
-} // namespace mpxp
+} // namespace	usr

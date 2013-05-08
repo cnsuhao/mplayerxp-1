@@ -22,7 +22,7 @@
 #include "video_out.h"
 #include "dri_vo.h"
 
-namespace mpxp {
+namespace	usr {
     struct MotifWmHints_t {
 	long flags;
 	long functions;
@@ -165,5 +165,5 @@ namespace mpxp {
 };
 #endif // HAVE_OPENGL
 
-} //namespace mpxp
+} //namespace	usr
 #endif

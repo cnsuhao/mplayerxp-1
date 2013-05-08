@@ -10,7 +10,7 @@
 #endif
 #include <inttypes.h> /* for __WORDSIZE */
 
-namespace mpxp {
+namespace	usr {
 
 #if __BYTE_ORDER == __BIG_ENDIAN
 #define FOURCC_TAG(ch0,ch1,ch2,ch3) (((uint32_t)(ch3)|((uint32_t)ch2<<8)|(uint32_t)ch1<<16)|((uint32_t)ch0<<24))
@@ -196,5 +196,5 @@ namespace mpxp {
     inline double   le2me_dbl(double x) { return x; }
     inline long double le2me_ldbl(long double x) { return x; }
 #endif
-} // namespace mpxp
+} // namespace	usr
 #endif

@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*  AVI file parser for DEMUXER v2.9  by A'rpi/ESP-team */
 
 #include <algorithm>

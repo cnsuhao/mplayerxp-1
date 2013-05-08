@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <stdio.h>
 #include <pthread.h>
 
@@ -23,7 +23,7 @@ using namespace mpxp;
   see aclib_template.c ... this file only contains runtime cpu detection and config options stuff
   runtime cpu detection by michael niedermayer (michaelni@gmx.at) is under GPL
 */
-namespace mpxp {
+namespace	usr {
 static any_t* init_fast_memcpy(any_t* to, const any_t* from, size_t len)
 {
 #ifdef __SSE2__
@@ -88,6 +88,6 @@ static any_t* init_stream_copy(any_t* to, const any_t* from, size_t len)
 
 any_t*(*fast_memcpy_ptr)(any_t* to, const any_t* from, size_t len) = init_fast_memcpy;
 any_t*(*fast_stream_copy_ptr)(any_t* to, const any_t* from, size_t len) = init_stream_copy;
-} // namespace mpxp
+} // namespace	usr
 #endif /* use fastmemcpy */
 

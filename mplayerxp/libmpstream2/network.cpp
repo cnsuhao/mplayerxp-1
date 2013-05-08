@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * Network layer for MPlayer
  * by Bertrand BAUDET <bertrand_baudet@yahoo.com>
@@ -46,7 +46,7 @@ using namespace mpxp;
 #include "version.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 /* Variables for the command line option -user, -passwd & -bandwidth */
 net_config_t::net_config_t()
 	    :username(NULL),
@@ -439,4 +439,4 @@ int Networking::stop() {
     status = networking_stopped_e;
     return 0;
 }
-} // namespace mpxp
+} // namespace	usr

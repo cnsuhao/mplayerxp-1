@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include "afmt.h"
 
 const char* afmt2str(unsigned fmt) {

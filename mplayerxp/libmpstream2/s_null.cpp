@@ -1,13 +1,13 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     s_null - not a driver.
 */
 #include "stream.h"
 #include "stream_internal.h"
 
-namespace mpxp {
+namespace	usr {
     class Null_Stream_Interface : public Stream_Interface {
 	public:
 	    Null_Stream_Interface(libinput_t& libinput);
@@ -56,4 +56,4 @@ extern const stream_interface_info_t null_stream =
     "not a driver",
     query_interface,
 };
-} // namespace mpxp
+} // namespace	usr

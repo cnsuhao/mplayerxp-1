@@ -1,7 +1,7 @@
 #ifndef CPUDETECT_H
 #define CPUDETECT_H
 
-namespace mpxp {
+namespace	usr {
 #ifdef ARCH_X86_64
 #  define REGa    rax
 #  define REGb    rbx
@@ -63,6 +63,6 @@ namespace mpxp {
 
     /* returned value is mp_malloc()'ed so mp_free() it after use */
     char *GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]);
-} // namespace mpxp
+} // namespace	usr
 #endif /* !CPUDETECT_H */
 

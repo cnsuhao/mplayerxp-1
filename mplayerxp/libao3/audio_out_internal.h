@@ -4,7 +4,7 @@
 
 #include <string>
 
-namespace mpxp {
+namespace	usr {
     /** AO-driver interface */
     class AO_Interface : public Opaque {
 	public:
@@ -65,5 +65,5 @@ namespace mpxp {
 	protected:
 	    std::string		subdevice;
     };
-} // namespace mpxp
+} // namespace	usr
 #endif

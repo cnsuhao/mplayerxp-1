@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*  ASF file parser for DEMUXER v0.3  by A'rpi/ESP-team and Nickols_K */
 
 #include <stdio.h>

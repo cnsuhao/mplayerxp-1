@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* This audio filter exports the incomming signal to other processes
    using memory mapping. Memory mapped area contains a header:
       int nch,

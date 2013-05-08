@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 // read vmpideo frame
 
 #include <stdio.h>
@@ -20,7 +20,7 @@ using namespace mpxp;
 #include "demux_msg.h"
 
 extern void ty_processuserdata(const unsigned char* buf, int len );
-namespace mpxp {
+namespace	usr {
 
 sh_audio_t::~sh_audio_t(){
     MSG_V("DEMUXER: freeing sh_audio at %p  \n",this);
@@ -594,4 +594,4 @@ int sh_video_t::read_frame(float* frame_time_ptr,float *v_pts,unsigned char** st
     if(frame_time_ptr) *frame_time_ptr=frame_time;
     return in_size;
 }
-} // namespace mpxp
+} // namespace	usr

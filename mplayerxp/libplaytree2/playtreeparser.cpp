@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,7 +16,7 @@ using namespace mpxp;
 #include "playtreeparser.h"
 #include "playtree_msg.h"
 
-namespace mpxp {
+namespace	usr {
 
 static const int BUF_STEP=1024;
 static const char* WHITES=" \n\r\t";
@@ -334,4 +334,4 @@ PlayTree* PlayTree_Parser::get_play_tree(libinput_t& libinput) {
     if(tree->cleanup()!=MPXP_Ok) mpxp_warn<<"Warning empty playlist"<<std::endl;
     return tree;
 }
-} // namespace mpxp
+} // namespace	usr

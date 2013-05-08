@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     s_oss - stream interface for oss capturing.
 */
@@ -27,7 +27,7 @@ using namespace mpxp;
 #include "mrl.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
     class Oss_Stream_Interface : public Stream_Interface {
 	public:
 	    Oss_Stream_Interface(libinput_t& libinput);
@@ -280,4 +280,4 @@ extern const stream_interface_info_t oss_stream =
     "reads multimedia stream from OSS audio capturing interface",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr

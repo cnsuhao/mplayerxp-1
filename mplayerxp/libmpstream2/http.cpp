@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * HTTP Helper
  * by Bertrand Baudet <bertrand_baudet@yahoo.com>
@@ -20,7 +20,7 @@ using namespace mpxp;
 #include "stream_msg.h"
 #include "network.h"
 
-namespace mpxp {
+namespace	usr {
 HTTP_Header::HTTP_Header() {}
 HTTP_Header::~HTTP_Header() {
     if( buffer!=NULL ) delete buffer ;
@@ -377,4 +377,4 @@ base64_encode(const any_t*enc, int encLen, char *out, int outMax) {
 	// Output overflow
 	return -1;
 }
-}// namespace mpxp
+}// namespace	usr

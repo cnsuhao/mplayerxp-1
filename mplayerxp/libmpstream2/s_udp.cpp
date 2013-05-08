@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -26,7 +26,7 @@ using namespace mpxp;
 #include "url.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
     class Udp_Stream_Interface : public Stream_Interface {
 	public:
 	    Udp_Stream_Interface(libinput_t& libinput);
@@ -126,5 +126,5 @@ extern const stream_interface_info_t udp_stream =
     "reads multimedia stream directly from User Datagram Protocol (UDP)",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr
 

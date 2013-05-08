@@ -157,7 +157,7 @@ __asm__ __volatile__(\
     return retval;\
 }
 
-namespace mpxp {
+namespace	usr {
 #undef MEM_STORE
 #undef MEM_SFENCE
 #define MEM_STORE  _ivec_stream

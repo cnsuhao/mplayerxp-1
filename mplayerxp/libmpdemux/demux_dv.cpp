@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * raw DV file parser
  * copyright (c) 2002 Alexander Neundorf <neundorf@kde.org>

@@ -21,7 +21,7 @@
 #define UDP_H_INCLUDED 1
 
 #include "url.h"
-namespace mpxp {
+namespace	usr {
     typedef int net_fd_t;
     class Udp {
 	public:
@@ -37,5 +37,5 @@ namespace mpxp {
 	    net_fd_t	_fd;
 	    int		_error;
     };
-} // namespace mpxp
+} // namespace	usr
 #endif /* UDP_H */

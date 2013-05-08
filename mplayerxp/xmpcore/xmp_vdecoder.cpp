@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <stdio.h>
 #include <math.h>
 
@@ -14,7 +14,7 @@ using namespace mpxp;
 #include "xmp_adecoder.h"
 #include "xmp_vdecoder.h"
 
-namespace mpxp {
+namespace	usr {
 /* this routine decodes video+audio but intends to be video only  */
 
 static void show_warn_cant_sync(sh_video_t*sh_video,float max_frame_delay) {
@@ -282,4 +282,4 @@ void sig_video_decode( void )
     __exit_sighandler();
 }
 
-} // namespace mpxp
+} // namespace	usr

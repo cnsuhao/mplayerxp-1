@@ -1,12 +1,12 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <stdio.h>
 #include "tcp.h"
 #include "network_real_rtsp.h"
 #include "librtsp/rtsp_session.h"
 
-namespace mpxp {
+namespace	usr {
 int RealRtsp_Networking::seek(Tcp& tcp, off_t pos) {
     UNUSED(tcp);
     UNUSED(pos);
@@ -67,4 +67,4 @@ Networking* RealRtsp_Networking::start( Tcp& tcp, network_protocol_t& protocol )
 }
 RealRtsp_Networking::RealRtsp_Networking() {}
 RealRtsp_Networking::~RealRtsp_Networking() {}
-} // namespace mpxp
+} // namespace	usr

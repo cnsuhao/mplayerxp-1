@@ -3,7 +3,7 @@
 #include "mpxp_config.h"
 #include <map>
 
-namespace mpxp {
+namespace	usr {
     /** Returns pointer to screen's codepage
       * @return		pointer into environment.
     **/
@@ -28,5 +28,5 @@ namespace mpxp {
     extern char *nls_recode_from_screen_cp(const char *to_cp,const char *param,size_t *size);
 
     extern unsigned utf8_get_char(const char **str);
-} // namespace mpxp
+} // namespace	usr
 #endif

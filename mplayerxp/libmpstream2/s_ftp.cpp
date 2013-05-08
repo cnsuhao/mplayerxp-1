@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #define __STDC_FORMAT_MACROS
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,7 +24,7 @@ using namespace mpxp;
 #include "url.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
     class Ftp_Stream_Interface : public Stream_Interface {
 	public:
 	    Ftp_Stream_Interface(libinput_t& libinput);
@@ -420,4 +420,4 @@ extern const stream_interface_info_t ftp_stream =
     "reads multimedia stream from File Transfer Protocol (FTP)",
     query_interface,
 };
-} // namespace mpxp
+} // namespace	usr

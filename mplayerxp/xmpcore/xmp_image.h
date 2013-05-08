@@ -6,7 +6,7 @@
 
 #include "mpxp_config.h"
 
-namespace mpxp {
+namespace	usr {
     //--- buffer content restrictions:
     enum {
 	MP_IMGFLAG_PRESERVE=0x00001, // set if buffer content shouldn't be modified:

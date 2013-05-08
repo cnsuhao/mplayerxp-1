@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*  vo_sdl.c
  *
  *  (was video_out_sdl.c from OMS project/mpeg2dec -> http://linuxvideo.org)
@@ -137,7 +137,7 @@ static const float MONITOR_ASPECT=4.0f/3.0f;
 
 #include <SDL/SDL.h>
 
-namespace mpxp {
+namespace	usr {
 int sdl_noxv;
 int sdl_forcexv;
 int sdl_forcegl;

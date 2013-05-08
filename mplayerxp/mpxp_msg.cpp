@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <algorithm>
 
 #include <stdio.h>
@@ -14,7 +14,7 @@ using namespace mpxp;
 #include "nls/nls.h"
 #include "mpxp_msg.h"
 
-namespace mpxp {
+namespace	usr {
 mpxp_streambuf::mpxp_streambuf(mpxp_ostream& _parent,const std::string& _data)
 		:data(_data)
 		,parent(_parent)
@@ -253,4 +253,4 @@ int mpxp_printf( unsigned x, const std::string& format, ... ){
 }
 
 void mpxp_print_flush(void) { fflush(stderr); }
-} //namespace mpxp
+} //namespace	usr

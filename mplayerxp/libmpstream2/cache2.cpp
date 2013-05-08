@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <algorithm>
 
 #include <stdio.h>
@@ -25,7 +25,7 @@ using namespace mpxp;
 #include "mplayerxp.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 static const int READ_USLEEP_TIME=10000;
 static const int FILL_USLEEP_TIME=50000;
 static const int PREFILL_SLEEP_TIME=200;
@@ -588,4 +588,4 @@ void Cached_Stream::reset()
     else		Stream::reset();
 }
 
-} // namespace mpxp
+} // namespace	usr

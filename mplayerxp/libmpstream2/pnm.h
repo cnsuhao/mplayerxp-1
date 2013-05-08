@@ -31,7 +31,7 @@
 #endif
 /*#include "xine_internal.h" */
 
-namespace mpxp {
+namespace	usr {
     class Tcp;
 
     class Pnm : public Opaque {
@@ -74,6 +74,6 @@ namespace mpxp {
 	    uint32_t	ts_last[2];     /* timestamps of last chunks      */
 	    unsigned	packet;         /* number of last recieved packet */
     };
-} // namespace mpxp
+} // namespace	usr
 #endif
 

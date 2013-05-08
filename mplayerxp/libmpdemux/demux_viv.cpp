@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
   VIVO file parser by A'rpi
   VIVO text header parser and audio support by alex

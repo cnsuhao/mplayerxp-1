@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <algorithm>
 
 #include <stdlib.h>
@@ -15,7 +15,7 @@ using namespace mpxp;
 #include "playtreeparser.h"
 #include "playtree_msg.h"
 
-namespace mpxp {
+namespace	usr {
 PlayTree* PlayTree::parse_playtree(libinput_t&libinput,Stream* stream) {
     PlayTree_Parser* p;
     PlayTree* ret;
@@ -534,4 +534,4 @@ std::string PlayTree_Iter::get_playable_source_name(int d) {
     return entry;
 }
 
-} // namespace mpxp
+} // namespace	usr

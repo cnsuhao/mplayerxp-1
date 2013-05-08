@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -27,7 +27,7 @@ using namespace mpxp;
 #include "librtsp/rtsp_session.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
     class Rtsp_Stream_Interface : public Stream_Interface {
 	public:
 	    Rtsp_Stream_Interface(libinput_t& libinput);
@@ -107,4 +107,4 @@ extern const stream_interface_info_t rtsp_stream =
     "reads multimedia stream from Real Time Streaming Protocol (RTSP)",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr

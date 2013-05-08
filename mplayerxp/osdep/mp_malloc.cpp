@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <algorithm>
 
 #include "osdep_msg.h"
@@ -15,7 +15,7 @@ using namespace mpxp;
 #include <time.h>
 #include <unistd.h>
 
-namespace mpxp {
+namespace	usr {
 
 enum { Max_BackTraces=13 };
 
@@ -531,9 +531,9 @@ int __FASTCALL__ mp_mprotect(any_t* addr,size_t len,enum mp_prot_e flags)
     return ::mprotect(addr,len,flags);
 }
 
-} // namespace mpxp
+} // namespace	usr
 
-using namespace mpxp;
+using namespace	usr;
 #include <new>
 
 extern "C" any_t*	SECURE_NAME0(_mp_malloc)(size_t size) {

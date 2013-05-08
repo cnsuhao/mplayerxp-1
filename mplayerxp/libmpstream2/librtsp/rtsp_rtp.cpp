@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  *  Copyright (C) 2006 Benjamin Zores
  *   based on the Freebox patch for xine by Vincent Mussard
@@ -48,7 +48,7 @@ using namespace mpxp;
 #include "freesdp/parser.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 #define RTSP_DEFAULT_PORT 31336
 #define MAX_LENGTH 256
 
@@ -567,4 +567,4 @@ Rtp_Rtsp_Session* Rtp_Rtsp_Session::setup_and_play (Rtsp& rtsp) {
     return rtp_session;
 }
 int Rtp_Rtsp_Session::get_rtp_socket() const { return rtp_socket; }
-} // namespace mpxp
+} // namespace	usr

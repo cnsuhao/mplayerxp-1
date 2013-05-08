@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  *  video_out_null.c
  *
@@ -38,7 +38,7 @@ using namespace mpxp;
 #endif
 #include "vo_msg.h"
 
-namespace mpxp {
+namespace	usr {
 class Null_VO_Interface : public VO_Interface {
     public:
 	Null_VO_Interface(const std::string& args);

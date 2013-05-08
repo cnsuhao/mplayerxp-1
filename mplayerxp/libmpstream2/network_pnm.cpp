@@ -1,12 +1,12 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include "tcp.h"
 #include "pnm.h"
 #include "network_pnm.h"
 
-namespace mpxp {
+namespace	usr {
 int Pnm_Networking::seek(Tcp& tcp, off_t pos) {
     UNUSED(tcp);
     UNUSED(pos);
@@ -40,4 +40,4 @@ Networking* Pnm_Networking::start(Tcp& tcp,network_protocol_t& protocol ) {
 
 Pnm_Networking::Pnm_Networking() {}
 Pnm_Networking::~Pnm_Networking() {}
-} // namespace mpxp
+} // namespace	usr

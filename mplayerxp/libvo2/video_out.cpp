@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * video_out.c,
  *
@@ -49,7 +49,7 @@ using namespace mpxp;
 #include "postproc/vf.h"
 #include "vo_msg.h"
 
-namespace mpxp{
+namespace	usr{
 
 VO_Config::VO_Config() {
     movie_aspect=-1.0;
@@ -853,4 +853,4 @@ int __FASTCALL__ vo_describe_fourcc(uint32_t fourcc,vo_format_desc *vd)
     return is_planar;
 }
 
-} // namespace mpxp
+} // namespace	usr

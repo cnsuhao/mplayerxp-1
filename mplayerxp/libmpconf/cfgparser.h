@@ -8,7 +8,7 @@
 #include <string>
 #include <map>
 
-namespace mpxp {
+namespace	usr {
     struct libinput_t;
     struct PlayTree;
 
@@ -145,6 +145,6 @@ namespace mpxp {
     inline M_Config::flags_e operator|=(M_Config::flags_e& a, M_Config::flags_e b) { return (a=static_cast<M_Config::flags_e>(static_cast<unsigned>(a)|static_cast<unsigned>(b))); }
     inline M_Config::flags_e operator&=(M_Config::flags_e& a, M_Config::flags_e b) { return (a=static_cast<M_Config::flags_e>(static_cast<unsigned>(a)&static_cast<unsigned>(b))); }
     inline M_Config::flags_e operator^=(M_Config::flags_e& a, M_Config::flags_e b) { return (a=static_cast<M_Config::flags_e>(static_cast<unsigned>(a)^static_cast<unsigned>(b))); }
-} // namespace mpxp
+} // namespace	usr
 
 #endif /* __CONFIG_H */

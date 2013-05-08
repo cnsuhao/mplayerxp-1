@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * EsounD (Enlightened Sound Daemon) audio output driver for MPlayerXP
  *
@@ -57,7 +57,7 @@ using namespace mpxp;
 #include "ao_msg.h"
 
 
-namespace mpxp {
+namespace	usr {
 static const int ESD_RESAMPLES=0;
 #define ESD_DEBUG 0
 
@@ -481,4 +481,4 @@ extern const ao_info_t audio_out_esd = {
     "",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr

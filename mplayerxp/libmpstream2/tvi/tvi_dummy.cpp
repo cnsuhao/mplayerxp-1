@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     Only a sample!
 */
@@ -11,7 +11,7 @@ using namespace mpxp;
 #include "tv.h"
 #include "tvi_def.h"
 
-namespace mpxp {
+namespace	usr {
 /* information about this file */
 static const tvi_info_t info = {
 	"NULL-TV",
@@ -158,4 +158,4 @@ void free_handle(tvi_handle_t *h)
 	delete h;
     }
 }
-} // namespace mpxp
+} // namespace	usr

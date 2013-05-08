@@ -1,12 +1,12 @@
 #ifndef __MPLAYER_MEMCPY
 #define __MPLAYER_MEMCPY 1
 #include "mpxp_config.h"
-using namespace mpxp;
+using namespace	usr;
 
 #ifdef USE_FASTMEMCPY
 #include <stddef.h>
 #include <string.h> /* memcpy prototypes */
-namespace mpxp {
+namespace	usr {
     extern any_t* (*fast_memcpy_ptr)(any_t* to, const any_t* from, size_t len);
     extern any_t* (*fast_stream_copy_ptr)(any_t* to, const any_t* from, size_t len);
 #define memcpy(a,b,c) (*fast_memcpy_ptr)(a,b,c)
@@ -47,5 +47,5 @@ namespace mpxp {
 	}
 	return retval;
     }
-} // namespace mpxp
+} // namespace	usr
 #endif

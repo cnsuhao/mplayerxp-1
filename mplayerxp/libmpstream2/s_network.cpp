@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     s_network - network stream inetrface
 */
@@ -20,7 +20,7 @@ using namespace mpxp;
 #include "tcp.h"
 #include "network.h"
 
-namespace mpxp {
+namespace	usr {
     class Network_Stream_Interface : public Stream_Interface {
 	public:
 	    Network_Stream_Interface(libinput_t& libinput);
@@ -114,5 +114,5 @@ extern const stream_interface_info_t network_stream =
     "reads multimedia stream from any known network protocol. Example: inet:http://myserver.com",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr
 #endif

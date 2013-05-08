@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
     (C)2002 Charles R. Henrich (henrich@msu.edu)
     *BSD (hopefully, requires working driver!) BrookTree capture support.

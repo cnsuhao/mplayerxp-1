@@ -7,7 +7,7 @@
 #define __NETWORK_H
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include <string>
 
@@ -29,7 +29,7 @@ using namespace mpxp;
 
 static const int BUFFER_SIZE=2048;
 
-namespace mpxp {
+namespace	usr {
     struct Stream;
     struct libinput_t;
     class Tcp;
@@ -106,5 +106,5 @@ namespace mpxp {
 #ifdef USE_ATON
     inline int inet_pton(int a, const char* b, any_t* c) { return inet_aton(b, c); }
 #endif
-} // namespace mpxp
+} // namespace	usr
 #endif

@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -10,7 +10,7 @@ using namespace mpxp;
 #include "afmt.h"
 #include "ao_msg.h"
 
-namespace mpxp {
+namespace	usr {
 extern const ao_info_t audio_out_wav;
 extern const ao_info_t audio_out_null;
 #ifdef USE_OSS_AUDIO
@@ -364,4 +364,4 @@ void Audio_Output::mixer_mute() const {
 	priv.muted=1;
     }
 }
-} // namespace mpxp
+} // namespace	usr

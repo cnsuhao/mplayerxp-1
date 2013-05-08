@@ -2,7 +2,7 @@
 #include "osdep/fastmemcpy.h"
 #include <string.h>
 
-namespace mpxp {
+namespace	usr {
 Demuxer_Packet::Demuxer_Packet(unsigned len)
 	    :type(Demuxer_Packet::Generic),
 	    pts(0),
@@ -40,4 +40,4 @@ Demuxer_Packet* Demuxer_Packet::clone() const {
   memcpy(dp->buffer(),_buf,_len);
   return dp;
 }
-} // namespace mpxp
+} // namespace	usr

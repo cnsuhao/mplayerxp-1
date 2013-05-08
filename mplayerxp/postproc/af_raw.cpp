@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
   This audio filter exports the incoming signal to raw or RIFF WAVE file
   TODO: add length + pts to export into sockets

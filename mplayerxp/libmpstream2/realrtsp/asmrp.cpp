@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * This file was ported to MPlayer from xine CVS asmrp.c,v 1.2 2002/12/17 16:49:48
  */

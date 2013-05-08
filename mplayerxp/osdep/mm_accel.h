@@ -24,7 +24,7 @@
 #ifndef MM_ACCEL_H
 #define MM_ACCEL_H
 
-namespace mpxp {
+namespace	usr {
 /* generic accelerations */
     enum {
 	MM_ACCEL_MLIB		=0x00000001,
@@ -36,5 +36,5 @@ namespace mpxp {
 	MM_ACCEL_X86_SSE	=0x10000000
     };
     uint32_t mm_accel (void);
-} // namespace mpxp
+} // namespace	usr
 #endif /* MM_ACCEL_H */

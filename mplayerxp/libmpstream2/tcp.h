@@ -25,7 +25,7 @@
 #include "input2/input.h"
 #include "url.h"
 
-namespace mpxp {
+namespace	usr {
 
     typedef int net_fd_t;
     class Tcp {
@@ -63,5 +63,5 @@ namespace mpxp {
 	    libinput_t&	libinput;
 	    URL		_url;
     };
-} // namespace mpxp
+} // namespace	usr
 #endif /* TCP_H */

@@ -17,7 +17,7 @@ extern "C" {
 struct ImageDescription;
 struct af_stream_t;
 struct codecs_st;
-namespace mpxp {
+namespace	usr {
     struct standard_header : public Opaque {
 	public:
 	    standard_header() {}
@@ -97,6 +97,6 @@ namespace mpxp {
 	BITMAPINFOHEADER*bih;		// in format
 	ImageDescription*ImageDesc;	// for quicktime codecs
     };
-} //namespace mpxp
+} //namespace	usr
 #endif
 

@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
    RTjpeg (C) Justin Schoeman 1998 (justin@suntiger.ee.up.ac.za)
 

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-namespace mpxp {
+namespace	usr {
 
     /* The sample format system is based on bitmasks. The
 	format definition only refers to the storage format not the

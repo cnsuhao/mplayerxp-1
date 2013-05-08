@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  *  video_out_vesa.c
  *
@@ -47,7 +47,7 @@ using namespace mpxp;
 #include "mpxp_help.h"
 #include "vo_msg.h"
 
-namespace mpxp {
+namespace	usr {
 /* driver data */
 struct win_frame
 {

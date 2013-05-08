@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * ao_sdl.c - libao3 SDLlib Audio Output Driver for MPlayer
  *
@@ -26,7 +26,7 @@ using namespace mpxp;
 #include "osdep/fastmemcpy.h"
 #include "ao_msg.h"
 
-namespace mpxp {
+namespace	usr {
 // Samplesize used by the SDLlib AudioSpec struct
 static const int SAMPLESIZE=1024;
 
@@ -349,4 +349,4 @@ extern const ao_info_t audio_out_sdl = {
     "",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr

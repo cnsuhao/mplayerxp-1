@@ -3,7 +3,7 @@
 #include <inttypes.h>
 #include "osd_render.h"
 
-namespace mpxp {
+namespace	usr {
     struct mp_osd_bbox_t {
 	int x1,y1,x2,y2;
     };

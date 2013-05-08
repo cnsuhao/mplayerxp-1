@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,7 +11,7 @@ using namespace mpxp;
 #include "osdep/fastmemcpy.h"
 #include "player_msg.h"
 
-namespace mpxp {
+namespace	usr {
 void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){
     mpi->flags&=~(MP_IMGFLAG_PLANAR|MP_IMGFLAG_YUV|MP_IMGFLAG_SWAPPED);
     mpi->imgfmt=out_fmt;
@@ -220,4 +220,4 @@ void mpi_fake_slice(mp_image_t *dmpi,const mp_image_t *mpi,unsigned y,unsigned h
     dmpi->flags&=~MP_IMGFLAG_ALLOCATED;
 }
 
-} // namespace mpxp
+} // namespace	usr

@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include "libmpstream2/stream.h"
 #include "demuxer_stream.h"
@@ -9,7 +9,7 @@ using namespace mpxp;
 #include "mpxp_help.h"
 #include "demux_msg.h"
 
-namespace mpxp {
+namespace	usr {
 Demuxer_Stream::~Demuxer_Stream(){
     free_packs();
 }
@@ -274,4 +274,4 @@ float Demuxer_Stream::get_next_pts() {
 
 void Demuxer_Stream::buffer_roll_back(int x) { _buffer_pos-=x; }
 
-} // namespace mpxp
+} // namespace	usr

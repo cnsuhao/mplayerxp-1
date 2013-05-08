@@ -11,7 +11,7 @@
 
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include <string>
 #include <inttypes.h>
@@ -28,7 +28,7 @@ using namespace mpxp;
 #include "xmpcore/xmp_image.h"
 #include "xmpcore/xmp_enums.h"
 
-namespace mpxp {
+namespace	usr {
     enum {
 	VO_EVENT_EXPOSE		=1,
 	VO_EVENT_RESIZE		=2,
@@ -249,5 +249,5 @@ namespace mpxp {
 	unsigned y_mul[4],y_div[4];
     };
     extern int	__FASTCALL__	vo_describe_fourcc(uint32_t fourcc,vo_format_desc *vd);
-} // namespace mpxp
+} // namespace	usr
 #endif

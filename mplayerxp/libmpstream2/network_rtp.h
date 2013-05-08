@@ -4,7 +4,7 @@
 #include "network_nop.h"
 #include "rtp_cache.h"
 
-namespace mpxp {
+namespace	usr {
     struct Rtp_Networking : public Nop_Networking {
 	public:
 	    virtual ~Rtp_Networking();
@@ -16,5 +16,5 @@ namespace mpxp {
 	    Rtp_Networking();
 	    Rtp_Cache* rtp;
     };
-} // namespace mpxp
+} // namespace	usr
 #endif

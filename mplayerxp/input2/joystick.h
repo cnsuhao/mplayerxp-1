@@ -1,7 +1,7 @@
 #ifndef JOYSTICK_H_INCLUDED
 #define JOYSTICK_H_INCLUDED 1
 
-namespace mpxp {
+namespace	usr {
     enum {
 	JOY_BASE	=(0x100+128),
 	JOY_AXIS0_PLUS	=(JOY_BASE+0),
@@ -42,5 +42,5 @@ namespace mpxp {
     extern any_t* mp_input_joystick_open(const char* dev);
     extern void   mp_input_joystick_close(any_t* ctx);
     extern int    mp_input_joystick_read(any_t* ctx);
-} // namespace mpxp
+} // namespace	usr
 #endif

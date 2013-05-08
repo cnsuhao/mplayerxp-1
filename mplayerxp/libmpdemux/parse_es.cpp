@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 //=================== MPEG-ES VIDEO PARSER =========================
 
 #include <stdio.h>

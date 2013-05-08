@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +18,7 @@ using namespace mpxp;
 #include "audio_out_internal.h"
 #include "ao_msg.h"
 
-namespace mpxp {
+namespace	usr {
 static const uint32_t WAV_ID_RIFF=FOURCC_TAG(0x46,0x46,0x49,0x52); /* "RIFF" */
 static const uint32_t WAV_ID_WAVE=FOURCC_TAG(0x45,0x56,0x41,0x57); /* "WAVE" */
 static const uint32_t WAV_ID_FMT =FOURCC_TAG(0x20,0x74,0x6d,0x66); /* "fmt " */
@@ -255,4 +255,4 @@ extern const ao_info_t audio_out_null = {
     "",
     query_interface
 };
-} // namespace mpxp
+} // namespace	usr

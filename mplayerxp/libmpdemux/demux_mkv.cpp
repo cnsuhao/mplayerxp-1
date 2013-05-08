@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * native Matroska demuxer
  * Written by Aurelien Jacobs <aurel@gnuage.org>

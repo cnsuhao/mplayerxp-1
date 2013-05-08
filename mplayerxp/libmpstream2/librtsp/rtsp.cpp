@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * This file was ported to MPlayer from xine CVS rtsp.c,v 1.9 2003/04/10 02:30:48
  */
@@ -60,7 +60,7 @@ using namespace mpxp;
 #include "osdep/timer.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 /*
 #define LOG
 */
@@ -688,4 +688,4 @@ void Rtsp::free_answers() {
 	answer++;
     }
 }
-} // namespace mpxp
+} // namespace	usr

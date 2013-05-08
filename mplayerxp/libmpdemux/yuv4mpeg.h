@@ -29,7 +29,7 @@
 
 #include <stdlib.h>
 
-namespace mpxp {
+namespace	usr {
     struct Stream;
 }
 /************************************************************************

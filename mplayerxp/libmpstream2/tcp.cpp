@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * Network layer for MPlayer
  * by Bertrand BAUDET <bertrand_baudet@yahoo.com>
@@ -35,7 +35,7 @@ using namespace mpxp;
 #include "tcp.h"
 #include "stream_msg.h"
 
-namespace mpxp {
+namespace	usr {
 
 // Converts an address family constant to a string
 static const char *af2String(Tcp::tcp_af_e af) {
@@ -279,4 +279,4 @@ int Tcp::established() const { return _fd > 0 && _error==Tcp::Err_None; }
 Tcp::tcp_error_e Tcp::error() const { return _error; }
 libinput_t& Tcp::get_libinput() const { return libinput; }
 const URL& Tcp::url() const { return _url; }
-} // namespace mpxp
+} // namespace	usr

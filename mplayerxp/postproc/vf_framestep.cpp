@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * vf_fstep.c - filter to ouput only 1 every n frame, or only the I (key)
  *              frame

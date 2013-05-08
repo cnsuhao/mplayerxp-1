@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * This file is part of MPlayerXP.
  *
@@ -51,7 +51,7 @@ using namespace mpxp;
 #include "osdep/fastmemcpy.h"
 #include "postproc/vfcap.h"
 #include "vo_msg.h"
-namespace mpxp {
+namespace	usr {
 class OpenGL_VO_Interface : public VO_Interface {
     public:
 	OpenGL_VO_Interface(const std::string& args);

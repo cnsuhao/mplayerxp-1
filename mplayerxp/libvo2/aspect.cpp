@@ -1,11 +1,11 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /* Stuff for correct aspect scaling. */
 #include "aspect.h"
 #include "vo_msg.h"
 
-namespace mpxp {
+namespace	usr {
 
 Aspect::Aspect(float mon_pix_aspect) { monitor_pixel_aspect = mon_pix_aspect; }
 Aspect::~Aspect() { }

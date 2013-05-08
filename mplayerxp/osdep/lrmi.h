@@ -15,7 +15,7 @@ Original location: http://cvs.debian.org/lrmi/
 #define LRMI_H
 
 #include "mpxp_config.h"
-namespace mpxp {
+namespace	usr {
     struct LRMI_regs {
 	unsigned int edi;
 	unsigned int esi;
@@ -77,5 +77,5 @@ namespace mpxp {
 */
 #define LRMI_free_real LRMI_MAKENAME(free_real)
     void LRMI_free_real(any_t*m);
-} // namespace mpxp
+} // namespace	usr
 #endif

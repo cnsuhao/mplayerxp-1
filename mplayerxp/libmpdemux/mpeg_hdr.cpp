@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <algorithm>
 
 // based on libmpeg2/header.c by Aaron Holtzman <aholtzma@ess.engr.uvic.ca>

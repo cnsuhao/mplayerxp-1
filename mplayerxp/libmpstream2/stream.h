@@ -2,7 +2,7 @@
 #define __STREAM_H_INCLUDED
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 
 #include <string>
 #include <inttypes.h>
@@ -11,7 +11,7 @@ using namespace mpxp;
 
 #include "xmpcore/xmp_enums.h"
 
-namespace mpxp {
+namespace	usr {
     struct libinput_t;
     enum {
 	STREAM_BUFFER_SIZE	=4096,
@@ -185,5 +185,5 @@ namespace mpxp {
 
 	SCTRL_EOF=10000
     };
-} // namespace mpxp
+} // namespace	usr
 #endif // __STREAM_H

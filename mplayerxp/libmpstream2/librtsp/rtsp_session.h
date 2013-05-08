@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 /*
  * This file was ported to MPlayer from xine CVS rtsp_session.h,v 1.4 2003/01/31 14:06:18
  */
@@ -35,7 +35,7 @@ using namespace mpxp;
 #define HAVE_RTSP_SESSION_H
 #include "../rtp_cache.h"
 struct real_rtsp_session_t;
-namespace mpxp {
+namespace	usr {
     class Rtp_Rtsp_Session;
     class Rtsp;
     struct Rtsp_Session : public Opaque {
@@ -53,5 +53,5 @@ namespace mpxp {
 	    Rtp_Rtsp_Session*	rtp_session;
 	    Rtp_Cache*		rtp;
     };
-} // namespace mpxp
+} // namespace	usr
 #endif

@@ -1,6 +1,6 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
-using namespace mpxp;
+using namespace	usr;
 #include <stdlib.h>
 #include <string.h>
 
@@ -12,7 +12,7 @@ using namespace mpxp;
 #ifdef TEST_MRL
 #include <stdio.h>
 #endif
-namespace mpxp {
+namespace	usr {
 const char *mrl_parse_line(const std::string& _line,char **user,char **pass,char **ms,char **port)
 {
     unsigned ssize;
@@ -174,5 +174,5 @@ const char * mrl_parse_params(const std::string& _param, const mrl_config_t * ar
     if(value) delete value;
     return param;
 }
-} // namespace mpxp
+} // namespace	usr
 
