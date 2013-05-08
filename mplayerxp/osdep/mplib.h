@@ -18,8 +18,16 @@
 #include "mp_malloc.h"
 
 namespace mpxp {
+    class Opaque {
+	public:
+	    Opaque();
+	    virtual ~Opaque();
+	
+	any_t*		false_pointers[RND_CHAR0];
+	any_t*		unusable;
+    };
 
-    template <typename T> class LocalPtr {
+    template <typename T> class LocalPtr : public Opaque {
 	public:
 	    LocalPtr(T* value):ptr(value) {}
 	    virtual ~LocalPtr() { delete ptr; }
@@ -30,16 +38,10 @@ namespace mpxp {
 	    LocalPtr<T>& operator=(LocalPtr<T> a) { return this; }
 	    LocalPtr<T>& operator=(LocalPtr<T>& a) { return this; }
 	    LocalPtr<T>& operator=(LocalPtr<T>* a) { return this; }
-	    T* ptr;
-    };
 
-    class Opaque {
-	public:
-	    Opaque();
-	    virtual ~Opaque();
-	
-	any_t*		false_pointers[RND_CHAR0];
-	any_t*		unusable;
+	    Opaque	opaque1;
+	    T* ptr;
+	    Opaque	opaque2;
     };
 } // namespace mpxp
 #endif

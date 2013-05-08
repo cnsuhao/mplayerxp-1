@@ -219,9 +219,13 @@ MPXPContext::~MPXPContext()
 }
 
 static volatile char antiviral_hole2[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
+static Opaque	opaque1;
 static LocalPtr<MPXPContext> MPXPCtx(new(zeromem) MPXPContext);
+static Opaque	opaque2;
 static volatile char antiviral_hole3[__VM_PAGE_SIZE__] __PAGE_ALIGNED__;
+static Opaque	opaque3;
 volatile MPXPSecureKeys* secure_keys;
+static Opaque	opaque4;
 /**************************************************************************
 	     Decoding ahead
 **************************************************************************/
