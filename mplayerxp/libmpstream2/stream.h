@@ -4,6 +4,7 @@
 #include "osdep/mplib.h"
 using namespace	usr;
 
+#include <vector>
 #include <string>
 #include <inttypes.h>
 #include <sys/types.h>
@@ -91,6 +92,7 @@ namespace	usr {
 	private:
 	    int			read(stream_packet_t* sp);
 	    Stream_Interface*	driver; /**< low-level stream driver */
+	    std::vector<const stream_interface_info_t*> list;
 	    type_e		_type;
 	    int			_eof;	/**< indicates EOF */
     };

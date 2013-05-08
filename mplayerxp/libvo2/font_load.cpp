@@ -51,7 +51,6 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
     int i,j;
     int chardb=0;
     int fontdb=-1;
-    int version=0;
 
     desc=new(zeromem) font_desc_t;
     if(!desc) return NULL;
@@ -135,7 +134,7 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 		continue;
 	    }
 	} else if(strcmp(section,"[files]")==0){
-	    char *default_dir=DATADIR"/font";
+	    const char *default_dir=DATADIR"/font";
 	    if(pdb==2 && strcmp(p[0],"alpha")==0){
 		char *cp;
 		if (!(cp=new char [strlen(desc->fpath)+strlen(p[1])+2])) {
@@ -191,10 +190,6 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 	} else if(strcmp(section,"[info]")==0){
 	    if(pdb==2 && strcmp(p[0],"name")==0){
 		desc->name=mp_strdup(p[1]);
-		continue;
-	    }
-	    if(pdb==2 && strcmp(p[0],"descversion")==0){
-		version=atoi(p[1]);
 		continue;
 	    }
 	    if(pdb==2 && strcmp(p[0],"spacewidth")==0){

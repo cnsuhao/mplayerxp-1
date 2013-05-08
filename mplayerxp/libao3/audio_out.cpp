@@ -1,6 +1,8 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace	usr;
+#include <vector>
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -71,15 +73,45 @@ static const ao_info_t* audio_out_drivers[] =
 
 struct priv_t : public Opaque {
     public:
-	priv_t() {}
+	priv_t();
 	virtual ~priv_t() {}
 
 	char		antiviral_hole[RND_CHAR5];
 	const ao_info_t*info;
 	AO_Interface*	driver;
+	std::vector<const ao_info_t*> list;
 	int		muted;
 	float		mute_l,mute_r;
 };
+
+priv_t::priv_t() {
+#ifdef USE_OSS_AUDIO
+	list.push_back(&audio_out_oss);
+#endif
+#ifdef HAVE_SDL
+	list.push_back(&audio_out_sdl);
+#endif
+#ifdef HAVE_ALSA
+	list.push_back(&audio_out_alsa);
+#endif
+#ifdef HAVE_ARTS
+	list.push_back(&audio_out_arts);
+#endif
+#ifdef HAVE_ESD
+	list.push_back(&audio_out_esd);
+#endif
+#ifdef HAVE_OPENAL
+	list.push_back(&audio_out_openal);
+#endif
+#ifdef HAVE_NAS
+	list.push_back(&audio_out_nas);
+#endif
+#ifdef HAVE_JACK
+	list.push_back(&audio_out_jack);
+#endif
+	list.push_back(&audio_out_wav);
+	list.push_back(&audio_out_null);
+}
 
 const char * __FASTCALL__ ao_format_name(int format)
 {
@@ -207,17 +239,17 @@ void Audio_Output::print_help() {
 
 MPXP_Rc Audio_Output::_register(const std::string& driver_name,unsigned flags) const {
     priv_t& priv=static_cast<priv_t&>(opaque);
-    unsigned i;
+    size_t i,sz=priv.list.size();
     if(driver_name.empty()) {
-	priv.info=audio_out_drivers[0];
-	priv.driver=audio_out_drivers[0]->query_interface(subdevice?subdevice:"");
+	priv.info=priv.list[0];
+	priv.driver=priv.list[0]->query_interface(subdevice?subdevice:"");
     }
     else
-    for (i=0; audio_out_drivers[i] != &audio_out_null; i++) {
-	const ao_info_t *info = audio_out_drivers[i];
+    for (i=0; i<sz; i++) {
+	const ao_info_t *info = priv.list[i];
 	if(info->short_name==driver_name){
-	    priv.info = audio_out_drivers[i];
-	    priv.driver = audio_out_drivers[i]->query_interface(subdevice?subdevice:"");
+	    priv.info = priv.list[i];
+	    priv.driver = priv.list[i]->query_interface(subdevice?subdevice:"");
 	    break;
 	}
     }

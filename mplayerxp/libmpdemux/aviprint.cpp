@@ -109,7 +109,7 @@ void print_wave_header(WAVEFORMATEX *h,unsigned size)
   MSG_V("======= End of WAVE Format =======\n");
 }
 
-static char * aspect_ratios[]=
+static const char * aspect_ratios[]=
 {
 "forbidden",
 "1.0000 (VGA)",
@@ -129,7 +129,7 @@ static char * aspect_ratios[]=
 "reserved"
 };
 
-static char *decode_aspect_ratio(unsigned char id)
+static const char *decode_aspect_ratio(unsigned char id)
 {
     if(id>15) id=0;
     return aspect_ratios[id];

@@ -284,13 +284,8 @@ void MPXPSystem::uninit_input() {
 }
 void MPXPSystem::uninit_player(unsigned int mask){
     Stream* stream=NULL;
-    sh_audio_t* sh_audio=NULL;
-    sh_video_t* sh_video=NULL;
-    if(_demuxer) {
-	stream=static_cast<Stream*>(_demuxer->stream);
-	sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
-	sh_video=reinterpret_cast<sh_video_t*>(_demuxer->video->sh);
-    }
+    if(_demuxer) stream=static_cast<Stream*>(_demuxer->stream);
+
     fflush(stdout);
     fflush(stderr);
     mask=inited_flags&mask;
@@ -320,7 +315,6 @@ void MPXPSystem::uninit_player(unsigned int mask){
 	inited_flags&=~INITED_VCODEC;
 	MP_UNIT("uninit_vcodec");
 	mpcv_uninit(*mpxp_context().video().decoder);
-	sh_video=NULL;
     }
 
     if(mask&INITED_VO){
@@ -335,7 +329,6 @@ void MPXPSystem::uninit_player(unsigned int mask){
 	inited_flags&=~INITED_ACODEC;
 	MP_UNIT("uninit_acodec");
 	mpca_uninit(*mpxp_context().audio().decoder);
-	sh_audio=NULL;
     }
 
     if(mask&INITED_AO){

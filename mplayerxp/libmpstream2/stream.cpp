@@ -58,45 +58,40 @@ extern const stream_interface_info_t stdin_stream;
 extern const stream_interface_info_t file_stream;
 extern const stream_interface_info_t null_stream;
 
-static const stream_interface_info_t* sdrivers[] =
-{
-#ifdef HAVE_LIBCDIO_CDDA
-    &cdda_stream,
-#ifdef HAVE_STREAMING
-    &cddb_stream,
-#endif
-#endif
-#ifdef USE_DVDNAV
-    &dvdnav_stream,
-#endif
-#ifdef USE_DVDREAD
-    &dvdread_stream,
-#endif
-#ifdef USE_TV
-    &tv_stream,
-#endif
-#ifdef USE_LIBVCD
-    &vcdnav_stream,
-#endif
-#ifdef USE_OSS_AUDIO
-    &oss_stream,
-#endif
-#ifdef HAVE_STREAMING
-    &ftp_stream,
-    &rtsp_stream,
-    &udp_stream,
-    &network_stream,
-#endif
-    &lavs_stream,
-    &stdin_stream,
-    &file_stream,
-    &null_stream,
-    NULL
-};
-
 Stream::Stream(Stream::type_e t)
 	:_type(t)
 {
+#ifdef HAVE_LIBCDIO_CDDA
+    list.push_back(&cdda_stream);
+#ifdef HAVE_STREAMING
+    list.push_back(&cddb_stream);
+#endif
+#endif
+#ifdef USE_DVDNAV
+    list.push_back(&dvdnav_stream);
+#endif
+#ifdef USE_DVDREAD
+    list.push_back(&dvdread_stream);
+#endif
+#ifdef USE_TV
+    list.push_back(&tv_stream);
+#endif
+#ifdef USE_LIBVCD
+    list.push_back(&vcdnav_stream);
+#endif
+#ifdef USE_OSS_AUDIO
+    list.push_back(&oss_stream);
+#endif
+#ifdef HAVE_STREAMING
+    list.push_back(&ftp_stream);
+    list.push_back(&rtsp_stream);
+    list.push_back(&udp_stream);
+    list.push_back(&network_stream);
+#endif
+    list.push_back(&lavs_stream);
+    list.push_back(&stdin_stream);
+    list.push_back(&file_stream);
+    list.push_back(&null_stream);
     pin=STREAM_PIN;
     reset();
 }
@@ -125,20 +120,19 @@ void		Stream::eof(int e) { if(!e) reset(); _eof = e; }
 
 MPXP_Rc		Stream::open(libinput_t&libinput,const std::string& filename,int* ff)
 {
-    unsigned i,done;
+    size_t i,sz=list.size();
     unsigned mrl_len;
     file_format=*ff;
-    done=0;
-    for(i=0;sdrivers[i]!=&null_stream;i++) {
-	mrl_len=strlen(sdrivers[i]->mrl);
-	if(filename.substr(0,mrl_len)==sdrivers[i]->mrl||sdrivers[i]->mrl[0]=='*') {
-	    mpxp_v<<"[Stream]: "<<"Opening "<<sdrivers[i]->mrl<<" ... ";
-	    Stream_Interface* drv = sdrivers[i]->query_interface(libinput);
-	    if(sdrivers[i]->mrl[0]=='*') mrl_len=0;
+    for(i=0;i<sz;i++) {
+	mrl_len=strlen(list[i]->mrl);
+	if(filename.substr(0,mrl_len)==list[i]->mrl||list[i]->mrl[0]=='*') {
+	    mpxp_v<<"[Stream]: "<<"Opening "<<list[i]->mrl<<" ... ";
+	    Stream_Interface* drv = list[i]->query_interface(libinput);
+	    if(list[i]->mrl[0]=='*') mrl_len=0;
 	    if(drv->open(&filename[mrl_len],0)==MPXP_Ok) {
 		mpxp_v<<"Ok"<<std::endl;
 		*ff = file_format;
-		driver_info=sdrivers[i];
+		driver_info=list[i];
 		driver=drv;
 		return MPXP_Ok;
 	    }
@@ -243,6 +237,41 @@ unsigned int Stream::read_int24(){
   return y;
 }
 
+static const stream_interface_info_t* sdrivers[] =
+{
+#ifdef HAVE_LIBCDIO_CDDA
+    &cdda_stream,
+#ifdef HAVE_STREAMING
+    &cddb_stream,
+#endif
+#endif
+#ifdef USE_DVDNAV
+    &dvdnav_stream,
+#endif
+#ifdef USE_DVDREAD
+    &dvdread_stream,
+#endif
+#ifdef USE_TV
+    &tv_stream,
+#endif
+#ifdef USE_LIBVCD
+    &vcdnav_stream,
+#endif
+#ifdef USE_OSS_AUDIO
+    &oss_stream,
+#endif
+#ifdef HAVE_STREAMING
+    &ftp_stream,
+    &rtsp_stream,
+    &udp_stream,
+    &network_stream,
+#endif
+    &lavs_stream,
+    &stdin_stream,
+    &file_stream,
+    &null_stream,
+    NULL
+};
 void Stream::print_drivers()
 {
     unsigned i;

@@ -23,6 +23,7 @@ using namespace	usr;
  */
 #include <algorithm>
 #include <iomanip>
+#include <vector>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -121,11 +122,31 @@ struct vo_priv_t : public video_private {
     dri_priv_t			dri;
     const vo_info_t*		video_out;
     class VO_Interface*		vo_iface;
+    std::vector<const vo_info_t*> list;
     const OSD_Render*		draw_alpha;
     vf_stream_t*		parent;
 };
 
 vo_priv_t::vo_priv_t() {
+#ifdef HAVE_XV
+	list.push_back(&xv_vo_info);
+#endif
+#ifdef HAVE_OPENGL
+	list.push_back(&opengl_vo_info);
+#endif
+#ifdef HAVE_X11
+	list.push_back(&x11_vo_info);
+#endif
+#ifdef HAVE_SDL
+	list.push_back(&sdl_vo_info);
+#endif
+#ifdef HAVE_VESA
+	list.push_back(&vesa_vo_info);
+#endif
+#ifdef HAVE_FBDEV
+	list.push_back(&fbdev_vo_info);
+#endif
+	list.push_back(&null_vo_info);
     dri.num_xp_frames=1;
 }
 
@@ -174,13 +195,13 @@ MPXP_Rc Video_Output::init(const std::string& driver_name) const {
 	if(offset!=std::string::npos) subdev = drv_name.substr(offset+1);
     }
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
-    unsigned i;
-    if(drv_name.empty()) priv.video_out=vo_infos[0];
+    size_t i,sz=priv.list.size();
+    if(drv_name.empty()) priv.video_out=priv.list[0];
     else
-    for (i=0; vo_infos[i] != &null_vo_info; i++){
-	const vo_info_t *info = vo_infos[i];
+    for (i=0; i<sz; i++){
+	const vo_info_t *info = priv.list[i];
 	if(info->short_name==drv_name){
-	    priv.video_out = vo_infos[i];
+	    priv.video_out = priv.list[i];
 	    break;
 	}
     }
