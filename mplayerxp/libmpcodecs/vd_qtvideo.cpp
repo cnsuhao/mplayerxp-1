@@ -260,21 +260,12 @@ static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
 
     //Fill the imagedescription for our SVQ3 frame
     //we can probably get this from Demuxer
-#if 0
-    framedescHandle=(ImageDescriptionHandle)NewHandleClear(sizeof(ImageDescription)+200);
-    MSG_V("framedescHandle=%p  *p=%p\n",framedescHandle,*framedescHandle);
-{ FILE* f=fopen("/root/.wine/fake_windows/IDesc","r");
-  if(!f) MSG_ERR("filenot found: IDesc\n");
-  fread(*framedescHandle,sizeof(ImageDescription)+200,1,f);
-  fclose(f);
-}
-#else
     if(!sh->ImageDesc) sh->ImageDesc=reinterpret_cast<ImageDescription*>(sh->bih+1); // hack for SVQ3-in-AVI
     MSG_V("ImageDescription size: %d\n",((ImageDescription*)(sh->ImageDesc))->idSize);
     framedescHandle=(ImageDescriptionHandle)NewHandleClear(((ImageDescription*)(sh->ImageDesc))->idSize);
     memcpy(*framedescHandle,sh->ImageDesc,((ImageDescription*)(sh->ImageDesc))->idSize);
     dump_ImageDescription(*framedescHandle);
-#endif
+
 //Find codecscomponent for video decompression
 //    result = FindCodec ('SVQ1',anyCodec,&compressor,&decompressor );
 //    MSG_V("FindCodec SVQ1 returned:%i compressor: 0x%X decompressor: 0x%X\n",result,compressor,decompressor);

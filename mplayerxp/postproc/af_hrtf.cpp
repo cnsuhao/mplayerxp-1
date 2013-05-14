@@ -136,17 +136,6 @@ inline void matrix_decode(real_t *in, const int k, const int il,
    float l_agc, r_agc, lpr_agc, lmr_agc;
    float f, d_gain, c_gain, c_agc_cfk;
 
-#if 0
-   static int counter = 0;
-   static FILE *fp_out;
-
-   if(counter == 0)
-      fp_out = fopen("af_hrtf.log", "w");
-   if(counter % 240 == 0)
-      fprintf(fp_out, "%g %g %g %g %g ", counter * (1.0 / 48000),
-	      l_gain, r_gain, lpr_gain, lmr_gain);
-#endif
-
    /*** AXIS NO. 1: (Lt, Rt) -> (C, Ls, Rs) ***/
    /* AGC adaption */
    d_gain = (fabs(l_gain - *adapt_l_gain) +

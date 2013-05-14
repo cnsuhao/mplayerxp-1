@@ -1,6 +1,8 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace	usr;
+#include <iostream>
+#include <fstream>
 
 #include "mpxp_help.h"
 
@@ -125,7 +127,7 @@ static void draw(menu_t* menu,mp_image_t* mpi) {
 #define BUF_SIZE 1024
 
 static int open_txt(menu_t* menu,const char* args) {
-  FILE* fd;
+  std::ifstream fd;
   char buf[BUF_SIZE];
   char *l;
   int s;
@@ -141,21 +143,22 @@ static int open_txt(menu_t* menu,const char* args) {
     return 0;
   }
 
-  fd = fopen(mpriv->file,"r");
-  if(!fd) {
+  fd.open(mpriv->file,std::ios_base::in);
+  if(!fd.is_open()) {
     mpxp_warn<<"[libmenu] MenuTxt can't open: "<<mpriv->file<<std::endl;
     return 0;
   }
 
   while(1) {
-    r = fread(buf+pos,1,BUF_SIZE-pos-1,fd);
-    if(r <= 0) {
+    fd.read(buf+pos,BUF_SIZE-pos-1);
+    r=BUF_SIZE-pos-1;
+    if(!fd.good()) {
       if(pos > 0) {
 	mpriv->lines = (char **)mp_realloc(mpriv->lines,(mpriv->num_lines + 1)*sizeof(char*));
 	mpriv->lines[mpriv->num_lines] = mp_strdup(buf);
 	mpriv->num_lines++;
       }
-      fclose(fd);
+      fd.close();
       break;
     }
     pos += r;

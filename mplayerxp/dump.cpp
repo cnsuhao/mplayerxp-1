@@ -4,6 +4,8 @@ using namespace	usr;
 /*
     dump.c - stream dumper
 */
+#include <iostream>
+#include <fstream>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,8 +30,7 @@ static char *media=NULL,*port=NULL;
 int  dump_parse(const char *param)
 {
     int type=0;
-    const char *tile;
-    tile=mrl_parse_line(param,NULL,NULL,&media,&port);
+    mrl_parse_line(param,NULL,NULL,&media,&port);
     if(!media) return 0;
     if(strcmp(media,"stream")==0)	type=1;
     else				type=2;
@@ -40,7 +41,7 @@ void dump_stream(Stream *stream)
 {
   char buf[4096];
   int len;
-  FILE *f;
+  std::ofstream f;
   const char *ext,*name;
   MP_UNIT("dumpstream");
   stream->reset();
@@ -56,17 +57,17 @@ void dump_stream(Stream *stream)
     strcpy(buf,port);
   }
   name=buf;
-  f=fopen(name,"wb");
-  if(!f){
+  f.open(name,std::ios_base::out|std::ios_base::binary);
+  if(!f.is_open()){
     MSG_FATAL(MSGTR_CantOpenDumpfile);
     exit_player(MSGTR_Fatal_error);
   }
   MSG_INFO("Dumping stream to %s\n",name);
   while(!stream->eof()){
       len=stream->read(buf,4096);
-      if(len>0) fwrite(buf,len,1,f);
+      if(len>0) f.write(buf,len);
   }
-  fclose(f);
+  f.close();
   mpxp_info<<MSGTR_StreamDumped<<std::endl;
   exit_player(MSGTR_Exit_eof);
 }
@@ -82,7 +83,7 @@ struct dump_priv_t : public Opaque {
 	virtual ~dump_priv_t() {}
 
 	int		my_use_pts;
-	FILE*		mux_file;
+	std::ofstream	mux_file;
 	muxer_t*	muxer;
 	muxer_stream_t *m_audio,*m_video,*m_subs;
 	unsigned	decoded_frameno;
@@ -141,9 +142,9 @@ void dump_mux_init(Demuxer *demuxer,libinput_t& libinput)
 	MSG_FATAL("Unsupported muxer format %s found\n",media);
 	exit_player(MSGTR_Fatal_error);
     }
-    priv->mux_file=fopen(stream_dump_name,"wb");
+    priv->mux_file.open(stream_dump_name,std::ios_base::out|std::ios_base::binary);
     MSG_DBG2("Preparing stream dumping: %s\n",stream_dump_name);
-    if(!priv->mux_file){
+    if(!priv->mux_file.is_open()){
 	MSG_FATAL(MSGTR_CantOpenDumpfile);
 	exit_player(MSGTR_Fatal_error);
     }
@@ -270,10 +271,10 @@ void dump_mux_close(Demuxer *demuxer)
 	if(demuxer->sub->sh) {
 	    if(priv->m_subs) MSG_V("Finishing sstream as\n");
 	}
-	fseeko(priv->mux_file,0,SEEK_SET);
+	priv->mux_file.seekp(0,std::ios_base::beg);
 	muxer_write_header(priv->muxer,demuxer);
-	fclose(priv->mux_file);
-	delete demuxer->priv;
+	priv->mux_file.close();
+	delete priv;
 	demuxer->priv=NULL;
     }
     mpxp_info<<MSGTR_StreamDumped<<std::endl;

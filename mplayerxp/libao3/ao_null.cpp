@@ -1,6 +1,9 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace	usr;
+#include <iostream>
+#include <fstream>
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -88,7 +91,7 @@ class Null_AO_Interface : public AO_Interface {
 
 	struct		timeval last_tv;
 	int		buffer;
-	FILE*		fd;
+	std::ofstream	fd;
 	int		fast_mode;
 	int		wav_mode;
 };
@@ -96,13 +99,14 @@ class Null_AO_Interface : public AO_Interface {
 Null_AO_Interface::Null_AO_Interface(const std::string& _subdevice)
 		:AO_Interface(_subdevice) {}
 Null_AO_Interface::~Null_AO_Interface() {
-    if(fd && wav_mode && fseeko(fd, 0, SEEK_SET) == 0){ /* Write wave header */
+    if(fd.is_open() && wav_mode){ /* Write wave header */
+	fd.seekp(0, std::ios_base::beg);
 	wavhdr.file_length = wavhdr.data_length + sizeof(wavhdr) - 8;
 	wavhdr.file_length = le2me_32(wavhdr.file_length);
 	wavhdr.data_length = le2me_32(wavhdr.data_length);
-	::fwrite(&wavhdr,sizeof(wavhdr),1,fd);
+	fd.write((char*)&wavhdr,sizeof(wavhdr));
     }
-    if(fd) ::fclose(fd);
+    if(fd.is_open()) fd.close();
 }
 
 void Null_AO_Interface::drain() {
@@ -139,8 +143,7 @@ MPXP_Rc Null_AO_Interface::open(unsigned flags) {
     UNUSED(flags);
     if (!subdevice.empty()) {
 	mrl_parse_line(subdevice,NULL,NULL,&null_dev,&mode);
-	fd=NULL;
-	if(null_dev) fd = ::fopen(null_dev, "wb");
+	if(null_dev) fd.open(null_dev, std::ios_base::out|std::ios_base::binary);
 	if(::strcmp(mode,"wav")==0) wav_mode=1;
     } //end parsing subdevice
     return MPXP_Ok;
@@ -179,7 +182,7 @@ MPXP_Rc Null_AO_Interface::configure(unsigned r,unsigned c,unsigned f){
     }
     buffer=0;
     gettimeofday(&last_tv, 0);
-    if(fd && wav_mode) {
+    if(fd.is_open() && wav_mode) {
 	wavhdr.channels = le2me_16(_channels);
 	wavhdr.sample_rate = le2me_32(_samplerate);
 	wavhdr.bytes_per_second = le2me_32(afmt2bps(_format));
@@ -188,7 +191,7 @@ MPXP_Rc Null_AO_Interface::configure(unsigned r,unsigned c,unsigned f){
 	wavhdr.data_length=le2me_32(0x7ffff000);
 	wavhdr.file_length = wavhdr.data_length + sizeof(wavhdr) - 8;
 
-	::fwrite(&wavhdr,sizeof(wavhdr),1,fd);
+	fd.write((char*)&wavhdr,sizeof(wavhdr));
 	wavhdr.file_length=wavhdr.data_length=0;
     }
     return MPXP_Ok;
@@ -225,7 +228,7 @@ unsigned Null_AO_Interface::play(const any_t* data,unsigned len,unsigned flags) 
     UNUSED(flags);
     if(fd && len) {
 	mpxp_dbg2<<"writing "<<len<<" bytes into file"<<std::endl;
-	::fwrite(data,len,1,fd);
+	fd.write((const char*)data,len);
 	wavhdr.data_length += len;
     }
     return fast_mode?bursts*_outburst:len;

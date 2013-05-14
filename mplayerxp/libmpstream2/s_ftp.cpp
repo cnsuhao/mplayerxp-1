@@ -275,7 +275,7 @@ off_t Ftp_Stream_Interface::seek(off_t newpos) {
 
     // Close current download
     if(tcp.established()) {
-	static const char pre_cmd[]={TELNET_IAC,TELNET_IP,TELNET_IAC,TELNET_SYNCH};
+	static const uint8_t pre_cmd[]={TELNET_IAC,TELNET_IP,TELNET_IAC,TELNET_SYNCH};
 	//int fl;
 	// Send send the telnet sequence needed to make the server react
 

@@ -62,105 +62,105 @@ typedef struct priv_mpxpav64_s
     float prev_seek;
 }priv_mpxpav64_t;
 
-static void mpxpav64_put64(FILE *f,uint64_t value)
+static void mpxpav64_put64(std::ofstream& f,uint64_t value)
 {
     uint64_t val;
     val = me2le_64(value);
-    fwrite(&val,8,1,f);
+    f.write((char*)&val,8);
 }
 
-static void mpxpav64_put32(FILE *f,uint32_t value)
+static void mpxpav64_put32(std::ofstream& f,uint32_t value)
 {
     uint32_t val;
     val = me2le_32(value);
-    fwrite(&val,4,1,f);
+    f.write((char*)&val,4);
 }
 
-static void mpxpav64_put16(FILE *f,uint16_t value)
+static void mpxpav64_put16(std::ofstream& f,uint16_t value)
 {
     uint16_t val;
     val = me2le_16(value);
-    fwrite(&val,2,1,f);
+    f.write((char*)&val,2);
 }
 
-static void mpxpav64_put8(FILE *f,uint8_t value)
+static void mpxpav64_put8(std::ofstream& f,uint8_t value)
 {
-    fwrite(&value,1,1,f);
+    f.write((char*)&value,1);
 }
 
-static void mpxpav64_put_pts64(FILE *f,double value)
+static void mpxpav64_put_pts64(std::ofstream& f,double value)
 {
     uint64_t val;
     val = llrint(value*1000); /* 1 ms */
     mpxpav64_put64(f,val);
 }
 
-static void mpxpav64_put_pts32(FILE *f,float value)
+static void mpxpav64_put_pts32(std::ofstream& f,float value)
 {
     uint32_t val;
     val = PTS2INT(value); /* 1 ms */
     mpxpav64_put32(f,val);
 }
 
-static void mpxpav64_put_pts16(FILE *f,float value)
+static void mpxpav64_put_pts16(std::ofstream& f,float value)
 {
     uint16_t val;
     val = PTS2INT(value); /* 1 ms */
     mpxpav64_put16(f,val);
 }
 
-static void mpxpav64_put_pts8(FILE *f,float value)
+static void mpxpav64_put_pts8(std::ofstream& f,float value)
 {
     uint8_t val;
     val = PTS2INT(value); /* 1 ms */
     mpxpav64_put8(f,val);
 }
 
-static void mpxpav64_put_unicode(FILE *f, const char *tag)
+static void mpxpav64_put_unicode(std::ofstream& f, const char *tag)
 {
     size_t len;
     char *str=nls_recode_from_screen_cp("UTF-16LE",tag,&len);
     mpxpav64_put16(f,len);
-    fwrite(str,len,1,f);
+    f.write(str,len);
     delete str;
 }
 
-static void mpxpav64_put_frcc_unicode(FILE *f, const char *frcc,const char *tag)
+static void mpxpav64_put_frcc_unicode(std::ofstream& f, const char *frcc,const char *tag)
 {
-    fwrite(frcc,4,1,f);
+    f.write(frcc,4);
     mpxpav64_put_unicode(f,tag);
 }
 
-static uint64_t mpxpav64_open_header64(FILE *f,const char *id)
+static uint64_t mpxpav64_open_header64(std::ofstream& f,const char *id)
 {
-    fwrite(id,8,1,f);
+    f.write(id,8);
     mpxpav64_put64(f,-1);
-    return ftello(f);
+    return f.tellp();
 }
 
-static void mpxpav64_close_header64(FILE *f,uint64_t header_start)
+static void mpxpav64_close_header64(std::ofstream& f,uint64_t header_start)
 {
     uint64_t header_end;
-    header_end = ftello(f);
-    fseeko(f,header_start-8,SEEK_SET);
+    header_end = f.tellp();
+    f.seekp(header_start-8,std::ios_base::beg);
     mpxpav64_put64(f,header_end-header_start);
-    fseeko(f,header_end,SEEK_SET);
+    f.seekp(header_end,std::ios_base::beg);
 }
 
-static uint64_t mpxpav64_open_header32(FILE *f,const char *id)
+static uint64_t mpxpav64_open_header32(std::ofstream& f,const char *id)
 {
-    fwrite(id,4,1,f);
+    f.write(id,4);
     mpxpav64_put32(f,-1);
-    return ftello(f);
+    return f.tellp();
 }
 
-static void mpxpav64_close_header32(FILE *f,uint64_t header_start)
+static void mpxpav64_close_header32(std::ofstream& f,uint64_t header_start)
 {
     uint64_t header_end;
-    header_end = ftello(f);
-    fseeko(f,header_start-4,SEEK_SET);
+    header_end = f.tellp();
+    f.seekp(header_start-4,std::ios_base::beg);
     mpxpav64_put32(f,header_end-header_start);
-    fseeko(f,header_end,SEEK_SET);
+    f.seekp(header_end,std::ios_base::beg);
 }
 
 static muxer_stream_t* mpxpav64_new_stream(muxer_t *muxer,int type)
@@ -206,7 +206,7 @@ static muxer_stream_t* mpxpav64_new_stream(muxer_t *muxer,int type)
 static void mpxpav64_put_fcnt(muxer_t *muxer,Demuxer*dinfo)
 {
     uint64_t fpos;
-    FILE *f = muxer->file;
+    std::ofstream& f = muxer->file;
     const char *sname;
     fpos=mpxpav64_open_header32(f,"FCNT");
 #ifdef USE_ICONV
@@ -297,19 +297,19 @@ static void mpxpav64_put_st64(muxer_t *muxer,muxer_stream_t* s)
     priv_mpxpav64_stream_t *privs=(priv_mpxpav64_stream_t *)s->priv;
     uint64_t fpos,spos,flags=0;
     uint8_t* frcc;
-    FILE *f = muxer->file;
+    std::ofstream& f = muxer->file;
     VideoPropHeader vprp;
     fpos=mpxpav64_open_header32(f,"ST64");
     switch(s->type)
     {
 	case MUXER_TYPE_VIDEO:
-	    fwrite("vids",4,1,f);
+	    f.write("vids",4);
 	    break;
 	case MUXER_TYPE_AUDIO:
-	    fwrite("auds",4,1,f);
+	    f.write("auds",4);
 	    break;
 	default:
-	    fwrite("gens",4,1,f);
+	    f.write("gens",4);
 	    break;
     }
     mpxpav64_put64(f,privs->data_off);
@@ -336,10 +336,10 @@ static void mpxpav64_put_st64(muxer_t *muxer,muxer_stream_t* s)
 	case MUXER_TYPE_VIDEO:
 	    flags=13;
 	    mpxpav64_put8(f,flags);
-	    fwrite("video/x-video",flags,1,f);
+	    f.write("video/x-video",flags);
 	    spos=mpxpav64_open_header32(f,"BIH ");
 	    le2me_BITMAPINFOHEADER(s->bih);
-	    fwrite(s->bih,s->bih->biSize,1,f);
+	    f.write((char*)s->bih,s->bih->biSize);
 	    le2me_BITMAPINFOHEADER(s->bih);
 	    mpxpav64_close_header32(f,spos);
 	    if(s->aspect)
@@ -363,7 +363,7 @@ static void mpxpav64_put_st64(muxer_t *muxer,muxer_stream_t* s)
 		le2me_VIDEO_FIELD_DESC(&vprp.FieldInfo[0]);
 		le2me_VIDEO_FIELD_DESC(&vprp.FieldInfo[1]);
 		spos=mpxpav64_open_header32(f,"vprp");
-		fwrite(&vprp,sizeof(VideoPropHeader),1,f);
+		f.write((char*)&vprp,sizeof(VideoPropHeader));
 		le2me_VideoPropHeader(&vprp);
 		le2me_VIDEO_FIELD_DESC(&vprp.FieldInfo[0]);
 		le2me_VIDEO_FIELD_DESC(&vprp.FieldInfo[1]);
@@ -374,7 +374,7 @@ static void mpxpav64_put_st64(muxer_t *muxer,muxer_stream_t* s)
 		ImageDescription id;
 		spos=mpxpav64_open_header32(f,"IMGD");
 		le2me_ImageDesc(&id);
-		fwrite(&id,sizeof(ImageDescription),1,f);
+		f.write((char*)&id,sizeof(ImageDescription));
 		le2me_ImageDesc(&id);
 		mpxpav64_close_header32(f,spos);
 	    }
@@ -382,10 +382,10 @@ static void mpxpav64_put_st64(muxer_t *muxer,muxer_stream_t* s)
 	case MUXER_TYPE_AUDIO:
 	    flags=13;
 	    mpxpav64_put8(f,flags);
-	    fwrite("audio/x-audio",flags,1,f);
+	    f.write("audio/x-audio",flags);
 	    spos=mpxpav64_open_header32(f,"WAVE");
 	    le2me_WAVEFORMATEX(s->wf);
-	    fwrite(s->wf,WFSIZE(s->wf),1,f);
+	    f.write((char*)s->wf,WFSIZE(s->wf));
 	    le2me_WAVEFORMATEX(s->wf);
 	    mpxpav64_close_header32(f,spos);
 	    frcc=(uint8_t *)(&((sh_audio_t *)(s->source))->wtag);
@@ -399,7 +399,7 @@ static void mpxpav64_put_st64(muxer_t *muxer,muxer_stream_t* s)
 	default:
 	    flags=17;
 	    mpxpav64_put8(f,flags);
-	    fwrite("unknown/x-unknown",flags,1,f);
+	    f.write("unknown/x-unknown",flags);
 	    break;
     }
 
@@ -414,9 +414,9 @@ static void mpxpav64_write_header(muxer_t *muxer,Demuxer*dinfo)
     uint32_t max_bitrate=0;
     float pts;
     size_t i;
-    FILE *f = muxer->file;
+    std::ofstream& f = muxer->file;
     if(!pass)	pmpxpav64->mainh=mpxpav64_open_header64(f,"MPXPAV64");
-    else	fseeko(f,16,SEEK_CUR);
+    else	f.seekp(16,std::ios_base::cur);
     hpos=mpxpav64_open_header64(f,"HEADER64");
     fpos=mpxpav64_open_header32(f,"FPRP");
     tmp=0;
@@ -447,7 +447,7 @@ static void mpxpav64_write_header(muxer_t *muxer,Demuxer*dinfo)
     for(i=0;i<muxer->avih.dwStreams;i++) mpxpav64_put_st64(muxer,muxer->streams[i]);
     mpxpav64_close_header64(f,hpos);
     if(!pass) pmpxpav64->datah=mpxpav64_open_header64(f,"AVDATA64");
-    else	fseeko(f,16,SEEK_CUR);
+    else	f.seekp(16,std::ios_base::cur);
     pass++;
 }
 
@@ -456,14 +456,14 @@ static void mpxpav64_write_packet(muxer_stream_t *s,size_t len,unsigned int flag
 {
     priv_mpxpav64_t *pmpxpav64=(priv_mpxpav64_t *)s->muxer->priv;
     priv_mpxpav64_stream_t *privs=(priv_mpxpav64_stream_t *)s->priv;
-    FILE *f = s->muxer->file;
+    std::ofstream& f = s->muxer->file;
     uint64_t off;
     float xpts;
     uint8_t xflg;
     int want_pts32,is_seek;
     uint8_t  seek[3]= {'S','E','E'}, Dx[2];
     /* make indexes */
-    off=ftello(f);
+    off=f.tellp();
     xflg=0;
     is_seek=0;
     if(!privs->data_off) privs->data_off=off;
@@ -503,7 +503,7 @@ static void mpxpav64_write_packet(muxer_stream_t *s,size_t len,unsigned int flag
 	else		privs->idx=mp_realloc(privs->idx,(privs->idx_size+1)*sizeof(uint64_t));
 	((uint64_t *)(privs->idx))[privs->idx_size]=off;
 	privs->idx_size++;
-	fwrite(seek,3,1,f);
+	f.write((char*)seek,3);
     }
     want_pts32=0;
     if(privs->prev_pts==HUGE) want_pts32=1;
@@ -537,7 +537,7 @@ static void mpxpav64_write_packet(muxer_stream_t *s,size_t len,unsigned int flag
 
     Dx[0]=is_seek?'K':flags&AVIIF_KEYFRAME?'D':'d';
     Dx[1]=xflg;
-    fwrite(Dx,2,1,f);
+    f.write((char*)Dx,2);
     if((xflg&0x80)==0x80)
     {
 	if(s->id < 0x100U)	mpxpav64_put8(f,s->id);
@@ -557,7 +557,7 @@ static void mpxpav64_write_packet(muxer_stream_t *s,size_t len,unsigned int flag
 	else if(PTS2INT(xpts)<0x100000000ULL)		mpxpav64_put_pts32(f,xpts);
 	else						mpxpav64_put_pts64(f,xpts);
     }
-    fwrite(s->buffer,len,1,f);
+    f.write((char*)s->buffer,len);
     MSG_V("MUX_MPXPAV64: write %lu bytes of #%u %08X flags %f pts %f\n",len,s->id,flags,pts,xpts);
     /* update statistic */
     privs->npackets++;
@@ -582,8 +582,8 @@ static void mpxpav64_write_index_64(muxer_stream_t *s)
     priv_mpxpav64_stream_t *privs=(priv_mpxpav64_stream_t *)s->priv;
     uint64_t ioff;
     uint32_t i;
-    FILE *f = s->muxer->file;
-    if(!privs->idx_off) privs->idx_off=ftello(f);
+    std::ofstream& f = s->muxer->file;
+    if(!privs->idx_off) privs->idx_off=f.tellp();
     ioff=mpxpav64_open_header64(f,"INDEX_64");
     mpxpav64_put32(f,s->id);
     for(i=0;i<privs->idx_size;i++) mpxpav64_put64(f,((uint64_t *)privs->idx)[i]);
@@ -595,8 +595,8 @@ static void mpxpav64_write_index_32(muxer_stream_t *s)
     priv_mpxpav64_stream_t *privs=(priv_mpxpav64_stream_t *)s->priv;
     uint64_t ioff;
     uint32_t i;
-    FILE *f = s->muxer->file;
-    if(!privs->idx_off) privs->idx_off=ftello(f);
+    std::ofstream& f = s->muxer->file;
+    if(!privs->idx_off) privs->idx_off=f.tellp();
     ioff=mpxpav64_open_header32(f,"IX32");
     mpxpav64_put32(f,s->id);
     for(i=0;i<privs->idx_size;i++) mpxpav64_put32(f,((uint64_t *)privs->idx)[i]);
@@ -608,8 +608,8 @@ static void mpxpav64_write_index(muxer_t *muxer)
     off_t avdata64_size;
     priv_mpxpav64_t *pmpxpav64=(priv_mpxpav64_t *)muxer->priv;
     unsigned i;
-    FILE *f = muxer->file;
-    avdata64_size=ftello(f);
+    std::ofstream& f = muxer->file;
+    avdata64_size=f.tellp();
     mpxpav64_close_header64(f,pmpxpav64->datah);
     for(i=0;i<muxer->avih.dwStreams;i++)
     {

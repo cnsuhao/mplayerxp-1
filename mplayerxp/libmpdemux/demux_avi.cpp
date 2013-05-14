@@ -622,45 +622,6 @@ freeout:
     delete priv->suidx;
 
 }
-/* Read a saved index file */
-#if 0
-if (index_file_load) {
-  FILE *fp;
-  char magic[7];
-  unsigned int i;
-
-  if ((fp = fopen(index_file_load, "r")) == NULL) {
-    MSG_ERR(MSGTR_MPDEMUX_AVIHDR_CantReadIdxFile, index_file_load, strerror(errno));
-    goto gen_index;
-  }
-  fread(&magic, 6, 1, fp);
-  if (strncmp(magic, "MPIDX1", 6)) {
-    MSG_ERR(MSGTR_MPDEMUX_AVIHDR_NotValidMPidxFile, index_file_load);
-    goto gen_index;
-  }
-  fread(&priv->idx_size, sizeof(priv->idx_size), 1, fp);
-  priv->idx=mp_malloc(priv->idx_size*sizeof(AVIINDEXENTRY));
-  if (!priv->idx) {
-    MSG_ERR(MSGTR_MPDEMUX_AVIHDR_FailedMallocForIdxFile, index_file_load);
-    priv->idx_size = 0;
-    goto gen_index;
-  }
-
-  for (i=0; i<priv->idx_size;i++) {
-    AVIINDEXENTRY *idx;
-    idx=&((AVIINDEXENTRY *)priv->idx)[i];
-    fread(idx, sizeof(AVIINDEXENTRY), 1, fp);
-    if (feof(fp)) {
-      MSG_ERR(MSGTR_MPDEMUX_AVIHDR_PrematureEOF, index_file_load);
-      delete priv->idx;
-      priv->idx_size = 0;
-      goto gen_index;
-    }
-  }
-  fclose(fp);
-  mp_msg(MSGT_HEADER,MSGL_INFO, MSGTR_MPDEMUX_AVIHDR_IdxFileLoaded, index_file_load);
-}
-#endif
 /* Generate indexes */
 if(index_mode>=2 || (priv->idx_size==0 && index_mode==1)){
   // build index for file:
@@ -735,27 +696,6 @@ skip_chunk:
   priv->idx_size=priv->idx_pos;
   MSG_INFO("Indexed are generated for %ul chunks\n",priv->idx_size);
   if(mp_conf.verbose>=2) print_index(priv->idx,priv->idx_size);
-
-#if 0
-  /* Write generated index to a file */
-  if (index_file_save) {
-    FILE *fp;
-    unsigned int i;
-
-    if ((fp=fopen(index_file_save, "w")) == NULL) {
-      MSG_ERR(MSGTR_MPDEMUX_AVIHDR_Failed2WriteIdxFile, index_file_save, strerror(errno));
-      return;
-    }
-    fwrite("MPIDX1", 6, 1, fp);
-    fwrite(&priv->idx_size, sizeof(priv->idx_size), 1, fp);
-    for (i=0; i<priv->idx_size; i++) {
-      AVIINDEXENTRY *idx = &((AVIINDEXENTRY *)priv->idx)[i];
-      fwrite(idx, sizeof(AVIINDEXENTRY), 1, fp);
-    }
-    fclose(fp);
-    MSG_INFO(MSGTR_MPDEMUX_AVIHDR_IdxFileSaved, index_file_save);
-  }
-#endif
 }
 }
 #undef MIN

@@ -1,6 +1,8 @@
 #ifndef __MPLAYER_SUBREADER_H
 #define __MPLAYER_SUBREADER_H
 
+#include <string>
+
 namespace	usr {
     class Video_Output;
 }
@@ -36,15 +38,15 @@ struct subtitle {
     char *text[SUB_MAX_TEXT];
 };
 
-extern subtitle* sub_read_file (const char *filename, float pts);
-extern char * sub_filename(const char *path,const char *fname);
+extern subtitle* sub_read_file (const std::string& filename, float pts);
+extern std::string sub_filename(const std::string& path,const std::string& fname);
 extern void list_sub_file(subtitle* subs);
 extern void dump_mpsub(subtitle* subs, float fps);
 extern void sub_free(subtitle* subs );
 extern void find_sub(subtitle* subtitles,unsigned long key,Video_Output*vo_data);
 
-extern void subcp_open (void);
-extern void subcp_close (void);
+extern void subcp_open ();
+extern void subcp_close ();
 extern subtitle* subcp_recode (subtitle *sub);
 extern subtitle* subcp_recode1 (subtitle *sub);
 

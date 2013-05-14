@@ -1,5 +1,8 @@
 #ifndef MUXER_H_INCLUDED
 #define MUXER_H_INCLUDED 1
+#include <string>
+#include <iostream>
+#include <fstream>
 
 enum {
     MUXER_MAX_STREAMS	=16,
@@ -62,6 +65,7 @@ struct muxer_info_t {
 };
 
 struct muxer_t {
+    muxer_t(std::ofstream& f):file(f) {}
   // encoding:
   MainAVIHeader avih;
   muxer_stream_t* def_v;  // default video stream (for general headers)
@@ -71,18 +75,18 @@ struct muxer_t {
   void (*cont_write_header)(struct muxer_t *,Demuxer* dinfo);
   void (*cont_write_index)(struct muxer_t *);
   muxer_stream_t* (*cont_new_stream)(struct muxer_t *,int);
-  FILE* file;
+  std::ofstream& file;
   any_t*priv;
 };
 
-muxer_t *muxer_new_muxer(const char *type,const char *subtype,FILE *f);
+muxer_t *muxer_new_muxer(const std::string& type,const std::string& subtype,std::ofstream& f);
 inline muxer_stream_t* muxer_new_stream(muxer_t* muxer,int a) { return muxer->cont_new_stream(muxer,a); }
 inline void muxer_write_chunk(muxer_stream_t* a,size_t b,unsigned c,float d) { a->muxer->cont_write_chunk(a,b,c,d); }
 inline void muxer_write_header(muxer_t* muxer,Demuxer* info) { if(muxer->cont_write_header) muxer->cont_write_header(muxer,info); }
 inline void muxer_write_index(muxer_t* muxer) { if(muxer->cont_write_index) muxer->cont_write_index(muxer); }
 inline void muxer_fix_parameters(muxer_t* muxer) { if(muxer->fix_parameters) muxer->fix_parameters(muxer); }
-extern void muxer_init_muxer_raw(muxer_t *);
-extern void muxer_init_muxer_mpxp64(muxer_t *);
-extern int  muxer_init_muxer_lavf(muxer_t *,const char *);
+extern void muxer_init_muxer_raw(muxer_t*);
+extern void muxer_init_muxer_mpxp64(muxer_t*);
+extern int  muxer_init_muxer_lavf(muxer_t*,const std::string&);
 
 #endif

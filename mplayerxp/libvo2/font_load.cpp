@@ -2,6 +2,9 @@
 #include "osdep/mplib.h"
 using namespace	usr;
 
+#include <iostream>
+#include <fstream>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,40 +15,40 @@ using namespace	usr;
 #include "sub.h"
 #include "vo_msg.h"
 
-raw_file* load_raw(const char *name,int verbose){
+raw_file* load_raw(const std::string& name,int verbose){
     int bpp;
     raw_file* raw=new raw_file;
     unsigned char head[32];
-    FILE *f=fopen(name,"rb");
-    if(!f) { delete raw; return NULL; } // can't open
-    if(fread(head,32,1,f)<1) { delete raw; fclose(f); return NULL; } // too small
-    if(memcmp(head,"mhwanh",6)) { delete raw; fclose(f); return NULL; } // not raw file
+    std::ifstream f;
+    f.open(name.c_str(),std::ios_base::in|std::ios_base::binary);
+    if(!f.is_open()) { delete raw; return NULL; } // can't open
+    f.read((char*)(head),32); if(!f.good()) { delete raw; f.close(); return NULL; } // too small
+    if(memcmp(head,"mhwanh",6)) { delete raw; f.close(); return NULL; } // not raw file
     raw->w=head[8]*256+head[9];
     raw->h=head[10]*256+head[11];
     raw->c=head[12]*256+head[13];
     if(raw->w == 0) /* 2 bytes were not enough for the width... read 4 bytes from the end of the header */
 	raw->w = ((head[28]*0x100 + head[29])*0x100 + head[30])*0x100 + head[31];
-    if(raw->c>256) { delete raw; fclose(f); return NULL; }  // too many colors!?
+    if(raw->c>256) { delete raw; f.close(); return NULL; }  // too many colors!?
     mpxp_v<<"RAW: "<<name<<" "<<raw->w<<" x "<<raw->h<<", "<<raw->c<<" colors"<<std::endl;
     if(raw->c){
 	raw->pal=new unsigned char [raw->c*3];
-	fread(raw->pal,3,raw->c,f);
+	f.read((char*)(raw->pal),3*raw->c);
 	bpp=1;
     } else {
 	raw->pal=NULL;
 	bpp=3;
     }
     raw->bmp=new unsigned char [raw->h*raw->w*bpp];
-    fread(raw->bmp,raw->h*raw->w*bpp,1,f);
-    fclose(f);
+    f.read((char*)(raw->bmp),raw->h*raw->w*bpp);
+    f.close();
     return raw;
 }
 
-font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
+font_desc_t* read_font_desc(const std::string& fname,float factor,int verbose){
     char sor[1024];
     unsigned char sor2[1024];
     font_desc_t *desc;
-    FILE *f;
     char *dn;
     char section[64];
     int i,j;
@@ -55,16 +58,17 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
     desc=new(zeromem) font_desc_t;
     if(!desc) return NULL;
 
-    f=fopen(fname,"rt");
-    if(!f) {
+    std::ifstream f;
+    f.open(fname.c_str(),std::ios_base::in);
+    if(!f.is_open()) {
 	mpxp_err<<"font: can't open file: "<<fname<<std::endl;
 	delete desc;
 	return NULL;
     }
 
-    i = strlen (fname) - 9;
+    i = fname.length() - 9;
     if ((dn = new char [i+1])){
-	strncpy (dn, fname, i);
+	strncpy (dn, fname.c_str(), i);
 	dn[i]='\0';
     }
 
@@ -77,7 +81,7 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 
     section[0]=0;
 
-    while(fgets(sor,1020,f)){
+    while(f.getline(sor,1020)){
 	char* p[8];
 	int pdb=0;
 	unsigned char *s=(unsigned char *)sor;
@@ -223,7 +227,7 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 	}
 	mpxp_err<<"Syntax error in font desc: "<<sor<<std::endl;
     }
-    fclose(f);
+    f.close();
     for(i=0;i<=fontdb;i++){
 	if(!desc->pic_a[i] || !desc->pic_b[i]){
 	    mpxp_err<<"font: Missing bitmap(s) for sub-font #"<<i<<std::endl;
@@ -231,19 +235,18 @@ font_desc_t* read_font_desc(const char* fname,float factor,int verbose){
 	    return NULL;
 	}
 	// re-sample alpha
-	int f=factor*256.0f;
+	int ff=factor*256.0f;
 	int size=desc->pic_a[i]->w*desc->pic_a[i]->h;
-	int j;
-	mpxp_v<<"font: resampling alpha by factor "<<factor<<" ("<<f<<")"<<std::endl;
+	mpxp_v<<"font: resampling alpha by factor "<<factor<<" ("<<ff<<")"<<std::endl;
 	for(j=0;j<size;j++){
 	    int x=desc->pic_a[i]->bmp[j];	// alpha
 	    int y=desc->pic_b[i]->bmp[j];	// bitmap
 
 #ifdef FAST_OSD
-	    x=(x<(255-f))?0:1;
+	    x=(x<(255-ff))?0:1;
 #else
 
-	    x=255-((x*f)>>8); // scale
+	    x=255-((x*ff)>>8); // scale
 
 	    if(x+y>255) x=255-y; // to avoid overflows
 

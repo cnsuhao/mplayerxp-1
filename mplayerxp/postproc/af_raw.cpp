@@ -5,6 +5,8 @@ using namespace	usr;
   This audio filter exports the incoming signal to raw or RIFF WAVE file
   TODO: add length + pts to export into sockets
 */
+#include <iostream>
+#include <fstream>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,7 +52,7 @@ struct af_raw_t
   char* filename;	// File to export data
   int wav_mode;
   struct WaveHeader wavhdr;
-  FILE *fd;
+  std::ofstream fd;
 };
 
 /* Initialization and runtime control_af
@@ -64,13 +66,14 @@ static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
     char *pt;
     // Accepts any streams
     memcpy(&af->conf,arg,sizeof(af_conf_t));
-    if(!s->fd) { /* reenterability */
-	if(!(s->fd=fopen(s->filename,"wb")))
+    if(s->fd.is_open()) { /* reenterability */
+	s->fd.open(s->filename,std::ios_base::out|std::ios_base::binary);
+	if(!(s->fd.is_open()))
 	    MSG_ERR("Can't open %s\n",s->filename);
 	pt=strchr(s->filename,'.');
 	s->wav_mode=0;
 	if(pt) if(strcmp(pt+1,"wav")==0) s->wav_mode=1;
-	if(s->wav_mode && s->fd)
+	if(s->wav_mode && s->fd.is_open())
 	{
 	    uint16_t fmt=af->conf.format>>16;
 	    if(!fmt) fmt=0x01; /* pcm */
@@ -87,7 +90,7 @@ static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 	    s->wavhdr.bits = le2me_16((af->conf.format&MPAF_BPS_MASK)*8);
 	    s->wavhdr.data=le2me_32(WAV_ID_DATA);
 	    s->wavhdr.data_length=le2me_32(0x7ffff000);
-	    fwrite(&s->wavhdr,sizeof(struct WaveHeader),1,s->fd);
+	    s->fd.write((char*)(&s->wavhdr),sizeof(struct WaveHeader));
 	    s->wavhdr.file_length=s->wavhdr.data_length=0;
 	}
     }
@@ -119,21 +122,20 @@ static void __FASTCALL__ uninit( af_instance_t* af )
 {
   af_raw_t* s = reinterpret_cast<af_raw_t*>(af->setup);
   if(s) {
-    if(s->fd) {
-	off_t pos = ftello(s->fd);
+    if(s->fd.is_open()) {
+	off_t pos = s->fd.tellp();
 	if(s->wav_mode){ /* Write wave header */
-	    fseeko(s->fd, 0, SEEK_SET);
+	    s->fd.seekp(0, std::ios_base::beg);
 	    s->wavhdr.file_length = pos-8;
 	    s->wavhdr.file_length = le2me_32(s->wavhdr.file_length);
 	    s->wavhdr.data_length = le2me_32(s->wavhdr.data_length);
-	    fwrite(&s->wavhdr,sizeof(struct WaveHeader),1,s->fd);
-	    fseeko(s->fd, pos, SEEK_SET);
+	    s->fd.write((char*)(&s->wavhdr),sizeof(struct WaveHeader));
+	    s->fd.seekp(pos, std::ios_base::beg);
 	}
-	fclose(s->fd);
-	s->fd=NULL;
+	s->fd.close();
     }
     if(s->filename) delete s->filename;
-    delete af->setup;
+    delete s;
     af->setup = NULL;
   }
 }
@@ -145,7 +147,7 @@ static void __FASTCALL__ uninit( af_instance_t* af )
 static mp_aframe_t* __FASTCALL__ play( af_instance_t* af,const mp_aframe_t* ind)
 {
   af_raw_t*	s   = reinterpret_cast<af_raw_t*>(af->setup); // Setup for this instance
-  if(s->fd) fwrite(ind->audio,ind->len,1,s->fd);
+  if(s->fd.is_open()) s->fd.write((char*)(ind->audio),ind->len);
   s->wavhdr.data_length += ind->len;
   // We don't modify data, just export it
   return const_cast<mp_aframe_t*>(ind);

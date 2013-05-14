@@ -5,7 +5,9 @@ using namespace	usr;
  * Some code freely inspired from VobSub <URL:http://vobsub.edensrising.com>,
  * with kind permission from Gabest <gabest@freemail.hu>
  */
-/* #define HAVE_GETLINE */
+#include <iostream>
+#include <fstream>
+
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -23,12 +25,9 @@ using namespace	usr;
 #include "spudec.h"
 #include "mpsub_msg.h"
 
-#ifdef HAVE_GETLINE
-extern ssize_t getline(char **, size_t *, FILE *);
-#else
 /* FIXME This should go into a general purpose library or even a
    separate file. */
-static ssize_t __FASTCALL__ __getline (char **lineptr, size_t *n, FILE *stream)
+static ssize_t __FASTCALL__ __getline (char **lineptr, size_t *n, std::ifstream& stream)
 {
     size_t res = 0;
     int c;
@@ -47,7 +46,7 @@ static ssize_t __FASTCALL__ __getline (char **lineptr, size_t *n, FILE *stream)
     if (*lineptr == NULL || *n == 0)
 	return -1;
 
-    for (c = fgetc(stream); c != EOF; c = fgetc(stream)) {
+    for (c = stream.get(); stream.good(); c = stream.get()) {
 	if (res + 1 >= *n) {
 	    char *tmp = (char*)mp_realloc(*lineptr, *n * 2);
 	    if (tmp == NULL)
@@ -66,7 +65,6 @@ static ssize_t __FASTCALL__ __getline (char **lineptr, size_t *n, FILE *stream)
     (*lineptr)[res] = 0;
     return res;
 }
-#endif
 
 /**********************************************************************
  * MPEG parsing
@@ -725,7 +723,7 @@ static int __FASTCALL__ vobsub_set_lang(vobsub_t *vob, const char *line)
     return 0;
 }
 
-static int __FASTCALL__ vobsub_parse_one_line(vobsub_t *vob, FILE *fd)
+static int __FASTCALL__ vobsub_parse_one_line(vobsub_t *vob, std::ifstream& fd)
 {
     ssize_t line_size;
     int res = -1;
@@ -773,15 +771,17 @@ int __FASTCALL__ vobsub_parse_ifo(any_t* _vob, const std::string& name, unsigned
 {
     vobsub_t *vob = (vobsub_t*)_vob;
     int res = -1;
-    FILE *fd = ::fopen(name.c_str(), "rb");
-    if (fd == NULL) {
+    std::ifstream fd;
+    fd.open(name.c_str(),std::ios_base::in|std::ios_base::binary);
+    if (!fd.is_open()) {
 	if (force)
 	    mpxp_warn<<"VobSub: Can't open IFO file"<<std::endl;
     } else {
 	// parse IFO header
 	unsigned char block[0x800];
 	const char *const ifo_magic = "DVDVIDEO-VTS";
-	if (fread(block, sizeof(block), 1, fd) != 1) {
+	fd.read((char*)block, sizeof(block));
+	if (!fd.good()) {
 	    if (force)
 		mpxp_err<<"VobSub: Can't read IFO header"<<std::endl;
 	} else if (memcmp(block, ifo_magic, strlen(ifo_magic) + 1))
@@ -814,9 +814,9 @@ int __FASTCALL__ vobsub_parse_ifo(any_t* _vob, const std::string& name, unsigned
 		char *tmp = (char *)block + 0x256 + sid * 6 + 2;
 		langid.assign(tmp,2);
 	    }
-	    if (fseek(fd, pgci_sector * sizeof(block), SEEK_SET)
-		|| fread(block, sizeof(block), 1, fd) != 1)
-		mpxp_err<<"VobSub: Can't read IFO PGCI"<<std::endl;
+	    fd.seekg(pgci_sector * sizeof(block), std::ios_base::beg);
+	    fd.read((char*)block, sizeof(block));
+	    if (!fd.good()) mpxp_err<<"VobSub: Can't read IFO PGCI"<<std::endl;
 	    else {
 		unsigned long idx;
 		unsigned long pgc_offset = block[0xc] << 24 | block[0xd] << 16
@@ -830,7 +830,7 @@ int __FASTCALL__ vobsub_parse_ifo(any_t* _vob, const std::string& name, unsigned
 		res = 0;
 	    }
 	}
-	fclose(fd);
+	fd.close();
     }
     return res;
 }
@@ -851,7 +851,7 @@ any_t* __FASTCALL__ vobsub_open(const std::string& name,const char *const ifo,co
 	vob->delay = 0;
 	vob->forced_subs=0;
 	std::string buf;
-	FILE *fd;
+	std::ifstream fd;
 	mpeg_t *mpg;
 	/* read in the info file */
 	std::string stmp="";
@@ -862,8 +862,8 @@ any_t* __FASTCALL__ vobsub_open(const std::string& name,const char *const ifo,co
 	    vobsub_parse_ifo(vob,ifo, vob->palette, &vob->orig_frame_width, &vob->orig_frame_height, force, -1, stmp);
 	/* read in the index */
 	buf=name+".idx";
-	fd = ::fopen(buf.c_str(), "rb");
-	if (fd == NULL) {
+	fd.open(buf.c_str(),std::ios_base::in|std::ios_base::binary);
+	if (!fd.is_open()) {
 	    if(force)
 		mpxp_err<<"VobSub: Can't open IDX file"<<std::endl;
 	    else {
@@ -872,7 +872,7 @@ any_t* __FASTCALL__ vobsub_open(const std::string& name,const char *const ifo,co
 	    }
 	} else {
 	    while (vobsub_parse_one_line(vob, fd) >= 0) /* NOOP */ ;
-	    ::fclose(fd);
+	    fd.close();
 	}
 	/* if no palette in .idx then use custom colors */
 	if ((vob->custom == 0)&&(vob->have_palette!=1))

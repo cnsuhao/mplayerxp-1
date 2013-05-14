@@ -5,6 +5,9 @@ using namespace	usr;
   This video filter exports the incoming signal to raw file
   TODO: add length + pts to export into sockets
 */
+#include <iostream>
+#include <fstream>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +23,7 @@ using namespace	usr;
 #include "pp_msg.h"
 
 struct vf_priv_t {
-    FILE *out;
+    std::ofstream out;
 };
 
 //===========================================================================//
@@ -36,14 +39,14 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
     // hope we'll get DR buffer:
     dmpi=vf_get_new_temp_genome(vf->next,mpi);
     if(mpi->flags&MP_IMGFLAG_PLANAR){
-	    fwrite(mpi->planes[0],mpi->stride[0],mpi->h,vf->priv->out);
-	    fwrite(mpi->planes[1],mpi->stride[1],mpi->h>>mpi->chroma_y_shift,vf->priv->out);
-	    fwrite(mpi->planes[2],mpi->stride[2],mpi->h>>mpi->chroma_y_shift,vf->priv->out);
+	    vf->priv->out.write((char*)(mpi->planes[0]),mpi->stride[0]*mpi->h);
+	    vf->priv->out.write((char*)(mpi->planes[1]),mpi->stride[1]*mpi->h>>mpi->chroma_y_shift);
+	    vf->priv->out.write((char*)(mpi->planes[2]),mpi->stride[2]*mpi->h>>mpi->chroma_y_shift);
 	    MSG_V("[vf_raw] dumping %lu bytes\n"
 	    ,mpi->stride[0]*mpi->h+
 	    (((mpi->stride[1]+mpi->stride[2])*mpi->h)>>mpi->chroma_y_shift));
     } else {
-	    fwrite(mpi->planes[0],mpi->stride[0],mpi->h,vf->priv->out);
+	    vf->priv->out.write((char*)(mpi->planes[0]),mpi->stride[0]*mpi->h);
 	    MSG_V("[vf_raw] dumping %lu bytes\n",mpi->stride[0]*mpi->h);
     }
     return vf_next_put_slice(vf,dmpi);
@@ -52,15 +55,18 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 //===========================================================================//
 static void __FASTCALL__ uninit(vf_instance_t* vf)
 {
-    fclose(vf->priv->out);
-    delete vf->priv;
+    vf_priv_t* s = vf->priv;
+    s->out.close();
+    delete s;
 }
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->config_vf=vf_config;
     vf->put_slice=put_slice;
     vf->uninit=uninit;
-    vf->priv=new(zeromem) vf_priv_t;
-    if(!(vf->priv->out=fopen(args?args:"1.raw","wb"))) { delete vf->priv; return MPXP_False; }
+    vf_priv_t* priv=new(zeromem) vf_priv_t;
+    vf->priv=priv;
+    priv->out.open(args?args:"1.raw",std::ios_base::out|std::ios_base::binary);
+    if(!priv->out.is_open()) { delete priv; return MPXP_False; }
     check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;
 }

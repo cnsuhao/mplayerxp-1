@@ -20,6 +20,9 @@ using namespace	usr;
  * with MPlayer; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+#include <iostream>
+#include <fstream>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -92,7 +95,7 @@ class Wave_AO_Interface : public AO_Interface {
 	int		fast;
 
 	uint64_t	data_length;
-	FILE*		fp;
+	std::ofstream	fp;
 	WaveHeader	wavhdr;
 	unsigned	_channels,_samplerate,_format;
 	unsigned	_buffersize,_outburst;
@@ -102,13 +105,8 @@ Wave_AO_Interface::Wave_AO_Interface(const std::string& _subdevice)
 		:AO_Interface(_subdevice) {}
 Wave_AO_Interface::~Wave_AO_Interface() {
     if(pcm_waveheader){ /* Rewrite wave header */
-	int broken_seek = 0;
-#ifdef __MINGW32__
-	// Windows, in its usual idiocy "emulates" seeks on pipes so it always looks
-	// like they work. So we have to detect them brute-force.
-	broken_seek = GetFileType((HANDLE)_get_osfhandle(_fileno(fp))) != FILE_TYPE_DISK;
-#endif
-	if (broken_seek || fseek(fp, 0, SEEK_SET) != 0)
+	fp.seekp(0,std::ios_base::beg);
+	if (!fp.good())
 	    mpxp_err<<"Could not seek to start, WAV size headers not updated!"<<std::endl;
 	else if (data_length > 0x7ffff000)
 	    mpxp_err<<"File larger than allowed for WAV files, may play truncated!"<<std::endl;
@@ -116,10 +114,10 @@ Wave_AO_Interface::~Wave_AO_Interface() {
 	    wavhdr.file_length = data_length + sizeof(wavhdr) - 8;
 	    wavhdr.file_length = le2me_32(wavhdr.file_length);
 	    wavhdr.data_length = le2me_32(data_length);
-	    ::fwrite(&wavhdr,sizeof(wavhdr),1,fp);
+	    fp.write((char*)&wavhdr,sizeof(wavhdr));
 	}
     }
-    ::fclose(fp);
+    fp.close();
 }
 
 // to set/get/query special features/parameters
@@ -189,10 +187,10 @@ MPXP_Rc Wave_AO_Interface::configure(unsigned r,unsigned c,unsigned f){
     wavhdr.file_length = wavhdr.data_length + sizeof(wavhdr) - 8;
 
     mpxp_info<<"ao_wav: "<<out_filename<<" "<<_samplerate<<"-"<<((_channels > 1) ? "Stereo" : "Mono")<<" "<<afmt2str(_format)<<std::endl;
-    fp = ::fopen(out_filename.c_str(), "wb");
-    if(fp) {
+    fp.open(out_filename.c_str(),std::ios_base::out|std::ios_base::binary);
+    if(fp.is_open()) {
 	if(pcm_waveheader){ /* Reserve space for wave header */
-	    ::fwrite(&wavhdr,sizeof(wavhdr),1,fp);
+	    fp.write((char*)&wavhdr,sizeof(wavhdr));
 	}
 	return MPXP_Ok;
     }
@@ -222,7 +220,7 @@ unsigned Wave_AO_Interface::get_space() {
 // return: number of bytes played
 unsigned Wave_AO_Interface::play(const any_t* data,unsigned len,unsigned flags){
     UNUSED(flags);
-    ::fwrite(data,len,1,fp);
+    fp.write((const char*)data,len);
     if(pcm_waveheader) data_length += len;
     return len;
 }

@@ -1,6 +1,9 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace	usr;
+#include <iostream>
+#include <fstream>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <dirent.h>
@@ -141,20 +144,20 @@ static int compare(char **a, char **b){
 
 static char **get_extensions(menu_t *menu){
   char **extensions, ext[32];
-  FILE *fp;
+  std::ifstream fp;
   int n = 1;
 
   if (!mpriv->filter)
     return NULL;
 
-  fp = fopen(mpriv->filter, "r");
-  if(!fp)
-    return NULL;
+  fp.open(mpriv->filter,std::ios_base::in);
+  if(!fp.is_open())  return NULL;
 
   extensions = (char **) mp_malloc(sizeof(*extensions));
   *extensions = NULL;
 
-  while(fgets(ext,sizeof(ext),fp)) {
+  while(!fp.eof()) {
+    fp.getline(ext,sizeof(ext));
     char **l, *e;
     int s = strlen (ext);
 
@@ -171,7 +174,7 @@ static char **get_extensions(menu_t *menu){
     *l = NULL;
   }
 
-  fclose (fp);
+  fp.close();
   return extensions;
 }
 
@@ -190,7 +193,6 @@ static int open_dir(menu_t* menu,const char* args) {
   struct stat st;
   int n;
   int path_fp;
-  char* p = NULL;
   list_entry_t* e;
   DIR* dirp;
   extern int file_filter;
@@ -203,7 +205,6 @@ static int open_dir(menu_t* menu,const char* args) {
   mpriv->dir = mp_strdup(args);
   if(mpriv->p.title && mpriv->p.title != mpriv->title && mpriv->p.title != cfg_dflt.p.title)
     delete mpriv->p.title;
-  p = strstr(const_cast<char*>(mpriv->title),"%p");
 
   mpriv->p.title = replace_path(mpriv->title,mpriv->dir);
 

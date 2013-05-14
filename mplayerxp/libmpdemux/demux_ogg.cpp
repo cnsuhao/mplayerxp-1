@@ -182,7 +182,6 @@ static const int OGG_SUB_MAX_LINE=128;
 
 static subtitle ogg_sub;
 static float clear_sub;
-//FILE* subout;
 
 static MPXP_Rc ogg_probe(Demuxer *demuxer)
 {

@@ -62,7 +62,7 @@ static muxer_stream_t* rawfile_new_stream(muxer_t *muxer,int type){
 
 static void rawfile_write_chunk(muxer_stream_t *s,size_t len,unsigned int flags,float pts){
     muxer_t *muxer=s->muxer;
-    fwrite(s->buffer,len,1,muxer->file);
+    muxer->file.write((char*)s->buffer,len);
 }
 
 static void rawfile_write_header(muxer_t *muxer,Demuxer*dinfo){

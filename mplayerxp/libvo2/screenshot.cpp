@@ -9,6 +9,8 @@ using namespace	usr;
  * Uses libpng (which uses zlib), so see according licenses.
  *
  */
+#include <iostream>
+#include <fstream>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -123,62 +125,61 @@ static uint8_t destroy_png(struct pngdata png) {
 /* Note: this is LE version */
 static void write_bmp(const char *fname,unsigned w,unsigned h,uint8_t *data)
 {
-    FILE* out;
+    std::ofstream f;
     char c[4];
     uint32_t udata;
     unsigned i;
     unsigned long fsize_off,data_off,fsize_val,data_val;
-    if(!(out=fopen(fname,"wb"))) return;
+    f.open(fname,std::ios_base::out|std::ios_base::binary);
+    if(!f.is_open()) return;
     c[0]='B';
     c[1]='M';
-    fwrite(c,2,1,out);
-    fsize_off = ftello(out);
-    fseeko(out,4,SEEK_CUR);
+    f.write(c,2);
+    fsize_off = f.tellp();
+    f.seekp(4,std::ios_base::cur);
     memset(c,0,4);
-    fwrite(c,4,1,out);
-    data_off=ftello(out);
-    fseeko(out,4,SEEK_CUR);
+    f.write(c,4);
+    data_off=f.tellp();
+    f.seekp(4,std::ios_base::cur);
 
     udata=40;
-    fwrite(&udata,4,1,out); /* sizeof BITMAPINFOHEADER == biSize */
+    f.write((char*)&udata,4); /* sizeof BITMAPINFOHEADER == biSize */
     udata=w;
-    fwrite(&udata,4,1,out); /* sizeof biWidth */
+    f.write((char*)&udata,4); /* sizeof biWidth */
     udata=h;
-    fwrite(&udata,4,1,out); /* sizeof biHeight */
+    f.write((char*)&udata,4); /* sizeof biHeight */
     udata=1;
-    fwrite(&udata,2,1,out); /* sizeof biPlanes */
+    f.write((char*)&udata,2); /* sizeof biPlanes */
     udata=24;
-    fwrite(&udata,2,1,out); /* sizeof biBitCount */
+    f.write((char*)&udata,2); /* sizeof biBitCount */
     udata=0;
-    fwrite(&udata,4,1,out); /* sizeof biCompression */
+    f.write((char*)&udata,4); /* sizeof biCompression */
     udata=w*h*3;
-    fwrite(&udata,4,1,out); /* sizeof biSizeImage */
+    f.write((char*)&udata,4); /* sizeof biSizeImage */
     udata=0;
-    fwrite(&udata,4,1,out); /* sizeof biXPelsPerMeter */
+    f.write((char*)&udata,4); /* sizeof biXPelsPerMeter */
     udata=0;
-    fwrite(&udata,4,1,out); /* sizeof biYPelsPerMeter */
+    f.write((char*)&udata,4); /* sizeof biYPelsPerMeter */
     udata=0;
-    fwrite(&udata,4,1,out); /* sizeof biClrUsed */
+    f.write((char*)&udata,4); /* sizeof biClrUsed */
     udata=0;
-    fwrite(&udata,4,1,out); /* sizeof biClrImportant */
-    data_val=ftello(out);
-    for(i=0;i<h;i++) /* flip picture here */
-    {
-	fwrite(data+(w*3)*(h-i-1),w*3,1,out);
+    f.write((char*)&udata,4); /* sizeof biClrImportant */
+    data_val=f.tellp();
+    for(i=0;i<h;i++) {/* flip picture here */
+	f.write((char*)(data+(w*3)*(h-i-1)),w*3);
     }
-    fsize_val=ftello(out);
-    fseeko(out,fsize_off,SEEK_SET);
-    fwrite(&fsize_val,4,1,out);
-    fseeko(out,data_off,SEEK_SET);
-    fwrite(&data_val,2,1,out);
-    fseeko(out,fsize_val,SEEK_SET);
-    fclose(out);
+    fsize_val=f.tellp();
+    f.seekp(fsize_off,std::ios_base::beg);
+    f.write((char*)&fsize_val,4);
+    f.seekp(data_off,std::ios_base::beg);
+    f.write((char*)&data_val,2);
+    f.seekp(fsize_val,std::ios_base::beg);
+    f.close();
 }
 #endif
 
 MPXP_Rc gr_screenshot(const char *fname,const uint8_t *planes[],const unsigned *strides,uint32_t fourcc,unsigned w,unsigned h)
 {
-    unsigned k;
     char buf[256];
 #ifdef HAVE_PNG
     struct pngdata png;
@@ -186,7 +187,6 @@ MPXP_Rc gr_screenshot(const char *fname,const uint8_t *planes[],const unsigned *
     uint8_t *image_data=NULL;
     uint8_t *dst[3];
     int dstStride[3];
-    unsigned bpp = 24;
     struct SwsContext * sws = NULL;
 
 

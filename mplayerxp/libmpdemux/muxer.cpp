@@ -34,14 +34,13 @@ void free_muxer_packet(muxer_packet_t *packet)
     delete packet;
 }
 
-muxer_t *muxer_new_muxer(const char *type,const char *subtype,FILE *f){
-    muxer_t* muxer=new(zeromem) muxer_t;
-    muxer->file = f;
-//    if(!strcmp(type,"lavf")) { if(!muxer_init_muxer_lavf(muxer,subtype)) { delete muxer; muxer=NULL; }}
+muxer_t *muxer_new_muxer(const std::string& type,const std::string& subtype,std::ofstream& f){
+    muxer_t* muxer=new(zeromem) muxer_t(f);
+//    if(type=="lavf") { if(!muxer_init_muxer_lavf(muxer,subtype)) { delete muxer; muxer=NULL; }}
 //    else
-    if(!strcmp(type,"mpxp")) muxer_init_muxer_mpxp64(muxer);
+    if(type=="mpxp") muxer_init_muxer_mpxp64(muxer);
     else
-    if(!strcmp(type,"raw")) muxer_init_muxer_raw(muxer);
+    if(type=="raw") muxer_init_muxer_raw(muxer);
     else { delete muxer; muxer=NULL; }
     return muxer;
 }

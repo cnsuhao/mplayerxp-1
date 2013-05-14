@@ -8,7 +8,8 @@ using namespace	usr;
  * Some code cleanup & mp_realloc() by A'rpi/ESP-team
  * dunnowhat sub format by szabi
  */
-
+#include <iostream>
+#include <fstream>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,8 +54,7 @@ static void __FASTCALL__ trail_space(char *s) {
 	while (i > 0 && isspace(s[i])) s[i--] = '\0';
 }
 
-
-static subtitle * __FASTCALL__ sub_read_line_sami(FILE *fd, subtitle *current) {
+static subtitle * __FASTCALL__ sub_read_line_sami(std::ifstream& fd, subtitle *current) {
     static char line[LINE_LEN+1];
     static char *s = NULL, *slacktime_s;
     char text[LINE_LEN+1], *p=NULL, *q;
@@ -64,9 +64,10 @@ static subtitle * __FASTCALL__ sub_read_line_sami(FILE *fd, subtitle *current) {
     state = 0;
 
     /* read the first line */
-    if (!s)
-	    if (!(s = fgets(line, LINE_LEN, fd))) return 0;
-
+    if (!s) {
+	fd.getline(line,LINE_LEN);
+	if (!fd.good()) return 0;
+    }
     do {
 	switch (state) {
 
@@ -124,7 +125,8 @@ static subtitle * __FASTCALL__ sub_read_line_sami(FILE *fd, subtitle *current) {
 	}
 
 	/* read next line */
-	if (state != 99 && !(s = fgets (line, LINE_LEN, fd))) {
+	fd.getline(line,LINE_LEN);
+	if (state != 99 && !fd.good()) {
 	    if (current->start > 0) {
 		break; // if it is the last subtitle
 	    } else {
@@ -166,7 +168,7 @@ static const char * __FASTCALL__ sub_readtext(const char *source, char **dest) {
     else return NULL;  // last text field
 }
 
-static subtitle * __FASTCALL__ sub_read_line_microdvd(FILE *fd,subtitle *current) {
+static subtitle * __FASTCALL__ sub_read_line_microdvd(std::ifstream& fd,subtitle *current) {
     char line[LINE_LEN+1];
     char line2[LINE_LEN+1];
     char *p;
@@ -174,7 +176,8 @@ static subtitle * __FASTCALL__ sub_read_line_microdvd(FILE *fd,subtitle *current
     int i;
 
     do {
-	if (!fgets (line, LINE_LEN, fd)) return NULL;
+	fd.getline(line,LINE_LEN);
+	if (!fd.good()) return NULL;
     } while ((sscanf (line,
 		      "{%ld}{}%[^\r\n]",
 		      &(current->start), line2) < 2) &&
@@ -195,19 +198,21 @@ static subtitle * __FASTCALL__ sub_read_line_microdvd(FILE *fd,subtitle *current
     return current;
 }
 
-static subtitle * __FASTCALL__ sub_read_line_subrip(FILE *fd, subtitle *current) {
+static subtitle * __FASTCALL__ sub_read_line_subrip(std::ifstream& fd, subtitle *current) {
     char line[LINE_LEN+1];
     int a1,a2,a3,a4,b1,b2,b3,b4;
     char *p=NULL, *q=NULL;
     int len;
 
     while (1) {
-	if (!fgets (line, LINE_LEN, fd)) return NULL;
+	fd.getline(line, LINE_LEN);
+	if (!fd.good()) return NULL;
 	if (sscanf (line, "%d:%d:%d.%d,%d:%d:%d.%d",&a1,&a2,&a3,&a4,&b1,&b2,&b3,&b4) < 8) continue;
 	current->start = a1*360000+a2*6000+a3*100+a4;
 	current->end   = b1*360000+b2*6000+b3*100+b4;
 
-	if (!fgets (line, LINE_LEN, fd)) return NULL;
+	fd.getline(line, LINE_LEN);
+	if (!fd.good()) return NULL;
 
 	p=q=line;
 	for (current->lines=1; current->lines < SUB_MAX_TEXT; current->lines++) {
@@ -224,20 +229,22 @@ static subtitle * __FASTCALL__ sub_read_line_subrip(FILE *fd, subtitle *current)
     return current;
 }
 
-static subtitle * __FASTCALL__ sub_read_line_subviewer(FILE *fd,subtitle *current) {
+static subtitle * __FASTCALL__ sub_read_line_subviewer(std::ifstream& fd,subtitle *current) {
     char line[LINE_LEN+1];
     int a1,a2,a3,a4,b1,b2,b3,b4;
     char *p=NULL;
     int i,len;
 
     while (!current->text[0]) {
-	if (!fgets (line, LINE_LEN, fd)) return NULL;
+	fd.getline(line, LINE_LEN);
+	if (!fd.good()) return NULL;
 	if ((len=sscanf (line, "%d:%d:%d,%d --> %d:%d:%d,%d",&a1,&a2,&a3,&a4,&b1,&b2,&b3,&b4)) < 8)
 	    continue;
 	current->start = a1*360000+a2*6000+a3*100+a4/10;
 	current->end   = b1*360000+b2*6000+b3*100+b4/10;
 	for (i=0; i<SUB_MAX_TEXT;) {
-	    if (!fgets (line, LINE_LEN, fd)) break;
+	    fd.getline(line, LINE_LEN);
+	    if (!fd.good()) break;
 	    len=0;
 	    for (p=line; *p!='\n' && *p!='\r' && *p; p++,len++);
 	    if (len) {
@@ -254,7 +261,7 @@ static subtitle * __FASTCALL__ sub_read_line_subviewer(FILE *fd,subtitle *curren
     return current;
 }
 
-static subtitle * __FASTCALL__ sub_read_line_vplayer(FILE *fd,subtitle *current) {
+static subtitle * __FASTCALL__ sub_read_line_vplayer(std::ifstream& fd,subtitle *current) {
 	char line[LINE_LEN+1];
 	int a1,a2,a3;
 	char *p=NULL, separator;
@@ -262,7 +269,8 @@ static subtitle * __FASTCALL__ sub_read_line_vplayer(FILE *fd,subtitle *current)
 	int i,len,plen;
 
 	while (!current->text[0]) {
-		if (!fgets (line, LINE_LEN, fd)) return NULL;
+		fd.getline(line, LINE_LEN);
+		if (!fd.good()) return NULL;
 		if ((len=sscanf (line, "%d:%d:%d%c%n",&a1,&a2,&a3,&separator,&plen)) < 4)
 			continue;
 
@@ -288,7 +296,7 @@ static subtitle * __FASTCALL__ sub_read_line_vplayer(FILE *fd,subtitle *current)
 	return current;
 }
 
-static subtitle * __FASTCALL__ sub_read_line_rt(FILE *fd,subtitle *current) {
+static subtitle * __FASTCALL__ sub_read_line_rt(std::ifstream& fd,subtitle *current) {
 	//TODO: This format uses quite rich (sub/super)set of xhtml
 	// I couldn't check it since DTD is not included.
 	// WARNING: full XML parses can be required for proper parsing
@@ -299,7 +307,8 @@ static subtitle * __FASTCALL__ sub_read_line_rt(FILE *fd,subtitle *current) {
     int i,len,plen;
 
     while (!current->text[0]) {
-	if (!fgets (line, LINE_LEN, fd)) return NULL;
+	fd.getline(line, LINE_LEN);
+	if (!fd.good()) return NULL;
 	//TODO: it seems that format of time is not easily determined, it may be 1:12, 1:12.0 or 0:1:12.0
 	//to describe the same moment in time. Maybe there are even more formats in use.
 	//if ((len=sscanf (line, "<Time Begin=\"%d:%d:%d.%d\" End=\"%d:%d:%d.%d\"",&a1,&a2,&a3,&a4,&b1,&b2,&b3,&b4)) < 8)
@@ -327,7 +336,7 @@ static subtitle * __FASTCALL__ sub_read_line_rt(FILE *fd,subtitle *current) {
     return current;
 }
 
-static subtitle * __FASTCALL__ sub_read_line_ssa(FILE *fd,subtitle *current) {
+static subtitle * __FASTCALL__ sub_read_line_ssa(std::ifstream& fd,subtitle *current) {
 	int hour1, min1, sec1, hunsec1,
 	    hour2, min2, sec2, hunsec2, nothing;
 	int num;
@@ -338,7 +347,8 @@ static subtitle * __FASTCALL__ sub_read_line_ssa(FILE *fd,subtitle *current) {
 	char *tmp;
 
 	do {
-		if (!fgets (line, LINE_LEN, fd)) return NULL;
+	    fd.getline(line, LINE_LEN);
+	    if (!fd.good()) return NULL;
 	} while (sscanf (line, "Dialogue: Marked=%d,%d:%d:%d.%d,%d:%d:%d.%d,"
 			"%[^\n\r]", &nothing,
 			&hour1, &min1, &sec1, &hunsec1,
@@ -369,12 +379,12 @@ static subtitle * __FASTCALL__ sub_read_line_ssa(FILE *fd,subtitle *current) {
 	return current;
 }
 
-static subtitle * __FASTCALL__ sub_read_line_dunnowhat(FILE *fd,subtitle *current) {
+static subtitle * __FASTCALL__ sub_read_line_dunnowhat(std::ifstream& fd,subtitle *current) {
     char line[LINE_LEN+1];
     char text[LINE_LEN+1];
 
-    if (!fgets (line, LINE_LEN, fd))
-	return NULL;
+    fd.getline(line, LINE_LEN);
+    if (!fd.good()) return NULL;
     if (sscanf (line, "%ld,%ld,\"%[^\"]", &(current->start),
 		&(current->end), text) <3)
 	return (subtitle*)ERR;
@@ -384,7 +394,7 @@ static subtitle * __FASTCALL__ sub_read_line_dunnowhat(FILE *fd,subtitle *curren
     return current;
 }
 
-static subtitle * __FASTCALL__ sub_read_line_mpsub(FILE *fd, subtitle *current) {
+static subtitle * __FASTCALL__ sub_read_line_mpsub(std::ifstream& fd, subtitle *current) {
 	char line[LINE_LEN+1];
 	float a,b;
 	int num=0;
@@ -392,7 +402,8 @@ static subtitle * __FASTCALL__ sub_read_line_mpsub(FILE *fd, subtitle *current) 
 
 	do
 	{
-		if (!fgets(line, LINE_LEN, fd)) return NULL;
+	    fd.getline(line, LINE_LEN);
+	    if (!fd.good()) return NULL;
 	} while (sscanf (line, "%f %f", &a, &b) !=2);
 
 	mpsub_position += a*(sub_uses_time ? 100.0 : 1.0);
@@ -401,7 +412,8 @@ static subtitle * __FASTCALL__ sub_read_line_mpsub(FILE *fd, subtitle *current) 
 	current->end=(int) mpsub_position;
 
 	while (num < SUB_MAX_TEXT) {
-		if (!fgets (line, LINE_LEN, fd)) {
+		fd.getline(line, LINE_LEN);
+		if (!fd.good()) {
 			if (num == 0) return NULL;
 			else return current;
 		}
@@ -425,12 +437,13 @@ static subtitle * __FASTCALL__ sub_read_line_mpsub(FILE *fd, subtitle *current) 
 
 static subtitle *previous_aqt_sub = NULL;
 
-static subtitle * __FASTCALL__ sub_read_line_aqt(FILE *fd,subtitle *current) {
+static subtitle * __FASTCALL__ sub_read_line_aqt(std::ifstream& fd,subtitle *current) {
     char line[LINE_LEN+1];
 
     while (1) {
     // try to locate next subtitle
-	if (!fgets (line, LINE_LEN, fd))
+	fd.getline(line, LINE_LEN);
+	if (!fd.good())
 		return NULL;
 	if (!(sscanf (line, "-->> %ld", &(current->start)) <1))
 		break;
@@ -441,15 +454,15 @@ static subtitle * __FASTCALL__ sub_read_line_aqt(FILE *fd,subtitle *current) {
 
     previous_aqt_sub = current;
 
-    if (!fgets (line, LINE_LEN, fd))
-	return NULL;
+    fd.getline(line, LINE_LEN);
+    if (!fd.good()) return NULL;
 
     sub_readtext(line,&current->text[0]);
     current->lines = 1;
     current->end = current->start; // will be corrected by next subtitle
 
-    if (!fgets (line, LINE_LEN, fd))
-	return current;;
+    fd.getline(line, LINE_LEN);
+    if (!fd.good()) return current;
 
     sub_readtext(line,&current->text[1]);
     current->lines = 2;
@@ -463,15 +476,15 @@ static subtitle * __FASTCALL__ sub_read_line_aqt(FILE *fd,subtitle *current) {
     return current;
 }
 
-static int sub_autodetect (FILE *fd) {
+static int sub_autodetect (std::ifstream& fd) {
     char line[LINE_LEN+1];
     int i,j=0;
     char p;
 
     while (j < 100) {
 	j++;
-	if (!fgets (line, LINE_LEN, fd))
-	    return SUB_INVALID;
+	fd.getline(line, LINE_LEN);
+	if (!fd.good()) return SUB_INVALID;
 
 	if (sscanf (line, "{%d}{%d}", &i, &i)==2)
 		{sub_uses_time=0;return SUB_MICRODVD;}
@@ -628,7 +641,7 @@ static void adjust_subs_time(subtitle* sub, float subtime, float fps){
 
 static const char *fmtname[] = { "microdvd", "subrip", "subviewer", "sami", "vplayer",
 			"rt", "ssa", "dunnowhat", "mpsub", "aqt" };
-static subtitle * (*__FASTCALL__ func[])(FILE *fd,subtitle *dest)=
+static subtitle * (*__FASTCALL__ func[])(std::ifstream& fd,subtitle *dest)=
 {
 	sub_read_line_microdvd,
 	sub_read_line_subrip,
@@ -642,18 +655,18 @@ static subtitle * (*__FASTCALL__ func[])(FILE *fd,subtitle *dest)=
 	sub_read_line_aqt
 
 };
-subtitle* sub_read_file (const char *filename, float fps) {
-    FILE *fd;
+subtitle* sub_read_file (const std::string& filename, float fps) {
+    std::ifstream fd;
     int n_max;
     subtitle *first;
-    if(filename==NULL) return NULL; //qnx segfault
-    fd=fopen (filename, "r"); if (!fd) return NULL;
+    if(filename.empty()) return NULL; //qnx segfault
+    fd.open (filename.c_str(),std::ios_base::in); if (!fd.is_open()) return NULL;
 
     sub_format=sub_autodetect (fd);
-    if (sub_format==SUB_INVALID) { MSG_ERR ("SUB: Could not determine file format\n"); fclose(fd); return NULL;}
+    if (sub_format==SUB_INVALID) { MSG_ERR ("SUB: Could not determine file format\n"); fd.close(); return NULL;}
     MSG_INFO ("SUB: Detected subtitle file format: %s\n", fmtname[sub_format]);
 
-    rewind (fd);
+    fd.seekg(0,std::ios_base::beg);
 
 #ifdef USE_ICONV
     subcp_open();
@@ -661,7 +674,7 @@ subtitle* sub_read_file (const char *filename, float fps) {
 
     sub_num=0;n_max=32;
     first=(subtitle *)mp_malloc(n_max*sizeof(subtitle));
-    if(!first) { fclose(fd); return NULL; }
+    if(!first) { fd.close(); return NULL; }
 
     while(1){
 	subtitle *sub;
@@ -679,7 +692,7 @@ subtitle* sub_read_file (const char *filename, float fps) {
 	if(sub==ERR) ++sub_errs; else ++sub_num; // Error vs. Valid
     }
 
-    fclose(fd);
+    fd.close();
 
 #ifdef USE_ICONV
     subcp_close();
@@ -729,31 +742,28 @@ static const char * sub_exts[] =
     ".aqt",
     ".AQT"
 };
-char * sub_filename(const char* path,const char * fname )
+std::string sub_filename(const std::string& path,const std::string& fname )
 {
  char * sub_name1;
  char * sub_name2;
  char * aviptr1, * aviptr2;
- const char * tmp;
  unsigned i,j;
- FILE * f;
- int pos=0;
+ std::ifstream f;
 
+ if (fname.empty()) return NULL;
 
- if ( fname == NULL ) return NULL;
-
- sub_name1=(char *)strrchr(fname,'.');
+ sub_name1=(char *)strrchr(fname.c_str(),'.');
  if (!sub_name1) return NULL;
- pos=sub_name1-fname;
 
- sub_name1=new char [strlen(fname)+8];
- strcpy(sub_name1,fname);
+ sub_name1=new char [fname.length()+8];
+ strcpy(sub_name1,fname.c_str());
 
- sub_name2=new char [strlen(path) + strlen(fname) + 8];
- if ((tmp=strrchr(fname,'/')))
-	 sprintf (sub_name2, "%s%s", path, tmp+1);
+ sub_name2=new char [path.length() + fname.length() + 8];
+ size_t tmp=fname.rfind('/');
+ if (tmp!=std::string::npos)
+	sprintf (sub_name2, "%s%s", path.c_str(), fname.substr(tmp+1).c_str());
  else
-	 sprintf (sub_name2, "%s%s", path, fname);
+	sprintf (sub_name2, "%s%s", path.c_str(), fname.c_str());
 
  aviptr1=strrchr(sub_name1,'.');
  aviptr2=strrchr(sub_name2,'.');
@@ -766,8 +776,9 @@ char * sub_filename(const char* path,const char * fname )
   for ( i=0;i<(sizeof(sub_exts)/sizeof(char*));i++ ) {
 #endif
    strcpy(j?aviptr1:aviptr2,sub_exts[i]);
-   if((f=fopen( sub_name,"rt" ))) {
-     fclose( f );
+   f.open(sub_name);
+   if(f.is_open()) {
+     f.close();
      MSG_INFO( "SUB: Detected sub file: %s\n",sub_name );
      if (i<2) sub_data.utf8=1;
      return sub_name;
@@ -776,7 +787,7 @@ char * sub_filename(const char* path,const char * fname )
  }
  delete sub_name1;
  delete sub_name2;
- return NULL;
+ return "";
 }
 
 void list_sub_file(subtitle* subs){
@@ -802,48 +813,44 @@ void list_sub_file(subtitle* subs){
 
 void dump_mpsub(subtitle* subs, float fps){
 	int i,j;
-	FILE *fd;
+	std::ofstream fd;
 	float a,b;
 
 	mpsub_position=0;
 	if (mp_conf.sub_fps==0) mp_conf.sub_fps=fps;
 
-	fd=fopen ("dump.mpsub", "w");
-	if (!fd) {
+	fd.open ("dump.mpsub",std::ios_base::out);
+	if (!fd.is_open()) {
 		perror ("dump_mpsub: fopen");
 		return;
 	}
 
 
-	if (sub_uses_time) fprintf (fd,"FORMAT=TIME\n\n");
-	else fprintf (fd, "FORMAT=%5.2f\n\n", fps);
+	if (sub_uses_time) fd<<"FORMAT=TIME"<<std::endl<<std::endl;
+	else fd<<"FORMAT="<<fps<<std::endl<<std::endl;
 
 	for(j=0;j<sub_num;j++){
 		subtitle* egysub=&subs[j];
 		if (sub_uses_time) {
 			a=((egysub->start-mpsub_position)/100.0);
 			b=((egysub->end-egysub->start)/100.0);
-			if ( (float)((int)a) == a)
-			fprintf (fd, "%.0f",a);
-			else
-			fprintf (fd, "%.2f",a);
+			if ( (float)((int)a) == a) fd<<(int)a;
+			else			fd<<a;
 
-			if ( (float)((int)b) == b)
-			fprintf (fd, " %.0f\n",b);
-			else
-			fprintf (fd, " %.2f\n",b);
+			if ( (float)((int)b) == b) fd<<(int)b;
+			else			fd<<b;
 		} else {
-			fprintf (fd, "%ld %ld\n", (long)((egysub->start*(fps/mp_conf.sub_fps))-((mpsub_position*(fps/mp_conf.sub_fps)))),
-					(long)(((egysub->end)-(egysub->start))*(fps/mp_conf.sub_fps)));
+			fd<<(long)((egysub->start*(fps/mp_conf.sub_fps))-((mpsub_position*(fps/mp_conf.sub_fps))))
+			<<" "<<(long)(((egysub->end)-(egysub->start))*(fps/mp_conf.sub_fps));
 		}
 
 		mpsub_position = egysub->end;
 		for (i=0; i<egysub->lines; i++) {
-			fprintf (fd, "%s\n",egysub->text[i]);
+			fd<<" "<<egysub->text[i]<<std::endl;
 		}
-		fprintf (fd, "\n");
+		fd<<std::endl;
 	}
-	fclose (fd);
+	fd.close ();
 	MSG_DBG2 ("SUB: Subtitles dumped in \'dump.mpsub\'.\n");
 }
 

@@ -10,6 +10,8 @@ using namespace	usr;
  */
 #include <algorithm>
 #include <limits>
+#include <iostream>
+#include <fstream>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -342,7 +344,7 @@ static const int MAX_OPT_LEN=100;
 static const int MAX_PARAM_LEN=100;
 MPXP_Rc M_Config::parse_config_file(const std::string& conffile)
 {
-    FILE *fp;
+    std::ifstream fs;
     char *line;
     char opt[MAX_OPT_LEN + 1];
     char param[MAX_PARAM_LEN + 1];
@@ -374,7 +376,8 @@ MPXP_Rc M_Config::parse_config_file(const std::string& conffile)
 	goto out;
     }
 
-    if ((fp = ::fopen(conffile.c_str(), "r")) == NULL) {
+    fs.open(conffile.c_str(),std::ios_base::in);
+    if (!fs.is_open()) {
 	if (recursion_depth > 1) mpxp_err<<": "<<::strerror(errno)<<std::endl;
 	delete line;
 	ret = MPXP_Ok;
@@ -382,7 +385,8 @@ MPXP_Rc M_Config::parse_config_file(const std::string& conffile)
     }
     if (recursion_depth > 1) mpxp_fatal<<std::endl;
 
-    while (fgets(line, MAX_LINE_LEN, fp)) {
+    while (!fs.eof()) {
+	fs.getline(line, MAX_LINE_LEN);
 	if (errors >= 16) {
 	    mpxp_fatal<<"too many errors"<<std::endl;
 	    goto out;
@@ -504,7 +508,7 @@ nextline:
     }
 
     delete line;
-    fclose(fp);
+    fs.close();
 out:
     --recursion_depth;
     return ret;

@@ -1,5 +1,6 @@
 #ifndef __FONT_LOAD_H
 #define __FONT_LOAD_H 1
+#include <string>
 
 struct raw_file {
     unsigned char *bmp;
@@ -22,7 +23,7 @@ struct font_desc_t {
     short width[65536];
 };
 
-raw_file* load_raw(const char *name,int verbose);
-font_desc_t* read_font_desc(const char* fname,float factor,int verbose);
+raw_file* load_raw(const std::string& name,int verbose);
+font_desc_t* read_font_desc(const std::string& fname,float factor,int verbose);
 
 #endif

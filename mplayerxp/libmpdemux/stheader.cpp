@@ -126,7 +126,7 @@ switch(video_codec){
 	(fourcc == mmioFOURCC('m','p','e','g')) ||
 	(fourcc == mmioFOURCC('M','P','E','G')))
     {
-	int saved_pos;
+//	int saved_pos;
 	Demuxer::demuxer_type_e saved_type;
 
 	/* demuxer pos saving is required for libavcodec mpeg decoder as it's

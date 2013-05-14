@@ -102,15 +102,7 @@ static HRESULT STDCALL DS_Filter_CopySample(any_t* pUserData,IMediaSample* pSamp
 
     pData->frame_pointer = pointer;
     pData->frame_size = len;
-/*
-    FILE* file=fopen("./uncompr.bmp", "wb");
-    char head[14]={0x42, 0x4D, 0x36, 0x10, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x36, 0x00, 0x00, 0x00};
-    *(int*)(&head[2])=len+0x36;
-    fwrite(head, 14, 1, file);
-    fwrite(&((VIDEOINFOHEADER*)me.type.pbFormat)->bmiHeader, sizeof(BITMAPINFOHEADER), 1, file);
-    fwrite(pointer, len, 1, file);
-    fclose(file);
-*/
+
     return 0;
 }
 
