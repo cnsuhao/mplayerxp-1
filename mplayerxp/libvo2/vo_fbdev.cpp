@@ -8,6 +8,8 @@ using namespace	usr;
  *
  * Some idea and code borrowed from Chris Lawrence's ppmtofb-0.27
  */
+#include <iostream>
+#include <fstream>
 
 static const char* FBDEV= "fbdev: ";
 
@@ -128,12 +130,11 @@ class FBDev_VO_Interface : public VO_Interface {
 	MPXP_Rc		fb_preinit();
 	std::string	parse_sub_device(const std::string& sd);
 	int		parse_fbmode_cfg(const std::string& cfgfile);
-	int		get_token(int num);
+	int		get_token(std::ifstream&,int num);
 	void		vt_set_textarea(int u, int l);
 	void		lots_of_printf() const;
 
 	LocalPtr<Aspect>aspect;
-	FILE *		fp;
 	int		line_num;
 	char *		line;
 	char *		token[MAX_NR_TOKEN];
@@ -145,8 +146,7 @@ class FBDev_VO_Interface : public VO_Interface {
 	range_t *	monitor_dotclock;
 	fb_mode_t *	mode;
 /* vt related variables */
-	int		vt_fd;
-	FILE *		vt_fp;
+	std::ofstream	vt_fp;
 	int		vt_doit;
 /* vo_fbdev related variables */
 	int		dev_fd;
@@ -175,7 +175,6 @@ class FBDev_VO_Interface : public VO_Interface {
 	unsigned	out_width;
 	unsigned	out_height;
 	int		last_row;
-	int		fs;
 	MPXP_Rc		pre_init_err;
 #ifdef CONFIG_VIDIX
 /* Name of VIDIX driver */
@@ -314,7 +313,7 @@ FBDev_VO_Interface::FBDev_VO_Interface(const std::string& arg)
     if(fb_preinit()!=MPXP_Ok) exit_player("FBDev preinit");
 }
 
-int FBDev_VO_Interface::get_token(int num)
+int FBDev_VO_Interface::get_token(std::ifstream& fp,int num)
 {
     static int read_nextline = 1;
     static int line_pos;
@@ -327,7 +326,8 @@ int FBDev_VO_Interface::get_token(int num)
     }
 
     if (read_nextline) {
-	if (!fgets(line, MAX_LINE_LEN, fp)) goto out_eof;
+	fp.getline(line, MAX_LINE_LEN);
+	if (!fp.good()) goto out_eof;
 	line_pos = 0;
 	++line_num;
 	read_nextline = 0;
@@ -374,10 +374,12 @@ int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
     char *endptr;	// strtoul()...
     int in_mode_def = 0;
     int tmp, i;
+    std::ifstream fp;
 
     mpxp_dbg2<<"Reading "<<cfgfile.c_str()<<":";
 
-    if ((fp = fopen(cfgfile.c_str(), "r")) == NULL) {
+    fp.open(cfgfile.c_str(),std::ios_base::in);
+    if (!fp.is_open()) {
 	mpxp_err<<"can't open '"<<cfgfile<<"': "<<strerror(errno)<<std::endl;
 	return -1;
     }
@@ -390,12 +392,12 @@ int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
     /*
      * check if the cfgfile starts with 'mode'
      */
-    while ((tmp = get_token(1)) == RET_EOL) /* NOTHING */;
+    while ((tmp = get_token(fp,1)) == RET_EOL) /* NOTHING */;
     if (tmp == RET_EOF) goto out;
     if (!strcmp(token[0], "mode")) goto loop_enter;
     goto err_out_parse_error;
 
-    while ((tmp = get_token(1)) != RET_EOF) {
+    while ((tmp = get_token(fp,1)) != RET_EOF) {
 	if (tmp == RET_EOL) continue;
 	if (!strcmp(token[0], "mode")) {
 	    if (in_mode_def) {
@@ -413,7 +415,7 @@ int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
 	    ++nr_modes;
 	    memset(_mode,0,sizeof(fb_mode_t));
 
-	    if (get_token(1) < 0) goto err_out_parse_error;
+	    if (get_token(fp,1) < 0) goto err_out_parse_error;
 	    for (i = 0; i < nr_modes - 1; i++) {
 		if (!strcmp(token[0], fb_modes[i].name)) {
 		    mpxp_err<<"mode name '"<<token[0]<<"' isn't unique"<<std::endl;
@@ -427,7 +429,7 @@ int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
 	    in_mode_def = 1;
 	} else if (!strcmp(token[0], "geometry")) {
 	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
-	    if (get_token(5) < 0) goto err_out_parse_error;
+	    if (get_token(fp,5) < 0) goto err_out_parse_error;
 	    _mode->xres = strtoul(token[0], &endptr, 0);
 	    if (*endptr) goto err_out_parse_error;
 	    _mode->yres = strtoul(token[1], &endptr, 0);
@@ -440,7 +442,7 @@ int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
 	    if (*endptr) goto err_out_parse_error;
 	} else if (!strcmp(token[0], "timings")) {
 	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
-	    if (get_token(7) < 0) goto err_out_parse_error;
+	    if (get_token(fp,7) < 0) goto err_out_parse_error;
 	    _mode->pixclock = strtoul(token[0], &endptr, 0);
 	    if (*endptr) goto err_out_parse_error;
 	    _mode->left = strtoul(token[1], &endptr, 0);
@@ -460,44 +462,44 @@ int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
 	    in_mode_def = 0;
 	} else if (!strcmp(token[0], "accel")) {
 	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
-	    if (get_token(1) < 0) goto err_out_parse_error;
+	    if (get_token(fp,1) < 0) goto err_out_parse_error;
 	    /*
 	     * it's only used for text acceleration
 	     * so we just ignore it.
 	     */
 	} else if (!strcmp(token[0], "hsync")) {
 	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
-	    if (get_token(1) < 0) goto err_out_parse_error;
+	    if (get_token(fp,1) < 0) goto err_out_parse_error;
 	    if (!strcmp(token[0], "low")) _mode->sync &= ~FB_SYNC_HOR_HIGH_ACT;
 	    else if(!strcmp(token[0], "high")) _mode->sync |= FB_SYNC_HOR_HIGH_ACT;
 	    else goto err_out_parse_error;
 	} else if (!strcmp(token[0], "vsync")) {
 	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
-	    if (get_token(1) < 0) goto err_out_parse_error;
+	    if (get_token(fp,1) < 0) goto err_out_parse_error;
 	    if (!strcmp(token[0], "low")) _mode->sync &= ~FB_SYNC_VERT_HIGH_ACT;
 	    else if(!strcmp(token[0], "high")) _mode->sync |= FB_SYNC_VERT_HIGH_ACT;
 	    else goto err_out_parse_error;
 	} else if (!strcmp(token[0], "csync")) {
 	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
-	    if (get_token(1) < 0) goto err_out_parse_error;
+	    if (get_token(fp,1) < 0) goto err_out_parse_error;
 	    if (!strcmp(token[0], "low")) _mode->sync &= ~FB_SYNC_COMP_HIGH_ACT;
 	    else if(!strcmp(token[0], "high")) _mode->sync |= FB_SYNC_COMP_HIGH_ACT;
 	    else goto err_out_parse_error;
 	} else if (!strcmp(token[0], "extsync")) {
 	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
-	    if (get_token(1) < 0) goto err_out_parse_error;
+	    if (get_token(fp,1) < 0) goto err_out_parse_error;
 	    if (!strcmp(token[0], "false")) _mode->sync &= ~FB_SYNC_EXT;
 	    else if(!strcmp(token[0], "true")) _mode->sync |= FB_SYNC_EXT;
 	    else goto err_out_parse_error;
 	} else if (!strcmp(token[0], "laced")) {
 	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
-	    if (get_token(1) < 0) goto err_out_parse_error;
+	    if (get_token(fp,1) < 0) goto err_out_parse_error;
 	    if (!strcmp(token[0], "false")) _mode->vmode = FB_VMODE_NONINTERLACED;
 	    else if (!strcmp(token[0], "true")) _mode->vmode = FB_VMODE_INTERLACED;
 	    else goto err_out_parse_error;
 	} else if (!strcmp(token[0], "double")) {
 	    check_in_mode_def(in_mode_def); goto err_out_print_linenum;
-	    if (get_token(1) < 0) goto err_out_parse_error;
+	    if (get_token(fp,1) < 0) goto err_out_parse_error;
 	    if (!strcmp(token[0], "false")) ;
 	    else if (!strcmp(token[0], "true")) _mode->vmode = FB_VMODE_DOUBLE;
 	    else goto err_out_parse_error;
@@ -507,7 +509,7 @@ int FBDev_VO_Interface::parse_fbmode_cfg(const std::string& cfgfile)
 out:
     mpxp_dbg2<<nr_modes<<"modes"<<std::endl;
     delete line;
-    fclose(fp);
+    fp.close();
     return nr_modes;
 err_out_parse_error:
     mpxp_err<<"parse error";
@@ -520,7 +522,6 @@ err_out:
     }
     nr_modes = 0;
     delete line;
-    delete fp;
     return -2;
 err_out_not_valid:
     mpxp_err<<"previous mode is not correct"<<std::endl;
@@ -873,8 +874,8 @@ void FBDev_VO_Interface::vt_set_textarea(int u, int l)
 
     if (mp_conf.verbose > 1)
 	mpxp_dbg2<<FBDEV<< "vt_set_textarea("<<u<<","<<l<<"): "<<urow<<","<<lrow<<std::endl;
-    ::fprintf(vt_fp, "\33[%d;%dr\33[%d;%dH", urow, lrow, lrow, 0);
-    ::fflush(vt_fp);
+    vt_fp<<"\33["<<urow<<";"<<lrow<<"r\33["<<lrow<<";0H";
+    vt_fp.flush();
 }
 
 MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t d_width,
@@ -1079,11 +1080,8 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
 		return MPXP_False;
 	    }
     }
-    if (vt_doit && (vt_fd = open("/dev/tty", O_WRONLY)) == -1) {
-	mpxp_err<<FBDEV<< "can't open /dev/tty: "<<strerror(errno)<<std::endl;
-	vt_doit = 0;
-    }
-    if (vt_doit && !(vt_fp = fdopen(vt_fd, "w"))) {
+    vt_fp.open("/dev/tty", std::ios_base::out);
+    if (vt_doit && !vt_fp.is_open()) {
 	mpxp_err<<FBDEV<< "can't fdopen /dev/tty: "<<strerror(errno)<<std::endl;
 	vt_doit = 0;
     }
@@ -1096,18 +1094,19 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
 
 MPXP_Rc FBDev_VO_Interface::query_format(vo_query_fourcc_t * format) const
 {
+    MPXP_Rc rc=MPXP_False;
 #ifdef CONFIG_VIDIX
     if(vidix) return vidix->query_fourcc(format);
 #endif
     format->flags=VOCAP_NA;
     switch(format->fourcc) {
-	case IMGFMT_BGR15: if(bpp == 15) format->flags=VOCAP_SUPPORTED; break;
-	case IMGFMT_BGR16: if(bpp == 16) format->flags=VOCAP_SUPPORTED; break;
-	case IMGFMT_BGR24: if(bpp == 24) format->flags=VOCAP_SUPPORTED; break;
-	case IMGFMT_BGR32: if(bpp == 32) format->flags=VOCAP_SUPPORTED; break;
+	case IMGFMT_BGR15: if(bpp == 15) format->flags=VOCAP_SUPPORTED; rc=MPXP_Ok; break;
+	case IMGFMT_BGR16: if(bpp == 16) format->flags=VOCAP_SUPPORTED; rc=MPXP_Ok; break;
+	case IMGFMT_BGR24: if(bpp == 24) format->flags=VOCAP_SUPPORTED; rc=MPXP_Ok; break;
+	case IMGFMT_BGR32: if(bpp == 32) format->flags=VOCAP_SUPPORTED; rc=MPXP_Ok; break;
 	default: break;
     }
-    return MPXP_Ok;
+    return rc;
 }
 
 MPXP_Rc FBDev_VO_Interface::select_frame(unsigned idx)
@@ -1115,14 +1114,11 @@ MPXP_Rc FBDev_VO_Interface::select_frame(unsigned idx)
 #ifdef CONFIG_VIDIX
     if(vidix) return vidix->select_frame(idx);
 #endif
-    unsigned i, out_offset = 0, in_offset = 0;
 
-    for (i = 0; i < out_height; i++) {
-	memcpy( L123123875 + out_offset, next_frame[idx] + in_offset,
-		out_width * pixel_size);
-	out_offset += line_len;
-	in_offset += out_width * pixel_size;
-    }
+    size_t src_stride=out_width*pixel_size;
+    size_t dst_stride=line_len;
+    stream_copy_pic(L123123875,next_frame[idx],src_stride,out_height,dst_stride,src_stride);
+
     return MPXP_Ok;
 }
 

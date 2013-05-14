@@ -4,6 +4,9 @@ using namespace	usr;
 /*
     s_file - stream interface for file i/o.
 */
+#include <iostream>
+#include <fstream>
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -36,29 +39,29 @@ namespace	usr {
 	    virtual off_t	sector_size() const;
 	    virtual std::string mime_type() const;
 	private:
-	    int fd;
-	    int was_open;
+	    std::ifstream fs;
 	    off_t spos;
 	    off_t end_pos;
     };
 
 File_Stream_Interface::File_Stream_Interface(libinput_t&l)
 			:Stream_Interface(l),
-			fd(0),was_open(0),spos(0) {}
+			spos(0) {}
 File_Stream_Interface::~File_Stream_Interface() {}
 
 MPXP_Rc File_Stream_Interface::open(const std::string& filename,unsigned flags)
 {
     UNUSED(flags);
-    if(filename=="-") fd=0;
-    else fd=::open(filename.c_str(),O_RDONLY);
-    if(fd<0) {
+//    if(filename=="-") fd=0;
+//    else fd=::open(filename.c_str(),O_RDONLY);
+    fs.open(filename.c_str(),std::ios_base::binary | std::ios_base::in);
+    if(!fs.is_open()) {
 	mpxp_err<<"[s_file] Cannot open file: "<<filename<<std::endl;
 	return MPXP_False;
     }
-    was_open = (fd==0)?0:1;
-    end_pos = ::lseek(fd,0,SEEK_END);
-    ::lseek(fd,0,SEEK_SET);
+    fs.seekg(0,std::ios_base::end);
+    end_pos = fs.tellg();
+    fs.seekg(0,std::ios_base::beg);
     /* decreasing number of packet from 256 to 10 speedups cache2 from 3.27% to 1.26%
        with full speed 1.04% for -nocache */
     /* Note: Please locate sector_size changinf after all read/write operations of open() function */
@@ -76,14 +79,18 @@ int File_Stream_Interface::read(stream_packet_t*sp)
     Should we repeate read() again on these errno: `EAGAIN', `EIO' ???
 */
     sp->type=0;
-    sp->len = ::read(fd,sp->buf,sp->len);
-    if(sp->len>0) spos += sp->len;
-    return sp->len;
+    fs.read(sp->buf,sp->len);
+    spos = fs.tellg();
+    return fs.good()?sp->len:-1;
 }
 
 off_t File_Stream_Interface::seek(off_t pos)
 {
-    spos=::lseek(fd,pos,SEEK_SET);
+    fs.clear(fs.failbit);
+    fs.clear(fs.badbit);
+    fs.clear(fs.eofbit);
+    fs.seekg(pos,std::ios_base::beg);
+    spos=fs.tellg();
     return spos;
 }
 
@@ -94,7 +101,7 @@ off_t File_Stream_Interface::tell() const
 
 void File_Stream_Interface::close()
 {
-    if(was_open) ::close(fd);
+    if(fs.is_open()) fs.close();
 }
 
 MPXP_Rc File_Stream_Interface::ctrl(unsigned cmd,any_t*args) {
