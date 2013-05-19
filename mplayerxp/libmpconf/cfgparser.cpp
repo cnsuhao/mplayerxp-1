@@ -784,10 +784,8 @@ void M_Config::__show_options(unsigned ntabs,const std::string& pfx,const mpxp_o
 	if(opts[i].type<=CONF_TYPE_PRINT) {
 	    for(n=0;n<ntabs;n++) mpxp_info<<" ";
 	    if(!pfx.empty())	mpxp_info<<std::left<<pfx<<std::endl;
-	    else		mpxp_info<<"-"<<std::endl;
-	    mpxp_info<<std::left<<opts[i].name<<" "
-		     <<((opts[i].type==CONF_TYPE_PRINT && strcmp(opts[i].help,"show help")!=0)?opts[i].p:opts[i].help)
-		     <<std::endl;
+	    else		mpxp_info<<" "<<std::endl;
+	    mpxp_info<<std::left<<opts[i].name<<" "<<opts[i].help<<std::endl;
 	    if((opts[i].flags&CONF_NOCFG)==0) {
 	    mpxp_info<<" {"<<
 		    (opts[i].type==CONF_TYPE_FLAG?"flg":
