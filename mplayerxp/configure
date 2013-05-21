@@ -365,7 +365,7 @@ disabled lavc && die "**FATAL**: local copy of lavc doesn't exist!"
 add_cflags "-I$srcdir/../lavc"
 print_config HAVE_ mpxp_config.h mpxp_config.mak lavc
 # Configuring external lavc stuff
-lavc_args="--enable-static --disable-shared --enable-gpl --enable-pthreads --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --disable-ffprobe --disable-avdevice --disable-avfilter --disable-avresample"
+lavc_args="--enable-static --disable-shared --enable-gpl --enable-pthreads --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffserver --disable-ffprobe --disable-avdevice --disable-avfilter --disable-avresample --disable-yasm"
 if test -n $host ; then
 _arch=$host_arch
 x86_32 && _arch="i686"
