@@ -158,6 +158,7 @@ struct MPXPSystem : public Opaque {
 	// for multifile support:
 	PlayTree_Iter* playtree_iter;
 	const std::map<std::string,std::string>& envm;
+	unsigned	xp_num_cpu;
     private:
 	Opaque		unusable;
 	Demuxer*	_demuxer;
@@ -246,7 +247,6 @@ static void __attribute__ ((noinline)) mpxp_test_backtrace(void) {
     kill(getpid(), SIGILL);
 }
 
-unsigned xp_num_cpu;
 unsigned get_number_cpu(void) {
 #ifdef _OPENMP
     return omp_get_num_procs();
@@ -1611,7 +1611,7 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
 	    exit_player("Bad test of antiviral protection");
     }
 
-    xp_num_cpu=get_number_cpu();
+    MPXPSys.xp_num_cpu=get_number_cpu();
 #if defined( ARCH_X86 ) || defined(ARCH_X86_64)
     get_mmx_optimizations();
 #endif
