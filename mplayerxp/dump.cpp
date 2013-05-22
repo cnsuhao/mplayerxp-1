@@ -298,12 +298,10 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
   priv->my_use_pts=use_pts;
   /* test stream property */
   MSG_INFO("%s using PTS method\n",use_pts?"":"not");
-  if(priv->m_video)
-  {
+  if(priv->m_video) {
     if(!shv) { MSG_ERR("Video not found!!!Skip this stream\n"); return; }
     if(!shv->bih) { MSG_ERR("Video property not found!!!Skip this stream\n"); return; }
-    if(memcmp(shv->bih,priv->m_video->bih,sizeof(BITMAPINFOHEADER))!=0)
-    {
+    if(memcmp(shv->bih,priv->m_video->bih,sizeof(BITMAPINFOHEADER))!=0) {
        MSG_ERR("Found different video properties(%X-%ix%i)!=(%X-%ix%i)!!!\nSkip this stream\n",
        shv->bih->biCompression,shv->bih->biWidth,shv->bih->biHeight,
        priv->m_video->bih->biCompression,priv->m_video->bih->biWidth,
@@ -312,12 +310,10 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
     }
     priv->m_video->source=shv;
   }
-  if(priv->m_audio)
-  {
+  if(priv->m_audio) {
     if(!sha) { MSG_ERR("Audio not found!!!Skip this stream\n"); return; }
     if(!sha->wf) { MSG_ERR("Audio property not found!!!Skip this stream\n"); return; }
-    if(memcmp(sha->wf,priv->m_audio->wf,sizeof(WAVEFORMATEX))!=0)
-    {
+    if(memcmp(sha->wf,priv->m_audio->wf,sizeof(WAVEFORMATEX))!=0) {
        MSG_ERR("Found different audio properties(%X-%ix%ix%i)!=(%X-%ix%ix%i)X!!!\nSkip this stream\n",
        sha->wf->wFormatTag,sha->wf->nSamplesPerSec,sha->wf->wBitsPerSample,sha->wf->nChannels,
        priv->m_audio->wf->wFormatTag,priv->m_audio->wf->nSamplesPerSec,
@@ -347,13 +343,11 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
   veof=shv?0:1;
   if(shv) priv->vtimer=0;
   if(sha) sha->timer=0;
-  while(!(aeof && veof)){
+  while(!(aeof && veof)) {
     in_size=0;
-    if(sha && !aeof)
-    {
+    if(sha && !aeof) {
       float a_pts;
-      while(sha->timer < (shv?priv->vtimer:HUGE) || !shv || veof) /* autolimitation of audio reading */
-      {
+      while(sha->timer < (shv?priv->vtimer:HUGE) || !shv || veof) { /* autolimitation of audio reading */
 	/* we should try to keep structure of audio packets here
 	   and don't generate badly interlaved stream.
 	   The ideal case is:  type=read_packet(ANY_TYPE); put_packet(type);
@@ -364,8 +358,7 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
 	else
 	a_duration=(float)in_size/(float)(sha->i_bps);
 	if(mpeg_atimer==HUGE) mpeg_atimer=a_pts;
-	else
-	{
+	else {
 	    if( mpeg_atimer-a_duration<a_pts) mpeg_atimer=a_pts;
 	    else	mpeg_atimer+=a_duration;
 	}
@@ -375,11 +368,9 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
 	aeof=sha->ds->eof;
 	priv->a_frameno++;
 	if(aeof) break;
-	if(priv->m_audio)
-	{
+	if(priv->m_audio) {
 	    priv->m_audio->buffer=start;
-	    if(in_size>0)
-	    {
+	    if(in_size>0) {
 		MSG_V("put audio: %f %f %u\n",a_pts,sha->timer+priv->timer_corr,in_size);
 		if(priv->m_audio)
 		    muxer_write_chunk(priv->m_audio,in_size,priv->m_video?0:AVIIF_KEYFRAME,sha->timer+priv->timer_corr);
@@ -390,16 +381,14 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
 	priv->asize += in_size;
       }
     }
-    if(shv && !veof)
-    {
+    if(shv && !veof) {
 	float v_pts;
 	in_size=shv->read_frame(&frame_time,&v_pts,&start,0);
 	cmd = check_cmd(priv);
 	if(cmd == -1) goto done;
 	else
 	if(mpeg_vtimer==HUGE) mpeg_vtimer=v_pts;
-	else
-	{
+	else {
 	    if( mpeg_vtimer-frame_time<v_pts ) mpeg_vtimer=v_pts;
 	    else	mpeg_vtimer+=frame_time;
 	}
@@ -409,8 +398,7 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
 	veof=shv->ds->eof;
 	MSG_V("Got video frame %f %i\n",v_pts,(!veof)?priv->decoded_frameno:-1);
 	if(priv->m_video) priv->m_video->buffer=start;
-	if(in_size>0)
-	{
+	if(in_size>0) {
 	    MSG_V("put video: %f %f %u flg=%u\n",v_pts,priv->vtimer+priv->timer_corr,in_size,shv->ds->flags);
 	    if(priv->m_video) muxer_write_chunk(priv->m_video,in_size,(shv->ds->flags&1)?AVIIF_KEYFRAME:0,priv->vtimer+priv->timer_corr);
 	    priv->vsize += in_size;
@@ -418,11 +406,9 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
 	if(!(priv->decoded_frameno%100))
 	    MSG_STATUS("Done %u frames\r",priv->decoded_frameno);
     }
-    if(demuxer->sub->sh)
-    {
+    if(demuxer->sub->sh) {
 	float s_pts=0;
-	while(s_pts < (shv?priv->vtimer:HUGE) || !shv || veof) /* autolimitation of sub reading */
-	{
+	while(s_pts < (shv?priv->vtimer:HUGE) || !shv || veof) { /* autolimitation of sub reading */
 	    in_size=ds_get_packet_r(*demuxer->sub,&start,s_pts);
 	    seof=demuxer->sub->eof;
 	    if(seof) break;
@@ -430,11 +416,9 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
 	    if(cmd == -1) goto done;
 	    else
 	    MSG_V("Got sub frame: %f\n",s_pts);
-	    if(priv->m_subs)
-	    {
+	    if(priv->m_subs) {
 		priv->m_subs->buffer=start;
-		if(in_size>0)
-		{
+		if(in_size>0) {
 		    MSG_V("put subs: %f %u\n",s_pts,in_size);
 		    if(priv->m_subs)
 			muxer_write_chunk(priv->m_subs,in_size,priv->m_video?0:AVIIF_KEYFRAME,s_pts);
@@ -446,8 +430,7 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
   }
   done:
   if(shv) priv->timer_corr+=priv->vtimer+frame_time;
-  else
-  {
+  else {
     if(sha) priv->timer_corr+=d_audio->pts;
     if(priv->m_audio->wf->nAvgBytesPerSec)
 	    priv->timer_corr+=((float)d_audio->tell_pts())/((float)priv->m_audio->wf->nAvgBytesPerSec);
