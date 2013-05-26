@@ -1,6 +1,4 @@
-/*
-    dump.h - stream dumper interface
-*/
+/*  dump.h - stream dumper interface */
 #ifndef DUMP_H_INCLUDED
 #define DUMP_H_INCLUDED 1
 #include "libmpdemux/demuxer_r.h"
