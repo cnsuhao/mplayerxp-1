@@ -2,6 +2,7 @@
 #include "osdep/mplib.h"
 using namespace	usr;
 #include <iomanip>
+#include <stdexcept>
 
 #include <errno.h>
 #include <stdio.h>
@@ -76,7 +77,7 @@ X11_System::X11_System(const std::string& DisplayName,int xinerama_screen)
 
     if(!(mDisplay=::XOpenDisplay(dispName.c_str()))) {
 	mpxp_err<<"X11_System: couldn't open the X11 display: "<<dispName<<std::endl;
-	exit_player("X11_System error");
+	throw std::runtime_error("X11_System error");
     }
     mScreen=DefaultScreen( mDisplay );
     mRootWin=RootWindow( mDisplay,mScreen );// Root window ID.
@@ -1211,7 +1212,7 @@ void GLX_System::create_window(const XSizeHints& hint,XVisualInfo* vi,unsigned f
     ctx=::glXCreateContext(get_display(), vi, NULL, GL_TRUE);
     if (ctx == NULL) {
 	mpxp_err<<"[GLX_System]: Can't create GLX context"<<std::endl;
-	exit_player("vo error");
+	throw std::runtime_error("vo error");
     }
 
     theCmap  =::XCreateColormap( get_display(),RootWindow( get_display(),vi->screen),

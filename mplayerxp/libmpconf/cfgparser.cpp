@@ -12,6 +12,7 @@ using namespace	usr;
 #include <limits>
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -883,7 +884,7 @@ void M_Config::parse_cfgfiles(const std::map<std::string,std::string>& envm)
 	    ::write(conffile_fd, default_config, strlen(default_config));
 	    ::close(conffile_fd);
 	}
-	if (parse_config_file(conffile) != MPXP_Ok) ::exit(1);
+	if (parse_config_file(conffile) != MPXP_Ok) throw std::runtime_error("Error in config file");
     }
 }
 

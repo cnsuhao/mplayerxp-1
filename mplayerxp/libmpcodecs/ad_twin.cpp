@@ -1,6 +1,8 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace	usr;
+#include <stdexcept>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -426,11 +428,8 @@ static int get_bstm(int	*data,          /* Input: input data */
     char	tmpbit[BITS_INT];
     int		retval;
 
-    if ( nbits > BITS_INT ){
-		MSG_ERR( "get_bstm(): %d: %d Error.\n",
-			nbits, BITS_INT);
-		exit(1);
-    }
+    if ( nbits > BITS_INT ) throw std::runtime_error("get_bstm(): falied");
+
     retval = bread(tmpbit, sizeof(*tmpbit), nbits, priv, pts );
     for (ibit=retval; ibit<nbits; ibit++){
 		tmpbit[ibit] = 0;

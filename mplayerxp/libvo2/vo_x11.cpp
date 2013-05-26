@@ -17,6 +17,7 @@ using namespace	usr;
  * runtime fullscreen switching by alex
  *
  */
+#include <stdexcept>
 
 #include <limits.h>
 #include <stdio.h>
@@ -144,7 +145,7 @@ X11_VO_Interface::X11_VO_Interface(const std::string& arg)
 	mpxp_info<<"args="<<arg<<" vidix_name="<<vidix_name<<std::endl;
 	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
 	    mpxp_err<<"Cannot initialze vidix with '"<<vidix_name<<"' argument"<<std::endl;
-	    exit_player("Vidix error");
+	    throw std::runtime_error("Vidix error");
 	}
     }
 #endif
@@ -176,9 +177,9 @@ void X11_VO_Interface::resize_vidix() const {
     {
 	mpxp_fatal<<"Can't initialize VIDIX: "<<strerror(errno)<<std::endl;
 	delete vidix;
-	exit_player("Vidix init"); /* !!! */
+	throw std::runtime_error("Vidix init"); /* !!! */
     }
-    if(vidix->start()!=0) { delete vidix; exit_player("Vidix start"); }
+    if(vidix->start()!=0) { delete vidix; throw std::runtime_error("Vidix start"); }
 }
 #endif
 

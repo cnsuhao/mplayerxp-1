@@ -92,14 +92,13 @@ void GetCpuCaps( CpuCaps *caps)
 	}
 	do_cpuid(0x00000000, regs); // get _max_ cpuid level and vendor name
 	if (regs[0]>=0x00000001) {
-		char *tmpstr;
+		std::string tmpstr;
 		unsigned cl_size;
 
 		do_cpuid(0x00000001, regs2);
 
 		tmpstr=GetCpuFriendlyName(regs, regs2);
 		mpxp_v<<"CPU: "<<tmpstr<<std::endl;
-		delete tmpstr;
 
 		caps->cpuType=(regs2[0] >> 8)&0xf;
 		if(caps->cpuType==0xf){
@@ -163,16 +162,14 @@ void GetCpuCaps( CpuCaps *caps)
 #define CPUID_MODEL	((regs2[0] >>  4)&0x0F) /* 07..04 */
 #define CPUID_STEPPING	((regs2[0] >>  0)&0x0F) /* 03..00 */
 
-char *GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]){
+std::string GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]){
 #include "cputable.h" /* get cpuname and cpuvendors */
 	char vendor[17];
 	char *retname;
 	int i;
+	std::string rc;
 
-	if (NULL==(retname=(char*)mp_malloc(256))) {
-		mpxp_err<<MSGTR_OutOfMemory<<std::endl;
-		::exit(1);
-	}
+	retname=new char[256];
 
 	sprintf(vendor,"%.4s%.4s%.4s",(char*)(regs+1),(char*)(regs+3),(char*)(regs+2));
 
@@ -194,8 +191,9 @@ char *GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]){
 		}
 	}
 
-	//printf("Detected CPU: %s\n", retname);
-	return retname;
+	rc=retname;
+	delete retname;
+	return rc;
 }
 
 #undef CPUID_EXTFAMILY

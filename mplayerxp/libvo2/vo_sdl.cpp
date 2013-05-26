@@ -93,6 +93,7 @@ using namespace	usr;
  *
  */
 #include <algorithm>
+#include <stdexcept>
 /* define to force software-surface (video surface stored in system memory)*/
 #undef SDL_NOHWSURFACE
 
@@ -278,7 +279,7 @@ SDL_VO_Interface::SDL_VO_Interface(const std::string& arg)
     if(!vidix_name.empty()) {
 	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
 	    mpxp_err<<"Cannot initialze vidix with '"<<vidix_name<<"' argument"<<std::endl;
-	    exit_player("Vidix error");
+	    throw std::runtime_error("Vidix error");
 	}
     }
 #endif
@@ -343,7 +344,7 @@ void SDL_VO_Interface::sdl_open( )
     if (!SDL_WasInit(SDL_INIT_VIDEO)) {
 	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_NOPARACHUTE)) {
 	    mpxp_err<<"SDL: Initializing of SDL failed: "<<SDL_GetError()<<std::endl;
-	    exit_player("SDL error");
+	    throw std::runtime_error("SDL error");
 	}
     }
 
@@ -389,7 +390,7 @@ void SDL_VO_Interface::sdl_open( )
 	sdlflags &= ~SDL_HWSURFACE;
 	if ((!SDL_ListModes (vidInfo->vfmt, sdlflags)) && (!fullmodes)) {
 	    mpxp_err<<"SDL: Couldn't get any acceptable SDL Mode for output."<<std::endl;
-	    exit_player("SDL error");
+	    throw std::runtime_error("SDL error");
 	}
     }
    /* YUV overlays need at least 16-bit color depth, but the
@@ -835,7 +836,7 @@ uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
 		(*vrest->adjust_size)(vrest->vo,windowsize.w,windowsize.h,reinterpret_cast<unsigned*>(&event.resize.w), reinterpret_cast<unsigned*>(&event.resize.h));
 		if(set_video_mode(event.resize.w, event.resize.h,
 				  bpp, sdlflags)!=0)
-				  exit_player("SDL set video mode");
+			throw std::runtime_error("SDL set video mode");
 
 		/* save video extents, to restore them after going fullscreen */
 		windowsize.w = surface->w;
@@ -884,7 +885,7 @@ uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
 		    /* select next fullscreen mode */
 		    fullmode++;
 		    if (fullmode > (findArrayEnd(fullmodes) - 1)) fullmode = 0;
-		    if(set_fullmode(fullmode)!=0) exit_player("SDL set full mode");
+		    if(set_fullmode(fullmode)!=0) throw std::runtime_error("SDL set full mode");
 		    mpxp_v<<"SDL: Set next available fullscreen mode."<<std::endl;
 		    retval = VO_EVENT_RESIZE;
 		} else if ( keypressed == SDLK_n ) {
@@ -892,13 +893,13 @@ uint32_t SDL_VO_Interface::check_events (const vo_resize_t* vrest){
 		    aspect->calc(dstwidth, dstheight,flags&VOFLAG_FULLSCREEN?Aspect::ZOOM:Aspect::NOZOOM);
 #endif
 		    if (unsigned(surface->w) != dstwidth || unsigned(surface->h) != dstheight) {
-			if(set_video_mode(dstwidth, dstheight, bpp, sdlflags)!=0) exit_player("SDL set video mode");
+			if(set_video_mode(dstwidth, dstheight, bpp, sdlflags)!=0) throw std::runtime_error("SDL set video mode");
 			windowsize.w = surface->w;
 			windowsize.h = surface->h;
 			mpxp_v<<"SDL: Normal size"<<std::endl;
 			retval |= VO_EVENT_RESIZE;
 		    } else if (unsigned(surface->w) != dstwidth * 2 || unsigned(surface->h) != dstheight * 2) {
-			if(set_video_mode(dstwidth * 2, dstheight * 2, bpp, sdlflags)!=0) exit_player("SDL set video mode");
+			if(set_video_mode(dstwidth * 2, dstheight * 2, bpp, sdlflags)!=0) throw std::runtime_error("SDL set video mode");
 			windowsize.w = surface->w;
 			windowsize.h = surface->h;
 			mpxp_v<<"SDL: Double size"<<std::endl;
@@ -1217,11 +1218,11 @@ MPXP_Rc SDL_VO_Interface::flush_page(unsigned idx) {
 
 MPXP_Rc SDL_VO_Interface::toggle_fullscreen() {
     if (surface->flags & SDL_FULLSCREEN) {
-	if(set_video_mode(windowsize.w, windowsize.h, bpp, sdlflags)!=0) exit_player("SDL set fullscreen");
+	if(set_video_mode(windowsize.w, windowsize.h, bpp, sdlflags)!=0) throw std::runtime_error("SDL set fullscreen");
 	SDL_ShowCursor(1);
 	mpxp_v<<"SDL: Windowed mode"<<std::endl;
     } else if (fullmodes) {
-	if(set_fullmode(fullmode)!=0) exit_player("SDL set fullmode");
+	if(set_fullmode(fullmode)!=0) throw std::runtime_error("SDL set fullmode");
 	mpxp_v<<"SDL: Set fullscreen mode"<<std::endl;
     }
     return MPXP_True;

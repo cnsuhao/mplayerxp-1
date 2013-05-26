@@ -1,6 +1,8 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace	usr;
+#include <stdexcept>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -678,7 +680,7 @@ void vf_help(){
 vf_stream_t* vf_init(libinput_t& libinput,const vf_conf_t* conf) {
     if(!sws_init()) {
 	MSG_ERR("MPlayerXP requires working copy of libswscaler\n");
-	exit_player(MSGTR_Exit_quit);
+	throw std::runtime_error("libswscaler");
     }
     vf_stream_t* s = new(zeromem) vf_stream_t(libinput);
     vf_instance_t* first;

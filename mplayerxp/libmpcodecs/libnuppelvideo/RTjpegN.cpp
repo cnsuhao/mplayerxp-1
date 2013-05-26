@@ -3120,22 +3120,16 @@ Initialise additional data structures for motion compensation
 
 void RTjpeg_init_mcompress(void)
 {
- unsigned long tmp;
+    unsigned long tmp;
 
- if(!RTjpeg_old)
- {
-  RTjpeg_old=(__s16*)mp_malloc((4*RTjpeg_width*RTjpeg_height)+32);
-  tmp=(unsigned long)RTjpeg_old;
-  tmp+=32;
-  tmp=tmp>>5;
-  RTjpeg_old=(__s16 *)(tmp<<5);
- }
- if (!RTjpeg_old)
- {
-  fprintf(stderr, "RTjpeg: Could not allocate memory\n");
-  exit(-1);
- }
- bzero(RTjpeg_old, ((4*RTjpeg_width*RTjpeg_height)));
+    if(!RTjpeg_old) {
+	RTjpeg_old=new __s16[(4*RTjpeg_width*RTjpeg_height)+32];
+	tmp=(unsigned long)RTjpeg_old;
+	tmp+=32;
+	tmp=tmp>>5;
+	RTjpeg_old=(__s16 *)(tmp<<5);
+    }
+    bzero(RTjpeg_old, ((4*RTjpeg_width*RTjpeg_height)));
 }
 
 #ifdef MMX

@@ -483,37 +483,37 @@ static void get_mmx_optimizations( void )
 #endif
 
 
-static void init_player(const std::map<std::string,std::string>& envm)
+static MPXP_Rc init_player(const std::map<std::string,std::string>& envm)
 {
     if(mp_conf.video_driver && strcmp(mp_conf.video_driver,"help")==0) {
 	mpxp_context().video().output->print_help();
 	mpxp_uninit_structs();
-	exit(0);
+	return MPXP_False;
     }
     if(mp_conf.audio_driver && strcmp(mp_conf.audio_driver,"help")==0) {
 	mpxp_context().audio().output->print_help();
 	mpxp_uninit_structs();
-	exit(0);
+	return MPXP_False;
     }
     if(mp_conf.video_family && strcmp(mp_conf.video_family,"help")==0) {
 	vfm_help();
 	mpxp_uninit_structs();
-	exit(0);
+	return MPXP_False;
     }
     if(mp_conf.audio_family && strcmp(mp_conf.audio_family,"help")==0) {
 	afm_help();
 	mpxp_uninit_structs();
-	exit(0);
+	return MPXP_False;
     }
     if(vf_cfg.list && strcmp(vf_cfg.list,"help")==0) {
 	vf_help();
 	mpxp_uninit_structs();
-	exit(0);
+	return MPXP_False;
     }
     if(af_cfg.list && strcmp(af_cfg.list,"help")==0) {
 	af_help();
 	mpxp_uninit_structs();
-	exit(0);
+	return MPXP_False;
     }
 
 #ifdef ENABLE_WIN32LOADER
@@ -522,7 +522,7 @@ static void init_player(const std::map<std::string,std::string>& envm)
       if(!parse_codec_cfg(CONFDIR"/win32codecs.conf")) {
 	mpxp_hint<<MSGTR_CopyCodecsConf<<std::endl;
 	mpxp_uninit_structs();
-	exit(0);
+	return MPXP_False;
       }
     }
 #endif
@@ -531,15 +531,16 @@ static void init_player(const std::map<std::string,std::string>& envm)
 	list_codecs(1);
 #endif
 	mpxp_uninit_structs();
-	exit(0);
+	return MPXP_False;
     }
     if(mp_conf.video_codec && strcmp(mp_conf.video_codec,"help")==0) {
 #ifdef ENABLE_WIN32LOADER
 	list_codecs(0);
 #endif
 	mpxp_uninit_structs();
-	exit(0);
+	return MPXP_False;
     }
+    return MPXP_Ok;
 }
 
 void show_help(void) {
@@ -824,7 +825,7 @@ char* MPXPSystem::init_output_subsystems() {
 
     if(vo_inited==MPXP_False){
 	mpxp_fatal<<MSGTR_InvalidVOdriver<<": "<<(mp_conf.video_driver?mp_conf.video_driver:"?")<<std::endl;
-	exit_player(MSGTR_Fatal_error);
+	throw std::runtime_error(MSGTR_Fatal_error);
     }
 
 // check audio_out driver name:
@@ -1079,7 +1080,7 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
 	ao_inited=mpxp_context().audio().output->_register(mp_conf.audio_driver?mp_conf.audio_driver:"",0);
 	if (ao_inited!=MPXP_Ok){
 	    mpxp_fatal<<MSGTR_InvalidAOdriver<<": "<<mp_conf.audio_driver<<std::endl;
-	    exit_player(MSGTR_Fatal_error);
+	    throw std::runtime_error(MSGTR_Fatal_error);
 	}
     }
 }
@@ -1211,12 +1212,12 @@ void MPXPSystem::run_ahead_engine() {
 	mpxp_fatal<<"Not enough buffers for DECODING AHEAD!"<<std::endl;
 	mpxp_fatal<<"Need 3 buffers but exist only "
 		<<mpxp_context().engine().xp_core->num_v_buffs<<std::endl;
-	exit_player("Try other '-vo' driver.\n");
+	throw std::runtime_error("Try other '-vo' driver.");
     }
     if(xmp_init_engine(sh_video,sh_audio)!=0)
-	exit_player("Can't initialize decoding ahead!\n");
+	throw std::runtime_error("Can't initialize decoding ahead!");
     if(xmp_run_decoders()!=0)
-	exit_player("Can't run decoding ahead!\n");
+	throw std::runtime_error("Can't run decoding ahead!");
     if(sh_video)
 	mpxp_ok<<"Using DECODING AHEAD mplayer's core with "<<mpxp_context().engine().xp_core->num_v_buffs<<" video buffers"<<std::endl;
     else
@@ -1598,17 +1599,16 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
     m_config.parse_cfgfiles(envm);
 
     if(m_config.parse_command_line(argv,envm)!=MPXP_Ok)
-	exit_player("Error parse command line"); // error parsing cmdline
+	throw std::runtime_error("Error parse command line"); // error parsing cmdline
 
     if(!mp_conf.xp) {
-	mpxp_err<<"Error: detected option: -core.xp=0"<<std::endl;
 	mpxp_err<<"Note!  Single-thread mode is not longer supported by MPlayerXP"<<std::endl;
-	exit_player(MSGTR_Exit_quit);
+	throw std::runtime_error("Error: detected option: -core.xp=0");
     }
     if(mp_conf.test_av) {
 	int verb=1;
 	if(mpxp_test_antiviral_protection(&verb)==MPXP_Virus)
-	    exit_player("Bad test of antiviral protection");
+	    throw std::runtime_error("Bad test of antiviral protection");
     }
 
     MPXPSys.xp_num_cpu=get_number_cpu();
@@ -1632,7 +1632,7 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
 
     mpxp_context().engine().xp_core->num_a_buffs = vo_conf.xp_buffs;
 
-    init_player(envm);
+    if(init_player(envm)!=MPXP_Ok) return EXIT_SUCCESS;
 
     if(filename.empty()){
 	show_help();
@@ -1686,7 +1686,7 @@ play_next_file:
     if(mp_conf.stream_dump)
 	if((stream_dump_type=dump_parse(mp_conf.stream_dump))==0) {
 	    mpxp_err<<"Wrong dump parameters! Unable to continue"<<std::endl;
-	    exit_player(MSGTR_Fatal_error);
+	    throw std::runtime_error(MSGTR_Fatal_error);
 	}
 
     if(stream_dump_type) mp_conf.s_cache_size=0;
@@ -1866,7 +1866,7 @@ main:
 	if(MPXPSys.vo_inited) MPXPSys.uninit_player(INITED_VO);
     }
 
-    if(!sh_audio && !sh_video) exit_player("Nothing to do");
+    if(!sh_audio && !sh_video) throw std::runtime_error("Nothing to do");
 
     if(mp_conf.force_fps && sh_video) {
 	sh_video->fps=mp_conf.force_fps;
@@ -1903,7 +1903,7 @@ main:
 
 // TODO: rewrite test backtrace in .asm
 //    mpxp_test_backtrace();
-    if(xmp_run_players()!=0) exit_player("Can't run xp players!\n");
+    if(xmp_run_players()!=0) throw std::runtime_error("Can't run xp players!");
     mpxp_ok<<"Using the next "<<mpxp_context().engine().xp_core->num_threads<<" threads:"<<std::endl;
     unsigned idx;
     for(idx=0;idx<mpxp_context().engine().xp_core->num_threads;idx++)

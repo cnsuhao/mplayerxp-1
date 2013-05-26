@@ -20,6 +20,7 @@ using namespace	usr;
 */
 #include <algorithm>
 #include <iomanip>
+#include <stdexcept>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -175,7 +176,7 @@ VESA_VO_Interface::VESA_VO_Interface(const std::string& arg)
     if(!vidix_name.empty()) {
 	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
 	    mpxp_err<<"Cannot initialze vidix with '"<<vidix_name<<"' argument"<<std::endl;
-	    exit_player("Vidix error");
+	    throw std::runtime_error("Vidix error");
 	}
     }
 #endif
@@ -184,7 +185,7 @@ VESA_VO_Interface::VESA_VO_Interface(const std::string& arg)
 	if(vbeInit()!=VBE_OK) {
 	    pre_init_err=MPXP_False;
 	    PRINT_VBE_ERR("vbeInit",pre_init_err);
-	    exit_player("VESA preinit");
+	    throw std::runtime_error("VESA preinit");
 	}
 }
 
@@ -214,7 +215,7 @@ void VESA_VO_Interface::__vbeSwitchBank(unsigned long offset)
 	vesa_term();
 	PRINT_VBE_ERR("vbeSetWindow",err);
 	mpxp_fatal<<"vo_vesa: Fatal error occured! Can't continue"<<std::endl;
-	exit_player("VESA error");
+	throw std::runtime_error("VESA error");
     }
     win.low = new_offset * gran;
     win.high = win.low + vmode_info.WinSize*1024;
@@ -301,7 +302,7 @@ MPXP_Rc VESA_VO_Interface::select_frame(unsigned idx)
 	    vesa_term();
 	    PRINT_VBE_ERR("vbeSetDisplayStart",err);
 	    mpxp_fatal<<"vo_vesa: Fatal error occured! Can't continue"<<std::endl;
-	    exit_player("VESA error");
+	    throw std::runtime_error("VESA error");
 	}
 	win.ptr = dga_buffer = video_base + multi_buff[(idx+1)%multi_size];
     }

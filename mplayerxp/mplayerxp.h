@@ -1,6 +1,6 @@
 #ifndef __MPLAYERXP_MAIN
 #define __MPLAYERXP_MAIN 1
-
+#include <stdexcept>
 #include <string>
 #include <map>
 
@@ -212,7 +212,7 @@ namespace	usr {
 
     inline void escape_player(const std::string& why,unsigned num_calls) {
 	show_backtrace(why,num_calls);
-	exit_player(why);
+	throw std::runtime_error(why);
     }
 
     inline MPXP_Rc check_pin(const std::string& module,unsigned pin1,unsigned pin2) {

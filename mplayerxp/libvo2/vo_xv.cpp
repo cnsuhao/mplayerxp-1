@@ -15,6 +15,7 @@ using namespace	usr;
  * double buffering support by A'rpi
  */
 #include <algorithm>
+#imclude <stdexcept>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -91,7 +92,7 @@ Xv_VO_Interface::Xv_VO_Interface(const std::string& arg)
     num_buffers=1;
     if(!arg.empty()) {
 	mpxp_err<<"vo_xv: Unknown subdevice: "<<arg<<std::endl;
-	exit_player("Xv error");
+	throw std::runtime_error("Xv error");
     }
 }
 

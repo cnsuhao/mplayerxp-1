@@ -62,7 +62,7 @@ namespace	usr {
     void GetCpuCaps(CpuCaps *caps);
 
     /* returned value is mp_malloc()'ed so mp_free() it after use */
-    char *GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]);
+    std::string GetCpuFriendlyName(unsigned int regs[], unsigned int regs2[]);
 } // namespace	usr
 #endif /* !CPUDETECT_H */
 

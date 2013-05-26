@@ -6,6 +6,7 @@ using namespace	usr;
 */
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,7 +61,7 @@ void dump_stream(Stream *stream)
   f.open(name,std::ios_base::out|std::ios_base::binary);
   if(!f.is_open()){
     MSG_FATAL(MSGTR_CantOpenDumpfile);
-    exit_player(MSGTR_Fatal_error);
+    throw std::runtime_error(MSGTR_Fatal_error);
   }
   MSG_INFO("Dumping stream to %s\n",name);
   while(!stream->eof()){
@@ -69,7 +70,7 @@ void dump_stream(Stream *stream)
   }
   f.close();
   mpxp_info<<MSGTR_StreamDumped<<std::endl;
-  exit_player(MSGTR_Exit_eof);
+  throw std::runtime_error(MSGTR_Exit_eof);
 }
 
 enum {
@@ -140,17 +141,17 @@ void dump_mux_init(Demuxer *demuxer,libinput_t& libinput)
     else if(strcmp(media,"raw") == 0) strcat(stream_dump_name,"dump.raw");
     else {
 	MSG_FATAL("Unsupported muxer format %s found\n",media);
-	exit_player(MSGTR_Fatal_error);
+	throw std::runtime_error(MSGTR_Fatal_error);
     }
     priv->mux_file.open(stream_dump_name,std::ios_base::out|std::ios_base::binary);
     MSG_DBG2("Preparing stream dumping: %s\n",stream_dump_name);
     if(!priv->mux_file.is_open()){
 	MSG_FATAL(MSGTR_CantOpenDumpfile);
-	exit_player(MSGTR_Fatal_error);
+	throw std::runtime_error(MSGTR_Fatal_error);
     }
     if(!(priv->muxer=muxer_new_muxer(media,port,priv->mux_file))) {
 	MSG_FATAL("Can't initialize muxer\n");
-	exit_player(MSGTR_Fatal_error);
+	throw std::runtime_error(MSGTR_Fatal_error);
     }
     if(sha && (priv->mux_type&MUX_HAVE_AUDIO)) {
 	priv->m_audio=muxer_new_stream(priv->muxer,MUXER_TYPE_AUDIO);

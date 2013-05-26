@@ -1,6 +1,8 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace	usr;
+#include <stdexcept>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -83,8 +85,7 @@ void __builtin_vec_delete(any_t*mem) {
 
 void __pure_virtual(void)
 {
-    MSG_ERR( "I'm outa here!\n");
-    exit(1);
+    throw std::runtime_error( "I'm outa here!\n");
 }
 #endif
 struct vreal_private_t : public Opaque {

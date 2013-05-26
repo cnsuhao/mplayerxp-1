@@ -76,7 +76,6 @@ static char *b64_decode(const char *in, char *out, int *size)
 
       if (dtable[c] & 0x80) {
 	mpxp_info<<"Illegal character '"<<c<<"' in input"<<std::endl;
-//        exit(1);
 	return NULL;
       }
       a[i] = (char) c;

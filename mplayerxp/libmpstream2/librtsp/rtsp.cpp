@@ -31,6 +31,7 @@ using namespace	usr;
  *    2006, Benjamin Zores and Vincent Mussard
  *      fixed a lot of RFC compliance issues.
  */
+#include <stdexcept>
 
 #include <unistd.h>
 #include <stdio.h>
@@ -178,10 +179,8 @@ char* Rtsp::get() const {
 	n++;
     }
 
-    if (n>=BUF_SIZE) {
-	mpxp_fatal<<"librtsp: buffer overflow in rtsp_get"<<std::endl;
-	exit(1);
-    }
+    if (n>=BUF_SIZE) throw std::runtime_error("librtsp: buffer overflow in rtsp_get");
+
     string=new char [n];
     memcpy(string,buffer,n-1);
     string[n-1]=0;

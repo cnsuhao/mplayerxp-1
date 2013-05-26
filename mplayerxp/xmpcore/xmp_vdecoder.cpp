@@ -1,6 +1,8 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace	usr;
+#include <stdexcept>
+
 #include <stdio.h>
 #include <math.h>
 

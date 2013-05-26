@@ -1,6 +1,7 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace	usr;
+#include <stdexcept>
 
 #include "mpxp_help.h"
 
@@ -294,6 +295,7 @@ static void check_child(menu_t* menu) {
 
 #define close_pipe(pipe) close(pipe[0]); close(pipe[1])
 
+#if 0
 static int run_shell_cmd(menu_t* menu, char* cmd) {
 #ifndef __MINGW32__
   int in[2],out[2],err[2];
@@ -317,15 +319,12 @@ static int run_shell_cmd(menu_t* menu, char* cmd) {
     return 0;
   }
   if(!mpriv->child) { // Chlid process
-    int err_fd = dup(2);
-    FILE* errf = fdopen(err_fd,"w");
     // Bind the std fd to our pipes
     dup2(in[0],0);
     dup2(out[1],1);
     dup2(err[1],2);
     execl("/bin/sh","sh","-c",cmd,(any_t*)NULL);
-    fprintf(errf,"exec failed : %s\n",strerror(errno));
-    exit(1);
+    throw std::runtime_error(std::string("exec failed : ")+strerror(errno));
   }
   // MPlayer
   mpriv->child_fd[0] = in[1];
@@ -336,6 +335,7 @@ static int run_shell_cmd(menu_t* menu, char* cmd) {
 #endif
   return 1;
 }
+#endif
 
 static void enter_cmd(menu_t* menu) {
   history_t* h;

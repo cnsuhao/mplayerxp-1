@@ -10,6 +10,7 @@ using namespace	usr;
  */
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
 
 static const char* FBDEV= "fbdev: ";
 
@@ -306,11 +307,11 @@ FBDev_VO_Interface::FBDev_VO_Interface(const std::string& arg)
     if(!vidix_name.empty()) {
 	if(!(vidix=new(zeromem) Vidix_System(vidix_name))) {
 	    mpxp_err<<"Cannot initialze vidix with '"<<vidix_name<<"' argument"<<std::endl;
-	    exit_player("Vidix error");
+	    throw std::runtime_error("Vidix error");
 	}
     }
 #endif
-    if(fb_preinit()!=MPXP_Ok) exit_player("FBDev preinit");
+    if(fb_preinit()!=MPXP_Ok) throw std::runtime_error("FBDev preinit");
 }
 
 int FBDev_VO_Interface::get_token(std::ifstream& fp,int num)

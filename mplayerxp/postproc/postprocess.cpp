@@ -12,6 +12,7 @@ using namespace	usr;
 #include "postprocess.h"
 #include "libmpcodecs/codecs_ld.h"
 #include "osdep/cpudetect.h"
+#include "mpxp_help.h"
 #include "pp_msg.h"
 
 pp_context *pp2_get_context(int width, int height, int flags)
@@ -29,7 +30,7 @@ int	pp2_init(void)
 {
     if(strcmp(mp_conf.npp_options,"help")==0) {
 	MSG_INFO(pp_help);
-	exit_player("");
+	exit_player(MSGTR_Exit_quit);
     }
     return 1;
 }

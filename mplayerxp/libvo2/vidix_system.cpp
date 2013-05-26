@@ -13,6 +13,7 @@ using namespace	usr;
  * (Partly based on vesa_lvo.c from mplayer's package)
  */
 #include <iomanip>
+#include <stdexcept>
 
 #include <errno.h>
 #include <inttypes.h>
@@ -51,15 +52,15 @@ Vidix_System::Vidix_System(const std::string& drvname)
     mpxp_dbg2<<"vidix_preinit("<<drvname<<") was called"<<std::endl;
     if(vidix->version() != VIDIX_VERSION) {
 	mpxp_fatal<<"You have wrong version of VIDIX library"<<std::endl;
-	exit_player("Vidix");
+	throw std::runtime_error("Vidix");
     }
     if(vidix->is_error()) {
 	mpxp_fatal<<"Couldn't find working VIDIX driver"<<std::endl;
-	exit_player("Vidix");
+	throw std::runtime_error("Vidix");
     }
     if((err=vidix->get_capabilities()) != 0) {
 	mpxp_fatal<<"Couldn't get capability: "<<strerror(err)<<std::endl;
-	exit_player("Vidix");
+	throw std::runtime_error("Vidix");
     }
     else mpxp_v<<"Driver capability: "<<std::hex<<vidix->cap.flags<<std::endl;
     mpxp_v<<"Using: "<<vidix->cap.name<<" by "<<vidix->cap.author<<std::endl;
@@ -152,9 +153,8 @@ void Vidix_System::copy_dma(unsigned idx,int sync_mode)
 	err=vidix->dma_copy_frame();
 	if(err) {
 	    /* We can switch back to DR here but for now exit */
-	    mpxp_fatal<<"error '"<<strerror(err)<<"' occured during DMA transfer"<<std::endl;
 	    mpxp_fatal<<"Please send BUGREPORT to developers!!!"<<std::endl;
-	    exit(EXIT_FAILURE); /* it's OK vidix_term will be called */
+	    throw std::runtime_error(std::string("error '")+strerror(err)+"' occured during DMA transfer");
 	}
 #if 0
 	mpxp_info<<"frame is DMA copied"<<std::endl;
