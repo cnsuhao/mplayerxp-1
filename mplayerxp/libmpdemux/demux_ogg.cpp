@@ -252,7 +252,7 @@ static void demux_ogg_init_sub () {
   int lcv;
   if(!ogg_sub.text[0]) // not yet allocated
   for (lcv = 0; lcv < SUB_MAX_TEXT; lcv++) {
-    ogg_sub.text[lcv] = (char*)mp_malloc(OGG_SUB_MAX_LINE);
+    ogg_sub.text[lcv] = new char[OGG_SUB_MAX_LINE];
   }
 }
 

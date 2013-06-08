@@ -272,8 +272,8 @@ static Opaque* bmp_open(Demuxer* demuxer)
   sh_video->bih->biClrUsed = demuxer->stream->read_dword_le();
   sh_video->bih->biClrImportant = demuxer->stream->read_dword_le();
   // fetch the palette
-  demuxer->stream->read( (unsigned char *)(sh_video->bih) + 40,
-    sh_video->bih->biClrUsed * 4);
+  binary_packet bp=demuxer->stream->read(sh_video->bih->biClrUsed * 4);
+  memcpy((unsigned char *)(sh_video->bih) + 40,bp.data(),bp.size());
 
   // load the data
   bmp_image = new(zeromem) bmp_image_t;

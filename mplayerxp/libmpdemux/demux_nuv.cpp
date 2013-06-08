@@ -84,13 +84,14 @@ static void nuv_seek ( Demuxer *demuxer, const seek_args_t* seeka )
 
 		while(current_time < target_time )
 		{
-			if ((unsigned)demuxer->stream->read( (char*)& rtjpeg_frameheader, sizeof ( rtjpeg_frameheader ) ) < sizeof(rtjpeg_frameheader))
-				return; /* EOF */
+			binary_packet bp=demuxer->stream->read(sizeof rtjpeg_frameheader);
+			if (bp.size() < sizeof rtjpeg_frameheader) return; /* EOF */
+			memcpy(&rtjpeg_frameheader,bp.data(),bp.size());
 			le2me_rtframeheader(&rtjpeg_frameheader);
 
 			if ( rtjpeg_frameheader.frametype == 'V' )
 			{
-				priv->current_position->next = (nuv_position_t*) mp_malloc ( sizeof ( nuv_position_t ) );
+				priv->current_position->next = new nuv_position_t;
 				priv->current_position = priv->current_position->next;
 				priv->current_position->frame = priv->current_video_frame++;
 				priv->current_position->time = rtjpeg_frameheader.timecode;
@@ -161,8 +162,9 @@ static int nuv_demux( Demuxer *demuxer, Demuxer_Stream *__ds )
 	int want_audio = (demuxer->audio)&&(demuxer->audio->id!=-2);
 
 	demuxer->filepos = orig_pos = demuxer->stream->tell( );
-	if ((unsigned)demuxer->stream->read( (char*)& rtjpeg_frameheader, sizeof ( rtjpeg_frameheader ) ) < sizeof(rtjpeg_frameheader))
-	    return 0; /* EOF */
+	binary_packet bp=demuxer->stream->read(sizeof rtjpeg_frameheader);
+	if (bp.size() < sizeof rtjpeg_frameheader) return 0; /* EOF */
+	memcpy(&rtjpeg_frameheader,bp.data(),bp.size());
 	le2me_rtframeheader(&rtjpeg_frameheader);
 
 	/* Skip Seekpoint, Text and Sync for now */
@@ -178,7 +180,7 @@ static int nuv_demux( Demuxer *demuxer, Demuxer_Stream *__ds )
 	    if ( rtjpeg_frameheader.frametype == 'V' )
 	    {
 		priv->current_video_frame++;
-		priv->current_position->next = (nuv_position_t*) mp_malloc(sizeof(nuv_position_t));
+		priv->current_position->next = new nuv_position_t;
 		priv->current_position = priv->current_position->next;
 		priv->current_position->frame = priv->current_video_frame;
 		priv->current_position->time = rtjpeg_frameheader.timecode;
@@ -227,7 +229,7 @@ static Opaque* nuv_open ( Demuxer* demuxer )
 	demuxer->stream->reset();
 	demuxer->stream->seek(demuxer->stream->start_pos());
 
-	demuxer->stream->read( (char*)& rtjpeg_fileheader, sizeof(rtjpeg_fileheader) );
+	binary_packet bp=demuxer->stream->read(sizeof rtjpeg_fileheader); memcpy(&rtjpeg_fileheader,bp.data(),bp.size());
 	le2me_rtfileheader(&rtjpeg_fileheader);
 
 	/* no video */
@@ -288,7 +290,7 @@ static Opaque* nuv_open ( Demuxer* demuxer )
 	    sh_audio->wf->cbSize = 0;
 	}
 
-	priv->index_list = (nuv_position_t*) mp_malloc(sizeof(nuv_position_t));
+	priv->index_list = new nuv_position_t;
 	priv->index_list->frame = 0;
 	priv->index_list->time = 0;
 	priv->index_list->offset = demuxer->stream->tell( );
@@ -307,7 +309,7 @@ static MPXP_Rc nuv_probe ( Demuxer* demuxer )
 
     MSG_V( "Checking for NuppelVideo\n" );
 
-    demuxer->stream->read((char*)&ns,sizeof(ns));
+    binary_packet bp=demuxer->stream->read(sizeof(ns)); memcpy(&ns,bp.data(),bp.size());
 
     if ( strncmp ( ns.finfo, "NuppelVideo", 12 ) )
 	return MPXP_False; /* Not a NuppelVideo file */

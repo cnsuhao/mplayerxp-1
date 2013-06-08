@@ -153,27 +153,30 @@ MPXP_Rc		Stream::open(libinput_t&libinput,const std::string& filename,int* ff)
 }
 MPXP_Rc Stream::ctrl(unsigned cmd,any_t* param) { return driver->ctrl(cmd,param); }
 int	Stream::read(stream_packet_t* sp) { return driver->read(sp); }
-int	Stream::read(any_t* mem,int total) {
+binary_packet Stream::read(size_t total) {
     off_t _off;
     int rc;
     stream_packet_t sp;
+    binary_packet bp(total);
     sp.type=0;
-    sp.buf=(char *)mem;
+    sp.buf=(char *)bp.data();
     sp.len=total;
     _off=tell();
     rc=read(&sp);
     if(rc<=0) eof(1);
     /* ------------ print packet ---------- */
-    unsigned j,_lim=std::min(sp.len,20);
-    int printable=1;
-    mpxp_dbg4<<rc<<"=[stream.read("<<sp.buf<<","<<sp.len<<")] ["<<std::hex<<std::setfill('0')<<std::setw(16)<<_off<<"] ";
-    for(j=0;j<_lim;j++) { if(!isprint(sp.buf[j])) { printable=0; break; } }
-	if(printable) mpxp_dbg4<<std::string(sp.buf).substr(0,20);
-	else for(j=0;j<_lim;j++)
-	    mpxp_dbg4<<std::hex<<std::setfill('0')<<std::setw(2)<<(unsigned)sp.buf[j];
-    mpxp_dbg4<<std::endl;
+    if(mp_conf.verbose>3) {
+        unsigned j,_lim=std::min(sp.len,20);
+        int printable=1;
+	mpxp_dbg4<<rc<<"=[stream.read("<<sp.buf<<","<<sp.len<<")] ["<<std::hex<<std::setfill('0')<<std::setw(16)<<_off<<"] ";
+	for(j=0;j<_lim;j++) { if(!isprint(sp.buf[j])) { printable=0; break; } }
+	    if(printable) mpxp_dbg4<<std::string(sp.buf).substr(0,20);
+	    else for(j=0;j<_lim;j++)
+		mpxp_dbg4<<std::hex<<std::setfill('0')<<std::setw(2)<<(unsigned)sp.buf[j];
+	mpxp_dbg4<<std::endl;
+    }
     /* ------------ print packet ---------- */
-    return rc;
+    return bp;
 }
 off_t	Stream::seek(off_t off) { return driver->seek(off); }
 int	Stream::skip(off_t off) { return driver->seek(tell()+off)?1:0; }
@@ -188,53 +191,46 @@ void Stream::reset() {
 }
 
 int Stream::read_char(){
-  int retval;
-  read((char *)&retval,1);
-  return eof()?-256:retval;
+    binary_packet rc=read(1);
+    return eof()?-256:rc.cdata()[0];
 }
 
 unsigned int Stream::read_word(){
-  unsigned short retval;
-  read((char *)&retval,2);
-  return me2be_16(retval);
+    binary_packet rc=read(2);
+    return me2be_16(*(uint16_t*)rc.data());
 }
 
 unsigned int Stream::read_dword(){
-  unsigned int retval;
-  read((char *)&retval,4);
-  return me2be_32(retval);
+    binary_packet rc=read(4);
+    return me2be_32(*(uint32_t*)rc.data());
 }
 
 uint64_t Stream::read_qword(){
-  uint64_t retval;
-  read((char *)&retval,8);
-  return me2be_64(retval);
+    binary_packet rc=read(8);
+    return me2be_64(*(uint64_t*)rc.data());
 }
 
 unsigned int Stream::read_word_le(){
-  unsigned short retval;
-  read((char *)&retval,2);
-  return me2le_16(retval);
+    binary_packet rc=read(2);
+    return me2le_16(*(uint16_t*)rc.data());
 }
 
 unsigned int Stream::read_dword_le(){
-  unsigned int retval;
-  read((char *)&retval,4);
-  return me2le_32(retval);
+    binary_packet rc=read(4);
+    return me2le_32(*(uint32_t*)rc.data());
 }
 
 uint64_t Stream::read_qword_le(){
-  uint64_t retval;
-  read((char *)&retval,8);
-  return me2le_64(retval);
+    binary_packet rc=read(8);
+    return me2le_64(*(uint64_t*)rc.data());
 }
 
 unsigned int Stream::read_int24(){
-  unsigned int y;
-  y = read_char();
-  y=(y<<8)|read_char();
-  y=(y<<8)|read_char();
-  return y;
+    unsigned int y;
+    y = read_char();
+    y=(y<<8)|read_char();
+    y=(y<<8)|read_char();
+    return y;
 }
 
 static const stream_interface_info_t* sdrivers[] =
@@ -298,10 +294,10 @@ unsigned Memory_Stream::sector_size() const { return 1; }
 off_t	Memory_Stream::start_pos() const { return 0; }
 off_t	Memory_Stream::end_pos() const { return _len; }
 
-int	Memory_Stream::read(any_t* mem,int total) {
-    memcpy(mem,buffer,total);
+binary_packet Memory_Stream::read(size_t total) {
+    binary_packet rc(buffer,total);
     _pos+=total;
-    return total;
+    return rc;
 }
 
 off_t	Memory_Stream::tell() const { return _pos; }

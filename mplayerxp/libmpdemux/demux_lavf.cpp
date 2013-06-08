@@ -133,10 +133,11 @@ static int mpxp_read(any_t*opaque, unsigned char *buf, int size){
 
     if(stream->eof()) //needed?
 	return -1;
-    ret=stream->read(buf, size);
+    binary_packet bp=stream->read(size);
+    memcpy(buf,bp.data(),bp.size());
 
-    MSG_DBG2("%d=mp_read(%p, %p, %d), eof:%d\n", ret, stream, buf, size, stream->eof());
-    return ret;
+    MSG_DBG2("%d=mp_read(%p, %p, %d), eof:%d\n", bp.size(), stream, buf, size, stream->eof());
+    return bp.size();
 }
 
 static int64_t mpxp_seek(any_t*opaque, int64_t pos, int whence){
@@ -193,10 +194,12 @@ static MPXP_Rc lavf_probe(Demuxer *demuxer){
     else if(mp_conf.verbose) av_log_set_level(AV_LOG_VERBOSE);
     else av_log_set_level(AV_LOG_INFO);
 
-    if(demuxer->stream->read( buf, PROBE_BUF_SIZE)!=PROBE_BUF_SIZE) {
+    binary_packet bp=demuxer->stream->read(PROBE_BUF_SIZE);
+    if(bp.size()!=PROBE_BUF_SIZE) {
 	delete demuxer->priv;
 	return MPXP_False;
     }
+    memcpy(buf,bp.data(),bp.size());
     avpd.filename= "xxx";
     avpd.buf= buf;
     avpd.buf_size= PROBE_BUF_SIZE;

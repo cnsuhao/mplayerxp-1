@@ -318,7 +318,8 @@ static int read_ddca_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos,unsigned *bit
     demuxer->movi_end = s->end_pos();
     memcpy(b,hdr,4);
     s->seek(pos+4);
-    s->read(&b[4],8);
+    binary_packet bp=s->read(8);
+    memcpy(&b[4],bp.data(),bp.size());
     for(n = 0; n < 5 ; n++) {
       MSG_DBG2("read_ddca_tags\n");
       pos = ddca_decode_header(b,bitrate,samplerate,channels);
@@ -327,7 +328,8 @@ static int read_ddca_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos,unsigned *bit
       s->skip(pos-12);
       if(s->eof())
 	return 0;
-      s->read(hdr,12);
+      bp=s->read(12);
+      memcpy(hdr,bp.data(),bp.size());
       if(s->eof())
 	return 0;
     }
@@ -336,18 +338,16 @@ static int read_ddca_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos,unsigned *bit
 
 static int dca_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigned *samplerate,unsigned *channels)
 {
-  uint32_t fcc,fcc1;
-  uint8_t *p,b[32];
+  uint32_t fcc;
   Stream *s;
   *brate=*samplerate=*channels=0;
   s = demuxer->stream;
   s->seek(fptr);
-  fcc=fcc1=s->read_dword();
-  fcc1=me2be_32(fcc1);
-  p = (uint8_t *)&fcc1;
+  fcc=s->read_dword();
+  fcc=me2be_32(fcc);
   s->seek(fptr);
-  s->read(b,sizeof(b));
-  if(ddca_decode_header(b,samplerate,brate,channels)>0) return 1;
+  binary_packet bp=s->read(32);
+  if(ddca_decode_header((const uint8_t*)bp.data(),samplerate,brate,channels)>0) return 1;
   s->seek(fptr);
   return 0;
 }
@@ -356,11 +356,9 @@ static MPXP_Rc dca_probe(Demuxer* demuxer)
 {
   uint32_t fcc1,fcc2;
   Stream *s;
-  uint8_t *p;
   s = demuxer->stream;
   fcc1=s->read_dword();
   fcc1=me2be_32(fcc1);
-  p = (uint8_t *)&fcc1;
   if(dca_get_raw_id(demuxer,0,&fcc1,&fcc2,&fcc2)) return MPXP_Ok;
   return MPXP_False;
 }
@@ -383,13 +381,15 @@ static Opaque* dca_open(Demuxer* demuxer) {
   s = demuxer->stream;
   s->reset();
   s->seek(s->start_pos());
+  binary_packet bp(1);
   while(n < 5 && !s->eof())
   {
     st_pos = s->tell();
     step = 1;
 
     if(pos < HDR_SIZE) {
-      s->read(&hdr[pos],HDR_SIZE-pos);
+      bp=s->read(HDR_SIZE-pos);
+      memcpy(&hdr[pos],bp.data(),bp.size());
       pos = HDR_SIZE;
     }
 
@@ -400,7 +400,8 @@ static Opaque* dca_open(Demuxer* demuxer) {
 	uint8_t b[21];
 	MSG_DBG2("initial mp3_header: 0x%08X at %lu\n",*(uint32_t *)hdr,st_pos);
 	memcpy(b,hdr,HDR_SIZE);
-	s->read(&b[HDR_SIZE],12-HDR_SIZE);
+	bp=s->read(12-HDR_SIZE);
+	memcpy(&b[HDR_SIZE],bp.data(),bp.size());
 	if((n = ddca_decode_header(b,&fmt,&fmt,&fmt)) > 0)
 	{
 	    demuxer->movi_start = st_pos;
@@ -469,13 +470,12 @@ static int dca_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
     }
     return 0;
   }
-
+    binary_packet bp(1);
     while(!s->eof() || (demux->movi_end && s->tell() >= demux->movi_end) ) {
-      uint8_t hdr[16];
       int len;
       unsigned dummy;
-      s->read(hdr,16);
-      len = ddca_decode_header(hdr,&dummy,&dummy,&dummy);
+      bp=s->read(16);
+      len = ddca_decode_header((const uint8_t*)bp.data(),&dummy,&dummy,&dummy);
       MSG_DBG2("dca_fillbuffer %u bytes\n",len);
       if(s->eof()) return 0; /* workaround for dead-lock (skip(-7)) below */
       if(len < 0) {
@@ -487,8 +487,10 @@ static int dca_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
 	{
 	    Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(len);
 	    dp->resize(len+16);
-	    memcpy(dp->buffer(),hdr,16);
-	    len=s->read(dp->buffer()+16,len-16);
+	    memcpy(dp->buffer(),bp.data(),16);
+	    bp=s->read(len-16);
+	    len=bp.size();
+	    memcpy(dp->buffer()+16,bp.data(),len);
 	    priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + len/(float)sh_audio->i_bps;
 	    dp->pts = priv->last_pts - (demux->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 	    dp->flags=DP_NONKEYFRAME;
@@ -502,7 +504,6 @@ static int dca_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
 }
 
 static void high_res_ddca_seek(Demuxer *demuxer,float _time) {
-  uint8_t hdr[12];
   int len,nf;
   unsigned tmp;
   dca_priv_t* priv = static_cast<dca_priv_t*>(demuxer->priv);
@@ -510,9 +511,9 @@ static void high_res_ddca_seek(Demuxer *demuxer,float _time) {
 
   nf = _time*sh->rate/1152;
   while(nf > 0) {
-    demuxer->stream->read(hdr,12);
+    binary_packet bp=demuxer->stream->read(12);
     MSG_DBG2("high_res_ddca_seek\n");
-    len = ddca_decode_header(hdr,&tmp,&tmp,&tmp);
+    len = ddca_decode_header((const uint8_t*)bp.data(),&tmp,&tmp,&tmp);
     if(len < 0) {
       demuxer->stream->skip(-11);
       continue;

@@ -2,7 +2,8 @@ include ../mpxp_config.mak
 
 LIBNAME = libxmpcore.a
 
-SRCS=xmp_context.cpp \
+SRCS=binary_packet.cpp \
+     xmp_context.cpp \
      xmp_core.cpp \
      xmp_aplayer.cpp \
      xmp_vplayer.cpp \

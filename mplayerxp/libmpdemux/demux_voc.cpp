@@ -45,18 +45,16 @@ struct voc_priv_t : public Opaque {
 
 static int voc_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigned *samplerate,unsigned *channels)
 {
-  uint32_t fcc,fcc1,fmt;
-  uint8_t *p,b[32];
+  uint32_t fcc1,fmt;
   Stream *s;
   *brate=*samplerate=*channels=0;
   s = demuxer->stream;
   s->seek(fptr);
-  fcc=fcc1=s->read_dword();
+  fcc1=s->read_dword();
   fcc1=me2be_32(fcc1);
-  p = (uint8_t *)&fcc1;
   s->seek(fptr);
-  s->read(b,sizeof(b));
-  if(memcmp(b,"Creative Voice File\x1A",20)==0) return 1;
+  binary_packet bp=s->read(32);
+  if(memcmp(bp.data(),"Creative Voice File\x1A",20)==0) return 1;
   s->seek(fptr);
   return 0;
 }
@@ -83,6 +81,7 @@ static Opaque* voc_open(Demuxer* demuxer) {
   off_t st_pos = 0;
   voc_priv_t* priv;
   const unsigned char *pfcc;
+    binary_packet bp(1);
 #ifdef MP_DEBUG
   assert(demuxer != NULL);
   assert(demuxer->stream != NULL);
@@ -98,7 +97,7 @@ static Opaque* voc_open(Demuxer* demuxer) {
     step = 1;
 
     if(pos < HDR_SIZE) {
-      s->read(&hdr[pos],HDR_SIZE-pos);
+      bp=s->read(HDR_SIZE-pos); memcpy(&hdr[pos],bp.data(),bp.size());
       pos = HDR_SIZE;
     }
 
@@ -106,11 +105,10 @@ static Opaque* voc_open(Demuxer* demuxer) {
     pfcc = (const unsigned char *)&fcc;
     MSG_DBG2("AUDIO initial fcc=%c%c%c%c\n",pfcc[0],pfcc[1],pfcc[2],pfcc[3]);
     {
-	unsigned fmt;
 	uint8_t b[21];
 	MSG_DBG2("initial mp3_header: 0x%08X at %lu\n",*(uint32_t *)hdr,st_pos);
 	memcpy(b,hdr,HDR_SIZE);
-	s->read(&b[HDR_SIZE],12-HDR_SIZE);
+	bp=s->read(12-HDR_SIZE); memcpy(&b[HDR_SIZE],bp.data(),bp.size());
 	if(memcmp(b,"Creative Voice File\x1A",20)==0)
 	{
 	    found = 1;
@@ -136,21 +134,21 @@ static Opaque* voc_open(Demuxer* demuxer) {
     unsigned size;
     WAVEFORMATEX* w;
     s->seek(0x14);
-    s->read(chunk,2);
+    bp=s->read(2); memcpy(chunk,bp.data(),bp.size());
     size=le2me_16(*reinterpret_cast<uint16_t*>(&chunk[0]));
     s->seek(size);
-    s->read(chunk,4);
+    bp=s->read(4); memcpy(chunk,bp.data(),bp.size());
     if(chunk[0]!=0x01) { MSG_V("VOC unknown block type %02X\n",chunk[0]); return NULL; }
     size=chunk[1]|(chunk[2]<<8)|(chunk[3]<<16);
     sh_audio->wtag = 0x01; /* PCM */
-    s->read(chunk,2);
+    bp=s->read(2); memcpy(chunk,bp.data(),bp.size());
     if(chunk[1]!=0) { MSG_V("VOC unknown compression type %02X\n",chunk[1]); return NULL; }
     demuxer->movi_start=s->tell();
     demuxer->movi_end=demuxer->movi_start+size;
     sh_audio->rate=256-(1000000/chunk[0]);
     sh_audio->nch=1;
     sh_audio->afmt=bps2afmt(1);
-    sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
+    sh_audio->wf = w = new WAVEFORMATEX;
     w->wFormatTag = sh_audio->wtag;
     w->nChannels = sh_audio->nch;
     w->nSamplesPerSec = sh_audio->rate;
@@ -205,7 +203,8 @@ static int voc_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
   }
     int l = 65536;
     Demuxer_Packet* dp =new(zeromem) Demuxer_Packet(l);
-    l=s->read(dp->buffer(),l);
+    binary_packet bp=s->read(l); memcpy(dp->buffer(),bp.data(),bp.size());
+    l=bp.size();
     dp->resize(l);
     priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + l/(float)sh_audio->i_bps;
     dp->pts = priv->last_pts - (demux->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;

@@ -599,6 +599,7 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
 			   off_t pos, off_t len, mov_track_t* trak);
 
 static void lschunks(Demuxer* demuxer,int level,off_t endpos,mov_track_t* trak){
+    binary_packet bp(1);
     mov_priv_t* priv=static_cast<mov_priv_t*>(demuxer->priv);
     while(1){
 	off_t pos;
@@ -907,7 +908,7 @@ quit_vorbis_block:
 			    if(!is_vorbis)
 			    {
 				sh->codecdata_len = esds.decoderConfigLen;
-				sh->codecdata = (unsigned char *)mp_malloc(sh->codecdata_len);
+				sh->codecdata = new uint8_t[sh->codecdata_len];
 				memcpy(sh->codecdata, esds.decoderConfig, sh->codecdata_len);
 			    }
 			    }
@@ -920,7 +921,7 @@ quit_vorbis_block:
 			if(atom_len > 8) {
 			    // copy all the atom (not only payload) for lavc alac decoder
 			    sh->codecdata_len = atom_len;
-			    sh->codecdata = (unsigned char *)mp_malloc(sh->codecdata_len);
+			    sh->codecdata = new uint8_t[sh->codecdata_len];
 			    memcpy(sh->codecdata, &trak->stdata[28], sh->codecdata_len);
 			}
 		      } break;
@@ -1086,7 +1087,7 @@ quit_vorbis_block:
 
 			  // dump away the codec specific configuration for the AAC decoder
 			  trak->stream_header_len = esds.decoderConfigLen;
-			  trak->stream_header = (unsigned char *)mp_malloc(trak->stream_header_len);
+			  trak->stream_header = new uint8_t[trak->stream_header_len];
 			  memcpy(trak->stream_header, esds.decoderConfig, trak->stream_header_len);
 			}
 			mp4_free_esds(&esds); // freeup esds mem
@@ -1122,7 +1123,7 @@ quit_vorbis_block:
 			// Copy avcC for the AVC decoder
 			// This data will be put in extradata below, where BITMAPINFOHEADER is created
 			trak->stream_header_len = atom_len-8;
-			trak->stream_header = (unsigned char *)mp_malloc(trak->stream_header_len);
+			trak->stream_header = new uint8_t[trak->stream_header_len];
 			memcpy(trak->stream_header, trak->stdata+pos+8, trak->stream_header_len);
 		      }
 		      break;
@@ -1336,7 +1337,8 @@ quit_vorbis_block:
 	    }
 	    MSG_V( "Compressed header size: %d / %d\n",cmov_sz,moov_sz);
 
-	    demuxer->stream->read(cmov_buf,cmov_sz);
+	    bp=demuxer->stream->read(cmov_sz);
+	    memcpy(cmov_buf,bp.data(),bp.size());
 
 	      zstrm.zalloc          = (alloc_func)0;
 	      zstrm.zfree           = (free_func)0;
@@ -1406,7 +1408,8 @@ quit_vorbis_block:
 		    {
 			off_t text_len = demuxer->stream->read_word();
 			char text[text_len+2+1];
-			demuxer->stream->read( (char *)&text, text_len+2);
+			bp=demuxer->stream->read(text_len+2);
+			memcpy(&text,bp.data(),bp.size());
 			text[text_len+2] = 0x0;
 			switch(udta_id)
 			{
@@ -1472,7 +1475,8 @@ quit_vorbis_block:
 				udta_len=udta_size;
 			{
 			char dump[udta_len-4];
-			demuxer->stream->read( (char *)&dump, udta_len-4-4);
+			bp=demuxer->stream->read( udta_len-4-4);
+			memcpy(&dump,bp.data(),bp.size());
 			udta_size -= udta_len;
 			}
 		    }
@@ -1495,6 +1499,7 @@ quit_vorbis_block:
 static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
 			   off_t pos, off_t len, mov_track_t* trak)
 {
+    binary_packet bp(1);
   switch(id) {
     case MOV_FOURCC('m','d','a','t'): {
       MSG_WARN("Hmm, strange MOV, parsing mdat in lschunks?\n");
@@ -1509,7 +1514,8 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
       // read codec data
       trak->tkdata_len = len;
       trak->tkdata = new unsigned char [trak->tkdata_len];
-      demuxer->stream->read( trak->tkdata, trak->tkdata_len);
+      bp=demuxer->stream->read(trak->tkdata_len);
+      memcpy(trak->tkdata,bp.data(),bp.size());
 /*
 0  1 Version
 1  3 Flags
@@ -1557,7 +1563,8 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
       /*unsigned int comp_mask =*/ demuxer->stream->read_dword();
       unsigned _len = demuxer->stream->read_char();
       char* str = new char [_len + 1];
-      demuxer->stream->read( str, _len);
+      bp=demuxer->stream->read(_len);
+      memcpy(str,bp.data(),bp.size());
       str[_len] = 0;
       MSG_V( "MOV: %*sHandler header: %.4s/%.4s (%.4s) %s\n", level, "",
 	     &type, &subtype, &manufact, str);
@@ -1623,7 +1630,8 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
 	  // NOTE: trak type is not yet known at this point :(((
 	  trak->stdata_len = _len - 8;
 	  trak->stdata = new unsigned char [trak->stdata_len];
-	  demuxer->stream->read( trak->stdata, trak->stdata_len);
+	  bp=demuxer->stream->read(trak->stdata_len);
+	  memcpy(trak->stdata,bp.data(),bp.size());
 	}
 	if (!demuxer->stream->seek( _pos + _len))
 	  break;
@@ -1880,7 +1888,8 @@ static Opaque* mov_open(Demuxer* demuxer){
 			char buf2[newlen];
 
 			len-=4;
-			demuxer->stream->read( buf, len);
+			bp=demuxer->stream->read(len);
+			memcpy(buf,bp.data().bp.size());
 
 			zstrm.zalloc          = (alloc_func)0;
 			zstrm.zfree           = (free_func)0;
@@ -1903,7 +1912,8 @@ static Opaque* mov_open(Demuxer* demuxer){
 		    }
 		    {
 #endif
-			demuxer->stream->read( buf, len);
+			bp=demuxer->stream->read(len);
+			memcpy(buf,bp.data(),bp.size());
 			write(fd, buf, len);
 		    }
 		    close(fd);
@@ -2010,7 +2020,8 @@ if(trak->pos==0 && trak->stream_header_len>0){
     memcpy(dp->buffer(),trak->stream_header,trak->stream_header_len);
     dp->pos=demuxer->stream->tell()-trak->stream_header_len;
     dp->resize(x+trak->stream_header_len);
-    x=demuxer->stream->read(dp->buffer()+trak->stream_header_len,x);
+    binary_packet bp=demuxer->stream->read(x);
+    memcpy(dp->buffer()+trak->stream_header_len,bp.data(),bp.size());
     delete trak->stream_header;
     trak->stream_header = NULL;
     trak->stream_header_len = 0;

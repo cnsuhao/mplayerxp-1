@@ -136,7 +136,8 @@ static int __FASTCALL__ c2_cache_fill(cache_vars_t* c){
     CACHE2_PACKET_TLOCK(c->packets[cidx]);
     c->packets[cidx].sp.len=c->sector_size;
     c->packets[cidx].filepos = c->stream->tell();
-    c->stream->read(c->packets[cidx].sp.buf,c->packets[cidx].sp.len);
+    binary_packet bp=c->stream->read(c->packets[cidx].sp.len);
+    memcpy(c->packets[cidx].sp.buf,bp.data(),bp.size());
     mpxp_dbg2<<"CACHE2: read_packet at "<<c->packets[cidx].filepos<<" (wanted "<<c->sector_size<<" got "<<c->packets[cidx].sp.len<<" type "<<c->packets[cidx].sp.type<<")";
     if(mp_conf.verbose>1)
 	if(c->packets[cidx].sp.len>8) {
@@ -398,46 +399,47 @@ static unsigned c2_next_packet(cache_vars_t* c,unsigned cidx,int *len,unsigned *
     return cidx;
 }
 
-static int __FASTCALL__ c2_stream_read(cache_vars_t* c,char* _mem,int total){
-  int len=total,eof,mlen;
-  char *mem=_mem;
-  unsigned buf_pos;
-  unsigned cur,i,npackets;
-  cur=c2_wait_packet(c,c->read_filepos,&mlen,&npackets);
-  eof = cur!=UINT_MAX?((int)(c->packets[cur].state&CPF_EOF)):c->eof;
-  if(cur==UINT_MAX||eof) { if(cur!=UINT_MAX) CACHE2_PACKET_UNLOCK(c->packets[cur]); return 0; }
-  mpxp_dbg2<<"c2_stream_read "<<total<<" bytes from "<<c->read_filepos<<std::endl;
-  while(len){
-    int x;
-    if(c->read_filepos>=c->packets[cur].filepos+mlen){
-	for(i=0;i<npackets;i++) CACHE2_PACKET_UNLOCK(c->packets[cur+i]);
-	mlen=len;
-	cur=c2_next_packet(c,cur,&mlen,&npackets);
-	eof = cur!=UINT_MAX?(c->packets[cur].state&CPF_EOF):1;
-	if(eof)
-	{
-	    CACHE2_PACKET_UNLOCK(c->packets[cur]);
-	    return total-len; // EOF
+static binary_packet __FASTCALL__ c2_stream_read(cache_vars_t* c,size_t total){
+    binary_packet rc(total);
+    int len=total,eof,mlen;
+    char *mem=rc.cdata();
+    unsigned buf_pos;
+    unsigned cur,i,npackets;
+
+    cur=c2_wait_packet(c,c->read_filepos,&mlen,&npackets);
+    eof = cur!=UINT_MAX?((int)(c->packets[cur].state&CPF_EOF)):c->eof;
+    if(cur==UINT_MAX||eof) { if(cur!=UINT_MAX) CACHE2_PACKET_UNLOCK(c->packets[cur]); return 0; }
+    mpxp_dbg2<<"c2_stream_read "<<total<<" bytes from "<<c->read_filepos<<std::endl;
+    while(len){
+	int x;
+	if(c->read_filepos>=c->packets[cur].filepos+mlen){
+	    for(i=0;i<npackets;i++) CACHE2_PACKET_UNLOCK(c->packets[cur+i]);
+	    mlen=len;
+	    cur=c2_next_packet(c,cur,&mlen,&npackets);
+	    eof = cur!=UINT_MAX?(c->packets[cur].state&CPF_EOF):1;
+	    if(eof) {
+		CACHE2_PACKET_UNLOCK(c->packets[cur]);
+		rc.resize(total-len);
+		return rc; // EOF
+	    }
 	}
+	buf_pos=c->read_filepos-c->packets[cur].filepos;
+	x=mlen-buf_pos;
+	C2_ASSERT(buf_pos>=(unsigned)mlen);
+	if(x>len) x=len;
+	if(!x) mpxp_warn<<"c2_read: dead-lock"<<std::endl;
+	memcpy(mem,&c->packets[cur].sp.buf[buf_pos],x);
+	buf_pos+=x;
+	mem+=x; len-=x;
+	c->read_filepos+=x;
     }
-    buf_pos=c->read_filepos-c->packets[cur].filepos;
-    x=mlen-buf_pos;
-    C2_ASSERT(buf_pos>=(unsigned)mlen);
-    if(x>len) x=len;
-    if(!x) mpxp_warn<<"c2_read: dead-lock"<<std::endl;
-    memcpy(mem,&c->packets[cur].sp.buf[buf_pos],x);
-    buf_pos+=x;
-    mem+=x; len-=x;
-    c->read_filepos+=x;
-  }
-  CACHE2_PACKET_UNLOCK(c->packets[cur]);
-  if(mp_conf.verbose>2)
-  {
-    mpxp_dbg2<<"c2_stream_read  got "<<total<<" bytes ";
-    for(i=0;i<std::min(8,total);i++) mpxp_dbg2<<std::hex<<(unsigned)((unsigned char)_mem[i]);
-    mpxp_dbg2<<std::endl;
-  }
-  return total;
+    CACHE2_PACKET_UNLOCK(c->packets[cur]);
+    if(mp_conf.verbose>2) {
+	mpxp_dbg2<<"c2_stream_read  got "<<total<<" bytes ";
+	for(i=0;i<std::min(size_t(8),total);i++) mpxp_dbg2<<std::hex<<(unsigned)((unsigned char)mem[i]);
+	mpxp_dbg2<<std::endl;
+    }
+    return rc;
 }
 
 
@@ -542,11 +544,10 @@ Cached_Stream::~Cached_Stream() {
     }
 }
 
-int Cached_Stream::read(any_t* _mem,int total)
+binary_packet Cached_Stream::read(size_t total)
 {
-    char *mem = reinterpret_cast<char*>(_mem);
-    if(cache_data)	return c2_stream_read(cache_data,mem,total);
-    else		return Stream::read(mem,total);
+    if(cache_data)	return c2_stream_read(cache_data,total);
+    else		return Stream::read(total);
 }
 
 int Cached_Stream::eof() const

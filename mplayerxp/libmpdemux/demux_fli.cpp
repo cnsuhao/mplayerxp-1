@@ -98,7 +98,8 @@ static Opaque* fli_open(Demuxer* demuxer){
   demuxer->stream->seek( 0);
 
   header = new unsigned char[sizeof(BITMAPINFOHEADER) + 128];
-  demuxer->stream->read( header + sizeof(BITMAPINFOHEADER), 128);
+  binary_packet bp=demuxer->stream->read(128);
+  memcpy(header + sizeof(BITMAPINFOHEADER),bp.data(),bp.size());
   demuxer->stream->seek( 0);
 
   demuxer->movi_start = 128;
@@ -120,7 +121,7 @@ static Opaque* fli_open(Demuxer* demuxer){
   frames->current_frame = 0;
 
   // allocate enough entries for the indices
-  frames->filepos = (off_t *)mp_malloc(frames->num_frames * sizeof(off_t));
+  frames->filepos = new off_t[frames->num_frames];
   frames->frame_size = new unsigned int [frames->num_frames];
 
   // create a new video stream header

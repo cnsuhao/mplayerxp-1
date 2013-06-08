@@ -296,10 +296,10 @@ static int h264_parse_vui(mp_mpeg_header_t * picture, unsigned char * buf, unsig
 int h264_parse_sps(mp_mpeg_header_t * picture, unsigned char * buf, int len)
 {
   unsigned int n = 0, v, i, j, mbh;
-  unsigned char *dest;
+  uint8_t *dest;
   int frame_mbs_only;
 
-  dest = (unsigned char*) mp_malloc(len);
+  dest = new uint8_t[len];
   if(! dest)
     return 0;
   j = i = 0;

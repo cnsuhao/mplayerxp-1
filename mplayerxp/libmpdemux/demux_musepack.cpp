@@ -45,9 +45,8 @@ struct musepack_priv_t : public Opaque {
 
 static int musepack_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigned *samplerate,unsigned *channels)
 {
-  int retval=0;
-  uint32_t fcc,fcc1,fmt;
-  uint8_t *p,b[32];
+  uint32_t fcc,fcc1;
+  uint8_t *p;
   Stream *s;
   *brate=*samplerate=*channels=0;
   s = demuxer->stream;
@@ -56,7 +55,7 @@ static int musepack_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsig
   fcc1=me2be_32(fcc1);
   p = (uint8_t *)&fcc1;
   s->seek(fptr);
-  s->read(b,sizeof(b));
+  binary_packet bp=s->read(32);
   if(p[0] == 'M' && p[1] == 'P' && p[2] == '+' && (p[3] >= 4 && p[3] <= 0x20)) return 1;
   s->seek(fptr);
   return 0;
@@ -99,7 +98,7 @@ static Opaque* musepack_open(Demuxer* demuxer) {
     step = 1;
 
     if(pos < HDR_SIZE) {
-      s->read(&hdr[pos],HDR_SIZE-pos);
+      binary_packet bp=s->read(HDR_SIZE-pos); memcpy(&hdr[pos],bp.data(),bp.size());
       pos = HDR_SIZE;
     }
 
@@ -134,7 +133,7 @@ static Opaque* musepack_open(Demuxer* demuxer) {
     frames = s->read_dword();
     s->skip(2);
     bt=s->read_char();
-    sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
+    sh_audio->wf = new WAVEFORMATEX;
     sh_audio->wf->wFormatTag = sh_audio->wtag;
     sh_audio->wf->nChannels = 2;
     sh_audio->wf->nSamplesPerSec = freqs[bt & 3];
@@ -182,7 +181,7 @@ static uint32_t mpc_get_bits(musepack_priv_t* priv, Stream* s, int bits) {
     out >>= (32 - priv->pos);
   }
   else {
-    s->read( (any_t*)&priv->dword, 4);
+    priv->dword=s->read_dword();
     priv->dword = le2me_32(priv->dword);
     priv->pos -= 32;
     if (priv->pos) {

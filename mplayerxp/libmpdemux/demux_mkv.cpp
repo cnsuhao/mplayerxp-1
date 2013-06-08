@@ -60,11 +60,11 @@ static const float EBML_FLOAT_INVALID=-1000000000.0f;
 
 static const char* MKV_A_AAC_2MAIN  ="A_AAC/MPEG2/MAIN";
 static const char* MKV_A_AAC_2LC    ="A_AAC/MPEG2/LC";
-static const char* MKV_A_AAC_2SBR   ="A_AAC/MPEG2/LC/SBR";
+//static const char* MKV_A_AAC_2SBR   ="A_AAC/MPEG2/LC/SBR";
 static const char* MKV_A_AAC_2SSR   ="A_AAC/MPEG2/SSR";
 static const char* MKV_A_AAC_4MAIN  ="A_AAC/MPEG4/MAIN";
 static const char* MKV_A_AAC_4LC    ="A_AAC/MPEG4/LC";
-static const char* MKV_A_AAC_4SBR   ="A_AAC/MPEG4/LC/SBR";
+//static const char* MKV_A_AAC_4SBR   ="A_AAC/MPEG4/LC/SBR";
 static const char* MKV_A_AAC_4SSR   ="A_AAC/MPEG4/SSR";
 static const char* MKV_A_AAC_4LTP   ="A_AAC/MPEG4/LTP";
 static const char* MKV_A_AAC        ="A_AAC";
@@ -91,11 +91,11 @@ static const char* MKV_V_REALV10    ="V_REAL/RV10";
 static const char* MKV_V_REALV20    ="V_REAL/RV20";
 static const char* MKV_V_REALV30    ="V_REAL/RV30";
 static const char* MKV_V_REALV40    ="V_REAL/RV40";
-static const char* MKV_V_SORENSONV1 ="V_SORENSON/V1";
-static const char* MKV_V_SORENSONV2 ="V_SORENSON/V2";
-static const char* MKV_V_SORENSONV3 ="V_SORENSON/V3";
-static const char* MKV_V_CINEPAK    ="V_CINEPAK";
-static const char* MKV_V_QUICKTIME  ="V_QUICKTIME";
+//static const char* MKV_V_SORENSONV1 ="V_SORENSON/V1";
+//static const char* MKV_V_SORENSONV2 ="V_SORENSON/V2";
+//static const char* MKV_V_SORENSONV3 ="V_SORENSON/V3";
+//static const char* MKV_V_CINEPAK    ="V_CINEPAK";
+//static const char* MKV_V_QUICKTIME  ="V_QUICKTIME";
 static const char* MKV_V_MPEG1      ="V_MPEG1";
 static const char* MKV_V_MPEG2      ="V_MPEG2";
 static const char* MKV_V_MPEG4_SP   ="V_MPEG4/ISO/SP";
@@ -286,8 +286,9 @@ ebml_read_float (Stream *s, uint64_t *length)
     case 10:
       {
 	union {uint8_t data[10]; long double ld;} u;
-	if (s->read( u.data, 10) != 10)
-	  return EBML_FLOAT_INVALID;
+	binary_packet bp=s->read(10);
+	if(bp.size()!=10) return EBML_FLOAT_INVALID;
+	memcpy(u.data, bp.data(),bp.size());
 	value = be2me_ldbl(u.ld);
 	break;
       }
@@ -318,12 +319,10 @@ ebml_read_ascii (Stream *s, uint64_t *length)
   if (length)
     *length = len + l;
 
-  str = (char *) mp_malloc (len+1);
-  if (s->read( str, len) != (int) len)
-    {
-      delete str;
-      return NULL;
-    }
+  binary_packet bp = s->read(len);
+  if(bp.size()!=len) return NULL;
+  str = new char[len+1];
+  memcpy(str,bp.data(),bp.size());
   str[len] = '\0';
 
   return str;
@@ -695,7 +694,8 @@ static void grow_array(any_t**array, int nelem, size_t elsize) {
 
 static mkv_track_t * demux_mkv_find_track_by_num (mkv_demuxer_t *d, int n, int type)
 {
-  int i, id;
+  int id;
+  unsigned i;
 
   for (i=0, id=0; i < d->num_tracks; i++)
     if (d->tracks[i] != NULL && d->tracks[i]->type == type)
@@ -708,7 +708,8 @@ static mkv_track_t * demux_mkv_find_track_by_num (mkv_demuxer_t *d, int n, int t
 static mkv_track_t *
 demux_mkv_find_track_by_language (mkv_demuxer_t *d,const char *language, int type)
 {
-  int i, len;
+  int len;
+  unsigned i;
 
   language += strspn(language,",");
   while((len = strcspn(language,",")) > 0)
@@ -890,12 +891,12 @@ vobsub_parse_forced_subs (mkv_sh_sub_t *sh, const char *start)
 void mkv_demuxer_t::free_cached_dps ()
 {
   mkv_track_t *track;
-  int i, k;
+  unsigned i, k;
 
   for (k = 0; k < num_tracks; k++)
     {
       track = tracks[k];
-      for (i = 0; i < track->num_cached_dps; i++) delete track->cached_dps[i];
+      for (i = 0; i < unsigned(track->num_cached_dps); i++) delete track->cached_dps[i];
       delete track->cached_dps;
       track->cached_dps = NULL;
       track->num_cached_dps = 0;
@@ -1118,6 +1119,7 @@ demux_mkv_read_trackencodings (Demuxer *demuxer, mkv_track_t *track)
   mkv_content_encoding_t *ce, e;
   uint64_t len, length, l;
   int il, n;
+  binary_packet bp(1);
 
   ce = new mkv_content_encoding_t;
   n = 0;
@@ -1130,7 +1132,6 @@ demux_mkv_read_trackencodings (Demuxer *demuxer, mkv_track_t *track)
 	{
 	case MATROSKA_ID_CONTENTENCODING:
 	  {
-	    uint64_t len;
 	    int i;
 
 	    memset (&e, 0, sizeof (e));
@@ -1191,7 +1192,8 @@ demux_mkv_read_trackencodings (Demuxer *demuxer, mkv_track_t *track)
 			    case MATROSKA_ID_CONTENTCOMPSETTINGS:
 			      l = ebml_read_length (s, &i);
 			      e.comp_settings = new uint8_t[l];
-			      s->read( e.comp_settings, l);
+			      bp=s->read(l);
+			      memcpy(e.comp_settings,bp.data(),bp.size());
 			      e.comp_settings_len = l;
 			      l += i;
 			      break;
@@ -1408,6 +1410,7 @@ demux_mkv_read_trackentry (Demuxer *demuxer)
   mkv_track_t *track;
   uint64_t len, length, l;
   int il;
+  binary_packet bp(1);
 
   track = new mkv_track_t;
   /* set default values */
@@ -1515,8 +1518,9 @@ demux_mkv_read_trackentry (Demuxer *demuxer)
 	    if (num > std::numeric_limits<size_t>::max() - 1000) return 0;
 	    l = x + num;
 	    track->private_data = mp_malloc (num + LZO_INPUT_PADDING);
-	    if (s->read( track->private_data, num) != (int) num)
-	      goto err_out;
+	    bp=s->read(num);
+	    if (bp.size() != num) goto err_out;
+	    memcpy(track->private_data,bp.data(),bp.size());
 	    track->private_size = num;
 	    MSG_V( "[mkv] |  + CodecPrivate, length "
 		    "%u\n", track->private_size);
@@ -1943,11 +1947,12 @@ demux_mkv_read_attachments (Demuxer *demuxer)
 			l = x + num;
 			delete data;
 			data = new char [num];
-			if (s->read( data, num) != (int) num)
-			{
+			binary_packet bp=s->read(num);
+			if(bp.size() != num) {
 			  delete data;
 			  return 0;
 			}
+			memcpy(data,bp.data(),bp.size());
 			data_size = num;
 			MSG_V( "[mkv] |  + FileData, length "
 				"%u\n", data_size);
@@ -2128,7 +2133,8 @@ static void
 display_create_tracks (Demuxer *demuxer)
 {
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
-  int i, vid=0, aid=0, sid=0;
+  int vid=0, aid=0, sid=0;
+  unsigned i;
 
   for (i=0; i<mkv_d->num_tracks; i++)
     {
@@ -2259,7 +2265,8 @@ demux_mkv_open_video (Demuxer *demuxer, mkv_track_t *track, int vid)
 	  // copy type1 and type2 info from rv properties
 	  memcpy(dst, &type1, 4);
 	  memcpy(dst+4, &type2, 4);
-	  demuxer->stream->read( dst+8, cnt);
+	  binary_packet bp=demuxer->stream->read(cnt);
+	  memcpy(dst+8,bp.data(),bp.size());
 	  track->realmedia = 1;
 
 #ifdef USE_QTX_CODECS
@@ -2672,7 +2679,7 @@ demux_mkv_parse_vobsub_data (Demuxer *demuxer)
 {
   mkv_demuxer_t *mkv_d = static_cast<mkv_demuxer_t*>(demuxer->priv);
   mkv_track_t *track;
-  int i, m;
+  unsigned i, m;
   unsigned size;
   uint8_t *buffer;
 
@@ -2774,7 +2781,8 @@ static void mkv_seek (Demuxer *demuxer,const seek_args_t* seeka);
  */
 static int demux_mkv_reverse_id(mkv_demuxer_t *d, int num, int type)
 {
-  int i, id;
+  int id;
+  unsigned i;
 
   for (i=0, id=0; i < d->num_tracks; i++)
     if (d->tracks[i] != NULL && d->tracks[i]->type == type) {
@@ -2806,7 +2814,8 @@ static Opaque* mkv_open(Demuxer *demuxer)
   Stream *s = demuxer->stream;
   mkv_demuxer_t *mkv_d;
   mkv_track_t *track;
-  int i, version, cont = 0;
+  int version, cont = 0;
+  unsigned i;
   char *str;
 
   s->seek( s->start_pos());
@@ -3031,7 +3040,7 @@ static Opaque* mkv_open(Demuxer *demuxer)
 
   if (mkv_d->chapters)
     {
-      for (i=0; i < (int)mkv_d->num_chapters; i++)
+      for (i=0; i < mkv_d->num_chapters; i++)
 	{
 	  mkv_d->chapters[i].start -= mkv_d->first_tc;
 	  mkv_d->chapters[i].end -= mkv_d->first_tc;
@@ -3674,6 +3683,7 @@ static int mkv_demux (Demuxer *demuxer, Demuxer_Stream *ds)
   Stream *s = demuxer->stream;
   uint64_t l;
   int il, tmp;
+  binary_packet bp(1);
 
   while (1)
     {
@@ -3704,11 +3714,12 @@ static int mkv_demux (Demuxer *demuxer, Demuxer_Stream *ds)
 		  if (block_length > std::numeric_limits<size_t>::max()- LZO_INPUT_PADDING) return 0;
 		  block = new uint8_t[block_length + LZO_INPUT_PADDING];
 		  demuxer->filepos = s->tell();
-		  if (s->read(block,block_length) != (int) block_length)
-		  {
+		  bp=s->read(block_length);
+		  if (bp.size() != block_length) {
 		    delete block;
 		    return 0;
 		  }
+		  memcpy(block,bp.data(),bp.size());
 		  l = tmp + block_length;
 		  break;
 
@@ -3778,11 +3789,12 @@ static int mkv_demux (Demuxer *demuxer, Demuxer_Stream *ds)
 		    block_length = ebml_read_length (s, &tmp);
 		    block = new uint8_t[block_length];
 		    demuxer->filepos = s->tell();
-		    if (s->read(block,block_length) != (int) block_length)
-		    {
+		    bp=s->read(block_length);
+		    if (bp.size() != block_length) {
 		      delete block;
 		      return 0;
 		    }
+		    memcpy(block,bp.data(),bp.size());
 		    l = tmp + block_length;
 		    res = handle_block (demuxer, block, block_length,
 					block_duration, block_bref, block_fref, 1);

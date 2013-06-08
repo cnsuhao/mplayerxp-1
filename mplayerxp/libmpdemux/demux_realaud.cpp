@@ -79,7 +79,8 @@ static int realaud_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
 	demuxer->filepos = demuxer->stream->tell();
 
 	Demuxer_Packet *dp = new(zeromem) Demuxer_Packet(len);
-	len=demuxer->stream->read( dp->buffer(), len);
+	binary_packet bp=demuxer->stream->read(len); memcpy(dp->buffer(),bp.data(),bp.size());
+	len=bp.size();
 	dp->resize(len);
 
 	if(sh->i_bps)
@@ -101,11 +102,9 @@ static Opaque* realaud_open(Demuxer* demuxer)
     sh_audio_t *sh;
     int i;
     char *buf;
+    binary_packet bp(1);
 
-    if ((realaud_priv = (realaud_priv_t *)mp_mallocz(sizeof(realaud_priv_t))) == NULL) {
-	MSG_ERR(MSGTR_OutOfMemory);
-	return 0;
-    }
+    realaud_priv = new(zeromem) realaud_priv_t;
 
 	demuxer->priv = realaud_priv;
 	sh = demuxer->new_sh_audio();
@@ -165,28 +164,28 @@ static Opaque* realaud_open(Demuxer* demuxer)
 
 	if ((i = demuxer->stream->read_char()) != 0) {
 		buf = new char [i+1];
-		demuxer->stream->read( buf, i);
+		bp=demuxer->stream->read(i); memcpy(buf,bp.data(),bp.size());
 		buf[i] = 0;
 		demuxer->info().add( INFOT_NAME, buf);
 		delete buf;
 	}
 	if ((i = demuxer->stream->read_char()) != 0) {
 		buf = new char [i+1];
-		demuxer->stream->read( buf, i);
+		bp=demuxer->stream->read(i); memcpy(buf,bp.data(),bp.size());
 		buf[i] = 0;
 		demuxer->info().add( INFOT_AUTHOR, buf);
 		delete buf;
 	}
 	if ((i = demuxer->stream->read_char()) != 0) {
 		buf = new char [i+1];
-		demuxer->stream->read( buf, i);
+		bp=demuxer->stream->read(i); memcpy(buf,bp.data(),bp.size());
 		buf[i] = 0;
 		demuxer->info().add( INFOT_COPYRIGHT, buf);
 		delete buf;
 	}
 	if ((i = demuxer->stream->read_char()) != 0) {
 		buf = new char [i+1];
-		demuxer->stream->read( buf, i);
+		bp=demuxer->stream->read(i); memcpy(buf,bp.data(),bp.size());
 		buf[i] = 0;
 		demuxer->info().add( INFOT_COMMENTS, buf);
 		delete buf;

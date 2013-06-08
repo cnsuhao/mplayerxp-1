@@ -132,10 +132,10 @@ static int ty_tmf_filetoparts( Demuxer *demux, TiVoInfo *tivo )
       char    *sizestr;
       int     size;
       off_t   skip;
-      if (demux->stream->read( header, 512) < 512)
-      {
-	 MSG_DBG3("Read bad\n" );
-	 break;
+      binary_packet bp=demux->stream->read(512); memcpy(header,bp.data(), bp.size());
+      if (bp.size() < 512) {
+	    MSG_DBG3("Read bad\n" );
+	    break;
       }
       name = header;
       name[99] = 0;
@@ -208,7 +208,8 @@ static int tmf_load_chunk( Demuxer *demux, TiVoInfo *tivo,
       MSG_ERR( "Read past EOF()\n" );
       return 0;
    }
-   count = demux->stream->read( buff, CHUNKSIZE );
+   binary_packet bp = demux->stream->read( CHUNKSIZE ); memcpy(buff, bp.data(), bp.size());
+   count = bp.size();
    demux->filepos = demux->stream->tell( );
 
    MSG_DBG3( "tmf_load_chunk() count %x\n",
@@ -356,6 +357,7 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
    int              counter;
 
    int              aid;
+   binary_packet bp(1);
 
    TiVoInfo         *tivo = static_cast<TiVoInfo*>(demux->priv);
 #if 0
@@ -392,7 +394,8 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 	 filePos = demux->filepos;
 	 demux->stream->seek( 0 );
 
-	 readSize = demux->stream->read( chunk, CHUNKSIZE );
+	bp = demux->stream->read( CHUNKSIZE ); memcpy(chunk,bp.data(),bp.size());
+	readSize=bp.size();
 
 	 if ( memcmp( chunk, TMF_SIG, sizeof( TMF_SIG ) ) == 0 )
 	 {
@@ -421,7 +424,8 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 		  if ( offset + CHUNKSIZE < demux->stream->end_pos() )
 		  {
 		     demux->stream->seek( offset );
-		     readSize = demux->stream->read( chunk, CHUNKSIZE );
+		     bp = demux->stream->read( CHUNKSIZE ); memcpy(chunk,bp.data(),bp.size());
+		     readSize = bp.size();
 		  }
 	       }
 	       else
@@ -487,7 +491,8 @@ static int ty_demux( Demuxer *demux, Demuxer_Stream *dsds )
 
       demux->filepos = demux->stream->tell( );
       tivo->whichChunk = demux->filepos / CHUNKSIZE;
-      readSize = demux->stream->read( chunk, CHUNKSIZE );
+      bp = demux->stream->read( CHUNKSIZE ); memcpy(chunk,bp.data(), bp.size());
+      readSize = bp.size();
       if ( readSize != CHUNKSIZE )
 	 return 0;
    }

@@ -56,7 +56,7 @@ static void find_next_mp3_hdr(Demuxer *demuxer,uint8_t *hdr) {
   off_t spos;
   while(!demuxer->stream->eof()) {
     spos=demuxer->stream->tell();
-    demuxer->stream->read(hdr,4);
+    binary_packet bp=demuxer->stream->read(4); memcpy(hdr,bp.data(),bp.size());
     len = mp_decode_mp3_header(hdr,NULL,NULL,NULL,NULL);
     if(len < 0) {
       demuxer->stream->skip(-3);
@@ -72,6 +72,7 @@ static int read_mp3v1_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos )
 {
     unsigned n;
     Stream *s=demuxer->stream;
+    binary_packet bp(1);
     for(n = 0; n < 5 ; n++) {
       MSG_DBG2("read_mp3v1_tags\n");
       pos = mp_decode_mp3_header(hdr,NULL,NULL,NULL,NULL);
@@ -80,14 +81,14 @@ static int read_mp3v1_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos )
       s->skip(pos-4);
       if(s->eof())
 	return 0;
-      s->read(hdr,4);
+      bp=s->read(4); memcpy(hdr,bp.data(),bp.size());
       if(s->eof())
 	return 0;
     }
     if(s->end_pos()) {
       char tag[4];
       s->seek(s->end_pos()-128);
-      s->read(tag,3);
+      bp=s->read(3); memcpy(tag,bp.data(),bp.size());
       tag[3] = '\0';
       if(strcmp(tag,"TAG"))
 	demuxer->movi_end = s->end_pos();
@@ -95,19 +96,19 @@ static int read_mp3v1_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos )
 	char buf[31];
 	uint8_t g;
 	demuxer->movi_end = s->tell()-3;
-	s->read(buf,30);
+	bp=s->read(30); memcpy(buf,bp.data(),bp.size());
 	buf[30] = '\0';
 	demuxer->info().add(INFOT_NAME,buf);
-	s->read(buf,30);
+	bp=s->read(30); memcpy(buf,bp.data(),bp.size());
 	buf[30] = '\0';
 	demuxer->info().add(INFOT_AUTHOR,buf);
-	s->read(buf,30);
+	bp=s->read(30); memcpy(buf,bp.data(),bp.size());
 	buf[30] = '\0';
 	demuxer->info().add(INFOT_ALBUM,buf);
-	s->read(buf,4);
+	bp=s->read(4); memcpy(buf,bp.data(),bp.size());
 	buf[4] = '\0';
 	demuxer->info().add(INFOT_DATE,buf);
-	s->read(buf,30);
+	bp=s->read(30); memcpy(buf,bp.data(),bp.size());
 	buf[30] = '\0';
 	demuxer->info().add(INFOT_COMMENTS,buf);
 	if(buf[28] == 0 && buf[29] != 0) {
@@ -143,6 +144,7 @@ static int read_id3v22_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 {
     off_t pos,epos;
     Stream *s=demuxer->stream;
+    binary_packet bp(1);
     if(	flags==ID3V22_ZERO_FLAG ||
 	flags==ID3V22_UNSYNCH_FLAG ||
 	flags==ID3V22_COMPRESS_FLAG) return 0;
@@ -154,10 +156,12 @@ static int read_id3v22_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 	unsigned len;
 	unsigned char buf[ID3V22_FRAME_HEADER_SIZE];
 	char data[4096];
-	s->read(buf,ID3V22_FRAME_HEADER_SIZE);
+	bp=s->read(ID3V22_FRAME_HEADER_SIZE);
+	memcpy(buf,bp.data(),bp.size());
 	id=(buf[2] << 16) + (buf[1] << 8) + buf[0];
 	len=(buf[3] << 14) + (buf[4] << 7) + buf[5];
-	s->read(data,std::min(len,unsigned(4096)));
+	bp=s->read(std::min(len,unsigned(4096)));
+	memcpy(data,bp.data(),bp.size());
 	data[std::min(len,unsigned(4096))]=0;
 	switch(id)
 	{
@@ -212,13 +216,15 @@ static int read_id3v23_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 {
     off_t pos,epos;
     Stream *s=demuxer->stream;
+    binary_packet bp(1);
     if(	flags==ID3V23_ZERO_FLAG ||
 	flags==ID3V23_UNSYNCH_FLAG) return 0;
     if( flags==ID3V23_EXT_HEADER_FLAG )
     {
 	char buf[4];
 	unsigned ehsize;
-	demuxer->stream->read(buf,4);
+	bp=demuxer->stream->read(4);
+	memcpy(buf,bp.data(),bp.size());
 	ehsize=(buf[0] << 21) + (buf[1] << 14) + (buf[2] << 7) + buf[3];
 	demuxer->stream->skip(ehsize);
     }
@@ -230,10 +236,12 @@ static int read_id3v23_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 	unsigned len;
 	unsigned char buf[ID3V23_FRAME_HEADER_SIZE];
 	char data[4096];
-	s->read(buf,ID3V23_FRAME_HEADER_SIZE);
+	bp=s->read(ID3V23_FRAME_HEADER_SIZE);
+	memcpy(buf,bp.data(),bp.size());
 	id=*((uint32_t *)buf);
 	len=(buf[4] << 21) + (buf[5] << 14) + (buf[6] << 7) + buf[7];
-	s->read(data,std::min(len,unsigned(4096)));
+	bp=s->read(std::min(len,unsigned(4096)));
+	memcpy(data,bp.data(),bp.size());
 	data[std::min(len,unsigned(4096))]=0;
 	MSG_V("ID3: %4s len %u\n",buf,len);
 	switch(id)
@@ -292,13 +300,16 @@ static int read_id3v24_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 {
     off_t pos,epos;
     Stream *s=demuxer->stream;
+    binary_packet bp(1);
+
     if(	flags==ID3V24_ZERO_FLAG ||
 	flags==ID3V24_UNSYNCH_FLAG) return 0;
     if( flags==ID3V24_EXT_HEADER_FLAG )
     {
 	char buf[4];
 	unsigned ehsize;
-	demuxer->stream->read(buf,4);
+	bp=demuxer->stream->read(4);
+	memcpy(buf,bp.data(),bp.size());
 	ehsize=(buf[0] << 21) + (buf[1] << 14) + (buf[2] << 7) + buf[3];
 	demuxer->stream->skip(ehsize);
     }
@@ -310,10 +321,13 @@ static int read_id3v24_tags(Demuxer *demuxer,unsigned flags,unsigned hsize)
 	unsigned len;
 	unsigned char buf[ID3V23_FRAME_HEADER_SIZE];
 	char data[4096];
-	s->read(buf,ID3V23_FRAME_HEADER_SIZE);
+	binary_packet bp(1);
+	bp=s->read(ID3V23_FRAME_HEADER_SIZE);
+	memcpy(buf,bp.data(),bp.size());
 	id=*((uint32_t *)buf);
 	len=(buf[4] << 21) + (buf[5] << 14) + (buf[6] << 7) + buf[7];
-	s->read(data,std::min(len,unsigned(4096)));
+	bp=s->read(std::min(len,unsigned(4096)));
+	memcpy(data,bp.data(),bp.size());
 	data[std::min(len,unsigned(4096))]=0;
 	MSG_V("ID3: %4s len %u\n",buf,len);
 	switch(id)
@@ -352,7 +366,8 @@ static int read_id3v2_tags(Demuxer *demuxer)
     vers=s->read_char();
     rev=s->read_char();
     flags=s->read_char();
-    s->read(buf,4);
+    binary_packet bp=s->read(4);
+    memcpy(buf,bp.data(),bp.size());
     hsize=(buf[0] << 21) + (buf[1] << 14) + (buf[2] << 7) + buf[3];
     MSG_V("Found ID3v2.%d.%d flags %d size %d\n",vers,rev,flags,hsize);
     if(vers==2) return read_id3v22_tags(demuxer,flags,hsize);
@@ -368,7 +383,7 @@ static int mp3_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigned *
 {
   int retval=0;
   uint32_t fcc,fcc1,fmt;
-  uint8_t *p,b[32];
+  uint8_t *p;
   Stream *s;
   *brate=*samplerate=*channels=0;
   s = demuxer->stream;
@@ -377,7 +392,7 @@ static int mp3_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigned *
   fcc1=me2be_32(fcc1);
   p = (uint8_t *)&fcc1;
   s->seek(fptr);
-  s->read(b,sizeof(b));
+  binary_packet bp=s->read(32);
   if(mp_check_mp3_header(fcc1,&fmt,brate,samplerate,channels)) {
     if(fmt==1)	retval = RAW_MP1;
     else
@@ -420,6 +435,7 @@ static void  Xing_test(Stream *s,uint8_t *hdr,mp3_priv_t *priv)
     char buf[4];
     const int sr_table[4] = { 44100, 48000, 32000, 99999 };
     priv->scale=-1;
+    binary_packet bp(1);
     mpeg1    = (hdr[1]>>3)&1;
     sr_index = (hdr[2]>>2)&3;
     mode     = (hdr[3]>>6)&3;
@@ -427,7 +443,8 @@ static void  Xing_test(Stream *s,uint8_t *hdr,mp3_priv_t *priv)
     else	off=mode!=MPG_MD_MONO?17:9;/* mpeg2 */
     fpos = s->tell();
     s->skip(off);
-    s->read(buf,4);
+    bp=s->read(4);
+    memcpy(buf,bp.data(),bp.size());
     if(memcmp(buf,"Xing",4) == 0 || memcmp(buf,"Info",4) == 0)
     {
 	priv->is_xing=1;
@@ -435,8 +452,8 @@ static void  Xing_test(Stream *s,uint8_t *hdr,mp3_priv_t *priv)
 	priv->srate=sr_table[sr_index&0x3];
 	head_flags = s->read_dword();
 	if(head_flags & FRAMES_FLAG)	priv->nframes=s->read_dword();
-	if(head_flags & BYTES_FLAG)		priv->nbytes=s->read_dword();
-	if(head_flags & TOC_FLAG)		s->read(priv->toc,100);
+	if(head_flags & BYTES_FLAG)	priv->nbytes=s->read_dword();
+	if(head_flags & TOC_FLAG)	{ bp=s->read(100); memcpy(priv->toc,bp.data(),bp.size()); }
 	if(head_flags & VBR_SCALE_FLAG)	priv->scale = s->read_dword();
 	MSG_DBG2("Found Xing VBR header: flags=%08X nframes=%u nbytes=%u scale=%i srate=%u\n"
 	,head_flags,priv->nframes,priv->nbytes,priv->scale,priv->srate);
@@ -459,6 +476,7 @@ static Opaque* mp3_open(Demuxer* demuxer) {
   assert(demuxer != NULL);
   assert(demuxer->stream != NULL);
 #endif
+    binary_packet bp(1);
 
   priv = new(zeromem) mp3_priv_t;
   s = demuxer->stream;
@@ -470,7 +488,8 @@ static Opaque* mp3_open(Demuxer* demuxer) {
     step = 1;
 
     if(pos < HDR_SIZE) {
-      s->read(&hdr[pos],HDR_SIZE-pos);
+      bp=s->read(HDR_SIZE-pos);
+      memcpy(&hdr[pos],bp.data(),bp.size());
       pos = HDR_SIZE;
     }
 
@@ -480,7 +499,8 @@ static Opaque* mp3_open(Demuxer* demuxer) {
     if( hdr[0] == 'I' && hdr[1] == 'D' && hdr[2] == '3' && (hdr[3] >= 2)) {
 	unsigned len,fmt;
 	s->skip(2);
-	s->read(hdr,4);
+	bp=s->read(4);
+	memcpy(hdr,bp.data(),bp.size());
 	len = (hdr[0]<<21) | (hdr[1]<<14) | (hdr[2]<<7) | hdr[3];
 	read_id3v2_tags(demuxer);
 	s->seek(len+10);
@@ -501,7 +521,8 @@ static Opaque* mp3_open(Demuxer* demuxer) {
 	    break;
 	}
 	memcpy(b,hdr,HDR_SIZE);
-	s->read(&b[HDR_SIZE],12-HDR_SIZE);
+	bp=s->read(12-HDR_SIZE);
+	memcpy(&b[HDR_SIZE],bp.data(),bp.size());
     }
     /* Add here some other audio format detection */
     if(step < HDR_SIZE) memmove(hdr,&hdr[step],HDR_SIZE-step);
@@ -579,6 +600,7 @@ static int mp3_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
   demux = demuxer;
   priv = static_cast<mp3_priv_t*>(demux->priv);
   s = demux->stream;
+  binary_packet bp(1);
 
   seof=s->eof();
   if(seof || (demux->movi_end && s->tell() >= demux->movi_end)) {
@@ -597,11 +619,10 @@ static int mp3_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
   case RAW_MP2:
   case RAW_MP3:
     while(!s->eof() || (demux->movi_end && s->tell() >= demux->movi_end) ) {
-      uint8_t hdr[4];
       int len;
-      s->read(hdr,4);
+      bp=s->read(4);
       MSG_DBG2("mp3_fillbuffer\n");
-      len = mp_decode_mp3_header(hdr,NULL,NULL,NULL,NULL);
+      len = mp_decode_mp3_header((const uint8_t*)bp.data(),NULL,NULL,NULL,NULL);
       if(s->eof()) return 0; /* workaround for dead-lock (skip(-3)) below */
       if(len < 0) {
 	s->skip(-3);
@@ -611,9 +632,11 @@ static int mp3_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
 	if(len>4)
 	{
 	    Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(len);
-	    memcpy(dp->buffer(),hdr,4);
+	    memcpy(dp->buffer(),bp.data(),4);
 	    dp->resize(len+4);
-	    len=s->read(dp->buffer() + 4,len-4);
+	    bp=s->read(len-4);
+	    len=bp.size();
+	    memcpy(dp->buffer() + 4,bp.data(),len);
 	    priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + len/(float)sh_audio->i_bps;
 	    dp->pts = priv->last_pts - (demux->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 	    dp->flags=DP_NONKEYFRAME;
@@ -630,16 +653,15 @@ static int mp3_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
 }
 
 static void high_res_mp3_seek(Demuxer *demuxer,float _time) {
-  uint8_t hdr[4];
   int len,nf;
   mp3_priv_t* priv = static_cast<mp3_priv_t*>(demuxer->priv);
   sh_audio_t* sh = reinterpret_cast<sh_audio_t*>(demuxer->audio->sh);
 
   nf = _time*sh->rate/1152;
   while(nf > 0) {
-    demuxer->stream->read(hdr,4);
+    binary_packet bp=demuxer->stream->read(4);
     MSG_DBG2("high_res_mp3_seek\n");
-    len = mp_decode_mp3_header(hdr,NULL,NULL,NULL,NULL);
+    len = mp_decode_mp3_header((const uint8_t*)bp.data(),NULL,NULL,NULL,NULL);
     if(len < 0) {
       demuxer->stream->skip(-3);
       continue;

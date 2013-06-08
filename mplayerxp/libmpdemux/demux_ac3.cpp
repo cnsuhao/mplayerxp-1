@@ -141,39 +141,38 @@ static int read_ac3_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos,unsigned *bitr
     demuxer->movi_end = s->end_pos();
     memcpy(b,hdr,4);
     s->seek(pos+4);
-    s->read(&b[4],4);
+    binary_packet bp=s->read(4);
+    memcpy(&b[4],bp.data(),bp.size());
     for(n = 0; n < 5 ; n++) {
-      MSG_DBG2("read_ac3_tags\n");
-      pos = ac3_decode_header(b,bitrate,samplerate,channels);
-      if(pos < 0)
-	return 0;
-      s->skip(pos-8);
-      if(s->eof())
-	return 0;
-      s->read(b,8);
-      if(s->eof())
-	return 0;
+	MSG_DBG2("read_ac3_tags\n");
+	pos = ac3_decode_header(b,bitrate,samplerate,channels);
+	if(pos < 0) return 0;
+	s->skip(pos-8);
+	if(s->eof()) return 0;
+	bp=s->read(8);
+	memcpy(b,bp.data(),bp.size());
+	if(s->eof()) return 0;
     }
     return 1;
 }
 
 static int ac3_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigned *samplerate,unsigned *channels)
 {
-  uint32_t fcc,fcc1,fmt;
-  uint8_t *p,b[32];
-  Stream *s;
-  *brate=*samplerate=*channels=0;
-  s = demuxer->stream;
-  s->seek(fptr);
-  fcc=fcc1=s->read_dword();
-  fcc1=me2be_32(fcc1);
-  p = (uint8_t *)&fcc1;
-  s->seek(fptr);
-  s->read(b,sizeof(b));
-  /* ac3 header check */
-  if(ac3_decode_header(b,samplerate,brate,channels)>0) return 1;
-  s->seek(fptr);
-  return 0;
+    uint32_t fcc,fcc1;
+    uint8_t *p;
+    Stream *s;
+    *brate=*samplerate=*channels=0;
+    s = demuxer->stream;
+    s->seek(fptr);
+    fcc=fcc1=s->read_dword();
+    fcc1=me2be_32(fcc1);
+    p = (uint8_t *)&fcc1;
+    s->seek(fptr);
+    binary_packet bp=s->read(32);
+    /* ac3 header check */
+    if(ac3_decode_header((const uint8_t*)bp.data(),samplerate,brate,channels)>0) return 1;
+    s->seek(fptr);
+    return 0;
 }
 
 static MPXP_Rc ac3_probe(Demuxer* demuxer)
@@ -213,7 +212,8 @@ static Opaque* ac3_open(Demuxer* demuxer) {
     step = 1;
 
     if(pos < HDR_SIZE) {
-      s->read(&hdr[pos],HDR_SIZE-pos);
+      binary_packet bp=s->read(HDR_SIZE-pos);
+      memcpy(&hdr[pos],bp.data(),bp.size());
       pos = HDR_SIZE;
     }
 
@@ -224,7 +224,8 @@ static Opaque* ac3_open(Demuxer* demuxer) {
     uint8_t b[21];
     MSG_DBG2("initial mp3_header: 0x%08X at %lu\n",*(uint32_t *)hdr,st_pos);
     memcpy(b,hdr,HDR_SIZE);
-    s->read(&b[HDR_SIZE],12-HDR_SIZE);
+    binary_packet bp=s->read(12-HDR_SIZE);
+    memcpy(&b[HDR_SIZE],bp.data(),bp.size());
     if((n = ac3_decode_header(b,&fmt,&fmt,&fmt)) > 0) {
 	demuxer->movi_start = st_pos;
 	break;
@@ -294,11 +295,10 @@ static int ac3_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
   }
   frmt=priv->frmt;
     while(!s->eof() || (demux->movi_end && s->tell() >= demux->movi_end) ) {
-      uint8_t hdr[8];
       int len;
       unsigned dummy;
-      s->read(hdr,8);
-      len = ac3_decode_header(hdr,&dummy,&dummy,&dummy);
+      binary_packet hdr=s->read(8);
+      len = ac3_decode_header((const uint8_t*)hdr.data(),&dummy,&dummy,&dummy);
       MSG_DBG2("ac3_fillbuffer %u bytes\n",len);
       if(s->eof()) return 0; /* workaround for dead-lock (skip(-7)) below */
       if(len < 0) {
@@ -309,9 +309,11 @@ static int ac3_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
 	if(len>8)
 	{
 	    Demuxer_Packet* dp = new(zeromem) Demuxer_Packet(len);
-	    memcpy(dp->buffer(),hdr,8);
+	    memcpy(dp->buffer(),hdr.data(),hdr.size());
 	    dp->resize(len+8);
-	    len=s->read(dp->buffer()+8,len-8);
+	    binary_packet bp=s->read(len-8);
+	    len=bp.size();
+	    memcpy(dp->buffer()+8,bp.data(),bp.size());
 	    priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + len/(float)sh_audio->i_bps;
 	    dp->pts = priv->last_pts - (demux->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;
 	    dp->flags=DP_NONKEYFRAME;
@@ -325,25 +327,24 @@ static int ac3_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
 }
 
 static void high_res_ac3_seek(Demuxer *demuxer,float _time) {
-  uint8_t hdr[8];
-  int len,nf;
-  unsigned tmp;
-  ac3_priv_t* priv = static_cast<ac3_priv_t*>(demuxer->priv);
-  sh_audio_t* sh = (sh_audio_t*)demuxer->audio->sh;
+    int len,nf;
+    unsigned tmp;
+    ac3_priv_t* priv = static_cast<ac3_priv_t*>(demuxer->priv);
+    sh_audio_t* sh = (sh_audio_t*)demuxer->audio->sh;
 
-  nf = _time*sh->rate/1152;
-  while(nf > 0) {
-    demuxer->stream->read(hdr,8);
-    MSG_DBG2("high_res_mp3_seek\n");
-    len = ac3_decode_header(hdr,&tmp,&tmp,&tmp);
-    if(len < 0) {
-      demuxer->stream->skip(-7);
-      continue;
+    nf = _time*sh->rate/1152;
+    while(nf > 0) {
+	binary_packet bp = demuxer->stream->read(8);
+	MSG_DBG2("high_res_mp3_seek\n");
+	len = ac3_decode_header((const uint8_t*)bp.data(),&tmp,&tmp,&tmp);
+	if(len < 0) {
+	    demuxer->stream->skip(-7);
+	    continue;
+	}
+	demuxer->stream->skip(len-8);
+	priv->last_pts += 1152/(float)sh->rate;
+	nf--;
     }
-    demuxer->stream->skip(len-8);
-    priv->last_pts += 1152/(float)sh->rate;
-    nf--;
-  }
 }
 
 static void ac3_seek(Demuxer *demuxer,const seek_args_t* seeka){

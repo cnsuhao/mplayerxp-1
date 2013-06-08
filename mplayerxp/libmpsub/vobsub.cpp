@@ -131,6 +131,7 @@ static off_t __FASTCALL__ mpeg_tell(mpeg_t *mpeg)
 
 static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 {
+    binary_packet bp(1);
     unsigned int len, idx, version;
     int c;
     /* Goto start of a packet, it starts with 0x000001?? */
@@ -139,8 +140,8 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 
     mpeg->aid = -1;
     mpeg->packet_size = 0;
-    if (mpeg->stream->read( buf, 4) != 4)
-	return -1;
+    bp=mpeg->stream->read(4); memcpy(buf,bp.data(),bp.size());
+    if (bp.size() != 4) return -1;
     while (memcmp(buf, wanted, sizeof(wanted)) != 0) {
 	c = mpeg->stream->read_char();
 	if (c < 0)
@@ -175,8 +176,8 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 	    abort();
 	break;
     case 0xbd:			/* packet */
-	if (mpeg->stream->read( buf, 2) != 2)
-	    return -1;
+	bp=mpeg->stream->read(2); memcpy(buf,bp.data(),bp.size());
+	if (bp.size() != 2) return -1;
 	len = buf[0] << 8 | buf[1];
 	idx = mpeg_tell(mpeg);
 	c = mpeg->stream->read_char();
@@ -214,8 +215,8 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 		return -1;
 	    }
 	    if ((pts_flags & 0xc0) == 0x80) {
-		if (mpeg->stream->read( buf, 5) != 5)
-		    return -1;
+		bp=mpeg->stream->read(5); memcpy(buf,bp.data(),bp.size());
+		if (bp.size() != 5) return -1;
 		if (!(((buf[0] & 0xf0) == 0x20) && (buf[0] & 1) && (buf[2] & 1) &&  (buf[4] & 1))) {
 		    MSG_ERR( "vobsub PTS error: 0x%02x %02x%02x %02x%02x \n",
 			    buf[0], buf[1], buf[2], buf[3], buf[4]);
@@ -249,7 +250,8 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 		mpeg->packet_size = 0;
 		return -1;
 	    }
-	    if ((unsigned)mpeg->stream->read( mpeg->packet, mpeg->packet_size) != mpeg->packet_size) {
+	    bp=mpeg->stream->read(mpeg->packet_size); memcpy(mpeg->packet,bp.data(),bp.size());
+	    if (bp.size() != mpeg->packet_size) {
 		MSG_ERR("stream_read failure");
 		mpeg->packet_size = 0;
 		return -1;
@@ -258,8 +260,8 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 	}
 	break;
     case 0xbe:			/* Padding */
-	if (mpeg->stream->read( buf, 2) != 2)
-	    return -1;
+	bp=mpeg->stream->read(2); memcpy(buf,bp.data(),bp.size());
+	if (bp.size() != 2) return -1;
 	len = buf[0] << 8 | buf[1];
 	if (len > 0 && !mpeg->stream->skip( len))
 	    return -1;
@@ -267,8 +269,8 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
     default:
 	if (0xc0 <= buf[3] && buf[3] < 0xf0) {
 	    /* MPEG audio or video */
-	    if (mpeg->stream->read( buf, 2) != 2)
-		return -1;
+	    bp=mpeg->stream->read(2); memcpy(buf,bp.data(),bp.size());
+	    if (bp.size() != 2) return -1;
 	    len = buf[0] << 8 | buf[1];
 	    if (len > 0 && !mpeg->stream->skip( len))
 		return -1;

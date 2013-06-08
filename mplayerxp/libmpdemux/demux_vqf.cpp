@@ -41,11 +41,10 @@ typedef struct{
 
 static MPXP_Rc vqf_probe(Demuxer* demuxer)
 {
-    char buf[12];
     Stream *s;
     s = demuxer->stream;
-    s->read(buf,12);
-    if(memcmp(buf,"TWIN",4)==0) return MPXP_Ok; /*version: 97012000*/
+    binary_packet bp=s->read(12);
+    if(memcmp(bp.data(),"TWIN",4)==0) return MPXP_Ok; /*version: 97012000*/
     return MPXP_False;
 }
 
@@ -70,18 +69,19 @@ static Opaque* vqf_open(Demuxer* demuxer) {
   w->cbSize = 0;
   s->reset();
   s->seek(0);
-  s->read(hi->ID,12); /* fourcc+version_id */
+  binary_packet bp=s->read(12); memcpy(hi->ID,bp.data(),bp.size()); /* fourcc+version_id */
   while(1)
   {
     char chunk_id[4];
     unsigned chunk_size;
     hi->size=chunk_size=s->read_dword(); /* include itself */
-    s->read(chunk_id,4);
+    bp=s->read(4); memcpy(chunk_id,bp.data(),bp.size());
     if(*((uint32_t *)&chunk_id[0])==mmioFOURCC('C','O','M','M'))
     {
 	char buf[chunk_size-8];
 	unsigned i,subchunk_size;
-	if(s->read(buf,chunk_size-8)!=chunk_size-8) return NULL;
+	bp=s->read(chunk_size-8); memcpy(buf,bp.data(),bp.size());
+	if(bp.size()!=chunk_size-8) return NULL;
 	i=0;
 	subchunk_size=be2me_32(*((uint32_t *)&buf[0]));
 	hi->channelMode=be2me_32(*((uint32_t *)&buf[4]));
@@ -202,7 +202,8 @@ static int vqf_demux(Demuxer* demuxer, Demuxer_Stream *ds) {
   dp->pos = spos;
   dp->flags = DP_NONKEYFRAME;
 
-  l=demuxer->stream->read(dp->buffer(),l);
+  binary_packet bp=demuxer->stream->read(l); memcpy(dp->buffer(),bp.data(),bp.size());
+  l=bp.size();
   dp->resize(l);
   ds->add_packet(dp);
 

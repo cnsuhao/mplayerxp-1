@@ -175,7 +175,7 @@ static Opaque* roq_open(Demuxer* demuxer)
 	sh_audio->ds = demuxer->audio;
 
 	// go through the bother of making a WAVEFORMATEX structure
-	sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
+	sh_audio->wf = new WAVEFORMATEX;
 
 	// custom fourcc for internal MPlayer use
 	sh_audio->wtag = mmioFOURCC('R', 'o', 'Q', 'A');

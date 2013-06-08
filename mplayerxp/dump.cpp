@@ -41,7 +41,6 @@ int  dump_parse(const char *param)
 void dump_stream(Stream *stream)
 {
   char buf[4096];
-  int len;
   std::ofstream f;
   const char *ext,*name;
   MP_UNIT("dumpstream");
@@ -65,8 +64,8 @@ void dump_stream(Stream *stream)
   }
   MSG_INFO("Dumping stream to %s\n",name);
   while(!stream->eof()){
-      len=stream->read(buf,4096);
-      if(len>0) f.write(buf,len);
+    binary_packet bp=stream->read(4096);
+    if(bp.size()>0) f.write(bp.cdata(),bp.size());
   }
   f.close();
   mpxp_info<<MSGTR_StreamDumped<<std::endl;

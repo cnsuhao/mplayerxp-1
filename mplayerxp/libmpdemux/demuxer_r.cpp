@@ -18,7 +18,7 @@ using namespace	usr;
 #include "demux_msg.h"
 
 enc_frame_t*	new_enc_frame(enc_frame_type_e type,unsigned len,float pts,float duration) {
-    enc_frame_t* frame=(enc_frame_t*)mp_mallocz(sizeof(enc_frame_t));
+    enc_frame_t* frame=new(zeromem) enc_frame_t;
     frame->type=type;
     frame->pts=pts;
     frame->duration=duration;

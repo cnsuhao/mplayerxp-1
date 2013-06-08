@@ -115,11 +115,12 @@ int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
   esds->decoderConfigLen = len = mp4_read_descr_len(s);
 
   esds->decoderConfig = new uint8_t[esds->decoderConfigLen];
-  if (esds->decoderConfig) {
-    s.read(esds->decoderConfig, esds->decoderConfigLen);
-  } else {
-    esds->decoderConfigLen = 0;
-  }
+    if (esds->decoderConfig) {
+	binary_packet bp=s.read(esds->decoderConfigLen);
+	memcpy(esds->decoderConfig, bp.data(), bp.size());
+    } else {
+	esds->decoderConfigLen = 0;
+    }
   MSG_V("ESDS MPEG4 Decoder Specific Descriptor (%dBytes)\n", len);
 
   /* get and verify SLConfigDescrTag */
@@ -132,7 +133,8 @@ int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
   esds->SLConfigLen = len = mp4_read_descr_len(s);
   esds->SLConfig = new uint8_t[esds->SLConfigLen];
   if (esds->SLConfig) {
-    s.read(esds->SLConfig, esds->SLConfigLen);
+    binary_packet bp=s.read(esds->SLConfigLen);
+    memcpy(esds->SLConfig, bp.data(), bp.size());
   } else {
     esds->SLConfigLen = 0;
   }

@@ -199,6 +199,7 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
   unsigned int dts=0;
   Demuxer_Stream *ds=NULL;
   mpg_demuxer_t *priv = static_cast<mpg_demuxer_t*>(demux->priv);
+    binary_packet bp(1);
 
   MSG_DBG3("demux_read_packet: %X\n",id);
 
@@ -402,14 +403,15 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
     {
 	Demuxer_Packet* dp=ds->asf_packet;
 	dp->resize(dp->length()+len);
-	demux->stream->read(dp->buffer()+dp->length(),len);
+	bp=demux->stream->read(len); memcpy(dp->buffer()+dp->length(),bp.data(),bp.size());
     }
     else
     {
 	sh_video_t *sh;
 	if(ds->asf_packet) ds->add_packet(ds->asf_packet);
 	Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
-	len=demux->stream->read(dp->buffer(),len);
+	bp=demux->stream->read(len); memcpy(dp->buffer(),bp.data(),bp.size());
+	len=bp.size();
 	dp->resize(len);
 	dp->pts=pts/90000.0f;
 	if(ds==demux->video)	sh=(sh_video_t *)ds->sh;

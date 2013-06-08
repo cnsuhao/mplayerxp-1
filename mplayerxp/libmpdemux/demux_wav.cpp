@@ -70,6 +70,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
   off_t st_pos = 0;
   da_priv_t* priv;
   const unsigned char *pfcc;
+  binary_packet bp(1);
 #ifdef MP_DEBUG
   assert(demuxer != NULL);
   assert(demuxer->stream != NULL);
@@ -85,7 +86,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
     step = 1;
 
     if(pos < HDR_SIZE) {
-      s->read(&hdr[pos],HDR_SIZE-pos);
+      bp=s->read(HDR_SIZE-pos); memcpy(&hdr[pos],bp.data(),bp.size());
       pos = HDR_SIZE;
     }
 
@@ -97,7 +98,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
 	MSG_DBG2("Found RIFF\n");
 	s->skip(4);
 	if(s->eof()) break;
-	s->read(hdr,4);
+	bp=s->read(4); memcpy(hdr,bp.data(),bp.size());
 	if(s->eof()) break;
 	fcc2 = le2me_32(*(uint32_t *)hdr);
 	pfcc= (const unsigned char *)&fcc2;
@@ -150,7 +151,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
     unsigned int chunk_size;
     WAVEFORMATEX* w;
     int l;
-    sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
+    sh_audio->wf = w = new WAVEFORMATEX;
     do
     {
       chunk_type = s->read_fourcc();
@@ -205,7 +206,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
 		    {
 			slen=subchunk_size-4;
 			rlen=std::min(sizeof(note),size_t(slen));
-			s->read(note,rlen);
+			bp=s->read(rlen); memcpy(note,bp.data(),bp.size());
 			note[rlen]=0;
 			if(slen>rlen) s->skip(slen-rlen);
 			demuxer->info().add(INFOT_NAME,note);
@@ -216,7 +217,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
 		    {
 			slen=subchunk_size-4;
 			rlen=std::min(sizeof(note),size_t(slen));
-			s->read(note,rlen);
+			bp=s->read(rlen); memcpy(note,bp.data(),bp.size());
 			note[rlen]=0;
 			if(slen>rlen) s->skip(slen-rlen);
 			demuxer->info().add(INFOT_COMMENTS,note);
@@ -247,7 +248,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
     if(sh_audio->wtag==0x50 || sh_audio->wtag==0x55)
     {
 	s->seek(data_off);
-	s->read(hdr,4);
+	bp=s->read(4); memcpy(hdr,bp.data(),bp.size());
 	MSG_DBG2("Trying id3v1 at %llX\n",data_off);
 	if(!read_mp3v1_tags(demuxer,hdr,data_off)) demuxer->movi_end = s->end_pos();
     }
@@ -301,7 +302,8 @@ static int audio_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
   }
     int l = sh_audio->wf->nAvgBytesPerSec;
     Demuxer_Packet* dp =new(zeromem) Demuxer_Packet(l);
-    l=s->read(dp->buffer(),l);
+    binary_packet bp=s->read(l); memcpy(dp->buffer(),bp.data(),bp.size());
+    l=bp.size();
     dp->resize(l);
     priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + l/(float)sh_audio->i_bps;
     dp->pts = priv->last_pts - (demux->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;

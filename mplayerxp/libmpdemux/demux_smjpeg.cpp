@@ -36,7 +36,7 @@ static MPXP_Rc smjpeg_probe(Demuxer* demuxer){
     MSG_V("Checking for SMJPEG\n");
 
     if (demuxer->stream->read_word() == 0xA) {
-	demuxer->stream->read( buf, 6);
+	binary_packet bp=demuxer->stream->read(6); memcpy(buf,bp.data(),bp.size());
 	buf[7] = 0;
 
 	if (strncmp("SMJPEG", buf, 6)) {

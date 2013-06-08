@@ -175,10 +175,10 @@ static muxer_stream_t* mpxpav64_new_stream(muxer_t *muxer,int type)
     if(!s) return NULL; // no mem!?
     if(!muxer->priv)
     {
-	muxer->priv=mp_mallocz(sizeof(priv_mpxpav64_t));
+	muxer->priv=new(zeromem) priv_mpxpav64_t;
 	((priv_mpxpav64_t *)muxer->priv)->prev_seek=-SEEKPOINT_THRESHOLD*2;
     }
-    s->priv=mp_mallocz(sizeof(priv_mpxpav64_stream_t));
+    s->priv=new(zeromem) priv_mpxpav64_stream_t;
     muxer->streams[muxer->avih.dwStreams]=s;
     s->type=type;
     s->id=muxer->avih.dwStreams;

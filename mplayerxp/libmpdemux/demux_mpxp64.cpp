@@ -146,7 +146,7 @@ static void mpxpav64_read_indexes(Demuxer *demuxer,unsigned id,uint64_t idx_off)
     int is_valid;
     fpos=s->tell();
     s->seek(idx_off);
-    s->read((char *)&iid,8);
+    iid=s->read_qword();
     is_valid=0;
     if(memcmp("IX32",&iid,4)==0)
     {
@@ -188,6 +188,7 @@ static int mpxpav64_read_st64v(Demuxer *demuxer,unsigned hsize,unsigned id){
     Stream *s=demuxer->stream;
     uint32_t fourcc,fsize;
     int have_bih=0;
+    binary_packet bp(1);
     sh_video_t *sh=demuxer->new_sh_video(id);
     do {
 	fourcc=s->read_dword_le();
@@ -200,7 +201,7 @@ static int mpxpav64_read_st64v(Demuxer *demuxer,unsigned hsize,unsigned id){
 	{
 	    case mmioFOURCC('B','I','H',' '):
 		sh->bih=(BITMAPINFOHEADER*)mp_malloc(fsize<sizeof(BITMAPINFOHEADER)?sizeof(BITMAPINFOHEADER):fsize);
-		s->read((char *)sh->bih,fsize);
+		bp=s->read(fsize); memcpy(sh->bih,bp.data(),bp.size());
 		le2me_BITMAPINFOHEADER(sh->bih);
 		if(mp_conf.verbose>=1) print_video_header(sh->bih,fsize);
 		have_bih=1;
@@ -222,7 +223,7 @@ static int mpxpav64_read_st64v(Demuxer *demuxer,unsigned hsize,unsigned id){
 		else
 		{
 		    VideoPropHeader vprp;
-		    s->read((char *)&vprp,sizeof(VideoPropHeader));
+		    bp=s->read(sizeof(VideoPropHeader)); memcpy(&vprp,bp.data(),bp.size());
 		    le2me_VideoPropHeader(&vprp);
 		    le2me_VIDEO_FIELD_DESC(&vprp.FieldInfo[0]);
 		    le2me_VIDEO_FIELD_DESC(&vprp.FieldInfo[1]);
@@ -240,7 +241,7 @@ static int mpxpav64_read_st64v(Demuxer *demuxer,unsigned hsize,unsigned id){
 		else
 		{
 		    sh->ImageDesc = (ImageDescription *)mp_malloc(fsize);
-		    s->read((char *)sh->ImageDesc,fsize);
+		    bp=s->read(fsize); memcpy(sh->ImageDesc,bp.data(),bp.size());
 		    le2me_ImageDesc(((ImageDescription *)sh->ImageDesc));
 		}
 		break;
@@ -262,6 +263,7 @@ static int mpxpav64_read_st64a(Demuxer *demuxer,unsigned hsize,unsigned id){
     Stream *s=demuxer->stream;
     uint32_t fourcc,fsize;
     int have_wf=0;
+    binary_packet bp(1);
     sh_audio_t *sh=demuxer->new_sh_audio(id);
     do {
 	fourcc=s->read_dword_le();
@@ -274,7 +276,7 @@ static int mpxpav64_read_st64a(Demuxer *demuxer,unsigned hsize,unsigned id){
 	{
 	    case mmioFOURCC('W','A','V','E'):
 		sh->wf=(WAVEFORMATEX*)mp_malloc(fsize<sizeof(WAVEFORMATEX)?sizeof(WAVEFORMATEX):fsize);
-		s->read((char *)sh->wf,fsize);
+		bp=s->read(fsize); memcpy((char *)sh->wf,bp.data(),bp.size());
 		le2me_WAVEFORMATEX(sh->wf);
 		if(mp_conf.verbose>=1) print_wave_header(sh->wf,fsize);
 		have_wf=1;
@@ -317,12 +319,12 @@ static int mpxpav64_read_st64(Demuxer *demuxer,unsigned hsize,unsigned id){
     priv->data_off[id]=s->read_qword_le();
     if((idx_off=s->read_qword_le())!=0ULL) mpxpav64_read_indexes(demuxer,id,idx_off);
     /* Read stream properties */
-    s->read((char *)&priv->sprop[id],sizeof(mpxpav64StreamProperties_t));
+    binary_packet bp=s->read(sizeof(mpxpav64StreamProperties_t)); memcpy((char *)&priv->sprop[id],bp.data(),bp.size());
     le2me_mpxpav64StreamProperties(&priv->sprop[id]);
     if(mp_conf.verbose)
     {
 	char mime[priv->sprop[id].mimetype_len+1];
-	s->read(mime,priv->sprop[id].mimetype_len);
+	bp=s->read(priv->sprop[id].mimetype_len); memcpy(mime,bp.data(),bp.size());
 	mime[priv->sprop[id].mimetype_len]='\0';
 	print_StreamProp(&priv->sprop[id],mime,fourcc,priv->data_off[id],idx_off);
     }
@@ -378,7 +380,6 @@ static void mpxpav64_read_fcnt(Demuxer* demuxer,unsigned fsize)
     {
 	uint32_t fourcc,len;
 	unsigned infot;
-	char *str;
 	fourcc=s->read_dword_le();
 	len=s->read_word_le();
 	infot=INFOT_NULL;
@@ -408,11 +409,9 @@ static void mpxpav64_read_fcnt(Demuxer* demuxer,unsigned fsize)
 	}
 	if(infot)
 	{
-	    str=new char [len];
-	    s->read(str,len);
+	    binary_packet bp=s->read(len);
 	    sub_data.cp=nls_get_screen_cp(mpxp_get_environment());
-	    demuxer->info().add(infot,nls_recode2screen_cp(codepage,str,len));
-	    delete str;
+	    demuxer->info().add(infot,nls_recode2screen_cp(codepage,bp.cdata(),bp.size()));
 	}
 	else s->skip(len);
     }
@@ -439,6 +438,7 @@ static Opaque* mpxpav64_open(Demuxer* demuxer){
     uint32_t fourcc;
     uint16_t scount=0;
     mpxpav64_priv_t* priv;
+    binary_packet bp(1);
 
     s->seek(0);
     id=s->read_qword_le();
@@ -469,7 +469,7 @@ static Opaque* mpxpav64_open(Demuxer* demuxer){
 		    delete priv;
 		    return NULL;
 		}
-		s->read((char *)&priv->fprop,sizeof(mpxpav64FileProperties_t));
+		bp=s->read(sizeof(mpxpav64FileProperties_t)); memcpy((char *)&priv->fprop,bp.data(),bp.size());
 		le2me_mpxpav64FileProperties(&priv->fprop);
 		demuxer->movi_length=(priv->fprop.PlayDuration-priv->fprop.Preroll)/1000;
 		if((priv->nstreams=priv->fprop.StreamCount)>MAX_AV_STREAMS)
@@ -559,7 +559,8 @@ static int mpxpav64_read_packet(Demuxer *demux,unsigned id,uint64_t len,float pt
 	off_t pos=0LL;
 	Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
 	if(mp_conf.verbose>1) pos=s->tell();
-	len=s->read(dp->buffer(),len);
+	binary_packet bp=s->read(len); memcpy(dp->buffer(),bp.data(),bp.size());
+	len=bp.size();
 	dp->resize(len);
 	dp->pts=pts;
 	dp->flags=keyframe?DP_KEYFRAME:DP_NONKEYFRAME;
@@ -592,17 +593,17 @@ static int mpxpav64_demux(Demuxer *demux,Demuxer_Stream *__ds){
 	return 0;
     }
     if(s->eof()) return 0; // EOF
-    s->read(p,2);
+    binary_packet bp=s->read(2); memcpy(p,bp.data(),bp.size());
     if(p[0]=='S' && p[1]=='E')
     {
 	off_t cl_off;
 	cl_off=s->tell();
-	s->read(p,2);
+	bp=s->read(2); memcpy(p,bp.data(),bp.size());
 	if(p[0]=='E' && p[1] == 'K')
 	{
 	    MSG_DBG2("Found SEEK-point at %016llX\n",cl_off-2);
 	    mpxpav64_reset_prevs(demux);
-	    s->read(&p[1],1);
+	    p[1]=s->read_char();
 	    p[0]='D';
 	    goto do_next;
 	}
@@ -699,14 +700,15 @@ static int mpxpav64_test_seekpoint(Demuxer *demuxer)
     uint64_t len=0;
     int is_key,nkeys=0;
     char p[4];
+    binary_packet bp(1);
     while(!s->eof())
     {
 	if(nkeys>5) return 1;
-	s->read(p,2);
+	bp=s->read(2); memcpy(p,bp.data(),bp.size());
 	is_key=0;
 	if(p[0]=='S' && p[1]=='E')
 	{
-	    s->read(p,2);
+	    bp=s->read(2); memcpy(p,bp.data(),bp.size());
 	    if(p[0]!='E' || p[1]!='K') return 0;
 	    p[1]=s->read_char();
 	    is_key=1;
@@ -757,7 +759,7 @@ static int mpxpav64_sync(Demuxer *demuxer)
     while(!s->eof())
     {
 	rpos=s->tell();
-	s->read(p,4);
+	binary_packet bp=s->read(4); memcpy(p,bp.data(),bp.size());
 	if(p[0]=='S' && p[1]=='E' && p[2]=='E' && p[3]=='K')
 	{
 	    s->skip(-4);

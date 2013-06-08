@@ -33,7 +33,7 @@ int mp_mp3_get_lsf(unsigned char* hbuf){
 /*
  * return frame size or -1 (bad frame)
  */
-int mp_decode_mp3_header(unsigned char* hbuf,unsigned *fmt,unsigned *brate,unsigned *samplerate,unsigned *channels){
+int mp_decode_mp3_header(const unsigned char* hbuf,unsigned *fmt,unsigned *brate,unsigned *samplerate,unsigned *channels){
     int nch,ssize,crc,lsf,mpeg25,framesize,padding,bitrate_index,sampling_frequency,mp3_fmt;
     unsigned long newhead =
       hbuf[0] << 24 |

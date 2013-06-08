@@ -149,7 +149,7 @@ static void vivo_parse_text_header(Demuxer *demux, int header_len)
     buf = new char [header_len];
     opt = new char [header_len];
     param = new char [header_len];
-    demux->stream->read( buf, header_len);
+    binary_packet bp=demux->stream->read(header_len); memcpy(buf,bp.data(),bp.size());
     i=0;
     while(i<header_len && buf[i]==0x0D && buf[i+1]==0x0A) i+=2; // skip empty lines
 
@@ -277,7 +277,7 @@ static void vivo_parse_text_header(Demuxer *demux, int header_len)
 
 static MPXP_Rc vivo_probe(Demuxer* demuxer){
     int i=0;
-    int len;
+    unsigned len;
     int c;
     char buf[2048+256];
     vivo_priv_t* priv;
@@ -304,8 +304,9 @@ static MPXP_Rc vivo_probe(Demuxer* demuxer){
     if (priv->supported == 0)
 	return MPXP_False;
 #else
+    len=std::min(size_t(len),sizeof(buf));
     /* this is enought for check (for now) */
-    demuxer->stream->read(buf,len);
+    binary_packet bp=demuxer->stream->read(len); memcpy(buf,bp.data(),bp.size());
     buf[len]=0;
 
     // parse header:
@@ -346,6 +347,7 @@ static int vivo_demux(Demuxer *demux,Demuxer_Stream *__ds){
   int seq;
   int prefix=0;
   demux->filepos=demux->stream->tell();
+  binary_packet bp(1);
 
   c=demux->stream->read_char();
   if (c == -256) /* EOF */
@@ -426,7 +428,7 @@ static int vivo_demux(Demuxer *demux,Demuxer_Stream *__ds){
 	Demuxer_Packet* dp=ds->asf_packet;
 	dp->resize(dp->length()+len);
 	//memcpy(dp->buffer+dp->len,data,len);
-	demux->stream->read(dp->buffer()+dp->length(),len);
+	bp=demux->stream->read(len); memcpy(dp->buffer()+dp->length(),bp.data(),bp.size());
 	MSG_DBG3("data appended! %d+%d\n",dp->length(),len);
 	// we are ready now.
 	if((c&0xF0)==0x20) --ds->asf_seq; // hack!
@@ -436,7 +438,8 @@ static int vivo_demux(Demuxer *demux,Demuxer_Stream *__ds){
     // create new packet:
       Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
       //memcpy(dp->buffer,data,len);
-      len=demux->stream->read(dp->buffer(),len);
+      bp=demux->stream->read(len); memcpy(dp->buffer(),bp.data(),bp.size());
+      len=bp.size();
       dp->resize(len);
       dp->pts=audio_rate?((float)audio_pos/(float)audio_rate):0;
       dp->flags=DP_NONKEYFRAME;
@@ -487,8 +490,8 @@ static unsigned int x_get_bits(int n){
 static int h263_decode_picture_header(const unsigned char *b_ptr)
 {
 //    int i;
-    const unsigned char *buffer;
-    buffer=b_ptr;
+    const unsigned char *__buffer;
+    __buffer=b_ptr;
     bufptr=bitcnt=buf=0;
 
     /* picture header */

@@ -381,6 +381,7 @@ static MPXP_Rc ts_probe(Demuxer * demuxer)
     uint8_t size = 0;
     off_t pos = 0;
     off_t init_pos;
+    binary_packet bp(1);
 
     MSG_V( "Checking for MPEG-TS...\n");
 
@@ -406,7 +407,8 @@ static MPXP_Rc ts_probe(Demuxer * demuxer)
 
 	pos = demuxer->stream->tell() - 1;
 	buf[0] = c;
-	_read = demuxer->stream->read( &buf[1], buf_size-1);
+	bp = demuxer->stream->read( buf_size-1); memcpy(&buf[1],bp.data(),bp.size());
+	_read=bp.size();
 
 	if(_read < buf_size-1) {
 	    MSG_V( "COULDN'T READ ENOUGH DATA, EXITING TS_CHECK\n");
@@ -1196,7 +1198,8 @@ static int mp4_parse_sl_packet(pmt_t *pmt, uint8_t *buf, uint16_t packet_len, in
 			return -1;
 		if(cts_flag && (sl->ts_len > 0))
 		{
-			int i = 0, _mm;
+			int _mm;
+			i=0;
 
 			while(i < sl->ts_len)
 			{
@@ -1564,9 +1567,7 @@ static int collect_section(ts_section_t *section, int is_start, unsigned char *b
 	{
 		if(! section->buffer)
 		{
-			section->buffer = (uint8_t*) mp_malloc(4096+256);
-			if(section->buffer == NULL)
-				return 0;
+			section->buffer = new uint8_t[4096+256];
 		}
 		section->buffer_len = 0;
 	}
@@ -2599,6 +2600,7 @@ static int ts_parse(Demuxer *demuxer , ES_stream_t *es, unsigned char *packet, i
 	pmt_t *pmt;
 	mp4_decoder_config_t *mp4_dec;
 	TS_stream_info *si;
+	binary_packet bp(1);
 
 
 	while(! done)
@@ -2633,9 +2635,9 @@ static int ts_parse(Demuxer *demuxer , ES_stream_t *es, unsigned char *packet, i
 			return 0;
 		}
 
-		len = stream->read( &packet[1], 3);
-		if (len != 3)
-			return 0;
+		bp = stream->read(3); memcpy(&packet[1],bp.data(),bp.size());
+		len=bp.size();
+		if (len != 3) return 0;
 		buf_size -= 4;
 
 		if((packet[1]  >> 7) & 0x01)	//transport error
@@ -2847,7 +2849,8 @@ static int ts_parse(Demuxer *demuxer , ES_stream_t *es, unsigned char *packet, i
 			p = &((*dp)->buffer()[*dp_offset]);
 		}
 
-		len = stream->read( p, buf_size);
+		bp = stream->read(buf_size); memcpy(p,bp.data(),bp.size());
+		len=bp.size();
 		if(len < buf_size)
 		{
 			MSG_DBG2("\r\nts_parse() couldn't read enough data: %d < %d\r\n", len, buf_size);

@@ -47,7 +47,7 @@ static MPXP_Rc y4m_probe(Demuxer* demuxer){
 
     MSG_V( "Checking for YUV4MPEG2\n");
 
-    demuxer->stream->read( buf, 9);
+    binary_packet bp=demuxer->stream->read(9); memcpy(buf,bp.data(),bp.size());
     buf[9] = 0;
 
     if (strncmp("YUV4MPEG2", buf, 9) && strncmp("YUV4MPEG ", buf, 9)) {
@@ -90,6 +90,7 @@ static int y4m_demux(Demuxer *demux,Demuxer_Stream *__ds) {
   size = ((sh_video_t*)ds->sh)->src_w*((sh_video_t*)ds->sh)->src_h;
 
   dp = new(zeromem) Demuxer_Packet(3*size/2);
+  binary_packet bp(1);
 
   /* swap U and V components */
   buf[0] = dp->buffer();
@@ -109,9 +110,9 @@ static int y4m_demux(Demuxer *demux,Demuxer_Stream *__ds) {
 	return 0;
     }
     demux->stream->skip( 5); /* RAME\n */
-    demux->stream->read( buf[0], size);
-    demux->stream->read( buf[1], size/4);
-    demux->stream->read( buf[2], size/4);
+    bp=demux->stream->read(size); memcpy(buf,bp.data(),bp.size());
+    bp=demux->stream->read(size/4); memcpy(&buf[1],bp.data(),bp.size());
+    bp=demux->stream->read(size/4); memcpy(&buf[2],bp.data(),bp.size());
   }
   else
   {
@@ -147,15 +148,15 @@ static Opaque* y4m_open(Demuxer* demuxer){
 
 	demuxer->stream->skip( 8); /* YUV4MPEG */
 	demuxer->stream->skip( 1); /* space */
-	demuxer->stream->read( (char *)&buf[0], 3);
+	binary_packet bp=demuxer->stream->read(3); memcpy((char *)&buf[0],bp.data(),bp.size());
 	buf[3] = 0;
 	sh->src_w = atoi(buf);
 	demuxer->stream->skip( 1); /* space */
-	demuxer->stream->read( (char *)&buf[0], 3);
+	bp=demuxer->stream->read(3); memcpy((char *)&buf[0],bp.data(),bp.size());
 	buf[3] = 0;
 	sh->src_h = atoi(buf);
 	demuxer->stream->skip( 1); /* space */
-	demuxer->stream->read( (char *)&buf[0], 1);
+	buf[0] = demuxer->stream->read_char();
 	buf[1] = 0;
 	frame_rate_code = atoi(buf);
 	demuxer->stream->skip( 1); /* new-line */

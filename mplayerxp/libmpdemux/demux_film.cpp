@@ -116,12 +116,14 @@ static int film_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
   // load the chunks manually (instead of using ds_read_packet()), since
   // they require some adjustment
   // (all ones in syncinfo1 indicates an audio chunk)
+  binary_packet bp(1);
   if (film_chunk.syncinfo1 == 0xFFFFFFFF)
   {
    if(demuxer->audio->id>=-1){   // audio not disabled
     dp = new(zeromem) Demuxer_Packet(film_chunk.chunk_size);
-    if (demuxer->stream->read( dp->buffer(), film_chunk.chunk_size) !=
-      film_chunk.chunk_size) return 0;
+    bp=demuxer->stream->read(film_chunk.chunk_size);
+    if(bp.size() != size_t(film_chunk.chunk_size)) return 0;
+    memcpy(dp->buffer(),bp.data(),bp.size());
     dp->pts = film_chunk.pts;
     dp->pos = film_chunk.chunk_offset;
     dp->flags = DP_NONKEYFRAME;
@@ -158,14 +160,14 @@ static int film_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
       dp = new(zeromem) Demuxer_Packet(film_chunk.chunk_size - length_fix_bytes);
 
       // these CVID data chunks have a few extra bytes; skip them
-      if (demuxer->stream->read( dp->buffer(), 10) != 10)
-	return 0;
+      bp=demuxer->stream->read(10);
+      if (bp.size() != 10) return 0;
+      memcpy(dp->buffer(),bp.data(),bp.size());
       demuxer->stream->skip( length_fix_bytes);
 
-      if (demuxer->stream->read( dp->buffer() + 10,
-	film_chunk.chunk_size - (10 + length_fix_bytes)) !=
-	(film_chunk.chunk_size - (10 + length_fix_bytes)))
-	return 0;
+      bp=demuxer->stream->read(film_chunk.chunk_size - (10 + length_fix_bytes));
+      if(bp.size()!=size_t(film_chunk.chunk_size - (10 + length_fix_bytes))) return 0;
+      memcpy(dp->buffer(),bp.data(),bp.size());
 
       dp->pts = film_chunk.pts;
       dp->pos = film_chunk.chunk_offset;
@@ -309,7 +311,7 @@ static Opaque* film_open(Demuxer* demuxer)
 	  demuxer->audio->sh = sh_audio;
 	  sh_audio->ds = demuxer->audio;
 
-	  sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
+	  sh_audio->wf = new WAVEFORMATEX;
 
 	  // uncompressed PCM format
 	  sh_audio->wf->wFormatTag = 1;
@@ -340,7 +342,7 @@ static Opaque* film_open(Demuxer* demuxer)
 	demuxer->audio->sh = sh_audio;
 	sh_audio->ds = demuxer->audio;
 
-	sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
+	sh_audio->wf = new WAVEFORMATEX;
 
 	// uncompressed PCM format
 	sh_audio->wf->wFormatTag = 1;
@@ -374,8 +376,7 @@ static Opaque* film_open(Demuxer* demuxer)
 	"  STAB chunk contains %d chunks\n", film_data->total_chunks);
 
       // allocate enough entries for the chunk
-      film_data->chunks =
-	(film_chunk_t *)mp_malloc(film_data->total_chunks * sizeof(film_chunk_t));
+      film_data->chunks =new film_chunk_t[film_data->total_chunks];
 
       // build the chunk index
       counting_chunks = 1;

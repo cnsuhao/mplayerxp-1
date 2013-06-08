@@ -45,17 +45,15 @@ struct snd_au_priv_t : public Opaque {
 
 static int snd_au_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigned *samplerate,unsigned *channels)
 {
-  uint32_t fcc,fcc1,fmt;
-  uint8_t *p,b[32];
+  uint32_t fcc1;
   Stream *s;
   *brate=*samplerate=*channels=0;
   s = demuxer->stream;
   s->seek(fptr);
-  fcc=fcc1=s->read_dword();
+  fcc1=s->read_dword();
   fcc1=me2be_32(fcc1);
-  p = (uint8_t *)&fcc1;
   s->seek(fptr);
-  s->read(b,sizeof(b));
+  binary_packet bp=s->read(32);
   if(fcc1 == mmioFOURCC('.','s','n','d')) return 1;
   s->seek(fptr);
   return 0;
@@ -98,7 +96,7 @@ static Opaque* snd_au_open(Demuxer* demuxer) {
     step = 1;
 
     if(pos < HDR_SIZE) {
-      s->read(&hdr[pos],HDR_SIZE-pos);
+      binary_packet bp=s->read(HDR_SIZE-pos); memcpy(&hdr[pos],bp.data(),bp.size());
       pos = HDR_SIZE;
     }
 
@@ -124,7 +122,7 @@ static Opaque* snd_au_open(Demuxer* demuxer) {
 	unsigned hsize,dsize;
 	uint32_t id;
 	WAVEFORMATEX* w;
-	sh_audio->wf = w = (WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
+	sh_audio->wf = w = new WAVEFORMATEX;
 	hsize=s->read_dword();
 	dsize=s->read_dword();
 	id = s->read_dword();
@@ -192,7 +190,8 @@ static int snd_au_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
   }
     int l = sh_audio->wf->nAvgBytesPerSec;
     Demuxer_Packet* dp =new(zeromem) Demuxer_Packet(l);
-    l=s->read(dp->buffer(),l);
+    binary_packet bp=s->read(l); memcpy(dp->buffer(),bp.data(),bp.size());
+    l=bp.size();
     dp->resize(l);
     priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + l/(float)sh_audio->i_bps;
     dp->pts = priv->last_pts - (demux->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;

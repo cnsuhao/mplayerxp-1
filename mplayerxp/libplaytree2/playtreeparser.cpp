@@ -57,7 +57,8 @@ char* PlayTree_Parser::get_line() {
 	}
 
 	if(buffer_size - buffer_end > 1 && !stream->eof()) {
-	    r = stream->read(buffer + buffer_end,buffer_size - buffer_end - 1);
+	    binary_packet bp = stream->read(buffer_size - buffer_end - 1); memcpy(buffer + buffer_end,bp.data(),bp.size());
+	    r = bp.size();
 	    if(r > 0) {
 		buffer_end += r;
 		buffer[buffer_end] = '\0';

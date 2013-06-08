@@ -119,7 +119,7 @@ static MPXP_Rc pva_probe(Demuxer * demuxer)
 {
     uint8_t buffer[5]={0,0,0,0,0};
     MSG_V("Checking for PVA\n");
-    demuxer->stream->read(buffer,5);
+    binary_packet bp=demuxer->stream->read(5); memcpy(buffer,bp.data(),bp.size());
     if(buffer[0]=='A' && buffer[1] == 'V' && buffer[4] == 0x55) {
 	MSG_DBG2("Success: PVA\n");
 	demuxer->file_format=Demuxer::Type_PVA;
@@ -194,6 +194,7 @@ static int pva_demux(Demuxer * demux,Demuxer_Stream *__ds)
 	Demuxer_Packet * dp;
 	pva_priv_t* priv=static_cast<pva_priv_t*>(demux->priv);
 	pva_payload_t current_payload;
+	binary_packet bp(1);
 
 	while(!done)
 	{
@@ -230,7 +231,8 @@ static int pva_demux(Demuxer * demux,Demuxer_Stream *__ds)
 					dp=new(zeromem) Demuxer_Packet(current_payload.size);
 					dp->pts=priv->last_video_pts;
 					dp->flags=DP_NONKEYFRAME;
-					l=demux->stream->read(dp->buffer(),current_payload.size);
+					bp=demux->stream->read(current_payload.size); memcpy(dp->buffer(),bp.data(),bp.size());
+					l=bp.size();
 					dp->resize(l);
 					demux->video->add_packet(dp);
 				} else {
@@ -260,7 +262,8 @@ static int pva_demux(Demuxer * demux,Demuxer_Stream *__ds)
 					dp->pts=priv->last_audio_pts;
 					if(current_payload.offset != demux->stream->tell())
 						demux->stream->seek(current_payload.offset);
-					l=demux->stream->read(dp->buffer(),current_payload.size);
+					bp=demux->stream->read(current_payload.size); memcpy(dp->buffer(),bp.data(),bp.size());
+					l=bp.size();
 					dp->resize(l);
 					demux->audio->add_packet(dp);
 				} else {
@@ -278,6 +281,7 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 	uint16_t pack_size;
 	off_t next_offset,pva_payload_start;
 	unsigned char buffer[256];
+	binary_packet bp(1);
 #ifndef PVA_NEW_PREBYTES_CODE
 	Demuxer_Packet * dp; 	//hack to deliver the preBytes (see PVA doc)
 #endif
@@ -366,9 +370,8 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 #ifdef DEMUX_PVA_MULTIDEC_HACK
 	if(payload->type==MAINAUDIOSTREAM)
 	{
-		d->stream->read(buffer,3);
-		if(buffer[0]==0x00 && buffer[1]==0x00 && buffer[2]==0x01 && !payload->is_packet_start)
-		{
+		bp=d->stream->read(3); memcpy(buffer,bp.data(),bp.size());
+		if(buffer[0]==0x00 && buffer[1]==0x00 && buffer[2]==0x01 && !payload->is_packet_start) {
 			MSG_V("demux_pva: suspecting non signaled audio PES packet start. Maybe file by MultiDec?\n");
 			payload->is_packet_start=1;
 		}
@@ -397,7 +400,7 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 				{
 #ifndef PVA_NEW_PREBYTES_CODE
 					dp=new_demux_packet(flags&0x03);
-					d->stream->read(dp->buffer,flags & 0x03); //read PreBytes
+					bp=d->stream->read(flags & 0x03); memcpy(dp->buffer,bp.data(),bp.size()); //read PreBytes
 					ds_add_packet(d->video,dp);
 #else
 					//printf("Delivering prebytes. Setting prebytes_delivered.");
@@ -425,7 +428,7 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 
 				buffer[255]=d->stream->read_char();
 				pes_head_len=d->stream->read_char();
-				d->stream->read(buffer,pes_head_len);
+				bp=d->stream->read(pes_head_len); memcpy(buffer,bp.data(),bp.size());
 				if(!(buffer[255]&0x80)) //PES header does not contain PTS.
 				{
 					MSG_V("Audio PES packet does not contain PTS. (pes_head_len=%d)\n",pes_head_len);

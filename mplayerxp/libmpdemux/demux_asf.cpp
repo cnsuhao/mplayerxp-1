@@ -133,7 +133,8 @@ static MPXP_Rc asf_probe(Demuxer *demuxer){
   apriv->asf_packetrate=0;
   apriv->asf_movielength=0;
 
-  demuxer->stream->read((char*)&apriv->asfh,sizeof(ASF_header_t)); // header obj
+    binary_packet bp=demuxer->stream->read(sizeof(ASF_header_t)); // header obj
+    memcpy((char*)&apriv->asfh,bp.data(),bp.size());
   le2me_ASF_header_t(&apriv->asfh);	// swap to machine endian
   if(memcmp(asf2hdrguid,apriv->asfh.objh.guid,16)==0){
     MSG_ERR("ASF_check: found ASF v2 guid!\nCurrently is not supported - please report!\n");
@@ -155,25 +156,27 @@ static MPXP_Rc asf_probe(Demuxer *demuxer){
 }
 
 static Opaque* asf_open(Demuxer *demuxer){
-  static unsigned char buffer[2048];
-  uint32_t* streams = NULL;
-  int audio_streams=0;
-  int video_streams=0;
-  uint16_t stream_count=0;
-  int best_video = -1;
-  int best_audio = -1;
-  asf_priv_t *apriv=static_cast<asf_priv_t*>(demuxer->priv);
+    binary_packet bp(1);
+    uint32_t* streams = NULL;
+    int audio_streams=0;
+    int video_streams=0;
+    uint16_t stream_count=0;
+    int best_video = -1;
+    int best_audio = -1;
+    asf_priv_t *apriv=static_cast<asf_priv_t*>(demuxer->priv);
 
 while(!demuxer->stream->eof()){
-  int pos,endpos;
-  pos=demuxer->stream->tell();
-  demuxer->stream->read((char*) &apriv->objh,sizeof(ASF_obj_header_t));
-  le2me_ASF_obj_header_t(&apriv->objh);
-  if(demuxer->stream->eof()) break; // EOF
-  endpos=pos+apriv->objh.size;
-  switch(ASF_LOAD_GUID_PREFIX(apriv->objh.guid)){
+    int pos,endpos;
+    pos=demuxer->stream->tell();
+    bp=demuxer->stream->read(sizeof(ASF_obj_header_t));
+    memcpy(&apriv->objh,bp.data(),bp.size());
+    le2me_ASF_obj_header_t(&apriv->objh);
+    if(demuxer->stream->eof()) break; // EOF
+    endpos=pos+apriv->objh.size;
+    switch(ASF_LOAD_GUID_PREFIX(apriv->objh.guid)){
     case ASF_GUID_PREFIX_stream_header:
-      demuxer->stream->read((char*) &apriv->streamh,sizeof(ASF_stream_header_t));
+      bp=demuxer->stream->read(sizeof(ASF_stream_header_t));
+      memcpy(&apriv->streamh,bp.data(),bp.size());
       le2me_ASF_stream_header_t(&apriv->streamh);
 	MSG_V("stream type: %s\n"
 	      "stream concealment: %s\n"
@@ -186,20 +189,20 @@ while(!demuxer->stream->eof()){
 	      ,(unsigned long)apriv->streamh.unk1,(unsigned int)apriv->streamh.unk2
 	      ,demuxer->stream->tell());
       // type-specific data:
-      demuxer->stream->read((char*) buffer,apriv->streamh.type_size);
+      bp=demuxer->stream->read(apriv->streamh.type_size);
       switch(ASF_LOAD_GUID_PREFIX(apriv->streamh.type)){
       case ASF_GUID_PREFIX_audio_stream: {
 	sh_audio_t* sh_audio=demuxer->new_sh_audio(apriv->streamh.stream_no & 0x7F);
 	++audio_streams;
 	sh_audio->wf=(WAVEFORMATEX*)mp_calloc((apriv->streamh.type_size<sizeof(WAVEFORMATEX))?sizeof(WAVEFORMATEX):apriv->streamh.type_size,1);
-	memcpy(sh_audio->wf,buffer,apriv->streamh.type_size);
+	memcpy(sh_audio->wf,bp.data(),bp.size());
 	le2me_WAVEFORMATEX(sh_audio->wf);
 	if(mp_conf.verbose>=1) print_wave_header(sh_audio->wf,apriv->streamh.type_size);
 	if(ASF_LOAD_GUID_PREFIX(apriv->streamh.concealment)==ASF_GUID_PREFIX_audio_conceal_interleave){
-	  demuxer->stream->read((char*) buffer,apriv->streamh.stream_size);
-	  apriv->asf_scrambling_h=buffer[0];
-	  apriv->asf_scrambling_w=(buffer[2]<<8)|buffer[1];
-	  apriv->asf_scrambling_b=(buffer[4]<<8)|buffer[3];
+	  bp=demuxer->stream->read(apriv->streamh.stream_size);
+	  apriv->asf_scrambling_h=bp.cdata()[0];
+	  apriv->asf_scrambling_w=(bp.cdata()[2]<<8)|bp.cdata()[1];
+	  apriv->asf_scrambling_b=(bp.cdata()[4]<<8)|bp.cdata()[3];
 	  apriv->asf_scrambling_w/=apriv->asf_scrambling_b;
 	} else {
 	  apriv->asf_scrambling_b=apriv->asf_scrambling_h=apriv->asf_scrambling_w=1;
@@ -212,7 +215,7 @@ while(!demuxer->stream->eof()){
 	unsigned int len=apriv->streamh.type_size-(4+4+1+2);
 	++video_streams;
 	sh_video->bih=(BITMAPINFOHEADER*)mp_mallocz(len<sizeof(BITMAPINFOHEADER)?sizeof(BITMAPINFOHEADER):len);
-	memcpy(sh_video->bih,&buffer[4+4+1+2],len);
+	memcpy(sh_video->bih,&bp.cdata()[4+4+1+2],len);
 	le2me_BITMAPINFOHEADER(sh_video->bih);
 	if(mp_conf.verbose>=1) print_video_header(sh_video->bih,len);
 	break;
@@ -222,7 +225,8 @@ while(!demuxer->stream->eof()){
       break;
 //  case ASF_GUID_PREFIX_header_2_0: return "guid_header_2_0";
     case ASF_GUID_PREFIX_file_header: // guid_file_header
-      demuxer->stream->read((char*) &apriv->fileh,sizeof(ASF_file_header_t));
+      bp=demuxer->stream->read(sizeof(ASF_file_header_t));
+      memcpy((char*) &apriv->fileh,bp.data(),bp.size());
       le2me_ASF_file_header_t(&apriv->fileh);
       MSG_V("ASF: size: %llu play_duration: %llu send_duration: %llu packets: %d\nflags: %d  min_packet_size: %d  max_packet_size: %d  max_bitrate: %d  preroll: %d\n",
       (uint64_t)apriv->fileh.file_size,(uint64_t)apriv->fileh.play_duration,(uint64_t)apriv->fileh.send_duration,
@@ -242,49 +246,39 @@ while(!demuxer->stream->eof()){
 
     case ASF_GUID_PREFIX_content_desc: // Content description
     {
-	char *string=NULL;
-	demuxer->stream->read((char*) &apriv->contenth,sizeof(ASF_content_description_t));
+	bp=demuxer->stream->read(sizeof(ASF_content_description_t));
+	memcpy((char*) &apriv->contenth,bp.data(),bp.size());
 	le2me_ASF_content_description_t(&apriv->contenth);
 	MSG_V("\n");
 	// extract the title
 	if( apriv->contenth.title_size!=0 ) {
-	    string=new char[apriv->contenth.title_size];
-	    demuxer->stream->read( string, apriv->contenth.title_size);
-	    pack_asf_string(string, apriv->contenth.title_size);
-	    demuxer->info().add(INFOT_NAME, string);
-	    delete string;
+	    bp=demuxer->stream->read(apriv->contenth.title_size);
+	    pack_asf_string(bp.cdata(), bp.size());
+	    demuxer->info().add(INFOT_NAME, bp.cdata());
 	}
 	// extract the author
 	if( apriv->contenth.author_size!=0 ) {
-	    string=new char [apriv->contenth.author_size];
-	    demuxer->stream->read( string, apriv->contenth.author_size);
-	    pack_asf_string(string, apriv->contenth.author_size);
-	    demuxer->info().add(INFOT_AUTHOR, string);
-	    delete string;
+	    bp=demuxer->stream->read(apriv->contenth.author_size);
+	    pack_asf_string(bp.cdata(),bp.size());
+	    demuxer->info().add(INFOT_AUTHOR, bp.cdata());
 	}
 	// extract the copyright
 	if( apriv->contenth.copyright_size!=0 ) {
-	    string=new char [apriv->contenth.copyright_size];
-	    demuxer->stream->read( string, apriv->contenth.copyright_size);
-	    pack_asf_string(string, apriv->contenth.copyright_size);
-	    demuxer->info().add(INFOT_COPYRIGHT, string);
-	    delete string;
+	    bp=demuxer->stream->read(apriv->contenth.copyright_size);
+	    pack_asf_string(bp.cdata(), bp.size());
+	    demuxer->info().add(INFOT_COPYRIGHT, bp.cdata());
 	}
 	// extract the comment
 	if( apriv->contenth.comment_size!=0 ) {
-	    string=new char [apriv->contenth.comment_size];
-	    demuxer->stream->read( string, apriv->contenth.comment_size);
-	    pack_asf_string(string, apriv->contenth.comment_size);
-	    demuxer->info().add(INFOT_COMMENTS, string);
-	    delete string;
+	    bp=demuxer->stream->read(apriv->contenth.comment_size);
+	    pack_asf_string(bp.cdata(), bp.size());
+	    demuxer->info().add(INFOT_COMMENTS, bp.cdata());
 	}
 	// extract the rating
 	if( apriv->contenth.rating_size!=0 ) {
-	    string=new char [apriv->contenth.rating_size];
-	    demuxer->stream->read( string, apriv->contenth.rating_size);
-	    pack_asf_string(string, apriv->contenth.comment_size);
-	    demuxer->info().add(INFOT_RATING, string);
-	    delete string;
+	    bp=demuxer->stream->read(apriv->contenth.rating_size);
+	    pack_asf_string(bp.cdata(), bp.size());
+	    demuxer->info().add(INFOT_RATING, bp.cdata());
 	}
 	MSG_V("\n");
       break;
@@ -295,19 +289,12 @@ while(!demuxer->stream->eof()){
 	char *object=NULL, *ptr=NULL;
 	MSG_V("============ ASF Stream group == START ===\n");
 	MSG_V(" object size = %d\n", (int)apriv->objh.size);
-	object = new char[apriv->objh.size];
-	if( object==NULL ) {
-	  MSG_ERR("Memory allocation failed\n");
-	  delete demuxer->priv;
-	  return NULL;
-	}
-	demuxer->stream->read(object, apriv->objh.size );
+	bp=demuxer->stream->read(apriv->objh.size );
 	// FIXME: We need some endian handling below...
-	ptr = object;
+	ptr = bp.cdata();
 	stream_count = le2me_16(*(uint16_t*)ptr);
 	ptr += sizeof(uint16_t);
-	if(stream_count > 0)
-	      streams = (uint32_t*)mp_malloc(2*stream_count*sizeof(uint32_t));
+	if(stream_count > 0) streams = new uint32_t[2*stream_count];
 	MSG_V(" stream count=[0x%x][%u]\n", stream_count, stream_count );
 	for( i=0 ; i<stream_count && ptr<((char*)object+apriv->objh.size) ; i++ ) {
 	  stream_id = le2me_16(*(uint16_t*)ptr);
@@ -321,7 +308,6 @@ while(!demuxer->stream->eof()){
 	  streams[2*i+1] = max_bitrate;
 	}
 	MSG_V("============ ASF Stream group == END ===\n");
-	delete object ;
       break;
     }
   } // switch GUID
@@ -460,7 +446,8 @@ static int demux_asf_read_packet(Demuxer *demux,off_t dataoff,int len,int id,int
 	if(dp->length()!=unsigned(offs) && offs!=-1) MSG_V("warning! fragment.len=%d BUT next fragment offset=%d  \n",dp->length(),offs);
 	dp->resize(dp->length()+len);
 	demux->stream->seek(dataoff);
-	demux->stream->read(dp->buffer()+dp->length(),len);
+	binary_packet bp=demux->stream->read(len);
+	memcpy(dp->buffer()+dp->length(),bp.data(),bp.size());
 	MSG_DBG3("data appended! %d+%d\n",dp->length(),len);
 	// we are ready now.
 	return 1;
@@ -474,7 +461,9 @@ static int demux_asf_read_packet(Demuxer *demux,off_t dataoff,int len,int id,int
       }
       Demuxer_Packet* dp=new(zeromem) Demuxer_Packet(len);
       demux->stream->seek(dataoff);
-      len=demux->stream->read(dp->buffer(),len);
+      binary_packet bp=demux->stream->read(len);
+      len=bp.size();
+      memcpy(dp->buffer(),bp.data(),len);
       dp->resize(len);
       dp->pts=time*0.001f;
       dp->flags=keyframe?DP_KEYFRAME:DP_NONKEYFRAME;

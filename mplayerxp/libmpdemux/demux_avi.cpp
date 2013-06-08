@@ -118,14 +118,15 @@ static float get_avi_aspect(unsigned char id)
 extern const demuxer_driver_t demux_avi;
 
 static void read_avi_header(Demuxer *demuxer,int index_mode){
-MainAVIHeader avih;
-sh_audio_t *sh_audio=NULL;
-sh_video_t *sh_video=NULL;
-int stream_id=-1;
-int idxfix_videostream=0;
-int idxfix_divx=0;
-avi_priv_t* priv=static_cast<avi_priv_t*>(demuxer->priv);
-off_t list_end=0;
+    binary_packet bp(1);
+    MainAVIHeader avih;
+    sh_audio_t *sh_audio=NULL;
+    sh_video_t *sh_video=NULL;
+    int stream_id=-1;
+    int idxfix_videostream=0;
+    int idxfix_divx=0;
+    avi_priv_t* priv=static_cast<avi_priv_t*>(demuxer->priv);
+    off_t list_end=0;
 
 //---- AVI header:
 priv->idx_size=0;
@@ -248,7 +249,8 @@ while(1){
     case mmioFOURCC('I','D','I','T'): hdr="Digitization Time";break;
 
     case ckidAVIMAINHDR:          // read 'avih'
-      demuxer->stream->read((char*) &avih,std::min(size2,unsigned(sizeof(avih))));
+      bp=demuxer->stream->read(std::min(size2,unsigned(sizeof(avih))));
+      memcpy(&avih,bp.data(),bp.size());
       le2me_MainAVIHeader(&avih); // swap to machine endian
       chunksize-=std::min(size2,unsigned(sizeof(avih)));
       demuxer->movi_length=avih.dwTotalFrames;
@@ -256,7 +258,8 @@ while(1){
       break;
     case ckidSTREAMHEADER: {      // read 'strh'
       AVIStreamHeader h;
-      demuxer->stream->read((char*) &h,std::min(size2,unsigned(sizeof(h))));
+      bp=demuxer->stream->read(std::min(size2,unsigned(sizeof(h))));
+      memcpy(&h,bp.data(),bp.size());
       le2me_AVIStreamHeader(&h);  // swap to machine endian
       chunksize-=std::min(size2,unsigned(sizeof(h)));
       ++stream_id;
@@ -293,8 +296,9 @@ while(1){
       s->bIndexType = demuxer->stream->read_char();
       s->nEntriesInUse = demuxer->stream->read_dword_le();
       *(uint32_t *)s->dwChunkId = demuxer->stream->read_dword_le();
-      demuxer->stream->read( (char *)s->dwReserved, 3*4);
-      memset(s->dwReserved, 0, 3*4);
+      bp=demuxer->stream->read(3*4);
+      memcpy(s->dwReserved,bp.data(),bp.size());
+      memset(s->dwReserved,0,3*4);
 
       print_avisuperindex_chunk(s);
 
@@ -319,7 +323,8 @@ while(1){
       if(last_fccType==streamtypeVIDEO){
 	sh_video->bih=(BITMAPINFOHEADER*)mp_mallocz((chunksize<sizeof(BITMAPINFOHEADER))?sizeof(BITMAPINFOHEADER):chunksize);
 	MSG_V("found 'bih', %u bytes of %d\n",chunksize,sizeof(BITMAPINFOHEADER));
-	demuxer->stream->read((char*) sh_video->bih,chunksize);
+	bp=demuxer->stream->read(chunksize);
+	memcpy(sh_video->bih,bp.data(),bp.size());
 	le2me_BITMAPINFOHEADER(sh_video->bih);  // swap to machine endian
 	// fixup MS-RLE header (seems to be broken for <256 color files)
 	if(sh_video->bih->biCompression<=1 && sh_video->bih->biSize==40)
@@ -372,7 +377,8 @@ while(1){
 	unsigned wf_size = chunksize<sizeof(WAVEFORMATEX)?sizeof(WAVEFORMATEX):chunksize;
 	sh_audio->wf=(WAVEFORMATEX*)mp_mallocz(wf_size);
 	MSG_V("found 'wf', %d bytes of %d\n",chunksize,sizeof(WAVEFORMATEX));
-	demuxer->stream->read((char*) sh_audio->wf,chunksize);
+	bp=demuxer->stream->read(chunksize);
+	memcpy(sh_audio->wf,bp.data(),bp.size());
 	le2me_WAVEFORMATEX(sh_audio->wf);
 	if (sh_audio->wf->cbSize != 0 &&
 	    wf_size < sizeof(WAVEFORMATEX)+sh_audio->wf->cbSize) {
@@ -388,7 +394,8 @@ while(1){
     case mmioFOURCC('v', 'p', 'r', 'p'): {
 	VideoPropHeader* vprp = (VideoPropHeader*)mp_malloc(chunksize);
 	unsigned int i;
-	demuxer->stream->read( (any_t*)vprp, chunksize);
+	bp=demuxer->stream->read(chunksize);
+	memcpy(vprp,bp.data(),bp.size());
 	le2me_VideoPropHeader(vprp);
 	chunksize -= sizeof(*vprp)-sizeof(vprp->FieldInfo);
 	chunksize /= sizeof(VIDEO_FIELD_DESC);
@@ -423,7 +430,8 @@ while(1){
       MSG_V("Reading INDEX block, %d chunks for %ld frames\n",
 	priv->idx_size,avih.dwTotalFrames);
       priv->idx=(AVIINDEXENTRY*)mp_malloc(priv->idx_size<<4);
-      demuxer->stream->read((char*)priv->idx,priv->idx_size<<4);
+      bp=demuxer->stream->read(priv->idx_size<<4);
+      memcpy(priv->idx,bp.data(),bp.size());
       for (i = 0; i < priv->idx_size; i++) {	// swap index to machine endian
 	AVIINDEXENTRY *entry=(AVIINDEXENTRY*)priv->idx + i;
 	le2me_AVIINDEXENTRY(entry);
@@ -469,14 +477,14 @@ while(1){
     if(size2==3)
       chunksize=1; // empty
     else {
-      char buf[256];
       int len=(size2<250)?size2:250;
-      demuxer->stream->read(buf,len);
+      bp=demuxer->stream->read(len);
       chunksize-=len;
-      buf[len]=0;
-      MSG_V("%-10s: %s\n",hdr,buf);
-      if(infot!=-1) demuxer->info().add(infot, buf);
-      else	    MSG_V("   %s: %s\n",hdr,buf);
+      bp.resize(bp.size()+1);
+      bp.cdata()[len]=0;
+      MSG_V("%-10s: %s\n",hdr,bp.cdata());
+      if(infot!=-1) demuxer->info().add(infot, bp.cdata());
+      else	    MSG_V("   %s: %s\n",hdr,bp.cdata());
     }
   }
   MSG_DBG2("list_end=0x%X  pos=0x%X  chunksize=0x%X  next=0x%X\n",
@@ -520,7 +528,9 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
 	    int ret1, ret2;
 	    memset(&cx->stdidx[j], 0, 32);
 	    ret1 = demuxer->stream->seek( (off_t)cx->aIndex[j].qwOffset);
-	    ret2 = demuxer->stream->read( (char *)&cx->stdidx[j], 32);
+	    bp = demuxer->stream->read(32);
+	    ret2 = bp.size();
+	    memcpy(&cx->stdidx[j],bp.data(),ret2);
 	    if (ret2 != 32 || cx->stdidx[j].nEntriesInUse==0) {
 		// this is a broken file (probably incomplete) let the standard
 		// gen_index routine handle this
@@ -534,8 +544,8 @@ if (priv->is_odml && (index_mode==-1 || index_mode==0)) {
 	    print_avistdindex_chunk(&cx->stdidx[j]);
 	    priv->idx_size += cx->stdidx[j].nEntriesInUse;
 	    cx->stdidx[j].aIndex = new avistdindex_entry[cx->stdidx[j].nEntriesInUse];
-	    demuxer->stream->read( (char *)cx->stdidx[j].aIndex,
-		    cx->stdidx[j].nEntriesInUse*sizeof(avistdindex_entry));
+	    bp=demuxer->stream->read(cx->stdidx[j].nEntriesInUse*sizeof(avistdindex_entry));
+	    memcpy( (char *)cx->stdidx[j].aIndex,bp.data(),bp.size());
 	    for (k=0;k<cx->stdidx[j].nEntriesInUse; k++)
 		le2me_avistdindex_entry(&cx->stdidx[j].aIndex[k]);
 

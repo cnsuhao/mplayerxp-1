@@ -10,6 +10,7 @@ using namespace	usr;
 #include <sys/types.h>
 #include <string.h>
 
+#include "xmpcore/binary_packet.h"
 #include "xmpcore/xmp_enums.h"
 
 namespace	usr {
@@ -58,7 +59,7 @@ namespace	usr {
 	    virtual MPXP_Rc	open(libinput_t&libinput,const std::string& filename,int* file_format);
 	    virtual void	close();
 
-	    virtual int		read(any_t* mem,int total);
+	    virtual binary_packet read(size_t total);
 	    virtual off_t	seek(off_t off);
 	    virtual int		skip(off_t len);
 	    virtual off_t	tell() const;
@@ -109,7 +110,7 @@ namespace	usr {
 	    Memory_Stream(const unsigned char* data,unsigned len);
 	    virtual ~Memory_Stream();
 
-	    virtual int		read(any_t* mem,int total);
+	    virtual binary_packet read(size_t total);
 	    virtual off_t	tell() const;
 	    virtual off_t	seek(off_t pos);
 	    virtual int		skip(off_t len);
@@ -132,7 +133,7 @@ namespace	usr {
 	    Cached_Stream(libinput_t& libinput,int size,int _min,int prefill,Stream::type_e type=Stream::Type_Unknown);
 	    virtual ~Cached_Stream();
 
-	    virtual int		read(any_t* mem,int total);
+	    virtual binary_packet read(size_t total);
 	    virtual off_t	tell() const;
 	    virtual off_t	seek(off_t pos);
 	    virtual int		skip(off_t len);

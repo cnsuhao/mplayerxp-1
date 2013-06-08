@@ -45,17 +45,20 @@ struct flac_priv_t : public Opaque {
 
 static int flac_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigned *samplerate,unsigned *channels)
 {
-  uint32_t fcc,fcc1;
-  uint8_t *p,b[32];
+  uint32_t fcc1;
   Stream *s;
   *brate=*samplerate=*channels=0;
   s = demuxer->stream;
   s->seek(fptr);
-  fcc=fcc1=s->read_dword();
+  fcc1=s->read_dword();
   fcc1=me2be_32(fcc1);
-  p = (uint8_t *)&fcc1;
   s->seek(fptr);
-  s->read(b,sizeof(b));
+  binary_packet bp=s->read(32);
+/*
+    s->samplerate = get_bits_long(&gb, 20);
+    s->channels = get_bits(&gb, 3) + 1;
+    s->bps = get_bits(&gb, 5) + 1;
+*/
   if(fcc1 == mmioFOURCC('f','L','a','C')) return 1;
   s->seek(fptr);
   return 0;
@@ -92,13 +95,15 @@ static Opaque* flac_open(Demuxer* demuxer) {
   s = demuxer->stream;
   s->reset();
   s->seek(s->start_pos());
+  binary_packet bp(1);
   while(n < 5 && !s->eof())
   {
     st_pos = s->tell();
     step = 1;
 
     if(pos < HDR_SIZE) {
-      s->read(&hdr[pos],HDR_SIZE-pos);
+      bp=s->read(HDR_SIZE-pos);
+      memcpy(&hdr[pos],bp.data(),bp.size());
       pos = HDR_SIZE;
     }
 
@@ -130,7 +135,9 @@ static Opaque* flac_open(Demuxer* demuxer) {
 	/* loop through the metadata blocks; use a do-while construct since there
 	* will always be 1 metadata block */
 	do {
-	    if(s->read(chunk,4)!=4) return NULL;
+	    bp=s->read(4);
+	    if(bp.size()!=4) return NULL;
+	    memcpy(chunk,bp.data(),bp.size());
 	    block_size=(chunk[1]<<16)|(chunk[2]<<8)|chunk[3];
 	    switch (chunk[0] & 0x7F) {
 		/* STREAMINFO */
@@ -139,13 +146,15 @@ static Opaque* flac_open(Demuxer* demuxer) {
 		    char sinfo[block_size];
 		    WAVEFORMATEX* w;
 		    unsigned long long int total_samples;
-		    sh_audio->wf = w = (WAVEFORMATEX*)mp_mallocz(sizeof(WAVEFORMATEX));
+		    sh_audio->wf = w = new WAVEFORMATEX;
 		    MSG_V("STREAMINFO metadata\n");
 		    if (block_size != 34) {
 			MSG_V("expected STREAMINFO chunk of %d bytes\n",block_size);
 			return 0;
 		    }
-		    if(s->read(sinfo,block_size)!=(int)block_size) return NULL;
+		    bp=s->read(block_size);
+		    if(bp.size()!=(int)block_size) return NULL;
+		    memcpy(sinfo,bp.data(),bp.size());
 		    sh_audio->rate=be2me_32(*(uint32_t *)&sinfo[10]);
 		    sh_audio->nch=w->nChannels=((sh_audio->rate>>9)&0x07)+1;
 		    w->wBitsPerSample=((sh_audio->rate>>4)&0x1F)+1;
@@ -229,7 +238,9 @@ static int flac_demux(Demuxer *demuxer,Demuxer_Stream *ds) {
   }
     int l = sh_audio->wf->nAvgBytesPerSec;
     Demuxer_Packet* dp =new(zeromem) Demuxer_Packet(l);
-    l=s->read(dp->buffer(),l);
+    binary_packet bp = s->read(l);
+    l=bp.size();
+    memcpy(dp->buffer(),bp.data(),bp.size());
     dp->resize(l);
     priv->last_pts = priv->last_pts < 0 ? 0 : priv->last_pts + l/(float)sh_audio->i_bps;
     dp->pts = priv->last_pts - (demux->audio->tell_pts()-sh_audio->a_in_buffer_len)/(float)sh_audio->i_bps;

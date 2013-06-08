@@ -66,21 +66,21 @@ int y4m_allow_unknown_tags(int yn) {
 
 ssize_t y4m_read(Stream& s, char *buf, size_t len)
 {
-   ssize_t n;
+    ssize_t n;
 
-   while (len > 0) {
-     n = s.read(buf, len);
-     if (n <= 0) {
-       /* return amount left to read */
-       if (n == 0)
-	 return len;  /* n == 0 --> eof */
-       else
-	 return -len; /* n < 0 --> error */
-     }
-     buf += n;
-     len -= n;
-   }
-   return 0;
+    while (len > 0) {
+	binary_packet bp = s.read(len);
+	n = bp.size();
+	memcpy(buf,bp.data(),bp.size());
+	if (n <= 0) {
+	    /* return amount left to read */
+	    if (n == 0) return len;  /* n == 0 --> eof */
+	    else return -len; /* n < 0 --> error */
+        }
+        buf += n;
+        len -= n;
+    }
+    return 0;
 }
 
 
