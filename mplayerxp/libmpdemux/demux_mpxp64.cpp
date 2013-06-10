@@ -17,7 +17,7 @@ using namespace	usr;
 #include "demuxer.h"
 #include "demuxer_internal.h"
 #include "stheader.h"
-#include "win32loader/qtx/qtxsdk/components.h"
+#include "win32sdk/qtxsdk/components.h"
 #include "nls/nls.h"
 #include "libmpsub/subreader.h"
 

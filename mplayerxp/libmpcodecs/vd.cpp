@@ -43,13 +43,6 @@ extern const vd_functions_t mpcodecs_vd_qtvideo;
 extern const vd_functions_t mpcodecs_vd_theora;
 
 static const vd_functions_t* mpcodecs_vd_drivers[] = {
-#ifdef ENABLE_WIN32LOADER
-    &mpcodecs_vd_dshow,
-    &mpcodecs_vd_vfw,
-    &mpcodecs_vd_vfwex,
-    &mpcodecs_vd_dmo,
-    &mpcodecs_vd_qtvideo,
-#endif
     &mpcodecs_vd_raw,
     &mpcodecs_vd_nuv,
     &mpcodecs_vd_libmpeg2,

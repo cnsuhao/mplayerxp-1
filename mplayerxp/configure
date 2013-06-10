@@ -87,7 +87,6 @@ DISABLED_LIST=(
     "profile|compile profiling information into PROGRAM",
     "static|build static libraries",
     "dbg23|allow additional level of debug messages",
-    "win32loader|build support for Win32 codecs",
     "random_name|generates pseudo random suffix of target",
     "sdl|build with SDL video and audio output|http://www.libsdl.org",
     "sdl_image|build with SDL_image for screenshots|http://www.libsdl.org/projects/SDL_image",
@@ -106,7 +105,6 @@ PATH_LIST=(
     "libdir|object code libraries|\$exec_prefix/lib",
     "datadir|read-only architecture-independent data|\$prefix/share/mplayerxp",
     "confdir|read-only configuration files|\$prefix/share/mplayerxp",
-    "win32libdir|win32 .dll locations [/usr/lib/win32]"
 )
 
 PROGNAME_LIST=(
@@ -579,26 +577,6 @@ fi
 mpxp_help="nls/mpxp_help-$linguas.h"
 test -f nls/mpxp_help-$linguas.h || die "nls/mpxp_help-$linguas.h not found"
 echo "#define I18N_LANGUAGE \"$linguas\"" >>mpxp_config.h
-
-enabled gpl_only && disable win32loader
-
-if win32 || ! x86_32 ; then
-disable win32loader
-fi
-win32 && add_ldflags -lkernel32
-print_config ENABLE_ mpxp_config.h mpxp_config.mak win32loader
-
-echo -n "win32 dll's ... "
-if test -z "$win32libdir" ; then
-  for I in /usr/local/lib/win32 /usr/lib/win32 ; do
-    if test -d "$I" ; then
-      win32libdir="$I"
-      break;
-    fi;
-  done
-fi
-echo "$win32libdir"
-echo "#define WIN32_PATH \"$win32libdir\"" >>mpxp_config.h
 
 #########
 # VIDEO #

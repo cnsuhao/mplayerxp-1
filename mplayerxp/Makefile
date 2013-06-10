@@ -12,9 +12,7 @@ include mpxp_config.mak
 TARGET_EXE = $(PROGNAME)
 # these subdirectories required installation due binaries within them
 SUBDIRS = libmpdemux libmpstream2 libmpsub libplaytree2 libmpcodecs libmpconf libao3 osdep postproc input2 nls libvo2 xmpcore
-ifeq ($(ENABLE_WIN32LOADER),yes)
-SUBDIRS+=win32loader
-endif
+
 DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_MAKE_ALL = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
@@ -45,9 +43,6 @@ MP_LIBS = libmpstream2/libmpstream2.a \
 	  nls/libnls.a \
 	  libmpconf/libmpconf.a \
 	  xmpcore/libxmpcore.a
-ifeq ($(ENABLE_WIN32LOADER),yes)
-	  MP_LIBS += win32loader/libwin32loader.a
-endif
 
 LIBS+= $(MP_LIBS) $(LAVC_LIBS) $(EXTRALIBS) -lm
 CXXFLAGS = $(OPTXXFLAGS) $(EXTRA_INC)

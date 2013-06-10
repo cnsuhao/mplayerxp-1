@@ -9,7 +9,7 @@
 #ifndef NOAVIFMT
 
 #ifndef  __WINE_WINDEF_H
-#include "win32loader/wine/windef.h"
+#include "win32sdk/windef.h"
 #endif
 
 #ifndef __WINE_MMSYSTEM_H

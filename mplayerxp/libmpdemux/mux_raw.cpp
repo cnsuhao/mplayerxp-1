@@ -10,9 +10,9 @@ using namespace	usr;
 
 #include "version.h"
 
-#include "win32loader/wine/mmreg.h"
-#include "win32loader/wine/avifmt.h"
-#include "win32loader/wine/vfw.h"
+#include "win32sdk/mmreg.h"
+#include "win32sdk/avifmt.h"
+#include "win32sdk/vfw.h"
 #include "osdep/bswap.h"
 #include "muxer.h"
 #include "aviheader.h"

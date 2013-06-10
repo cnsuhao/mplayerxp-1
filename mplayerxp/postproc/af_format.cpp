@@ -18,7 +18,7 @@ using namespace	usr;
 #include "af_internal.h"
 #include "osdep/bswap.h"
 #include "aflib.h"
-#include "win32loader/wine/mmreg.h"
+#include "win32sdk/mmreg.h"
 #include "pp_msg.h"
 
 // Integer to float conversion through lrintf()

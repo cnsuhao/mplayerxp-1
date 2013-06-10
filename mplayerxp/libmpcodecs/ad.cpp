@@ -52,13 +52,6 @@ static const ad_functions_t* mpcodecs_ad_drivers[] = {
 #ifndef ENABLE_GPL_ONLY
     &mpcodecs_ad_real,
 #endif
-#ifdef ENABLE_WIN32LOADER
-    &mpcodecs_ad_dshow,
-    &mpcodecs_ad_twin,
-    &mpcodecs_ad_msacm,
-    &mpcodecs_ad_dmo,
-    &mpcodecs_ad_qtaudio,
-#endif
     &mpcodecs_ad_lavc,
     &mpcodecs_ad_null,
 

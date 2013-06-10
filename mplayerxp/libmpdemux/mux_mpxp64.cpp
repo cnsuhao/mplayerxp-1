@@ -18,10 +18,10 @@ using namespace	usr;
 
 #include "nls/nls.h"
 
-#include "win32loader/wine/mmreg.h"
-#include "win32loader/wine/avifmt.h"
-#include "win32loader/wine/vfw.h"
-#include "win32loader/qtx/qtxsdk/components.h"
+#include "win32sdk/mmreg.h"
+#include "win32sdk/avifmt.h"
+#include "win32sdk/vfw.h"
+#include "win32sdk/qtxsdk/components.h"
 #include "osdep/bswap.h"
 
 #include "libmpstream2/stream.h"

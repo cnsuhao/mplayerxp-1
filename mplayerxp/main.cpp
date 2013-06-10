@@ -257,9 +257,6 @@ unsigned get_number_cpu(void) {
 }
 
 static void mpxp_uninit_structs(void) {
-#ifdef ENABLE_WIN32LOADER
-    free_codec_cfg();
-#endif
     if(mpxp_context().video().output) delete mpxp_context().video().output;
     if(mpxp_context().audio().output) delete mpxp_context().audio().output;
     xmp_uninit();
@@ -516,27 +513,11 @@ static MPXP_Rc init_player(const std::map<std::string,std::string>& envm)
 	return MPXP_False;
     }
 
-#ifdef ENABLE_WIN32LOADER
-    /* check codec.conf*/
-    if(!parse_codec_cfg(get_path(envm,"win32codecs.conf").c_str())) {
-      if(!parse_codec_cfg(CONFDIR"/win32codecs.conf")) {
-	mpxp_hint<<MSGTR_CopyCodecsConf<<std::endl;
-	mpxp_uninit_structs();
-	return MPXP_False;
-      }
-    }
-#endif
     if(mp_conf.audio_codec && strcmp(mp_conf.audio_codec,"help")==0) {
-#ifdef ENABLE_WIN32LOADER
-	list_codecs(1);
-#endif
 	mpxp_uninit_structs();
 	return MPXP_False;
     }
     if(mp_conf.video_codec && strcmp(mp_conf.video_codec,"help")==0) {
-#ifdef ENABLE_WIN32LOADER
-	list_codecs(0);
-#endif
 	mpxp_uninit_structs();
 	return MPXP_False;
     }
@@ -563,18 +544,6 @@ void show_long_help(const M_Config& cfg,const std::map<std::string,std::string>&
     af_help();
     vfm_help();
     afm_help();
-#ifdef ENABLE_WIN32LOADER
-    /* check codec.conf*/
-    if(!parse_codec_cfg(get_path(envm,"win32codecs.conf").c_str())){
-      if(!parse_codec_cfg(CONFDIR"/win32codecs.conf")){
-	mpxp_hint<<MSGTR_CopyCodecsConf<<std::endl;
-	mpxp_uninit_structs();
-	exit(0);
-      }
-    }
-    list_codecs(0);
-    list_codecs(1);
-#endif
 }
 
 #ifdef USE_OSD
@@ -1032,38 +1001,6 @@ void MPXPSystem::find_acodec(const char *ao_subdevice) {
     sh_audio->codec=NULL;
     mpca=mpca_init(sh_audio); // try auto-probe first
     if(mpca) { mpxp_context().audio().decoder=mpca; found=1; }
-#ifdef ENABLE_WIN32LOADER
-    if(!found) {
-// Go through the codec.conf and find the best codec...
-	if(mp_conf.audio_family) mpxp_info<<MSGTR_TryForceAudioFmt<<": "<<mp_conf.audio_family<<std::endl;
-	while(1) {
-	    sh_audio->codec=find_codec(sh_audio->wtag,NULL,sh_audio->codec,1);
-	    if(!sh_audio->codec) {
-		if(mp_conf.audio_family) {
-		    sh_audio->codec=NULL; /* re-search */
-		    mpxp_err<<MSGTR_CantFindAfmtFallback<<std::endl;
-		    mp_conf.audio_family=NULL;
-		    continue;
-		}
-		break;
-	    }
-	    if(mp_conf.audio_codec && strcmp(sh_audio->codec->codec_name,mp_conf.audio_codec)) continue;
-	    else if(mp_conf.audio_family && strcmp(sh_audio->codec->driver_name,mp_conf.audio_family)) continue;
-	    if(afm_find_driver(sh_audio->codec->driver_name)) {
-		mpxp_v<<(mp_conf.audio_codec?"Forcing":"Detected")
-		    <<" audio codec: ["<<std::string(sh_audio->codec->codec_name)
-		    <<"] drv:"<<std::string(sh_audio->codec->driver_name)
-		    <<" ("<<std::string(sh_audio->codec->s_info)<<")"<<std::endl;
-		found=1;
-		break;
-	    }
-	}
-	if(!found) {
-	    sh_audio->codec=find_lavc_audio(sh_audio);
-	    if(sh_audio->codec) found=1;
-	}
-    }
-#endif
     if(!found) {
 	mpxp_err<<MSGTR_CantFindAudioCodec<<std::endl;
 	fourcc(mpxp_err,sh_audio->wtag);
@@ -1098,28 +1035,6 @@ MPXP_Rc MPXPSystem::find_vcodec() {
     if(vo_conf.flip>0)		mpxp_context().video().output->FLIP_SET();
     if(vo_conf.vidmode)		mpxp_context().video().output->VM_SET();
     if((mpxp_context().video().decoder=mpcv_init(sh_video,mp_conf.video_codec?mp_conf.video_codec:"",mp_conf.video_family?mp_conf.video_family:"",-1,_libinput))) sh_video->inited=1;
-#ifdef ENABLE_WIN32LOADER
-    if(!sh_video->inited) {
-/* Go through the codec.conf and find the best codec...*/
-	codecs_reset_selection(0);
-	if(mp_conf.video_codec) {
-	/* forced codec by name: */
-	    mpxp_info<<"Forced video codec: "<<mp_conf.video_codec<<std::endl;
-	    mpxp_context().video().decoder=mpcv_init(sh_video,video_codec?mp_conf.video_codec:"","",-1,_libinput);
-	} else {
-	    int status;
-    /* try in stability order: UNTESTED, WORKING, BUGGY, BROKEN */
-	    if(mp_conf.video_family) mpxp_info<<MSGTR_TryForceVideoFmt<<": "<<mp_conf.video_family<<std::endl;
-	    for(status=CODECS_STATUS__MAX;status>=CODECS_STATUS__MIN;--status){
-		if(mp_conf.video_family) /* try first the preferred codec family:*/
-		    if((mpxp_context().video().decoder=mpcv_init(sh_video,"",mp_conf.video_family?mp_conf.video_family:"",status,_libinput))) break;
-		if((mpxp_context().video().decoder=mpcv_init(sh_video,"","",status,_libinput))) break;
-	    }
-	}
-    }
-    /* Use lavc decoders as last hope */
-    if(!sh_video->inited) mpxp_context().video().decoder=mpcv_lavc_init(sh_video,_libinput);
-#endif
 
     if(!sh_video->inited) {
 	mpxp_err<<MSGTR_CantFindVideoCodec<<std::endl;

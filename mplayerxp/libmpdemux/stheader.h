@@ -2,15 +2,10 @@
 #define __ST_HEADER_H 1
 
 // Stream headers:
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "win32loader/wine/mmreg.h"
-#include "win32loader/wine/avifmt.h"
-#include "win32loader/wine/vfw.h"
-#ifdef __cplusplus
-}
-#endif
+#include "win32sdk/mmreg.h"
+#include "win32sdk/avifmt.h"
+#include "win32sdk/vfw.h"
+
 #include "xmpcore/xmp_image.h"
 #include "demuxer_stream.h"
 

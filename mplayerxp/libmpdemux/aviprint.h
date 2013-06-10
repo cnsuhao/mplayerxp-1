@@ -1,9 +1,9 @@
 #ifndef MPXP_AVIPRINT_H
 #define MPXP_AVIPRINT_H 1
 
-#include "win32loader/wine/mmreg.h"
-#include "win32loader/wine/avifmt.h"
-#include "win32loader/wine/vfw.h"
+#include "win32sdk/mmreg.h"
+#include "win32sdk/avifmt.h"
+#include "win32sdk/vfw.h"
 
 extern void print_avih_flags(MainAVIHeader *h);
 extern void print_avih(MainAVIHeader *h);

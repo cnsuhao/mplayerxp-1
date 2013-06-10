@@ -42,18 +42,6 @@ ifeq ($(HAVE_LIBDV),yes)
 CXXSRCS+= ad_libdv.cpp vd_libdv.cpp
 endif
 
-ifeq ($(ENABLE_WIN32LOADER),yes)
-CXXSRCS+=vd_dshow.cpp \
-      vd_vfw.cpp \
-      vd_dmo.cpp \
-      vd_qtvideo.cpp \
-      ad_dshow.cpp \
-      ad_acm.cpp \
-      ad_dmo.cpp \
-      ad_qtaudio.cpp \
-      ad_twin.cpp
-endif
-
 OBJS=$(SRCS:.c=.o)
 CXXOBJS=$(CXXSRCS:.cpp=.o)
 

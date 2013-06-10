@@ -6,7 +6,7 @@ using namespace	usr;
 
 #include "xmp_aframe.h"
 #include "libao3/afmt.h"
-#include "win32loader/wine/mmreg.h"
+#include "win32sdk/mmreg.h"
 #include "player_msg.h"
 
 namespace	usr {

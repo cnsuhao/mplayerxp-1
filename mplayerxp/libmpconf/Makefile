@@ -8,9 +8,6 @@ DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
 CXXSRCS=cfgparser.cpp m_option.cpp m_property.cpp m_struct.cpp
 SRCS  =
-ifeq ($(ENABLE_WIN32LOADER),yes)
-CXXSRCS += codec-cfg.cpp
-endif
 
 OBJS	= $(SRCS:.c=.o)
 CXXOBJS	= $(CXXSRCS:.cpp=.o)

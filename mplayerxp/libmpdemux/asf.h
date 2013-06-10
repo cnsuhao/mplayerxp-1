@@ -3,9 +3,9 @@
 
 //#include "cp_config.h"	/* for WORDS_BIGENDIAN */
 #include <inttypes.h>
-#include "win32loader/wine/mmreg.h"
-#include "win32loader/wine/avifmt.h"
-#include "win32loader/wine/vfw.h"
+#include "win32sdk/mmreg.h"
+#include "win32sdk/avifmt.h"
+#include "win32sdk/vfw.h"
 #include "osdep/bswap.h"
 
 ///////////////////////
