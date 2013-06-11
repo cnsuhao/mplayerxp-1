@@ -16,100 +16,106 @@ using namespace	usr;
 #include "ad_msg.h"
 
 /* Missed vorbis, mad, dshow */
+namespace	usr {
 
-extern const ad_functions_t mpcodecs_ad_null;
-extern const ad_functions_t mpcodecs_ad_mp3;
-extern const ad_functions_t mpcodecs_ad_lavc;
-extern const ad_functions_t mpcodecs_ad_a52;
-extern const ad_functions_t mpcodecs_ad_dca;
-extern const ad_functions_t mpcodecs_ad_hwac3;
-extern const ad_functions_t mpcodecs_ad_pcm;
-extern const ad_functions_t mpcodecs_ad_libdv;
-extern const ad_functions_t mpcodecs_ad_dvdpcm;
-extern const ad_functions_t mpcodecs_ad_dshow;
-extern const ad_functions_t mpcodecs_ad_msacm;
-extern const ad_functions_t mpcodecs_ad_faad;
-extern const ad_functions_t mpcodecs_ad_vorbis;
-extern const ad_functions_t mpcodecs_ad_real;
-extern const ad_functions_t mpcodecs_ad_twin;
-extern const ad_functions_t mpcodecs_ad_dmo;
-extern const ad_functions_t mpcodecs_ad_qtaudio;
+extern const ad_info_t ad_null_info;
+extern const ad_info_t ad_mp3_info;
+extern const ad_info_t ad_lavc_info;
+extern const ad_info_t ad_a52_info;
+extern const ad_info_t ad_dca_info;
+extern const ad_info_t ad_pcm_info;
+extern const ad_info_t ad_libdv_info;
+extern const ad_info_t ad_dvdpcm_info;
+extern const ad_info_t ad_dshow_info;
+extern const ad_info_t ad_msacm_info;
+extern const ad_info_t ad_faad_info;
+extern const ad_info_t ad_vorbis_info;
+extern const ad_info_t ad_real_info;
+extern const ad_info_t ad_twin_info;
+extern const ad_info_t ad_dmo_info;
+extern const ad_info_t ad_qtaudio_info;
 
-static const ad_functions_t* mpcodecs_ad_drivers[] = {
-    &mpcodecs_ad_mp3,
-    &mpcodecs_ad_a52,
-    &mpcodecs_ad_dca,
-    &mpcodecs_ad_hwac3,
-    &mpcodecs_ad_pcm,
-    &mpcodecs_ad_dvdpcm,
-    &mpcodecs_ad_faad,
+static const ad_info_t* mpcodecs_ad_drivers[] = {
+    &ad_mp3_info,
+    &ad_a52_info,
+    &ad_dca_info,
+    &ad_pcm_info,
+    &ad_dvdpcm_info,
+    &ad_faad_info,
 #ifdef HAVE_LIBVORBIS
-    &mpcodecs_ad_vorbis,
+    &ad_vorbis_info,
 #endif
 #ifdef HAVE_LIBDV
-    &mpcodecs_ad_libdv,
+    &ad_libdv_info,
 #endif
 #ifndef ENABLE_GPL_ONLY
-    &mpcodecs_ad_real,
+    &ad_real_info,
 #endif
-    &mpcodecs_ad_lavc,
-    &mpcodecs_ad_null,
-
+    &ad_lavc_info,
+    &ad_null_info
 };
-
-static unsigned int nddrivers=sizeof(mpcodecs_ad_drivers)/sizeof(ad_functions_t*);
 
 void libmpcodecs_ad_register_options(M_Config& cfg)
 {
     unsigned i;
-    for(i=0;i<nddrivers;i++) {
-	if(mpcodecs_ad_drivers[i])
-	    if(mpcodecs_ad_drivers[i]->options)
-		cfg.register_options(mpcodecs_ad_drivers[i]->options);
-	if(mpcodecs_ad_drivers[i]==&mpcodecs_ad_null) break;
+    for (i=0; mpcodecs_ad_drivers[i] != &ad_null_info; i++) {
+	if(mpcodecs_ad_drivers[i]->options)
+	    cfg.register_options(mpcodecs_ad_drivers[i]->options);
     }
 }
 
-const ad_functions_t* afm_find_driver(const std::string& name) {
+const ad_info_t* afm_find_driver(const std::string& name) {
     unsigned i;
-    for (i=0; mpcodecs_ad_drivers[i] != &mpcodecs_ad_null; i++) {
-	if(name==mpcodecs_ad_drivers[i]->info->driver_name){
+    for (i=0; mpcodecs_ad_drivers[i] != &ad_null_info; i++) {
+	if(name==mpcodecs_ad_drivers[i]->driver_name)
 	    return mpcodecs_ad_drivers[i];
-	}
     }
     return NULL;
 }
 
-const audio_probe_t* afm_probe_driver(Opaque& ctx,sh_audio_t *sh,audio_filter_info_t& afi) {
+Audio_Decoder* afm_probe_driver(sh_audio_t& sh,audio_filter_info_t& afi) {
     unsigned i;
-    const audio_probe_t* probe;
-    for (i=0; mpcodecs_ad_drivers[i] != &mpcodecs_ad_null; i++) {
-	mpxp_v<<"Probing: "<<mpcodecs_ad_drivers[i]->info->driver_name<<std::endl;
-	if((probe=mpcodecs_ad_drivers[i]->probe(sh->wtag))!=NULL) {
-	    Opaque* priv=mpcodecs_ad_drivers[i]->preinit(*probe,sh,afi);
-	    mpxp_v<<"Driver: "<<mpcodecs_ad_drivers[i]->info->driver_name<<" supports these outfmt for ";
-	    fourcc(mpxp_v,sh->wtag);
+    Audio_Decoder* drv=NULL;
+    for (i=0; mpcodecs_ad_drivers[i] != &ad_null_info; i++) {
+	mpxp_v<<"Probing: "<<mpcodecs_ad_drivers[i]->driver_name;
+	try {
+	    /* Set up some common usefull defaults. ad->preinit() can override these: */
+#ifdef WORDS_BIGENDIAN
+	    sh.afmt=AFMT_S16_BE;
+#else
+	    sh.afmt=AFMT_S16_LE;
+#endif
+	    sh.rate=0;
+	    sh.o_bps=0;
+	    drv=mpcodecs_ad_drivers[i]->query_interface(sh,afi,sh.wtag);
+	    mpxp_v<<"ok"<<std::endl;
+	    mpxp_v<<"Driver: "<<mpcodecs_ad_drivers[i]->driver_name<<" supports these outfmt for ";
+	    fourcc(mpxp_v,sh.wtag);
 	    mpxp_v<<std::endl;
+	    audio_probe_t probe=drv->get_probe_information();
 	    for(i=0;i<Audio_MaxOutSample;i++) {
-		    mpxp_v<<std::hex<<probe->sample_fmt[i]<<" ";
-		    if(probe->sample_fmt[i]==-1||probe->sample_fmt[i]==0) break;
+		mpxp_v<<std::hex<<probe.sample_fmt[i]<<" ";
+		if(probe.sample_fmt[i]==unsigned(-1)||probe.sample_fmt[i]==0) break;
 	    }
 	    mpxp_v<<std::endl;
-	    mpcodecs_ad_drivers[i]->uninit(*priv);
-	    delete priv;
-	    return probe;
+	    break;
+	} catch (const bad_format_exception& ) {
+	    mpxp_v<<"failed"<<std::endl;
+	    delete drv; drv=NULL;
+	    continue;
 	}
     }
-    return NULL;
+    return drv;
 }
 
-void afm_help(void) {
-  unsigned i;
-  mpxp_info<<"Available audio codec families/drivers:"<<std::endl;
-  for(i=0;i<nddrivers;i++) {
-    if(mpcodecs_ad_drivers[i])
-	if(mpcodecs_ad_drivers[i]->options)
-	    mpxp_info<<"\t"<<std::left<<std::setw(10)<<mpcodecs_ad_drivers[i]->info->driver_name<<" "<<mpcodecs_ad_drivers[i]->info->descr<<std::endl;
-  }
-  mpxp_info<<std::endl;
+void afm_help() {
+    unsigned i;
+    mpxp_info<<"Available audio codec families/drivers:"<<std::endl;
+    for (i=0; mpcodecs_ad_drivers[i] != &ad_null_info; i++) {
+	if(mpcodecs_ad_drivers[i])
+	    if(mpcodecs_ad_drivers[i]->options)
+		mpxp_info<<"\t"<<std::left<<std::setw(10)<<mpcodecs_ad_drivers[i]->driver_name<<" "<<mpcodecs_ad_drivers[i]->descr<<std::endl;
+    }
+    mpxp_info<<std::endl;
 }
+} //namespace	usr

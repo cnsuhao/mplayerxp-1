@@ -82,7 +82,8 @@ static MPXP_Rc dv_probe(Demuxer *demuxer)
 
    MSG_V("Checking for DV\n");
 
-   bytes_read=demuxer->stream->read(tmp_buffer,DV_PAL_FRAME_SIZE);
+   binary_packet bp=demuxer->stream->read(DV_PAL_FRAME_SIZE); memcpy(tmp_buffer,bp.data(),bp.size());
+   bytes_read=bp.size();
    if ((bytes_read!=DV_PAL_FRAME_SIZE) && (bytes_read!=DV_NTSC_FRAME_SIZE))
       return MPXP_False;
 
@@ -115,7 +116,8 @@ static int dv_demux(Demuxer *demuxer, Demuxer_Stream *ds)
    demuxer->stream->seek(frames->current_filepos);
 
    Demuxer_Packet* dp_video=new(zeromem) Demuxer_Packet(frames->frame_size);
-   bytes_read=demuxer->stream->read(dp_video->buffer(),frames->frame_size);
+   binary_packet bp=demuxer->stream->read(frames->frame_size); memcpy(dp_video->buffer(),bp.data(),bp.size());
+   bytes_read=bp.size();
    if (bytes_read<frames->frame_size)
       return 0;
    dp_video->pts=frames->current_frame/sh_video->fps;
@@ -149,7 +151,7 @@ static Opaque* dv_open(Demuxer* demuxer)
    demuxer->stream->seek(0);
 
    //get the first frame
-   demuxer->stream->read( dv_frame, DV_PAL_FRAME_SIZE);
+   binary_packet bp=demuxer->stream->read( DV_PAL_FRAME_SIZE); memcpy(dv_frame,bp.data(),bp.size());
 
    //read params from this frame
    dv_decoder=dv_decoder_new(TRUE,TRUE,FALSE);

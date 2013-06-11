@@ -7,28 +7,22 @@ using namespace	usr;
 #include "vd_internal.h"
 #include "osdep/bswap.h"
 
-struct raw_private_t : public Opaque {
-    raw_private_t();
-    virtual ~raw_private_t();
+namespace	usr {
+    class vraw_decoder : public Video_Decoder {
+	public:
+	    vraw_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    virtual ~vraw_decoder();
 
-    sh_video_t* sh;
-    video_decoder_t* parent;
-};
-raw_private_t::raw_private_t() {}
-raw_private_t::~raw_private_t() {}
-
-static const vd_info_t info = {
-    "RAW Uncompressed Video",
-    "raw",
-    "A'rpi & Alex",
-    "build-in"
+	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
+	    virtual mp_image_t*		run(const enc_frame_t& frame);
+	    virtual video_probe_t	get_probe_information() const;
+	private:
+	    video_decoder_t&		parent;
+	    sh_video_t&			sh;
+	    const video_probe_t*	probe;
 };
 
-static const mpxp_option_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
-};
-
-LIBVD_EXTERN(raw)
+video_probe_t vraw_decoder::get_probe_information() const { return *probe; }
 
 static const video_probe_t probes[] = {
     { "raw", "raw", FOURCC_TAG('R','G','B',32), VCodecStatus_Working, {IMGFMT_RGB32}, {VideoFlag_None, VideoFlag_None } },
@@ -79,17 +73,38 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
+vraw_decoder::vraw_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+	    :Video_Decoder(p,_sh,psi,fourcc)
+	    ,parent(p)
+	    ,sh(_sh)
+{
     unsigned i;
+    // set format fourcc for raw RGB:
+    if(fourcc==0){
+	switch(sh.bih->biBitCount){
+	case 8: sh.fourcc=IMGFMT_BGR8; break;
+	case 15:
+	case 16: sh.fourcc=IMGFMT_BGR15; break;
+	case 24: sh.fourcc=IMGFMT_BGR24; break;
+	case 32: sh.fourcc=IMGFMT_BGR32; break;
+	default: mpxp_v<<"RAW: depth "<<sh.bih->biBitCount<<" not supported"<<std::endl;
+	}
+	fourcc=sh.fourcc;
+    }
     for(i=0;probes[i].driver;i++)
 	if(fourcc==probes[i].fourcc)
-	    return &probes[i];
-    return NULL;
+	    probe=&probes[i];
+    if(!probe) throw bad_format_exception();
+    if(!mpcodecs_config_vf(parent,sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
 }
 
+// uninit driver
+vraw_decoder::~vraw_decoder() { }
+
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
-    UNUSED(ctx);
+MPXP_Rc vraw_decoder::ctrl(int cmd,any_t* arg,long arg2){
+    UNUSED(arg);
+    UNUSED(arg2);
     switch(cmd) {
 	case VDCTRL_QUERY_FORMAT:
 	    return MPXP_True;
@@ -98,51 +113,18 @@ static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
-    UNUSED(probe);
-    UNUSED(psi);
-    raw_private_t* priv = new(zeromem) raw_private_t;
-    priv->sh=sh;
-    return priv;
-}
-
-// init driver
-static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
-    raw_private_t& priv=static_cast<raw_private_t&>(ctx);
-    sh_video_t* sh = priv.sh;
-    // set format fourcc for raw RGB:
-    if(sh->fourcc==0){
-	switch(sh->bih->biBitCount){
-	case 8: sh->fourcc=IMGFMT_BGR8; break;
-	case 15:
-	case 16: sh->fourcc=IMGFMT_BGR15; break;
-	case 24: sh->fourcc=IMGFMT_BGR24; break;
-	case 32: sh->fourcc=IMGFMT_BGR32; break;
-	default:
-	    MSG_WARN("RAW: depth %d not supported\n",sh->bih->biBitCount);
-	}
-    }
-    priv.parent=&opaque;
-    return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
-}
-
-// uninit driver
-static void uninit(Opaque& ctx) { UNUSED(ctx); }
-
 // decode a frame
-static mp_image_t* decode(Opaque &ctx,const enc_frame_t& frame){
-    raw_private_t& priv=static_cast<raw_private_t&>(ctx);
-    sh_video_t* sh = priv.sh;
+mp_image_t* vraw_decoder::run(const enc_frame_t& frame){
     mp_image_t* mpi;
     if(frame.len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_EXPORT, 0, sh->src_w, sh->src_h);
+    mpi=mpcodecs_get_image(parent, MP_IMGTYPE_EXPORT, 0, sh.src_w, sh.src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     if(mpi->flags&MP_IMGFLAG_PLANAR){
 	mpi->planes[0]=reinterpret_cast<unsigned char*>(frame.data);
 	mpi->stride[0]=mpi->width;
-	switch(sh->codec->outfmt[sh->outfmtidx])
+	switch(sh.codec->outfmt[sh.outfmtidx])
 	{
 	    default:
 	    case IMGFMT_I420:
@@ -175,3 +157,18 @@ static mp_image_t* decode(Opaque &ctx,const enc_frame_t& frame){
     return mpi;
 }
 
+static const mpxp_option_t options[] = {
+  { NULL, NULL, 0, 0, 0, 0, NULL}
+};
+
+static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) vraw_decoder(p,sh,psi,fourcc); }
+
+extern const vd_info_t vd_raw_info = {
+    "RAW Uncompressed Video",
+    "raw",
+    "A'rpi & Alex",
+    "build-in",
+    query_interface,
+    options
+};
+} // namespace	usr

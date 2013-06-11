@@ -66,4 +66,8 @@ Opaque::Opaque() {
 }
 
 Opaque::~Opaque() {}
+
+bad_format_exception::bad_format_exception() throw() {}
+bad_format_exception::~bad_format_exception() throw() {}
+const char* bad_format_exception::what() const throw() { return "unknown format"; }
 } // namespace	usr

@@ -21,19 +21,15 @@ using namespace	usr;
 #include "codecs_ld.h"
 #include "osdep/bswap.h"
 
-static const vd_info_t info = {
-    "libmpeg2 MPEG 1/2 Video decoder",
-    "mpeg2",
-    "A'rpi",
-    "http://libmpeg2.sourceforge.net"
-};
+#include "libmpdemux/parse_es.h"
+#include "libvo2/video_out.h"
+#ifdef ATTRIBUTE_ALIGNED_MAX
+#define ATTR_ALIGN(align) __attribute__ ((__aligned__ ((ATTRIBUTE_ALIGNED_MAX < align) ? ATTRIBUTE_ALIGNED_MAX : align)))
+#else
+#define ATTR_ALIGN(align)
+#endif
 
-static const mpxp_option_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
-};
-
-LIBVD_EXTERN(libmpeg2)
-
+namespace	usr {
 static const video_probe_t probes[] = {
     { "mpeg2", "libmpeg2"SLIBSUFFIX, 0x10000001,                  VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
     { "mpeg2", "libmpeg2"SLIBSUFFIX, 0x10000002,                  VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420, IMGFMT_422P}, {VideoFlag_None, VideoFlag_None } },
@@ -101,25 +97,7 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
-    unsigned i;
-    for(i=0;probes[i].driver;i++)
-	if(fourcc==probes[i].fourcc)
-	    return &probes[i];
-    return NULL;
-}
-
-
-#include "libmpdemux/parse_es.h"
-#include "libvo2/video_out.h"
-#ifdef ATTRIBUTE_ALIGNED_MAX
-#define ATTR_ALIGN(align) __attribute__ ((__aligned__ ((ATTRIBUTE_ALIGNED_MAX < align) ? ATTRIBUTE_ALIGNED_MAX : align)))
-#else
-#define ATTR_ALIGN(align)
-#endif
-
 struct mpeg2dec_t;
-
 
 struct mpeg2_sequence_t {
     unsigned int width, height;
@@ -205,52 +183,60 @@ typedef enum {
     STATE_SEQUENCE_MODIFIED = 11
 } mpeg2_state_t;
 
-struct libmpeg2_private_t : public Opaque {
-    libmpeg2_private_t();
-    virtual ~libmpeg2_private_t();
 
-    sh_video_t* sh;
-    video_decoder_t* parent;
-    mpeg2dec_t* mpeg2dec;
-    any_t* dll_handle;
-    mpeg2dec_t* (*mpeg2_init_ptr) (unsigned);
-    void (*mpeg2_close_ptr) (mpeg2dec_t * mpeg2dec);
-    const mpeg2_info_t * (*mpeg2_info_ptr) (mpeg2dec_t * mpeg2dec);
-    int (*mpeg2_parse_ptr) (mpeg2dec_t * mpeg2dec);
-    void (*mpeg2_buffer_ptr) (mpeg2dec_t * mpeg2dec, uint8_t * start, uint8_t * end);
-    void (*mpeg2_set_buf_ptr) (mpeg2dec_t * mpeg2dec, uint8_t * buf[3], any_t* id);
-    int (*mpeg2_stride_ptr) (mpeg2dec_t * mpeg2dec, int stride);
-    void (*mpeg2_reset_ptr) (mpeg2dec_t * mpeg2dec, int full_reset);
-};
-libmpeg2_private_t::libmpeg2_private_t() {}
-libmpeg2_private_t::~libmpeg2_private_t() {
-    if(mpeg2dec) (*mpeg2_close_ptr)(mpeg2dec);
-    if(dll_handle) ::dlclose(dll_handle);
-}
+    class libmpeg2_decoder : public Video_Decoder {
+	public:
+	    libmpeg2_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    virtual ~libmpeg2_decoder();
 
-static MPXP_Rc load_lib(libmpeg2_private_t& priv, const char *libname )
+	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
+	    virtual mp_image_t*		run(const enc_frame_t& frame);
+	    virtual video_probe_t	get_probe_information() const;
+	private:
+	    MPXP_Rc		load_lib(const std::string& libname);
+	    void		draw_frame(mp_image_t *mpi,unsigned w,const mpeg2_fbuf_t *src) const;
+
+	    video_decoder_t&	parent;
+	    sh_video_t&		sh;
+	    mpeg2dec_t*		mpeg2dec;
+	    any_t*		dll_handle;
+	    mpeg2dec_t*		(*mpeg2_init_ptr) (unsigned);
+	    void		(*mpeg2_close_ptr) (mpeg2dec_t * mpeg2dec);
+	    const mpeg2_info_t*	(*mpeg2_info_ptr) (mpeg2dec_t * mpeg2dec);
+	    int			(*mpeg2_parse_ptr) (mpeg2dec_t * mpeg2dec);
+	    void		(*mpeg2_buffer_ptr) (mpeg2dec_t * mpeg2dec, uint8_t * start, uint8_t * end);
+	    void		(*mpeg2_set_buf_ptr) (mpeg2dec_t * mpeg2dec, uint8_t * buf[3], any_t* id);
+	    int			(*mpeg2_stride_ptr) (mpeg2dec_t * mpeg2dec, int stride);
+	    void		(*mpeg2_reset_ptr) (mpeg2dec_t * mpeg2dec, int full_reset);
+	    const video_probe_t*	probe;
+    };
+
+video_probe_t libmpeg2_decoder::get_probe_information() const { return *probe; }
+
+extern const vd_info_t vd_libmpeg2_info;
+MPXP_Rc libmpeg2_decoder::load_lib(const std::string& libname)
 {
-    if(!(priv.dll_handle=ld_codec(libname,mpcodecs_vd_libmpeg2.info->url))) return MPXP_False;
-    priv.mpeg2_init_ptr = (mpeg2dec_t* (*)(unsigned int))ld_sym(priv.dll_handle,"mpeg2_init");
-    priv.mpeg2_close_ptr = (void (*)(mpeg2dec_t*))ld_sym(priv.dll_handle,"mpeg2_close");
-    priv.mpeg2_info_ptr = (const mpeg2_info_t* (*)(mpeg2dec_t*))ld_sym(priv.dll_handle,"mpeg2_info");
-    priv.mpeg2_parse_ptr = (int (*)(mpeg2dec_t*))ld_sym(priv.dll_handle,"mpeg2_parse");
-    priv.mpeg2_buffer_ptr = (void (*)(mpeg2dec_t*,uint8_t*,uint8_t*))ld_sym(priv.dll_handle,"mpeg2_buffer");
-    priv.mpeg2_set_buf_ptr = (void (*)(mpeg2dec_t*,uint8_t**,any_t*))ld_sym(priv.dll_handle,"mpeg2_set_buf");
-    priv.mpeg2_stride_ptr = (int (*)(mpeg2dec_t*,int))ld_sym(priv.dll_handle,"mpeg2_stride");
-    priv.mpeg2_reset_ptr = (void (*)(mpeg2dec_t*,int))ld_sym(priv.dll_handle,"mpeg2_reset");
-    return (priv.mpeg2_init_ptr && priv.mpeg2_close_ptr && priv.mpeg2_info_ptr &&
-	priv.mpeg2_parse_ptr && priv.mpeg2_buffer_ptr && priv.mpeg2_set_buf_ptr &&
-	priv.mpeg2_stride_ptr && priv.mpeg2_reset_ptr)?MPXP_Ok:MPXP_False;
+    if(!(dll_handle=ld_codec(libname,vd_libmpeg2_info.url))) return MPXP_False;
+    mpeg2_init_ptr = (mpeg2dec_t* (*)(unsigned int))ld_sym(dll_handle,"mpeg2_init");
+    mpeg2_close_ptr = (void (*)(mpeg2dec_t*))ld_sym(dll_handle,"mpeg2_close");
+    mpeg2_info_ptr = (const mpeg2_info_t* (*)(mpeg2dec_t*))ld_sym(dll_handle,"mpeg2_info");
+    mpeg2_parse_ptr = (int (*)(mpeg2dec_t*))ld_sym(dll_handle,"mpeg2_parse");
+    mpeg2_buffer_ptr = (void (*)(mpeg2dec_t*,uint8_t*,uint8_t*))ld_sym(dll_handle,"mpeg2_buffer");
+    mpeg2_set_buf_ptr = (void (*)(mpeg2dec_t*,uint8_t**,any_t*))ld_sym(dll_handle,"mpeg2_set_buf");
+    mpeg2_stride_ptr = (int (*)(mpeg2dec_t*,int))ld_sym(dll_handle,"mpeg2_stride");
+    mpeg2_reset_ptr = (void (*)(mpeg2dec_t*,int))ld_sym(dll_handle,"mpeg2_reset");
+    return (mpeg2_init_ptr && mpeg2_close_ptr && mpeg2_info_ptr &&
+	mpeg2_parse_ptr && mpeg2_buffer_ptr && mpeg2_set_buf_ptr &&
+	mpeg2_stride_ptr && mpeg2_reset_ptr)?MPXP_Ok:MPXP_False;
 }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
-    libmpeg2_private_t& priv=static_cast<libmpeg2_private_t&>(ctx);
+MPXP_Rc libmpeg2_decoder::ctrl(int cmd,any_t* arg,long arg2){
+    UNUSED(arg2);
     switch(cmd) {
 	case VDCTRL_RESYNC_STREAM:
 	    /*lib starts looking for the next sequence header.*/
-	    (*priv.mpeg2_reset_ptr)(priv.mpeg2dec,1);
+	    (*mpeg2_reset_ptr)(mpeg2dec,1);
 	    return MPXP_True;
 	case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12)
@@ -261,28 +247,31 @@ static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
     return MPXP_Unknown;
 }
 
-static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
-    UNUSED(psi);
-    libmpeg2_private_t* priv = new(zeromem) libmpeg2_private_t;
-    if(!load_lib(*priv,probe.codec_dll)) { delete priv; return NULL; }
-    priv->sh=sh;
-    return priv;
-}
+libmpeg2_decoder::libmpeg2_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+	    :Video_Decoder(p,_sh,psi,fourcc)
+	    ,parent(p)
+	    ,sh(_sh)
+{
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(fourcc==probes[i].fourcc)
+	    probe=&probes[i];
+    if(!probe) throw bad_format_exception();
 
-static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
-    libmpeg2_private_t& priv=static_cast<libmpeg2_private_t&>(ctx);
-    sh_video_t* sh = priv.sh;
-    priv.parent=&opaque;
-    if(!(priv.mpeg2dec=(*priv.mpeg2_init_ptr)(mpxp_context().mplayer_accel))) {
-	return MPXP_False;
-    }
-    return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
+    if(!load_lib(probe->codec_dll)) throw bad_format_exception();
+
+    if(!(mpeg2dec=(*mpeg2_init_ptr)(mpxp_context().mplayer_accel))) throw bad_format_exception();
+
+    if(mpcodecs_config_vf(parent,sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
 }
 
 // uninit driver
-static void uninit(Opaque& ctx){  UNUSED(ctx); }
+libmpeg2_decoder::~libmpeg2_decoder() {
+    if(mpeg2dec) (*mpeg2_close_ptr)(mpeg2dec);
+    if(dll_handle) ::dlclose(dll_handle);
+}
 
-static void draw_frame(mp_image_t *mpi,video_decoder_t& sh,unsigned w,const mpeg2_fbuf_t *src)
+void libmpeg2_decoder::draw_frame(mp_image_t* mpi,unsigned w,const mpeg2_fbuf_t* src) const
 {
     mpi->planes[0]=src->buf[0];
     mpi->planes[1]=src->buf[1];
@@ -291,61 +280,60 @@ static void draw_frame(mp_image_t *mpi,video_decoder_t& sh,unsigned w,const mpeg
     mpi->stride[1]=
     mpi->stride[2]=w>>1;
     mpi->flags&=~MP_IMGFLAG_DRAW_CALLBACK;
-    mpcodecs_draw_image(sh,mpi);
+    mpcodecs_draw_image(parent,mpi);
 }
 
 // decode a frame
-static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
-    libmpeg2_private_t& priv=static_cast<libmpeg2_private_t&>(ctx);
+mp_image_t* libmpeg2_decoder::run(const enc_frame_t& frame) {
     mp_image_t *mpi;
-    const mpeg2_info_t *_info;
+    const mpeg2_info_t* _info;
     int state,buf;
     if(frame.len<=0) return NULL; // skipped null frame
 
-    _info=(*priv.mpeg2_info_ptr)(priv.mpeg2dec);
+    _info=(*mpeg2_info_ptr)(mpeg2dec);
     mpi=NULL;
     buf=0;
-    MSG_DBG2("len=%u ***mpeg2_info***\n",frame.len);
+    mpxp_dbg2<<"len="<<frame.len<<" ***mpeg2_info***"<<std::endl;
     while(1)
     {
-	state=(*priv.mpeg2_parse_ptr)(priv.mpeg2dec);
-	MSG_DBG2("%i=mpeg2_parse\n",state);
+	state=(*mpeg2_parse_ptr)(mpeg2dec);
+	mpxp_dbg2<<state<<"=mpeg2_parse"<<std::endl;
 	switch(state)
 	{
 	    case STATE_BUFFER:
-		(*priv.mpeg2_buffer_ptr)(priv.mpeg2dec,reinterpret_cast<uint8_t*>(frame.data),reinterpret_cast<uint8_t*>(frame.data)+frame.len);
+		(*mpeg2_buffer_ptr)(mpeg2dec,reinterpret_cast<uint8_t*>(frame.data),reinterpret_cast<uint8_t*>(frame.data)+frame.len);
 		buf++;
 		if(buf>2) return NULL; /* parsing of the passed buffer finished, return. */
 		break;
 	    case STATE_PICTURE:
 #if 0
-		    if(!priv.mpeg2dec->decoder.mpq_store)
+		    if(!mpeg2dec->decoder.mpq_store)
 		    {
-			priv.mpeg2dec->decoder.mpq_stride=(_info->sequence->picture_width+15)>>4;
-			priv.mpeg2dec->decoder.mpq_store=mp_malloc(priv.mpeg2dec->decoder.mpq_stride*((_info->sequence->picture_height+15)>>4));
+			mpeg2dec->decoder.mpq_stride=(_info->sequence->picture_width+15)>>4;
+			mpeg2dec->decoder.mpq_store=mp_malloc(mpeg2dec->decoder.mpq_stride*((_info->sequence->picture_height+15)>>4));
 		    }
 #endif
-		    mpi=mpcodecs_get_image(*priv.parent,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK
+		    mpi=mpcodecs_get_image(parent,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK
 					,_info->sequence->width,_info->sequence->height);
-		    (*priv.mpeg2_stride_ptr)(priv.mpeg2dec,mpi->stride[0]);
+		    (*mpeg2_stride_ptr)(mpeg2dec,mpi->stride[0]);
 		    break;
 	    case STATE_SLICE:
 	    case STATE_END:
 	    case STATE_INVALID:
 		/* we must call draw_frame() only after STATE_BUFFER and STATE_PICTURE events */
-		MSG_DBG2("display=%X discard=%X current=%X mpi=%X\n",_info->display_fbuf,_info->discard_fbuf,_info->current_fbuf,mpi);
+		mpxp_dbg2<<"display="<<std::hex<<_info->display_fbuf<<" discard="<<std::hex<<_info->discard_fbuf<<" current="<<std::hex<<_info->current_fbuf<<" mpi="<<std::endl;
 		/* Workaround for broken (badly demuxed) streams.
 		Reset libmpeg2 to start decoding at the next picture. */
-		if(state==STATE_END) (*priv.mpeg2_reset_ptr)(priv.mpeg2dec,0);
+		if(state==STATE_END) (*mpeg2_reset_ptr)(mpeg2dec,0);
 		if (_info->display_fbuf && mpi)
 		{
 		    mpi->pict_type=_info->current_picture->flags&PIC_MASK_CODING_TYPE;
 #if 0
 		    mpi->qscale_type= 1;
-		    mpi->qscale=priv.mpeg2dec->decoder.mpq_store;
-		    mpi->qstride=priv.mpeg2dec->decoder.mpq_stride;
+		    mpi->qscale=mpeg2dec->decoder.mpq_store;
+		    mpi->qstride=mpeg2dec->decoder.mpq_stride;
 #endif
-		    draw_frame (mpi,*priv.parent,_info->sequence->width,_info->display_fbuf);
+		    draw_frame (mpi,_info->sequence->width,_info->display_fbuf);
 		    return mpi;
 		}
 		break;
@@ -355,3 +343,18 @@ static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
     return NULL; /* segfault */
 }
 
+static const mpxp_option_t options[] = {
+  { NULL, NULL, 0, 0, 0, 0, NULL}
+};
+
+static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) libmpeg2_decoder(p,sh,psi,fourcc); }
+
+extern const vd_info_t vd_libmpeg2_info = {
+    "libmpeg2 MPEG 1/2 Video decoder",
+    "mpeg2",
+    "A'rpi",
+    "http://libmpeg2.sourceforge.net",
+    query_interface,
+    options
+};
+} // namespace	usr

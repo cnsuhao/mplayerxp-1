@@ -634,7 +634,8 @@ static void demux_ogg_scan_stream(Demuxer* demuxer) {
     }
     if(np <= 0) { // We need more data
       char* buf = ogg_sync_buffer(sync,BLOCK_SIZE);
-      int len = s->read(buf,BLOCK_SIZE);
+      binary_packet bp = s->read(BLOCK_SIZE); memcpy(buf,bp.data(),bp.size());
+      int len=bp.size();
       if(len == 0 && s->eof())
 	break;
       ogg_sync_wrote(sync,len);
@@ -689,7 +690,8 @@ static void demux_ogg_scan_stream(Demuxer* demuxer) {
     np = ogg_sync_pageout(sync,page);
     if(np <= 0) { // We need more data
       char* buf = ogg_sync_buffer(sync,BLOCK_SIZE);
-      int len = s->read(buf,BLOCK_SIZE);
+      binary_packet bp = s->read(BLOCK_SIZE); memcpy(buf,bp.data(),bp.size());
+      int len=bp.size();
       if(len == 0 && s->eof()) {
 	MSG_ERR("EOF while trying to get the first page !!!!\n");
 	break;
@@ -784,7 +786,8 @@ static Opaque* ogg_open(Demuxer* demuxer) {
     if(np == 0) {
       int len;
       buf = ogg_sync_buffer(sync,BLOCK_SIZE);
-      len = s->read(buf,BLOCK_SIZE);
+      binary_packet bp = s->read(BLOCK_SIZE); memcpy(buf,bp.data(),bp.size());
+      len=bp.size();
       if(len == 0 && s->eof()) {
 	goto err_out;
       }
@@ -1130,7 +1133,8 @@ static int ogg_demux(Demuxer *d,Demuxer_Stream *__ds) {
 	    }
 	    /// We need more data
 	    buf = ogg_sync_buffer(sync,BLOCK_SIZE);
-	    len = s->read(buf,BLOCK_SIZE);
+	    binary_packet bp = s->read(BLOCK_SIZE); memcpy(buf,bp.data(),bp.size());
+	    len = bp.size();
 	    if(len == 0 && s->eof()) {
 	      MSG_DBG2("Ogg : Stream EOF !!!!\n");
 	      return 0;
@@ -1273,7 +1277,8 @@ static void ogg_seek(Demuxer *demuxer,const seek_args_t* seeka) {
       ogg_d->pos -= np;
     if(np <= 0) { // We need more data
       char* buf = ogg_sync_buffer(sync,BLOCK_SIZE);
-      int len = demuxer->stream->read(buf,BLOCK_SIZE);
+      binary_packet bp = demuxer->stream->read(BLOCK_SIZE); memcpy(buf,bp.data(),bp.size());
+      int len = bp.size();
        if(len == 0 && demuxer->stream->eof()) {
 	MSG_ERR("EOF while trying to seek !!!!\n");
 	break;

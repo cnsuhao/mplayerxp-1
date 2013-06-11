@@ -8,28 +8,20 @@ using namespace	usr;
 #include "libao3/afmt.h"
 #include "osdep/bswap.h"
 
-struct pcm_private_t : public Opaque {
-    pcm_private_t();
-    virtual ~pcm_private_t();
+namespace	usr {
+    class pcm_decoder : public Audio_Decoder {
+	public:
+	    pcm_decoder(sh_audio_t&,audio_filter_info_t&,uint32_t wtag);
+	    virtual ~pcm_decoder();
 
-    sh_audio_t* sh;
-    audio_filter_info_t* afi;
-};
-pcm_private_t::pcm_private_t() {}
-pcm_private_t::~pcm_private_t() {}
-
-static const ad_info_t info = {
-    "Uncompressed PCM audio decoder",
-    "pcm",
-    "Nickols_K",
-    "build-in"
-};
-
-static const mpxp_option_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
-};
-
-LIBAD_EXTERN(pcm)
+	    virtual unsigned		run(unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts);
+	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg);
+	    virtual audio_probe_t	get_probe_information() const;
+	private:
+	    sh_audio_t&			sh;
+	    audio_filter_info_t&	afi;
+	    const audio_probe_t*	probe;
+    };
 
 static const audio_probe_t probes[] = {
     { "pcm", "pcm", 0x0,   ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE, AFMT_S8} },
@@ -50,72 +42,62 @@ static const audio_probe_t probes[] = {
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 
-static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) {
+pcm_decoder::pcm_decoder(sh_audio_t& _sh,audio_filter_info_t& _afi,uint32_t wtag)
+	    :Audio_Decoder(_sh,_afi,wtag)
+	    ,sh(_sh)
+	    ,afi(_afi)
+{
     unsigned i;
     for(i=0;probes[i].driver;i++)
 	if(wtag==probes[i].wtag)
-	    return &probes[i];
-    return NULL;
-}
+	    probe=&probes[i];
+    if(!probe) throw bad_format_exception();
 
-MPXP_Rc init(Opaque& ctx)
-{
-    pcm_private_t& priv=static_cast<pcm_private_t&>(ctx);
-    sh_audio_t* sh_audio = priv.sh;
-    WAVEFORMATEX *h=sh_audio->wf;
-    sh_audio->i_bps=h->nAvgBytesPerSec;
-    sh_audio->nch=h->nChannels;
-    sh_audio->rate=h->nSamplesPerSec;
-    sh_audio->afmt=bps2afmt((h->wBitsPerSample+7)/8);
-    switch(sh_audio->wtag){ /* hardware formats: */
-	case 0x3:  sh_audio->afmt=AFMT_FLOAT32; break;
-	case 0x6:  sh_audio->afmt=AFMT_A_LAW;break;
-	case 0x7:  sh_audio->afmt=AFMT_MU_LAW;break;
-	case 0x11: sh_audio->afmt=AFMT_IMA_ADPCM;break;
-	case 0x50: sh_audio->afmt=AFMT_MPEG;break;
-/*	case 0x2000: sh_audio->sample_format=AFMT_AC3; */
+    sh.audio_out_minsize=16384;
+
+    WAVEFORMATEX *h=sh.wf;
+    sh.i_bps=h->nAvgBytesPerSec;
+    sh.nch=h->nChannels;
+    sh.rate=h->nSamplesPerSec;
+    sh.afmt=bps2afmt((h->wBitsPerSample+7)/8);
+    switch(sh.wtag){ /* hardware formats: */
+	case 0x3:  sh.afmt=AFMT_FLOAT32; break;
+	case 0x6:  sh.afmt=AFMT_A_LAW;break;
+	case 0x7:  sh.afmt=AFMT_MU_LAW;break;
+	case 0x11: sh.afmt=AFMT_IMA_ADPCM;break;
+	case 0x50: sh.afmt=AFMT_MPEG;break;
+/*	case 0x2000: sh.sample_format=AFMT_AC3; */
 	case mmioFOURCC('r','a','w',' '): /* 'raw '*/
 	    break;
 	case mmioFOURCC('t','w','o','s'): /* 'twos'*/
-	    if(afmt2bps(sh_audio->afmt)!=1) sh_audio->afmt=AFMT_S16_BE;
+	    if(afmt2bps(sh.afmt)!=1) sh.afmt=AFMT_S16_BE;
 	    break;
 	case mmioFOURCC('s','o','w','t'): /* 'swot'*/
-	    if(afmt2bps(sh_audio->afmt)!=1) sh_audio->afmt=AFMT_S16_LE;
+	    if(afmt2bps(sh.afmt)!=1) sh.afmt=AFMT_S16_LE;
 	    break;
 	default:
-	    if(afmt2bps(sh_audio->afmt)==1);
-	    else if(afmt2bps(sh_audio->afmt)==2) sh_audio->afmt=AFMT_S16_LE;
-	    else if(afmt2bps(sh_audio->afmt)==3) sh_audio->afmt=AFMT_S24_LE;
-	    else sh_audio->afmt=AFMT_S32_LE;
+	    if(afmt2bps(sh.afmt)==1);
+	    else if(afmt2bps(sh.afmt)==2) sh.afmt=AFMT_S16_LE;
+	    else if(afmt2bps(sh.afmt)==3) sh.afmt=AFMT_S24_LE;
+	    else sh.afmt=AFMT_S32_LE;
 	    break;
     }
-    return MPXP_Ok;
 }
 
-Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_info_t& afi)
-{
-    UNUSED(probe);
-    sh->audio_out_minsize=16384;
-    pcm_private_t* priv = new(zeromem) pcm_private_t;
-    priv->sh = sh;
-    priv->afi = &afi;
-    return priv;
-}
+pcm_decoder::~pcm_decoder() {}
 
-void uninit(Opaque& ctx) { UNUSED(ctx); }
+audio_probe_t pcm_decoder::get_probe_information() const { return *probe; }
 
-MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...)
+MPXP_Rc pcm_decoder::ctrl(int cmd,any_t* arg)
 {
-    pcm_private_t& priv=static_cast<pcm_private_t&>(ctx);
-    sh_audio_t* sh = priv.sh;
     int skip;
     UNUSED(arg);
     switch(cmd) {
 	case ADCTRL_SKIP_FRAME: {
 	    float pts;
-	    skip=sh->i_bps/16;
+	    skip=sh.i_bps/16;
 	    skip=skip&(~3);
-	    demux_read_data_r(*sh->ds,NULL,skip,pts);
+	    demux_read_data_r(*sh.ds,NULL,skip,pts);
 	    return MPXP_True;
 	}
 	default:
@@ -124,15 +106,29 @@ MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...)
     return MPXP_Unknown;
 }
 
-unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts)
+unsigned pcm_decoder::run(unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts)
 {
-    pcm_private_t& priv=static_cast<pcm_private_t&>(ctx);
-    sh_audio_t* sh_audio = priv.sh;
-    unsigned len = sh_audio->nch*afmt2bps(sh_audio->afmt);
+    unsigned len = sh.nch*afmt2bps(sh.afmt);
     len = (minlen + len - 1) / len * len;
     if (len > maxlen)
 	/* if someone needs hundreds of channels adjust audio_out_minsize based on channels in preinit() */
 	return -1;
-    len=demux_read_data_r(*sh_audio->ds,buf,len,pts);
+    len=demux_read_data_r(*sh.ds,buf,len,pts);
     return len;
 }
+
+static const mpxp_option_t options[] = {
+  { NULL, NULL, 0, 0, 0, 0, NULL}
+};
+
+static Audio_Decoder* query_interface(sh_audio_t& sh,audio_filter_info_t& afi,uint32_t wtag) { return new(zeromem) pcm_decoder(sh,afi,wtag); }
+
+extern const ad_info_t ad_pcm_info = {
+    "Uncompressed PCM audio decoder",
+    "pcm",
+    "Nickols_K",
+    "build-in",
+    query_interface,
+    options
+};
+} // namespace	usr

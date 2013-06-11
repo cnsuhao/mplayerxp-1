@@ -7,19 +7,7 @@ using namespace	usr;
 #include "vd_internal.h"
 #include "osdep/bswap.h"
 
-static const vd_info_t info = {
-    "MPEG 1/2 Video passthrough",
-    "mpegpes",
-    "A'rpi",
-    "build-in"
-};
-
-static const mpxp_option_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
-};
-
-LIBVD_EXTERN(mpegpes)
-
+namespace	usr {
 static const video_probe_t probes[] = {
     { "mpegpes", "libmpegpes", 0x10000001,                  VCodecStatus_Working, {IMGFMT_MPEGPES}, {VideoFlag_None} },
     { "mpegpes", "libmpegpes", 0x10000002,                  VCodecStatus_Working, {IMGFMT_MPEGPES}, {VideoFlag_None} },
@@ -87,62 +75,73 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
-    unsigned i;
-    for(i=0;probes[i].driver;i++)
-	if(fourcc==probes[i].fourcc)
-	    return &probes[i];
-    return NULL;
-}
+    class mpegpes_decoder : public Video_Decoder {
+	public:
+	    mpegpes_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    virtual ~mpegpes_decoder();
 
-struct mpegpes_private_t : public Opaque {
-    mpegpes_private_t();
-    virtual ~mpegpes_private_t();
+	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
+	    virtual mp_image_t*		run(const enc_frame_t& frame);
+	    virtual video_probe_t	get_probe_information() const;
+	private:
+	    video_decoder_t&		parent;
+	    sh_video_t&			sh;
+	    const video_probe_t*	probe;
+    };
 
-    sh_video_t* sh;
-    video_decoder_t* parent;
-};
-mpegpes_private_t::mpegpes_private_t() {}
-mpegpes_private_t::~mpegpes_private_t() {}
+video_probe_t mpegpes_decoder::get_probe_information() const { return *probe; }
+
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(Opaque &ctx,int cmd,any_t* arg,...){
-    UNUSED(ctx);
+MPXP_Rc mpegpes_decoder::ctrl(int cmd,any_t* arg,long arg2){
+    UNUSED(arg2);
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
 }
 
-static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
-    UNUSED(probe);
-    UNUSED(psi);
-    mpegpes_private_t* priv = new(zeromem) mpegpes_private_t;
-    priv->sh=sh;
-    return priv;
-}
+mpegpes_decoder::mpegpes_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+	    :Video_Decoder(p,_sh,psi,fourcc)
+	    ,parent(p)
+	    ,sh(_sh)
+{
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(fourcc==probes[i].fourcc)
+	    probe=&probes[i];
+    if(!probe) throw bad_format_exception();
 
-// init driver
-static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
-    mpegpes_private_t& priv=static_cast<mpegpes_private_t&>(ctx);
-    sh_video_t* sh = priv.sh;
-    priv.parent = &opaque;
-    return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
+    if(mpcodecs_config_vf(parent,sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
 }
 
 // uninit driver
-static void uninit(Opaque& ctx) { UNUSED(ctx); }
+mpegpes_decoder::~mpegpes_decoder() { }
 
 // decode a frame
-static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
-    mpegpes_private_t& priv=static_cast<mpegpes_private_t&>(ctx);
-    sh_video_t* sh = priv.sh;
+mp_image_t* mpegpes_decoder::run(const enc_frame_t& frame) {
     mp_image_t* mpi;
     static vo_mpegpes_t packet;
-    mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_EXPORT, 0,sh->src_w, sh->src_h);
+    mpi=mpcodecs_get_image(parent, MP_IMGTYPE_EXPORT, 0,sh.src_w, sh.src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
     packet.data=frame.data;
     packet.size=frame.len-4;
-    packet.timestamp=sh->ds->pts;
+    packet.timestamp=sh.ds->pts;
     packet.id=0x1E0; //+sh_video->ds->id;
     mpi->planes[0]=(uint8_t*)(&packet);
     return mpi;
 }
+
+static const mpxp_option_t options[] = {
+  { NULL, NULL, 0, 0, 0, 0, NULL}
+};
+
+static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) mpegpes_decoder(p,sh,psi,fourcc); }
+
+extern const vd_info_t vd_mpegpes_info = {
+    "MPEG 1/2 Video passthrough",
+    "mpegpes",
+    "A'rpi",
+    "build-in",
+    query_interface,
+    options
+};
+} // namespace	usr

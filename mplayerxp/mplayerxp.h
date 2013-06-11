@@ -15,11 +15,11 @@
 #include "libao3/audio_out.h"
 #include "libvo2/video_out.h"
 
-struct audio_decoder_t;
-struct video_decoder_t;
 namespace	usr {
     class M_Config;
     struct PlayTree_Iter;
+    struct audio_decoder_t;
+    struct video_decoder_t;
     /* List of all modules which require protection by pin-code */
     enum {
 	Module_Stream=0,
@@ -197,8 +197,8 @@ namespace	usr {
     PlayTree_Iter& mpxp_get_playtree_iter();
     const std::map<std::string,std::string>& mpxp_get_environment();
 
-    unsigned get_number_cpu(void);
-    void show_help(void);
+    unsigned get_number_cpu();
+    void show_help();
     void show_long_help(const M_Config& cfg,const std::map<std::string,std::string>& envm);
 
     void update_osd( float v_pts );
@@ -223,9 +223,9 @@ namespace	usr {
 	}
 	return MPXP_Ok;
     }
-    void mpxp_resync_audio_stream(void);
-    void mpxp_reset_vcache(void);
-    void __exit_sighandler(void);
+    void mpxp_resync_audio_stream();
+    void mpxp_reset_vcache();
+    void __exit_sighandler();
 
     void mplayer_put_key(int code);
 

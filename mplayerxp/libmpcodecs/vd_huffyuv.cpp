@@ -27,113 +27,112 @@ using namespace	usr;
 #include "mpxp_help.h"
 #include "osdep/bswap.h"
 
-static const vd_info_t info = {
-    "HuffYUV Video decoder",
-    "huffyuv",
-    "Roberto Togni (original win32 by Ben Rudiak-Gould http://www.math.berkeley.edu/~benrg/huffyuv.html)",
-    "build-in"
-};
-
-static const mpxp_option_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
-};
-
-LIBVD_EXTERN(huffyuv)
-
+namespace	usr {
 /*
  * Bitmap types
  */
-enum {
-    BMPTYPE_YUV=-1,
-    BMPTYPE_RGB=-2,
-    BMPTYPE_RGBA=-3
-};
+    enum {
+	BMPTYPE_YUV=-1,
+	BMPTYPE_RGB=-2,
+	BMPTYPE_RGBA=-3
+    };
 /*
  * Compression methods
  */
-enum {
-    METHOD_LEFT=0,
-    METHOD_GRAD=1,
-    METHOD_MEDIAN=2,
-    DECORR_FLAG=64,
-    METHOD_LEFT_DECORR=(METHOD_LEFT | DECORR_FLAG),
-    METHOD_GRAD_DECORR=(METHOD_GRAD | DECORR_FLAG),
-    METHOD_OLD=-2,
-};
-static const uint32_t FOURCC_HFYU=mmioFOURCC('H','F','Y','U');
-
-#define HUFFTABLE_CLASSIC_YUV ((unsigned char*)-1)
-#define HUFFTABLE_CLASSIC_RGB ((unsigned char*)-2)
-#define HUFFTABLE_CLASSIC_YUV_CHROMA ((unsigned char*)-3)
+    enum {
+	METHOD_LEFT=0,
+	METHOD_GRAD=1,
+	METHOD_MEDIAN=2,
+	DECORR_FLAG=64,
+	METHOD_LEFT_DECORR=(METHOD_LEFT | DECORR_FLAG),
+	METHOD_GRAD_DECORR=(METHOD_GRAD | DECORR_FLAG),
+	METHOD_OLD=-2,
+    };
 
 /*
  * Huffman table
  */
-typedef struct {
-    unsigned char* table_pointers[32];
-    unsigned char table_data[129*25];
-} DecodeTable;
+    struct DecodeTable {
+	unsigned char* table_pointers[32];
+	unsigned char table_data[129*25];
+    };
 
 /*
  * Decoder context
  */
-struct huffyuv_private_t : public Opaque {
-    huffyuv_private_t();
-    virtual ~huffyuv_private_t();
+    class huffyuv_decoder : public Video_Decoder {
+	public:
+	    huffyuv_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    virtual ~huffyuv_decoder();
 
-    // Real image depth
-    int bitcount;
-    // Prediction method
-    int method;
-    // Bitmap color type
-    int bitmaptype;
-    // Huffman tables
-    unsigned char decode1_shift[256];
-    unsigned char decode2_shift[256];
-    unsigned char decode3_shift[256];
-    DecodeTable decode1, decode2, decode3;
-    // Above line buffers
-    unsigned char *abovebuf1, *abovebuf2;
-    sh_video_t* sh;
-    video_decoder_t* parent;
-};
-huffyuv_private_t::huffyuv_private_t() {}
-huffyuv_private_t::~huffyuv_private_t() {
-    if (abovebuf1)
-	delete abovebuf1;
-    if (abovebuf2)
-	delete abovebuf2;
-}
+	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
+	    virtual mp_image_t*		run(const enc_frame_t& frame);
+	    virtual video_probe_t	get_probe_information() const;
+	private:
+	    const unsigned char*	InitializeDecodeTable(const unsigned char* hufftable,
+						unsigned char* shift, DecodeTable* decode_table) const;
+	    const unsigned char*	InitializeShiftAddTables(const unsigned char* hufftable,
+						unsigned char* shift, unsigned* add_shifted) const;
+	    const unsigned char*	DecompressHuffmanTable(const unsigned char* hufftable,
+						unsigned char* dst) const;
+	    unsigned char		huff_decompress(const unsigned int* in, unsigned int *pos,
+						const DecodeTable *decode_table,const unsigned char *decode_shift);
+
+	    video_decoder_t&		parent;
+	    sh_video_t&			sh;
+	    const video_probe_t*	probe;
+	    // Real image depth
+	    int				bitcount;
+	    // Prediction method
+	    int				method;
+	    // Bitmap color type
+	    int				bitmaptype;
+	    // Huffman tables
+	    unsigned char		decode1_shift[256];
+	    unsigned char		decode2_shift[256];
+	    unsigned char		decode3_shift[256];
+	    DecodeTable			decode1, decode2, decode3;
+	    // Above line buffers
+	    unsigned char*		abovebuf1;
+	    unsigned char*		abovebuf2;
+
+	    static const uint32_t	FOURCC_HFYU;
+	    static const unsigned char*	HUFFTABLE_CLASSIC_YUV;
+	    static const unsigned char*	HUFFTABLE_CLASSIC_RGB;
+	    static const unsigned char*	HUFFTABLE_CLASSIC_YUV_CHROMA;
+	    static const unsigned char classic_shift_luma[];
+	    static const unsigned char classic_shift_chroma[];
+	    static const unsigned char classic_add_luma[256];
+	    static const unsigned char classic_add_chroma[256];
+    };
+const uint32_t		huffyuv_decoder::FOURCC_HFYU=mmioFOURCC('H','F','Y','U');
+const unsigned char*	huffyuv_decoder::HUFFTABLE_CLASSIC_YUV=(const unsigned char*)(-1);
+const unsigned char*	huffyuv_decoder::HUFFTABLE_CLASSIC_RGB=(const unsigned char*)(-2);
+const unsigned char*	huffyuv_decoder::HUFFTABLE_CLASSIC_YUV_CHROMA=(const unsigned char*)(-3);
+
+video_probe_t huffyuv_decoder::get_probe_information() const { return *probe; }
 
 static const video_probe_t probes[] = {
     { "huffyuv", "huffyuv", FOURCC_TAG('H','F','Y','U'), VCodecStatus_Working, {IMGFMT_YUY2,IMGFMT_BGR32,IMGFMT_BGR24}, {VideoFlag_None, VideoFlag_None } },
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
-    unsigned i;
-    for(i=0;probes[i].driver;i++)
-	if(fourcc==probes[i].fourcc)
-	    return &probes[i];
-    return NULL;
-}
-
 /*
  * Classic Huffman tables
  */
-unsigned char classic_shift_luma[] = {
+const unsigned char huffyuv_decoder::classic_shift_luma[] = {
   34,36,35,69,135,232,9,16,10,24,11,23,12,16,13,10,14,8,15,8,
   16,8,17,20,16,10,207,206,205,236,11,8,10,21,9,23,8,8,199,70,
   69,68, 0
 };
 
-unsigned char classic_shift_chroma[] = {
+const unsigned char huffyuv_decoder::classic_shift_chroma[] = {
   66,36,37,38,39,40,41,75,76,77,110,239,144,81,82,83,84,85,118,183,
   56,57,88,89,56,89,154,57,58,57,26,141,57,56,58,57,58,57,184,119,
   214,245,116,83,82,49,80,79,78,77,44,75,41,40,39,38,37,36,34, 0
 };
 
-unsigned char classic_add_luma[256] = {
+const unsigned char huffyuv_decoder::classic_add_luma[256] = {
     3,  9,  5, 12, 10, 35, 32, 29, 27, 50, 48, 45, 44, 41, 39, 37,
    73, 70, 68, 65, 64, 61, 58, 56, 53, 50, 49, 46, 44, 41, 38, 36,
    68, 65, 63, 61, 58, 55, 53, 51, 48, 46, 45, 43, 41, 39, 38, 36,
@@ -152,7 +151,7 @@ unsigned char classic_add_luma[256] = {
    46, 47, 49, 51, 26, 28, 30, 31, 33, 34, 18, 19, 11, 13,  7,  8,
 };
 
-unsigned char classic_add_chroma[256] = {
+const unsigned char huffyuv_decoder::classic_add_chroma[256] = {
     3,  1,  2,  2,  2,  2,  3,  3,  7,  5,  7,  5,  8,  6, 11,  9,
     7, 13, 11, 10,  9,  8,  7,  5,  9,  7,  6,  4,  7,  5,  8,  7,
    11,  8, 13, 11, 19, 15, 22, 23, 20, 33, 32, 28, 27, 29, 51, 77,
@@ -171,27 +170,166 @@ unsigned char classic_add_chroma[256] = {
     6, 12,  8, 10,  7,  9,  6,  4,  6,  2,  2,  3,  3,  3,  3,  2,
 };
 
+/*
+ *
+ * Init HuffYUV decoder
+ *
+ */
+huffyuv_decoder::huffyuv_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+	    :Video_Decoder(p,_sh,psi,fourcc)
+	    ,parent(p)
+	    ,sh(_sh)
+{
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(fourcc==probes[i].fourcc)
+	    probe=&probes[i];
+    if(!probe) throw bad_format_exception();
+
+    MPXP_Rc vo_ret; // Video output init ret value
+    const unsigned char *hufftable; // Compressed huffman tables
+    BITMAPINFOHEADER *bih = sh.bih;
+
+    mpxp_v<<"[HuffYUV] Allocating above line buffer"<<std::endl;
+    abovebuf1 = new unsigned char [4*bih->biWidth];
+    abovebuf2 = new unsigned char [4*bih->biWidth];
+
+    if (bih->biCompression != FOURCC_HFYU) {
+	mpxp_v<<"[HuffYUV] BITMAPHEADER fourcc != HFYU"<<std::endl;
+	throw bad_format_exception();
+    }
+
+    /* Get bitcount */
+    bitcount = 0;
+    if (bih->biSize > sizeof(BITMAPINFOHEADER)+1)
+	bitcount = *((char*)bih + sizeof(BITMAPINFOHEADER) + 1);
+    if (bitcount == 0)
+	bitcount = bih->biBitCount;
+
+    /* Get bitmap type */
+    switch (bitcount & ~7) {
+	case 16:
+	    bitmaptype = BMPTYPE_YUV; // -1
+	    mpxp_v<<"[HuffYUV] Image type is YUV"<<std::endl;
+	    break;
+	case 24:
+	    bitmaptype = BMPTYPE_RGB; // -2
+	    mpxp_v<<"[HuffYUV] Image type is RGB"<<std::endl;
+	    break;
+	case 32:
+	    bitmaptype = BMPTYPE_RGBA; //-3
+	    mpxp_v<<"[HuffYUV] Image type is RGBA"<<std::endl;
+	    break;
+	default:
+	    bitmaptype = 0; // ERR
+	    mpxp_v<<"[HuffYUV] Image type is unknown"<<std::endl;
+    }
+
+    /* Get method */
+    switch (bih->biBitCount & 7) {
+	case 0:
+	    if (bih->biSize > sizeof(BITMAPINFOHEADER)) {
+		method = *((unsigned char*)bih + sizeof(BITMAPINFOHEADER));
+		mpxp_v<<"[HuffYUV] Method stored in extra data"<<std::endl;
+	    } else
+		method = METHOD_OLD;	// Is it really needed?
+	    break;
+	case 1:
+	    method = METHOD_LEFT;
+	    break;
+	case 2:
+	    method = METHOD_LEFT_DECORR;
+	    break;
+	case 3:
+	    if (bitmaptype == BMPTYPE_YUV) {
+		method = METHOD_GRAD;
+	    } else {
+		method = METHOD_GRAD_DECORR;
+	    }
+	    break;
+	case 4:
+	    method = METHOD_MEDIAN;
+	    break;
+	default:
+	    mpxp_v<<"[HuffYUV] Method: fallback to METHOD_OLD"<<std::endl;
+	    method = METHOD_OLD;
+    }
+
+    /* Print method info */
+    switch (method) {
+	case METHOD_LEFT:
+	    mpxp_v<<"[HuffYUV] Method: Predict Left"<<std::endl;
+	    break;
+	case METHOD_GRAD:
+	    mpxp_v<<"[HuffYUV] Method: Predict Gradient"<<std::endl;
+	    break;
+	case METHOD_MEDIAN:
+	    mpxp_v<<"[HuffYUV] Method: Predict Median"<<std::endl;
+	    break;
+	case METHOD_LEFT_DECORR:
+	    mpxp_v<<"[HuffYUV] Method: Predict Left with decorrelation"<<std::endl;
+	    break;
+	case METHOD_GRAD_DECORR:
+	    mpxp_v<<"[HuffYUV] Method: Predict Gradient with decorrelation"<<std::endl;
+	    break;
+	case METHOD_OLD:
+	    mpxp_v<<"[HuffYUV] Method Old"<<std::endl;
+	    break;
+	default:
+	    mpxp_v<<"[HuffYUV] Method unknown"<<std::endl;
+    }
+
+    /* Get compressed Huffman tables */
+    if (bih->biSize == sizeof(BITMAPINFOHEADER) /*&& !(bih->biBitCount&7)*/) {
+	hufftable = (bitmaptype == BMPTYPE_YUV) ? HUFFTABLE_CLASSIC_YUV : HUFFTABLE_CLASSIC_RGB;
+	mpxp_v<<"[HuffYUV] Using classic static Huffman tables"<<std::endl;
+    } else {
+	hufftable = (unsigned char*)bih + sizeof(BITMAPINFOHEADER) + ((bih->biBitCount&7) ? 0 : 4);
+	mpxp_v<<"[HuffYUV] Using Huffman tables stored in file"<<std::endl;
+    }
+
+    /* Initialize decoder Huffman tables */
+    hufftable = InitializeDecodeTable(hufftable, decode1_shift, &(decode1));
+    hufftable = InitializeDecodeTable(hufftable, decode2_shift, &(decode2));
+    InitializeDecodeTable(hufftable, decode3_shift, &(decode3));
+
+    /*
+     * Initialize video output device
+     */
+    switch (bitmaptype) {
+	case BMPTYPE_RGB:
+	case BMPTYPE_YUV:
+	    vo_ret = mpcodecs_config_vf(parent,sh.src_w,sh.src_h);
+	    break;
+	case BMPTYPE_RGBA:
+	    mpxp_v<<"[HuffYUV] RGBA not supported yet."<<std::endl;
+	    throw bad_format_exception();
+	default:
+	    mpxp_v<<"[HuffYUV] BUG! Unknown bitmaptype in vo config."<<std::endl;
+	    throw bad_format_exception();
+    }
+    if(vo_ret!=MPXP_Ok) throw bad_format_exception();
+}
 
 /*
- * Internal function prototypes
+ *
+ * Uninit HuffYUV decoder
+ *
  */
-unsigned char* InitializeDecodeTable(unsigned char* hufftable,
-					unsigned char* shift, DecodeTable* decode_table);
-unsigned char* InitializeShiftAddTables(unsigned char* hufftable,
-					unsigned char* shift, unsigned* add_shifted);
-unsigned char* DecompressHuffmanTable(unsigned char* hufftable,
-					unsigned char* dst);
-unsigned char huff_decompress(unsigned int* in, unsigned int *pos,
-				DecodeTable *decode_table, unsigned char *decode_shift);
-
+huffyuv_decoder::~huffyuv_decoder() {
+    if (abovebuf1)
+	delete abovebuf1;
+    if (abovebuf2)
+	delete abovebuf2;
+}
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...)
+MPXP_Rc huffyuv_decoder::ctrl(int cmd,any_t* arg,long arg2)
 {
-    huffyuv_private_t& priv=static_cast<huffyuv_private_t&>(ctx);
+    UNUSED(arg2);
     switch(cmd) {
 	case VDCTRL_QUERY_FORMAT:
-	    if  (priv.bitmaptype == BMPTYPE_YUV) {
+	    if (bitmaptype == BMPTYPE_YUV) {
 		if (*((int*)arg) == IMGFMT_YUY2)
 		    return MPXP_True;
 		else
@@ -206,184 +344,26 @@ static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...)
     return MPXP_Unknown;
 }
 
-static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
-    UNUSED(probe);
-    UNUSED(psi);
-    huffyuv_private_t* priv = new(zeromem) huffyuv_private_t;
-    priv->sh=sh;
-    return priv;
-}
-
-/*
- *
- * Init HuffYUV decoder
- *
- */
-static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque)
-{
-    huffyuv_private_t& priv=static_cast<huffyuv_private_t&>(ctx);
-    sh_video_t* sh = priv.sh;
-    MPXP_Rc vo_ret; // Video output init ret value
-    unsigned char *hufftable; // Compressed huffman tables
-    BITMAPINFOHEADER *bih = sh->bih;
-
-    priv.parent = &opaque;
-
-    MSG_V( "[HuffYUV] Allocating above line buffer\n");
-    if ((priv.abovebuf1 = new unsigned char [4*bih->biWidth]) == NULL) {
-	MSG_ERR(MSGTR_OutOfMemory);
-	return MPXP_False;
-    }
-
-    if ((priv.abovebuf2 = new unsigned char [4*bih->biWidth]) == NULL) {
-	MSG_ERR(MSGTR_OutOfMemory);
-	return MPXP_False;
-    }
-
-    if (bih->biCompression != FOURCC_HFYU) {
-	MSG_WARN( "[HuffYUV] BITMAPHEADER fourcc != HFYU\n");
-	return MPXP_False;
-    }
-
-    /* Get bitcount */
-    priv.bitcount = 0;
-    if (bih->biSize > sizeof(BITMAPINFOHEADER)+1)
-	priv.bitcount = *((char*)bih + sizeof(BITMAPINFOHEADER) + 1);
-    if (priv.bitcount == 0)
-	priv.bitcount = bih->biBitCount;
-
-    /* Get bitmap type */
-    switch (priv.bitcount & ~7) {
-	case 16:
-	    priv.bitmaptype = BMPTYPE_YUV; // -1
-	    MSG_V( "[HuffYUV] Image type is YUV\n");
-	    break;
-	case 24:
-	    priv.bitmaptype = BMPTYPE_RGB; // -2
-	    MSG_V( "[HuffYUV] Image type is RGB\n");
-	    break;
-	case 32:
-	    priv.bitmaptype = BMPTYPE_RGBA; //-3
-	    MSG_V( "[HuffYUV] Image type is RGBA\n");
-	    break;
-	default:
-	    priv.bitmaptype = 0; // ERR
-	    MSG_WARN( "[HuffYUV] Image type is unknown\n");
-    }
-
-    /* Get method */
-    switch (bih->biBitCount & 7) {
-	case 0:
-	    if (bih->biSize > sizeof(BITMAPINFOHEADER)) {
-		priv.method = *((unsigned char*)bih + sizeof(BITMAPINFOHEADER));
-		MSG_V( "[HuffYUV] Method stored in extra data\n");
-	    } else
-		priv.method = METHOD_OLD;	// Is it really needed?
-	    break;
-	case 1:
-	    priv.method = METHOD_LEFT;
-	    break;
-	case 2:
-	    priv.method = METHOD_LEFT_DECORR;
-	    break;
-	case 3:
-	    if (priv.bitmaptype == BMPTYPE_YUV) {
-		priv.method = METHOD_GRAD;
-	    } else {
-		priv.method = METHOD_GRAD_DECORR;
-	    }
-	    break;
-	case 4:
-	    priv.method = METHOD_MEDIAN;
-	    break;
-	default:
-	    MSG_V( "[HuffYUV] Method: fallback to METHOD_OLD\n");
-	    priv.method = METHOD_OLD;
-    }
-
-    /* Print method info */
-    switch (priv.method) {
-	case METHOD_LEFT:
-	    MSG_V( "[HuffYUV] Method: Predict Left\n");
-	    break;
-	case METHOD_GRAD:
-	    MSG_V( "[HuffYUV] Method: Predict Gradient\n");
-	    break;
-	case METHOD_MEDIAN:
-	    MSG_V( "[HuffYUV] Method: Predict Median\n");
-	    break;
-	case METHOD_LEFT_DECORR:
-	    MSG_V( "[HuffYUV] Method: Predict Left with decorrelation\n");
-	    break;
-	case METHOD_GRAD_DECORR:
-	    MSG_V( "[HuffYUV] Method: Predict Gradient with decorrelation\n");
-	    break;
-	case METHOD_OLD:
-	    MSG_V( "[HuffYUV] Method Old\n");
-	    break;
-	default:
-	    MSG_WARN( "[HuffYUV] Method unknown\n");
-    }
-
-    /* Get compressed Huffman tables */
-    if (bih->biSize == sizeof(BITMAPINFOHEADER) /*&& !(bih->biBitCount&7)*/) {
-	hufftable = (priv.bitmaptype == BMPTYPE_YUV) ? HUFFTABLE_CLASSIC_YUV : HUFFTABLE_CLASSIC_RGB;
-	MSG_V( "[HuffYUV] Using classic static Huffman tables\n");
-    } else {
-	hufftable = (unsigned char*)bih + sizeof(BITMAPINFOHEADER) + ((bih->biBitCount&7) ? 0 : 4);
-	MSG_V( "[HuffYUV] Using Huffman tables stored in file\n");
-    }
-
-    /* Initialize decoder Huffman tables */
-    hufftable = InitializeDecodeTable(hufftable, priv.decode1_shift, &(priv.decode1));
-    hufftable = InitializeDecodeTable(hufftable, priv.decode2_shift, &(priv.decode2));
-    InitializeDecodeTable(hufftable, priv.decode3_shift, &(priv.decode3));
-
-    /*
-     * Initialize video output device
-     */
-    switch (priv.bitmaptype) {
-	case BMPTYPE_RGB:
-	case BMPTYPE_YUV:
-	    vo_ret = mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
-	    break;
-	case BMPTYPE_RGBA:
-	    MSG_ERR( "[HuffYUV] RGBA not supported yet.\n");
-	    return MPXP_False;
-	default:
-	    MSG_ERR( "[HuffYUV] BUG! Unknown bitmaptype in vo config.\n");
-	    return MPXP_False;
-    }
-    return vo_ret;
-}
-
-/*
- *
- * Uninit HuffYUV decoder
- *
- */
-static void uninit(Opaque& ctx) { UNUSED(ctx); }
-
 #define HUFF_DECOMPRESS_YUYV() \
 { \
-    y1 = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode1), priv.decode1_shift); \
-    u = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode2), priv.decode2_shift); \
-    y2 = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode1), priv.decode1_shift); \
-    v = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode3), priv.decode3_shift); \
+    y1 = huff_decompress((unsigned int *)encoded, &pos, &(decode1), decode1_shift); \
+    u = huff_decompress((unsigned int *)encoded, &pos, &(decode2), decode2_shift); \
+    y2 = huff_decompress((unsigned int *)encoded, &pos, &(decode1), decode1_shift); \
+    v = huff_decompress((unsigned int *)encoded, &pos, &(decode3), decode3_shift); \
 }
 
 #define HUFF_DECOMPRESS_RGB_DECORR() \
 { \
-    g = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode2), priv.decode2_shift); \
-    b = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode1), priv.decode1_shift); \
-    r = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode3), priv.decode3_shift); \
+    g = huff_decompress((unsigned int *)encoded, &pos, &(decode2), decode2_shift); \
+    b = huff_decompress((unsigned int *)encoded, &pos, &(decode1), decode1_shift); \
+    r = huff_decompress((unsigned int *)encoded, &pos, &(decode3), decode3_shift); \
 }
 
 #define HUFF_DECOMPRESS_RGB() \
 { \
-    b = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode1), priv.decode1_shift); \
-    g = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode2), priv.decode2_shift); \
-    r = huff_decompress((unsigned int *)encoded, &pos, &(priv.decode3), priv.decode3_shift); \
+    b = huff_decompress((unsigned int *)encoded, &pos, &(decode1), decode1_shift); \
+    g = huff_decompress((unsigned int *)encoded, &pos, &(decode2), decode2_shift); \
+    r = huff_decompress((unsigned int *)encoded, &pos, &(decode3), decode3_shift); \
 }
 
 #define MEDIAN(left, above, aboveleft) \
@@ -485,10 +465,8 @@ static void uninit(Opaque& ctx) { UNUSED(ctx); }
  * Decode a HuffYUV frame
  *
  */
-static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame)
+mp_image_t* huffyuv_decoder::run(const enc_frame_t& frame)
 {
-    huffyuv_private_t& priv=static_cast<huffyuv_private_t&>(ctx);
-    sh_video_t* sh = priv.sh;
     mp_image_t* mpi;
     int pixel_ptr;
     unsigned char y1, y2, u, v, r, g, b;
@@ -498,28 +476,28 @@ static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame)
     int row, col;
     unsigned int pos = 32;
     const unsigned char *encoded = (const unsigned char *)frame.data;
-    unsigned char *abovebuf = priv.abovebuf1;
-    unsigned char *curbuf = priv.abovebuf2;
+    unsigned char *abovebuf = abovebuf1;
+    unsigned char *curbuf = abovebuf2;
     unsigned char *outptr;
-    int width = sh->src_w; // Real image width
-    int height = sh->src_h; // Real image height
+    int width = sh.src_w; // Real image width
+    int height = sh.src_h; // Real image height
     int bgr32;
 
     // skipped frame
     if(frame.len <= 0) return NULL;
 
     /* Do not accept stride for rgb, it gives me wrong output :-( */
-    if (priv.bitmaptype == BMPTYPE_YUV)
-	mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,sh->src_w, sh->src_h);
+    if (bitmaptype == BMPTYPE_YUV)
+	mpi=mpcodecs_get_image(parent, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,sh.src_w, sh.src_h);
     else
-	mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_TEMP, 0,sh->src_w, sh->src_h);
+	mpi=mpcodecs_get_image(parent, MP_IMGTYPE_TEMP, 0,sh.src_w, sh.src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     outptr = mpi->planes[0]; // Output image pointer
 
-    if (priv.bitmaptype == BMPTYPE_YUV) {
+    if (bitmaptype == BMPTYPE_YUV) {
 	width >>= 1; // Each cycle stores two pixels
-	if (priv.method == METHOD_GRAD) {
+	if (method == METHOD_GRAD) {
 	    /*
 	     * YUV predict gradient
 	     */
@@ -549,7 +527,7 @@ static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame)
 		abovebuf = curbuf;
 		curbuf = swap;
 	    }
-	} else if (priv.method == METHOD_MEDIAN) {
+	} else if (method == METHOD_MEDIAN) {
 	    /*
 	     * YUV predict median
 	     */
@@ -614,7 +592,7 @@ static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame)
 	}
     } else {
 	bgr32 = (mpi->bpp) >> 5; // 1 if bpp = 32, 0 if bpp = 24
-	if (priv.method == METHOD_LEFT_DECORR) {
+	if (method == METHOD_LEFT_DECORR) {
 	    /*
 	     * RGB predict left with decorrelation
 	     */
@@ -632,7 +610,7 @@ static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame)
 		    RGB_PREDLEFT_DECORR();
 		}
 	    }
-	} else if (priv.method == METHOD_GRAD_DECORR) {
+	} else if (method == METHOD_GRAD_DECORR) {
 	    /*
 	     * RGB predict gradient with decorrelation
 	     */
@@ -688,9 +666,8 @@ static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame)
     return mpi;
 }
 
-
-unsigned char* InitializeDecodeTable(unsigned char* hufftable,
-					unsigned char* shift, DecodeTable* decode_table)
+const unsigned char* huffyuv_decoder::InitializeDecodeTable(const unsigned char* hufftable,
+					unsigned char* shift, DecodeTable* decode_table) const
 {
 	unsigned int add_shifted[256];
 	char code_lengths[256];
@@ -746,14 +723,11 @@ unsigned char* InitializeDecodeTable(unsigned char* hufftable,
 						 1 << (table_lengths[firstbit] - code_lengths[k]));
 		}
 	}
-
 	return hufftable;
 }
 
-
-
-unsigned char* InitializeShiftAddTables(unsigned char* hufftable,
-					unsigned char* shift, unsigned* add_shifted)
+const unsigned char* huffyuv_decoder::InitializeShiftAddTables(const unsigned char* hufftable,
+					unsigned char* shift, unsigned* add_shifted) const
 {
 	int i, j;
 	unsigned int bits; // must be 32bit unsigned
@@ -799,10 +773,8 @@ unsigned char* InitializeShiftAddTables(unsigned char* hufftable,
 	return hufftable;
 }
 
-
-
-unsigned char* DecompressHuffmanTable(unsigned char* hufftable,
-					unsigned char* dst)
+const unsigned char* huffyuv_decoder::DecompressHuffmanTable(const unsigned char* hufftable,
+						    unsigned char* dst) const
 {
 	int val;
 	int repeat;
@@ -820,9 +792,8 @@ unsigned char* DecompressHuffmanTable(unsigned char* hufftable,
 	return hufftable;
 }
 
-
-unsigned char huff_decompress(unsigned int* in, unsigned int *pos, DecodeTable *decode_table,
-															unsigned char *decode_shift)
+unsigned char huffyuv_decoder::huff_decompress(const unsigned int* in, unsigned int *pos,const DecodeTable *decode_table,
+						const unsigned char *decode_shift)
 {
 	unsigned int word = *pos >> 5;
 	unsigned int bit = *pos & 31;
@@ -846,3 +817,19 @@ unsigned char huff_decompress(unsigned int* in, unsigned int *pos, DecodeTable *
 
 	return outbyte;
 }
+
+static const mpxp_option_t options[] = {
+  { NULL, NULL, 0, 0, 0, 0, NULL}
+};
+
+static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) huffyuv_decoder(p,sh,psi,fourcc); }
+
+extern const vd_info_t vd_huffyuv_info = {
+    "HuffYUV Video decoder",
+    "huffyuv",
+    "Roberto Togni (original win32 by Ben Rudiak-Gould http://www.math.berkeley.edu/~benrg/huffyuv.html)",
+    "build-in",
+    query_interface,
+    options
+};
+} // namespace	usr

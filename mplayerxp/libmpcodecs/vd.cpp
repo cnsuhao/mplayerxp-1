@@ -19,106 +19,105 @@ using namespace	usr;
 #include "postproc/vf.h"
 #include "vd_msg.h"
 
-extern const vd_functions_t mpcodecs_vd_null;
-extern const vd_functions_t mpcodecs_vd_lavc;
-extern const vd_functions_t mpcodecs_vd_dshow;
-extern const vd_functions_t mpcodecs_vd_vfw;
-extern const vd_functions_t mpcodecs_vd_vfwex;
-extern const vd_functions_t mpcodecs_vd_divx4;
-extern const vd_functions_t mpcodecs_vd_raw;
-extern const vd_functions_t mpcodecs_vd_libdv;
-extern const vd_functions_t mpcodecs_vd_xanim;
-extern const vd_functions_t mpcodecs_vd_fli;
-extern const vd_functions_t mpcodecs_vd_nuv;
-extern const vd_functions_t mpcodecs_vd_mpng;
-extern const vd_functions_t mpcodecs_vd_ijpg;
-extern const vd_functions_t mpcodecs_vd_libmpeg2;
-extern const vd_functions_t mpcodecs_vd_xvid;
-extern const vd_functions_t mpcodecs_vd_mpegpes;
-extern const vd_functions_t mpcodecs_vd_huffyuv;
-extern const vd_functions_t mpcodecs_vd_xanim;
-extern const vd_functions_t mpcodecs_vd_real;
-extern const vd_functions_t mpcodecs_vd_dmo;
-extern const vd_functions_t mpcodecs_vd_qtvideo;
-extern const vd_functions_t mpcodecs_vd_theora;
+namespace	usr {
+extern const vd_info_t vd_null_info;
+extern const vd_info_t vd_lavc_info;
+extern const vd_info_t vd_dshow_info;
+extern const vd_info_t vd_vfw_info;
+extern const vd_info_t vd_vfwex_info;
+extern const vd_info_t vd_divx4_info;
+extern const vd_info_t vd_raw_info;
+extern const vd_info_t vd_libdv_info;
+extern const vd_info_t vd_xanim_info;
+extern const vd_info_t vd_fli_info;
+extern const vd_info_t vd_nuv_info;
+extern const vd_info_t vd_mpng_info;
+extern const vd_info_t vd_ijpg_info;
+extern const vd_info_t vd_libmpeg2_info;
+extern const vd_info_t vd_xvid_info;
+extern const vd_info_t vd_mpegpes_info;
+extern const vd_info_t vd_huffyuv_info;
+extern const vd_info_t vd_xanim_info;
+extern const vd_info_t vd_real_info;
+extern const vd_info_t vd_dmo_info;
+extern const vd_info_t vd_qtvideo_info;
+extern const vd_info_t vd_theora_info;
 
-static const vd_functions_t* mpcodecs_vd_drivers[] = {
-    &mpcodecs_vd_raw,
-    &mpcodecs_vd_nuv,
-    &mpcodecs_vd_libmpeg2,
-    &mpcodecs_vd_xvid,
-    &mpcodecs_vd_mpegpes,
-    &mpcodecs_vd_huffyuv,
+static const vd_info_t* mpcodecs_vd_drivers[] = {
+    &vd_raw_info,
+    &vd_nuv_info,
+    &vd_libmpeg2_info,
+    &vd_xvid_info,
+    &vd_mpegpes_info,
+    &vd_huffyuv_info,
 #ifndef ENABLE_GPL_ONLY
-    &mpcodecs_vd_divx4,
-    &mpcodecs_vd_real,
-    &mpcodecs_vd_xanim,
+    &vd_divx4_info,
+    &vd_real_info,
+    &vd_xanim_info,
 #endif
 #ifdef HAVE_LIBTHEORA
-    &mpcodecs_vd_theora,
+    &vd_theora_info,
 #endif
 #ifdef HAVE_LIBDV
-    &mpcodecs_vd_libdv,
+    &vd_libdv_info,
 #endif
-    &mpcodecs_vd_lavc,
-    &mpcodecs_vd_null,
-    NULL
+    &vd_lavc_info,
+    &vd_null_info
 };
-static unsigned int nddrivers=sizeof(mpcodecs_vd_drivers)/sizeof(vd_functions_t*);
 
 void libmpcodecs_vd_register_options(M_Config& cfg)
 {
     unsigned i;
-    for(i=0;i<nddrivers;i++) {
-	if(mpcodecs_vd_drivers[i])
-	    if(mpcodecs_vd_drivers[i]->options)
-		cfg.register_options(mpcodecs_vd_drivers[i]->options);
-	if(mpcodecs_vd_drivers[i]==&mpcodecs_vd_null) break;
-    }
+    for (i=0; mpcodecs_vd_drivers[i] != &vd_null_info; i++)
+	if(mpcodecs_vd_drivers[i]->options)
+	    cfg.register_options(mpcodecs_vd_drivers[i]->options);
 }
 
-const vd_functions_t* vfm_find_driver(const std::string& name) {
+const vd_info_t* vfm_find_driver(const std::string& name) {
     unsigned i;
-    for (i=0; mpcodecs_vd_drivers[i] != &mpcodecs_vd_null; i++)
-	if(name==mpcodecs_vd_drivers[i]->info->driver_name) {
+    for (i=0; mpcodecs_vd_drivers[i] != &vd_null_info; i++)
+	if(name==mpcodecs_vd_drivers[i]->driver_name) {
 	    return mpcodecs_vd_drivers[i];
 	}
     return NULL;
 }
 
-const video_probe_t* vfm_driver_probe(Opaque& ctx,sh_video_t *sh,put_slice_info_t& psi) {
+Video_Decoder* vfm_probe_driver(video_decoder_t& handle,sh_video_t& sh,put_slice_info_t& psi) {
     unsigned i;
-    const video_probe_t* probe;
-    for (i=0; mpcodecs_vd_drivers[i] != &mpcodecs_vd_null; i++) {
-	mpxp_v<<"Probing: "<<mpcodecs_vd_drivers[i]->info->driver_name<<std::endl;
-	if((probe=mpcodecs_vd_drivers[i]->probe(sh->fourcc))!=NULL) {
-	    Opaque* priv=mpcodecs_vd_drivers[i]->preinit(*probe,sh,psi);
-	    if(priv) {
-		mpxp_v<<"Driver: "<<mpcodecs_vd_drivers[i]->info->driver_name<<" supports these outfmt for ";
-		fourcc(mpxp_v,sh->fourcc);
-		mpxp_v<<" fourcc:"<<std::endl;
-		for(i=0;i<Video_MaxOutFmt;i++) {
-		    fourcc(mpxp_v,probe->pix_fmt[i]);
-		    mpxp_v<<" (flg="<<probe->flags[i]<<")"<<std::endl;
-		    if(probe->pix_fmt[i]==0||probe->pix_fmt[i]==-1) break;
-		}
-		mpxp_v<<std::endl;
-		mpcodecs_vd_drivers[i]->uninit(*priv);
-		delete priv;
-		return probe;
+    Video_Decoder* drv=NULL;
+    for (i=0; mpcodecs_vd_drivers[i] != &vd_null_info; i++) {
+	mpxp_v<<"Probing: "<<mpcodecs_vd_drivers[i]->driver_name<<std::endl;
+	try {
+	    drv = mpcodecs_vd_drivers[i]->query_interface(handle,sh,psi,sh.fourcc);
+	    mpxp_v<<"ok"<<std::endl;
+	    mpxp_v<<"Driver: "<<mpcodecs_vd_drivers[i]->driver_name<<" supports these outfmt for ";
+		fourcc(mpxp_v,sh.fourcc);
+	    mpxp_v<<" fourcc:"<<std::endl;
+	    video_probe_t probe=drv->get_probe_information();
+	    for(i=0;i<Video_MaxOutFmt;i++) {
+		fourcc(mpxp_v,probe.pix_fmt[i]);
+		mpxp_v<<" (flg="<<probe.flags[i]<<")"<<std::endl;
+		if(probe.pix_fmt[i]==0||probe.pix_fmt[i]==unsigned(-1)) break;
 	    }
+	    mpxp_v<<std::endl;
+	    break;
+	} catch(const bad_format_exception&) {
+	    mpxp_v<<"failed"<<std::endl;
+	    delete drv; drv = NULL;
+	    continue;
 	}
     }
-    return NULL;
+    return drv;
 }
 
-void vfm_help(void) {
+void vfm_help() {
     unsigned i;
     mpxp_info<<"Available video codec families/drivers:"<<std::endl;
-    for(i=0;i<nddrivers;i++) {
+    for (i=0; mpcodecs_vd_drivers[i] != &vd_null_info; i++) {
 	if(mpcodecs_vd_drivers[i])
 	    if(mpcodecs_vd_drivers[i]->options)
-		mpxp_info<<"\t"<<std::setw(10)<<std::left<<mpcodecs_vd_drivers[i]->info->driver_name<<" "<<mpcodecs_vd_drivers[i]->info->descr<<std::endl;
+		mpxp_info<<"\t"<<std::setw(10)<<std::left<<mpcodecs_vd_drivers[i]->driver_name<<" "<<mpcodecs_vd_drivers[i]->descr<<std::endl;
     }
     mpxp_info<<std::endl;
 }
+} // namespace	usr

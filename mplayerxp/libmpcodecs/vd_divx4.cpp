@@ -25,131 +25,122 @@ using namespace	usr;
 #include "libvo2/video_out.h"
 #include "osdep/bswap.h"
 
-static const vd_info_t info = {
-    "DivX4Linux lib (divx4/5 mode)",
-    "divx",
-    "Nickols_K",
-    "http://labs.divx.com/DivXLinuxCodec"
-};
+namespace	usr {
+    enum {
+	DIVX4LINUX_BETA=0,
+	DIVX4LINUX=1,
+	DIVX5LINUX=2
+    };
 
-static const mpxp_option_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
-};
+    enum {
+	DEC_OPT_INIT=0, ///< Initialize the decoder.  See LibQDecoreFunction for example usage.
+	DEC_OPT_RELEASE=1, ///< Release the decoder.  See LibQDecoreFunction for example usage.
+	DEC_OPT_INFO=2, ///<  Obtain information about the video.  See LibQDecoreFunction for example usage.
+	DEC_OPT_FRAME=3, ///<  Decode a frame.  See LibQDecoreFunction for example usage.
+	DEC_OPT_SET=4, ///< Specify a parameter to adjust/set.
+	DEC_OPT_FLUSH=5 ///< Flush the decoder status.
+    };
 
-LIBVD_EXTERN(divx4)
+    // Decoder parameter specifier
+    enum {
+	DEC_PAR_OUTPUT=0, ///< Specify a different output format. pParam2 will point to a DecInit structure
+	DEC_PAR_POSTPROCESSING=1, ///< pParam2 will specify a postprocessing level.
+	DEC_PAR_POSTPROCDEBLOC=2, ///< pParam2 will specify a deblocking level.
+	DEC_PAR_POSTPROCDERING=3, ///< pParam2 will specify a deringing level.
+	DEC_PAR_WARMTHLEVEL=4, ///< pParam2 will specify a level for the warmth filter (film effect).
+	DEC_PAR_CONTRAST=5, ///< pParam2 will specify the contrast of the output image.
+	DEC_PAR_BRIGHTNESS=6, ///< pParam2 will specify the brightness of the output image.
+	DEC_PAR_SATURATION=7, ///< pParam2 will specify the saturation of the output image.
+	DEC_PAR_LOGO=8, ///< Display the DivX logo on the bottom right of the picture when pParam is the to 1.
+	DEC_PAR_SMOOTH=9, ///< Use smooth playback when pParam is set to 1.
+	DEC_PAR_SHOWPP=10 ///< Show the postprocessing level in use on the top left corner of the output image.
+    };
 
-enum {
-    DIVX4LINUX_BETA=0,
-    DIVX4LINUX=1,
-    DIVX5LINUX=2
-};
+    // Decoder return values.
+    enum {
+	DEC_OK=0, ///< Decoder call succeded.
+	DEC_INVALID_SYNTAX=-1, ///< A semantic error occourred while parsing the stream.
+	DEC_FAIL=1, ///< General failure message. An unexpected problem occourred.
+	DEC_INVALID_ARGUMENT=3, ///< One of the arguments passed to the decoder is invalid.
+	DEC_NOT_IMPLEMENTED=4, ///< The stream requires tools that have not been implemented.
+    };
 
-enum {
-    DEC_OPT_INIT=0, ///< Initialize the decoder.  See LibQDecoreFunction for example usage.
-    DEC_OPT_RELEASE=1, ///< Release the decoder.  See LibQDecoreFunction for example usage.
-    DEC_OPT_INFO=2, ///<  Obtain information about the video.  See LibQDecoreFunction for example usage.
-    DEC_OPT_FRAME=3, ///<  Decode a frame.  See LibQDecoreFunction for example usage.
-    DEC_OPT_SET=4, ///< Specify a parameter to adjust/set.
-    DEC_OPT_FLUSH=5 ///< Flush the decoder status.
-};
-// Decoder parameter specifier
-
-enum {
-    DEC_PAR_OUTPUT=0, ///< Specify a different output format. pParam2 will point to a DecInit structure
-    DEC_PAR_POSTPROCESSING=1, ///< pParam2 will specify a postprocessing level.
-    DEC_PAR_POSTPROCDEBLOC=2, ///< pParam2 will specify a deblocking level.
-    DEC_PAR_POSTPROCDERING=3, ///< pParam2 will specify a deringing level.
-    DEC_PAR_WARMTHLEVEL=4, ///< pParam2 will specify a level for the warmth filter (film effect).
-    DEC_PAR_CONTRAST=5, ///< pParam2 will specify the contrast of the output image.
-    DEC_PAR_BRIGHTNESS=6, ///< pParam2 will specify the brightness of the output image.
-    DEC_PAR_SATURATION=7, ///< pParam2 will specify the saturation of the output image.
-    DEC_PAR_LOGO=8, ///< Display the DivX logo on the bottom right of the picture when pParam is the to 1.
-    DEC_PAR_SMOOTH=9, ///< Use smooth playback when pParam is set to 1.
-    DEC_PAR_SHOWPP=10 ///< Show the postprocessing level in use on the top left corner of the output image.
-};
-// Decoder return values.
-enum {
-    DEC_OK=0, ///< Decoder call succeded.
-    DEC_INVALID_SYNTAX=-1, ///< A semantic error occourred while parsing the stream.
-    DEC_FAIL=1, ///< General failure message. An unexpected problem occourred.
-    DEC_INVALID_ARGUMENT=3, ///< One of the arguments passed to the decoder is invalid.
-    DEC_NOT_IMPLEMENTED=4, ///< The stream requires tools that have not been implemented.
-};
 typedef int (LibQDecoreFunction)(any_t* pHandle, int decOpt, any_t* pParam1, any_t* pParam2);
 
 /// Four Character Code used to decribe the media type of both compressed
 /// and uncompressed video.
 typedef uint32_t FourCC;
 /// Describes a compressed or uncompressed video format.
-typedef struct FormatInfo
-{
-    FourCC fourCC; /// Four CC of the video format.
-    int bpp; /// Bits per pixel for RGB (zero if not known).
-    int width; /// Width of the image in pixels.
-    int height; /// Height of the image in pixels.
-    int inverted; /// Set non-zero if the bottom line of the image appears first in the buffer.
-    int pixelAspectX; /// Pixel aspect ratio:  horizontal part.
-    int pixelAspectY; /// Pixel aspect ratio:  vertical part.
-    int sizeMax; /// Maximum size in bytes of a video frame of this format.
-    int timescale; /// Number of units of time in a second.
-    int framePeriod; /// Duration of each frame, in units of time defined by timescale.  In the case of variable framerate, this should be set to the maximum expected frame period.
-    int framePeriodIsConstant; /// 1 if frame rate is constant; 0 otherwise.
-}FormatInfo;
+    struct FormatInfo {
+	FourCC fourCC; /// Four CC of the video format.
+	int bpp; /// Bits per pixel for RGB (zero if not known).
+	int width; /// Width of the image in pixels.
+	int height; /// Height of the image in pixels.
+	int inverted; /// Set non-zero if the bottom line of the image appears first in the buffer.
+	int pixelAspectX; /// Pixel aspect ratio:  horizontal part.
+	int pixelAspectY; /// Pixel aspect ratio:  vertical part.
+	int sizeMax; /// Maximum size in bytes of a video frame of this format.
+	int timescale; /// Number of units of time in a second.
+	int framePeriod; /// Duration of each frame, in units of time defined by timescale.  In the case of variable framerate, this should be set to the maximum expected frame period.
+	int framePeriodIsConstant; /// 1 if frame rate is constant; 0 otherwise.
+    };
 
-/// Structure containing compressed video bitstream.
-typedef struct DecBitstream
-{
-    any_t* pBuff; ///< Bitstream buffer.  Allocated by caller.  May be modified by decoder.
-    int iLength;  ///< Length of bitstream buffer in bytes.
-}DecBitstream;
+    /// Structure containing compressed video bitstream.
+    struct DecBitstream {
+	any_t* pBuff; ///< Bitstream buffer.  Allocated by caller.  May be modified by decoder.
+	int iLength;  ///< Length of bitstream buffer in bytes.
+    };
 
-/// Structure used to obtain information about the decoded video.
-typedef struct DecInfo
-{
-    DecBitstream bitstream; ///< Bitstream buffer.  Allocated by caller.  Bitstream will not be modified by DecInfo.
-    FormatInfo formatOut; ///< Populated by decoder.
-}DecInfo;
+    /// Structure used to obtain information about the decoded video.
+    struct DecInfo {
+	DecBitstream bitstream; ///< Bitstream buffer.  Allocated by caller.  Bitstream will not be modified by DecInfo.
+	FormatInfo formatOut; ///< Populated by decoder.
+    };
 
-/// Structure containing input bitstream and decoder frame buffer.
-/// Default settings are when the structure is memset() to 0.
-typedef struct DecFrame
-{
-    DecBitstream bitstream; ///< Input bitstream to be decoded.
-    any_t* pBmp; ///< Decoded bitmap buffer.  Allocated by caller. If the buffer pointer is 0 the bitmap will not be rendered (fast decode).
-    int bmpStride; ///< Bitmap stride in pixels.  Set by caller.  Currently ignored by decoder.
-    int bConstBitstream; ///< Set zero if it is OK for decoder to trash the input bitstream when it is decoded.  This gives a small performance boost.
-    int bBitstreamUpdated;    ///< Notify API that the bitstream is updated [Used by the reference decoder to dump the bitstream to a disk file so that it can be read in].
-    int bBitstreamIsEOS; ///< Set non-zero to tell the decoder that bitstream is the last part of the stream.
-    int frameWasDecoded; ///< Non-zero value means that a frame was successfully decoded.  Set by decoder.
-    int timestampDisplay; ///< Display timestamp of the decoded frame.  Set by decoder.
-    int shallowDecode; ///< Set non-zero to allow the decoder not to decode any video data (just parse headers).
-    int bSingleFrame; ///< Set non-zero to indicate that the decoder is receiving a single frame in this buffer (no packet B-frames)
-}DecFrame;
+    /// Structure containing input bitstream and decoder frame buffer.
+    /// Default settings are when the structure is memset() to 0.
+    struct DecFrame {
+	DecBitstream bitstream; ///< Input bitstream to be decoded.
+	any_t* pBmp; ///< Decoded bitmap buffer.  Allocated by caller. If the buffer pointer is 0 the bitmap will not be rendered (fast decode).
+	int bmpStride; ///< Bitmap stride in pixels.  Set by caller.  Currently ignored by decoder.
+	int bConstBitstream; ///< Set zero if it is OK for decoder to trash the input bitstream when it is decoded.  This gives a small performance boost.
+	int bBitstreamUpdated;    ///< Notify API that the bitstream is updated [Used by the reference decoder to dump the bitstream to a disk file so that it can be read in].
+	int bBitstreamIsEOS; ///< Set non-zero to tell the decoder that bitstream is the last part of the stream.
+	int frameWasDecoded; ///< Non-zero value means that a frame was successfully decoded.  Set by decoder.
+	int timestampDisplay; ///< Display timestamp of the decoded frame.  Set by decoder.
+	int shallowDecode; ///< Set non-zero to allow the decoder not to decode any video data (just parse headers).
+	int bSingleFrame; ///< Set non-zero to indicate that the decoder is receiving a single frame in this buffer (no packet B-frames)
+    };
 
-typedef struct DecInit
-{
-    FormatInfo formatOut; ///< Desired output video format.
-    FormatInfo formatIn; ///< Given input video format
-    int isQ; ///< Reserved parameter, value ignored.
-}DecInit;
+    struct DecInit {
+	FormatInfo formatOut; ///< Desired output video format.
+	FormatInfo formatIn; ///< Given input video format
+	int isQ; ///< Reserved parameter, value ignored.
+    };
 
-struct divx4_private_t : public Opaque {
-    divx4_private_t();
-    virtual ~divx4_private_t();
+    class divx4_decoder : public Video_Decoder {
+	public:
+	    divx4_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    virtual ~divx4_decoder();
 
-    any_t*pHandle;
-    LibQDecoreFunction* decoder;
-    int resync;
-    sh_video_t* sh;
-    video_decoder_t* parent;
-    any_t* dll_handle;
-    LibQDecoreFunction* (*getDecore_ptr)(unsigned long format);
-};
-divx4_private_t::divx4_private_t() {}
-divx4_private_t::~divx4_private_t() {
-    if(pHandle) decoder(pHandle, DEC_OPT_RELEASE, 0, 0);
-    if(dll_handle) ::dlclose(dll_handle);
-}
+	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
+	    virtual mp_image_t*		run(const enc_frame_t& frame);
+	    virtual video_probe_t	get_probe_information() const;
+	private:
+	    int				load_lib(const std::string& libname);
+
+	    video_decoder_t&		parent;
+	    sh_video_t&			sh;
+	    const video_probe_t*	probe;
+
+	    any_t*			pHandle;
+	    LibQDecoreFunction*		decoder;
+	    int				resync;
+	    any_t*			dll_handle;
+	    LibQDecoreFunction*		(*getDecore_ptr)(unsigned long format);
+    };
+
+video_probe_t divx4_decoder::get_probe_information() const { return *probe; }
 
 static const video_probe_t probes[] = {
     { "divx", "libdivx"SLIBSUFFIX,FOURCC_TAG('D','Y','U','V'), VCodecStatus_Working, {IMGFMT_YV12, IMGFMT_I420}, {VideoFlag_None, VideoFlag_None } },
@@ -162,18 +153,68 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) {
-    unsigned i;
-    for(i=0;probes[i].driver;i++)
-	if(fourcc==probes[i].fourcc)
-	    return &probes[i];
-    return NULL;
+extern const vd_info_t vd_divx4_info;
+int divx4_decoder::load_lib(const std::string& libname)
+{
+    if(!(dll_handle=ld_codec(libname,vd_divx4_info.url))) return 0;
+    getDecore_ptr = (LibQDecoreFunction* (*)(unsigned long))ld_sym(dll_handle,"getDecore");
+    return getDecore_ptr != NULL;
 }
 
+divx4_decoder::divx4_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t _fourcc)
+	    :Video_Decoder(p,_sh,psi,_fourcc)
+	    ,parent(p)
+	    ,sh(_sh)
+{
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(_fourcc==probes[i].fourcc)
+	    probe=&probes[i];
+    if(!probe) throw bad_format_exception();
+
+    if(!load_lib(probe->codec_dll)) throw bad_format_exception();
+
+    DecInit dinit;
+    int bits=12;
+    if(!(mpcodecs_config_vf(parent,sh.src_w,sh.src_h))) throw bad_format_exception();
+    switch(sh.codec->outfmt[sh.outfmtidx]){
+	case IMGFMT_YV12:
+	case IMGFMT_I420:
+	case IMGFMT_IYUV: break;
+	default:
+	    mpxp_err<<"Unsupported out_fmt: "; fourcc(mpxp_err,sh.codec->outfmt[sh.outfmtidx]);
+	    mpxp_err<<std::endl;
+	    throw bad_format_exception();
+    }
+    if(!(decoder=getDecore_ptr(sh.fourcc))) {
+	mpxp_err<<"Can't find decoder for "; fourcc(mpxp_err,sh.fourcc);
+	mpxp_err<<" fourcc"<<std::endl;
+	throw bad_format_exception();
+    }
+    dinit.formatOut.fourCC=sh.codec->outfmt[sh.outfmtidx];
+    dinit.formatOut.bpp=bits;
+    dinit.formatOut.width=sh.src_w;
+    dinit.formatOut.height=sh.src_h;
+    dinit.formatOut.pixelAspectX=1;
+    dinit.formatOut.pixelAspectY=1;
+    dinit.formatOut.sizeMax=sh.src_w*sh.src_h*bits;
+    dinit.formatIn.fourCC=sh.fourcc;
+    dinit.formatIn.framePeriod=sh.fps;
+    if(decoder(NULL, DEC_OPT_INIT, (any_t*) &pHandle, &dinit)!=DEC_OK) {
+	mpxp_err<<"Can't find decoder for "; fourcc(mpxp_err,dinit.formatOut.fourCC);
+	mpxp_err<<" fourcc"<<std::endl;
+    }
+    mpxp_v<<"INFO: DivX4Linux (libdivx.so) video codec init OK!"<<std::endl;
+}
+
+// uninit driver
+divx4_decoder::~divx4_decoder() {
+    if(pHandle) decoder(pHandle, DEC_OPT_RELEASE, 0, 0);
+    if(dll_handle) ::dlclose(dll_handle);
+}
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
-    divx4_private_t& priv=static_cast<divx4_private_t&>(ctx);
+MPXP_Rc divx4_decoder::ctrl(int cmd,any_t* arg,long arg2){
     switch(cmd){
 	case VDCTRL_QUERY_MAX_PP_LEVEL:
 	    *((unsigned*)arg)=100;
@@ -182,15 +223,12 @@ static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
 	    int iOperation = DEC_PAR_POSTPROCESSING;
 	    int iLevel = *((int*)arg);
 	    if(iLevel<0 || iLevel>100) iLevel=100;
-	    return priv.decoder(priv.pHandle,DEC_OPT_SET,&iOperation,&iLevel)==DEC_OK?MPXP_Ok:MPXP_False;
+	    return decoder(pHandle,DEC_OPT_SET,&iOperation,&iLevel)==DEC_OK?MPXP_Ok:MPXP_False;
 	}
 	case VDCTRL_SET_EQUALIZER: {
 	    int value;
 	    int option;
-	    va_list ap;
-	    va_start(ap, arg);
-	    value=va_arg(ap, int);
-	    va_end(ap);
+	    value=arg2;
 
 	    if(!strcmp(reinterpret_cast<char*>(arg),VO_EC_BRIGHTNESS)) option=DEC_PAR_BRIGHTNESS;
 	    else if(!strcmp(reinterpret_cast<char*>(arg),VO_EC_CONTRAST)) option=DEC_PAR_CONTRAST;
@@ -198,7 +236,7 @@ static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
 	    else return MPXP_False;
 
 	    value = (value * 256) / 100;
-	    return priv.decoder(priv.pHandle,DEC_OPT_SET,&option,&value)==DEC_OK?MPXP_Ok:MPXP_False;
+	    return decoder(pHandle,DEC_OPT_SET,&option,&value)==DEC_OK?MPXP_Ok:MPXP_False;
 	}
 	case VDCTRL_QUERY_FORMAT:
 	    if (*((int*)arg) == IMGFMT_YV12 ||
@@ -207,83 +245,22 @@ static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
 			return MPXP_True;
 	    else 	return MPXP_False;
 	case VDCTRL_RESYNC_STREAM:
-	    priv.resync=1;
+	    resync=1;
 	    return MPXP_True;
     }
     return MPXP_Unknown;
 }
 
-
-static int load_lib(divx4_private_t& priv, const char *libname )
-{
-  if(!(priv.dll_handle=ld_codec(libname,mpcodecs_vd_divx4.info->url))) return 0;
-  priv.getDecore_ptr = (LibQDecoreFunction* (*)(unsigned long))ld_sym(priv.dll_handle,"getDecore");
-  return priv.getDecore_ptr != NULL;
-}
-
-static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
-    UNUSED(psi);
-    divx4_private_t* priv = new(zeromem) divx4_private_t;
-    if(!load_lib(*priv,probe.codec_dll)) { delete priv; return NULL; }
-    priv->sh=sh;
-    return priv;
-}
-
-// init driver
-static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
-    divx4_private_t& priv=static_cast<divx4_private_t&>(ctx);
-    DecInit dinit;
-    sh_video_t* sh = priv.sh;
-    int bits=12;
-    priv.parent = &opaque;
-    if(!(mpcodecs_config_vf(opaque,sh->src_w,sh->src_h))) return MPXP_False;
-    switch(sh->codec->outfmt[sh->outfmtidx]){
-	case IMGFMT_YV12:
-	case IMGFMT_I420:
-	case IMGFMT_IYUV: break;
-	default:
-	    mpxp_err<<"Unsupported out_fmt: "; fourcc(mpxp_err,sh->codec->outfmt[sh->outfmtidx]);
-	    mpxp_err<<std::endl;
-	    return MPXP_False;
-    }
-    if(!(priv.decoder=priv.getDecore_ptr(sh->fourcc))) {
-	mpxp_err<<"Can't find decoder for "; fourcc(mpxp_err,sh->fourcc);
-	mpxp_err<<" fourcc"<<std::endl;
-	return MPXP_False;
-    }
-    dinit.formatOut.fourCC=sh->codec->outfmt[sh->outfmtidx];
-    dinit.formatOut.bpp=bits;
-    dinit.formatOut.width=sh->src_w;
-    dinit.formatOut.height=sh->src_h;
-    dinit.formatOut.pixelAspectX=1;
-    dinit.formatOut.pixelAspectY=1;
-    dinit.formatOut.sizeMax=sh->src_w*sh->src_h*bits;
-    dinit.formatIn.fourCC=sh->fourcc;
-    dinit.formatIn.framePeriod=sh->fps;
-    if(priv.decoder(NULL, DEC_OPT_INIT, (any_t*) &priv.pHandle, &dinit)!=DEC_OK) {
-	mpxp_err<<"Can't find decoder for "; fourcc(mpxp_err,dinit.formatOut.fourCC);
-	mpxp_err<<" fourcc"<<std::endl;
-    }
-    MSG_V("INFO: DivX4Linux (libdivx.so) video codec init OK!\n");
-    fflush(stdout);
-    return MPXP_Ok;
-}
-
-// uninit driver
-static void uninit(Opaque& ctx){ UNUSED(ctx); }
-
 // decode a frame
-static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
-    divx4_private_t& priv=static_cast<divx4_private_t&>(ctx);
-    sh_video_t* sh = priv.sh;
+mp_image_t* divx4_decoder::run(const enc_frame_t& frame) {
     mp_image_t* mpi;
     DecFrame decFrame;
 
     memset(&decFrame,0,sizeof(DecFrame));
     if(frame.len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(*priv.parent, MP_IMGTYPE_TEMP, MP_IMGFLAG_PRESERVE | MP_IMGFLAG_ACCEPT_WIDTH,
-	sh->src_w, sh->src_h);
+    mpi=mpcodecs_get_image(parent, MP_IMGTYPE_TEMP, MP_IMGFLAG_PRESERVE | MP_IMGFLAG_ACCEPT_WIDTH,
+	sh.src_w, sh.src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     decFrame.bitstream.pBuff = frame.data;
@@ -293,10 +270,25 @@ static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
     decFrame.bmpStride=(mpi->flags&(MP_IMGFLAG_YUV|MP_IMGFLAG_DIRECT))==(MP_IMGFLAG_YUV|MP_IMGFLAG_DIRECT)?
 		     mpi->flags&MP_IMGFLAG_PLANAR?mpi->stride[0]:mpi->stride[0]/2:
 		     mpi->width;
-    if(priv.resync) { decFrame.bBitstreamUpdated=1; priv.resync=0; }
+    if(resync) { decFrame.bBitstreamUpdated=1; resync=0; }
 
-    if(priv.decoder(priv.pHandle, DEC_OPT_FRAME, &decFrame, 0)!=DEC_OK) MSG_WARN("divx: Error happened during decoding\n");
+    if(decoder(pHandle, DEC_OPT_FRAME, &decFrame, 0)!=DEC_OK) mpxp_warn<<"divx: Error happened during decoding"<<std::endl;
 
     return mpi;
 }
 
+static const mpxp_option_t options[] = {
+  { NULL, NULL, 0, 0, 0, 0, NULL}
+};
+
+static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) divx4_decoder(p,sh,psi,fourcc); }
+
+extern const vd_info_t vd_divx4_info = {
+    "DivX4Linux lib (divx4/5 mode)",
+    "divx",
+    "Nickols_K",
+    "http://labs.divx.com/DivXLinuxCodec",
+    query_interface,
+    options
+};
+} // namespace	usr

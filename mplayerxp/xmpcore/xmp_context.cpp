@@ -273,9 +273,9 @@ const mpxp_option_t* mplayerxp_opts=mplayerxp_options;
 
 } // namespace	usr
 
+namespace	usr {
 extern void libmpcodecs_ad_register_options(M_Config& cfg);
 extern void libmpcodecs_vd_register_options(M_Config& cfg);
-namespace	usr {
 #ifdef HAVE_LIBCDIO
 extern void cdda_register_options(M_Config& cfg);
 #endif

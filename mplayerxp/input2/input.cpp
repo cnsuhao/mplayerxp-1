@@ -26,6 +26,7 @@ using namespace	usr;
 #include "libmpconf/cfgparser.h"
 
 #include "in_msg.h"
+#include "mpxp_help.h"
 
 #ifdef HAVE_LIRC
 #include "lirc.h"
@@ -1360,7 +1361,7 @@ void mp_input_print_keys(libinput_t& handle) {
 
 static int mp_input_print_key_list(libinput_t& handle) {
     mp_input_print_keys(handle);
-    exit(0);
+    exit_player(MSGTR_Exit_quit);
 }
 
 void mp_input_print_binds(libinput_t& handle) {
@@ -1406,7 +1407,7 @@ void mp_input_print_cmds(libinput_t& handle) {
 
 static int mp_input_print_cmd_list(libinput_t& handle) {
     mp_input_print_cmds(handle);
-    exit(0);
+    exit_player(MSGTR_Exit_quit);
 }
 
 MPXP_Rc mp_input_check_interrupt(libinput_t& handle,int tim) {

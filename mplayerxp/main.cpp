@@ -359,23 +359,27 @@ void MPXPSystem::uninit_player(unsigned int mask){
     MP_UNIT(NULL);
 }
 
-void exit_player(const std::string& why){
+class soft_exit_exception : public std::exception {
+	public:
+	    soft_exit_exception(const std::string& why) throw();
+	    virtual ~soft_exit_exception() throw();
 
-    fflush(stdout);
-    fflush(stderr);
-    mpxp_context().engine().MPXPSys->uninit_player(INITED_ALL);
+	    virtual const char*	what() const throw();
+	private:
+	    std::string why;
+};
 
-    MP_UNIT("exit_player");
+soft_exit_exception::soft_exit_exception(const std::string& _why) throw() { why=_why; }
+soft_exit_exception::~soft_exit_exception() throw() {}
+const char* soft_exit_exception::what() const throw() { return why.c_str(); }
 
-    if(!why.empty()) mpxp_hint<<std::endl<<MSGTR_Exiting<<"...("<<why<<")"<<std::endl;
-    if(mpxp_context().mconfig) delete mpxp_context().mconfig;
-    mpxp_print_uninit();
-    mpxp_uninit_structs();
-    if(!why.empty()) ::exit(0);
-    return; /* Still try coredump!!!*/
+void exit_player(const std::string& why)
+{
+    if(!why.empty()) throw soft_exit_exception(why);
+    throw std::exception();
 }
 
-void __exit_sighandler(void)
+void __exit_sighandler()
 {
   static int sig_count=0;
   ++sig_count;
@@ -1037,8 +1041,9 @@ MPXP_Rc MPXPSystem::find_vcodec() {
     if((mpxp_context().video().decoder=mpcv_init(sh_video,mp_conf.video_codec?mp_conf.video_codec:"",mp_conf.video_family?mp_conf.video_family:"",-1,_libinput))) sh_video->inited=1;
 
     if(!sh_video->inited) {
-	mpxp_err<<MSGTR_CantFindVideoCodec<<std::endl;
+	mpxp_err<<MSGTR_CantFindVideoCodec;
 	fourcc(mpxp_err,sh_video->fourcc);
+	mpxp_err<<std::endl;
 	mpxp_hint<<get_path(envm,"win32codecs.conf")<<":"<<MSGTR_TryUpgradeCodecsConfOrRTFM<<std::endl;
 	d_video->sh = NULL;
 	sh_video = reinterpret_cast<sh_video_t*>(d_video->sh);
@@ -1962,15 +1967,14 @@ goto_next_file:  // don't jump here after ao/vo/getch initialization!
 
     if(stream_dump_type>1) dump_mux_close(MPXPSys.demuxer());
 
-    mpxp_uninit_structs();
     delete ptr_protector.unprotect(secure_keys);
-    exit_player(MSGTR_Exit_eof);
     return EXIT_SUCCESS;
 }
 } // namespace	usr
 
 int main(int argc,char* args[], char *envp[])
 {
+    int rc;
     try {
 	/* init malloc */
 	size_t pos;
@@ -2012,7 +2016,6 @@ int main(int argc,char* args[], char *envp[])
 	}
 	envp[j+1] = NULL;
 	/* init antiviral protection */
-	int rc;
 	rc=mp_mprotect((any_t*)antiviral_hole1,sizeof(antiviral_hole1),MP_DENY_ALL);
 	rc|=mp_mprotect((any_t*)antiviral_hole2,sizeof(antiviral_hole2),MP_DENY_ALL);
 	rc|=mp_mprotect((any_t*)antiviral_hole3,sizeof(antiviral_hole3),MP_DENY_ALL);
@@ -2027,9 +2030,28 @@ int main(int argc,char* args[], char *envp[])
 	memset(&mp_conf.x86,-1,sizeof(x86_features_t));
 #endif
 	/* call player */
-	return MPlayerXP(argv,envm);
-    } catch(const std::string& what) {
-	std::cout<<"[main_module] Exception '"<<what<<"'caught in module: MPlayerXP"<<std::endl;
+	rc=MPlayerXP(argv,envm);
+	mpxp_ok<<"[main_module] finished"<<std::endl;
+    } catch(const soft_exit_exception& e) {
+	mpxp_hint<<"[main_module] "<<MSGTR_Exiting<<"...("<<e.what()<<")"<<std::endl;
+	rc=EXIT_SUCCESS;
+    } catch(const std::exception& e) {
+	std::cout<<"[main_module] Exception '"<<e.what()<<"'caught in module: MPlayerXP"<<std::endl;
+	rc=EXIT_FAILURE;
+    } catch(const std::string& e) {
+	std::cerr<<"[main_module] thrown signal '"<<e<<"' caught in module: MPlayerXP"<<std::endl;
+	rc=EXIT_FAILURE;
+    } catch(...) {
+	std::cerr<<"[main_module] unknown exception caught in module: MPlayerXP"<<std::endl;
+	rc=EXIT_FAILURE;
     }
-    return EXIT_FAILURE;
+    mpxp_context().engine().MPXPSys->uninit_player(INITED_ALL);
+    MP_UNIT("exit_player");
+    if(mpxp_context().mconfig) delete mpxp_context().mconfig;
+    mpxp_print_uninit();
+    mpxp_uninit_structs();
+    fflush(stdout);
+    fflush(stderr);
+
+    return rc;
 }

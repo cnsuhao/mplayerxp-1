@@ -268,7 +268,7 @@ int M_Config::read_option(const std::vector<const mpxp_option_t*>& conf_list,con
 			break;
 		case CONF_TYPE_PRINT:
 			mpxp_info<<(char *)conf[i].p;
-			exit(1);
+			exit_player(MSGTR_Exit_quit);
 		default:
 			mpxp_err<<"read_option: Unknown config type specified in conf-mplayerxp.h!"<<std::endl;
 			break;
@@ -531,11 +531,11 @@ MPXP_Rc M_Config::parse_command_line(const std::vector<std::string>& argv,const 
 	opt = argv[i];
 	if(opt=="--help") {
 	    show_help();
-	    exit(0);
+	    exit_player(MSGTR_Exit_quit);
 	}
 	if(opt=="--long-help") {
 	    show_long_help(*this,envm);
-	    exit(0);
+	    exit_player(MSGTR_Exit_quit);
 	}
 	/* check for -- (no more options id.) except --help! */
 	if (opt[0] == '-' && opt[1] == '-') {

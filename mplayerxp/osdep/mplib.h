@@ -8,8 +8,8 @@
  */
 #ifndef __MPLIB_H_INCLUDED__
 #define __MPLIB_H_INCLUDED__ 1
-
 #include <string>
+#include <exception>
 
 #include <execinfo.h>
 #include <stddef.h>
@@ -42,6 +42,14 @@ namespace	usr {
 	    Opaque	opaque1;
 	    T* ptr;
 	    Opaque	opaque2;
+    };
+
+    class bad_format_exception : public std::exception {
+	public:
+	    bad_format_exception() throw();
+	    virtual ~bad_format_exception() throw();
+
+	    virtual const char*	what() const throw();
     };
 } // namespace	usr
 #endif

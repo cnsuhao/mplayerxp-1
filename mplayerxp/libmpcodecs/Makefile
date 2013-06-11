@@ -6,7 +6,7 @@ DO_MAKE = @ for i in $(SUBDIRS); do $(MAKE) -C $$i $@ || exit; done
 DO_ALL  = @ for i in $(SUBDIRS); do $(MAKE) -C $$i all || exit; done
 
 CXXSRCS=dec_video.cpp vd.cpp ad.cpp dec_audio.cpp
-CXXSRCS+=ad_a52.cpp ad_hwac3.cpp
+CXXSRCS+=ad_a52.cpp
 
 
 CXXSRCS+=vd_lavc.cpp \

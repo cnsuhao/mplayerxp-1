@@ -38,6 +38,7 @@ using namespace	usr;
 #include "vd_msg.h"
 
 // ===================================================================
+namespace usr	{
 vf_cfg_t vf_cfg; // Configuration for audio filters
 
 extern int v_bright;
@@ -51,9 +52,8 @@ struct decvideo_priv_t : public Opaque {
 	virtual ~decvideo_priv_t();
 
 	sh_video_t*		parent;
-	const vd_functions_t*	mpvdec;
+	Video_Decoder*		mpvdec;
 	libinput_t&		libinput;
-	Opaque*			ctx;
 	vf_stream_t*		vfilter;
 	int			vfilter_inited;
 	put_slice_info_t*	psi;
@@ -70,7 +70,7 @@ decvideo_priv_t::~decvideo_priv_t() { delete psi; }
 MPXP_Rc mpcv_get_quality_max(video_decoder_t& opaque,unsigned& quality){
     decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     if(priv->mpvdec){
-	MPXP_Rc ret=priv->mpvdec->control_vd(*priv->ctx,VDCTRL_QUERY_MAX_PP_LEVEL,&quality);
+	MPXP_Rc ret=priv->mpvdec->ctrl(VDCTRL_QUERY_MAX_PP_LEVEL,&quality);
 	if(ret>=MPXP_Ok) return ret;
     }
     return MPXP_False;
@@ -79,7 +79,7 @@ MPXP_Rc mpcv_get_quality_max(video_decoder_t& opaque,unsigned& quality){
 MPXP_Rc mpcv_set_quality(video_decoder_t& opaque,int quality){
     decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     if(priv->mpvdec)
-	return priv->mpvdec->control_vd(*priv->ctx,VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
+	return priv->mpvdec->ctrl(VDCTRL_SET_PP_LEVEL, (any_t*)(&quality));
     return MPXP_False;
 }
 
@@ -91,7 +91,7 @@ MPXP_Rc mpcv_set_colors(video_decoder_t& opaque,const std::string& item,int valu
     eq.item=item.c_str();
     eq.value=value*10;
     if(vf_control(vs,VFCTRL_SET_EQUALIZER,&eq)!=MPXP_True) {
-	if(priv->mpvdec) return priv->mpvdec->control_vd(*priv->ctx,VDCTRL_SET_EQUALIZER,(any_t*)item.c_str(),(int)value);
+	if(priv->mpvdec) return priv->mpvdec->ctrl(VDCTRL_SET_EQUALIZER,(any_t*)item.c_str(),value);
     }
     return MPXP_False;
 }
@@ -100,10 +100,9 @@ void mpcv_uninit(video_decoder_t& opaque){
     decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     sh_video_t* sh_video = priv->parent;
     if(!sh_video->inited) { delete priv; delete &opaque; return; }
-    MSG_V("uninit video ...\n");
+    mpxp_v<<"uninit video ..."<<std::endl;
     if(priv->vfilter && priv->vfilter_inited==1) vf_uninit(priv->vfilter);
-    priv->mpvdec->uninit(*priv->ctx);
-    delete priv->ctx;
+    delete priv->mpvdec;
     sh_video->inited=0;
     delete priv;
     delete &opaque;
@@ -116,15 +115,9 @@ static unsigned use_vf_threads=0;
 
 static void mpcv_print_codec_info(decvideo_priv_t& priv) {
     sh_video_t* sh_video = priv.parent;
-    MSG_OK("[VC] %s decoder: [%s] drv:%s.%s (%dx%d (aspect %g) %4.2ffps\n"
-	,mp_conf.video_codec?"Forcing":"Selected"
-	,sh_video->codec->codec_name
-	,priv.mpvdec->info->driver_name
-	,sh_video->codec->dll_name
-	,sh_video->src_w
-	,sh_video->src_h
-	,sh_video->aspect
-	,sh_video->fps);
+    mpxp_ok<<"[VC] "<<(mp_conf.video_codec?"Forcing":"Selected")<<" decoder: ["<<sh_video->codec->codec_name
+	<<"] drv:"<<priv.mpvdec->get_probe_information().driver<<"."<<sh_video->codec->dll_name
+	<<" ("<<sh_video->src_w<<"x"<<sh_video->src_h<<" (aspect "<<sh_video->aspect<<") "<<sh_video->fps<<"fps"<<std::endl;
     // Yeah! We got it!
     sh_video->inited=1;
     priv.psi->vf_flags=vf_query_flags(priv.vfilter);
@@ -134,46 +127,16 @@ static void mpcv_print_codec_info(decvideo_priv_t& priv) {
 	use_vf_threads=0;
 	if(((priv.psi->vf_flags&MPDEC_THREAD_COND)==MPDEC_THREAD_COND) && (smp_num_cpus>1)) use_vf_threads=1;
 	if(use_vf_threads)
-	    MSG_STATUS("[mpdec] will perform parallel video-filter on %u CPUs\n",smp_num_cpus);
+	    mpxp_status<<"[mpdec] will perform parallel video-filter on "<<smp_num_cpus<<" CPUs"<<std::endl;
     }
 #else
-    MSG_V("[mpdec] GOMP was not compiled-in! Using single threaded video filtering!\n");
+    mpxp_v<<"[mpdec] GOMP was not compiled-in! Using single threaded video filtering!"<<std::endl;
 #endif
-}
-
-video_decoder_t* mpcv_lavc_init(sh_video_t* sh_video,libinput_t& libinput) {
-    video_decoder_t* handle=new(zeromem) video_decoder_t;
-    decvideo_priv_t* priv = new(zeromem) decvideo_priv_t(libinput);
-    priv->parent=sh_video;
-    handle->vd_private=priv;
-    const video_probe_t* vprobe=NULL;
-    /* Use lavc's drivers  as last hope */
-    priv->mpvdec=vfm_find_driver("lavc");
-    if(priv->mpvdec) {
-	if((vprobe=priv->mpvdec->probe(sh_video->fourcc))!=NULL) {
-	    if((priv->ctx=priv->mpvdec->preinit(*vprobe,sh_video,*priv->psi))==NULL){
-		MSG_ERR(MSGTR_CODEC_CANT_INITV);
-		return NULL;
-	    }
-	    if(priv->mpvdec->init(*priv->ctx,*handle)!=MPXP_Ok){
-		MSG_ERR(MSGTR_CODEC_CANT_INITV);
-		return NULL;
-	    }
-	} else goto err_out;
-    } else {
-	err_out:
-	MSG_ERR("Cannot find lavc video decoder\n");
-	return NULL;
-    }
-    mpcv_print_codec_info(*priv);
-    return handle;
 }
 
 video_decoder_t* mpcv_init(sh_video_t *sh_video,const std::string& codecname,const std::string& family,int status,libinput_t&libinput){
     UNUSED(codecname);
     UNUSED(status);
-    int done=0;
-    const video_probe_t* vprobe=NULL;
     sh_video->codec=NULL;
     video_decoder_t* handle=new(zeromem) video_decoder_t;
     decvideo_priv_t* priv = new(zeromem) decvideo_priv_t(libinput);
@@ -192,44 +155,36 @@ video_decoder_t* mpcv_init(sh_video_t *sh_video,const std::string& codecname,con
     }
 
     if(!vfm.empty()) {
-	priv->mpvdec=vfm_find_driver(vfm);
-	if(priv->mpvdec) vprobe=priv->mpvdec->probe(sh_video->fourcc);
-    }
-    else vprobe = vfm_driver_probe(*priv->ctx,sh_video,*priv->psi);
-
-    if(vprobe) {
-	vfm=vprobe->driver;
-	/* fake struct codecs_st*/
-	sh_video->codec=new(zeromem) struct codecs_st;
-	strcpy(sh_video->codec->dll_name,vprobe->codec_dll);
-	strcpy(sh_video->codec->driver_name,vprobe->driver);
-	strcpy(sh_video->codec->codec_name,sh_video->codec->dll_name);
-	memcpy(sh_video->codec->outfmt,vprobe->pix_fmt,sizeof(vprobe->pix_fmt));
-    } else return NULL;
-
-    priv->mpvdec=vfm_find_driver(vfm);
-    if(priv->mpvdec) {
-	if((priv->ctx=priv->mpvdec->preinit(*vprobe,sh_video,*priv->psi))==NULL){
+	const vd_info_t* vi=vfm_find_driver(vfm);
+	try{
+	    priv->mpvdec=vi->query_interface(*handle,*sh_video,*priv->psi,sh_video->fourcc);
+	} catch(const bad_format_exception&) {
 	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
-		delete sh_video->codec;
-		sh_video->codec=NULL;
-	} else if(priv->mpvdec->init(*priv->ctx,*handle)!=MPXP_Ok){
-	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
-		delete sh_video->codec;
-		sh_video->codec=NULL;
-	} else done=1;
+	    delete priv->mpvdec;
+	    goto bye;
+	}
     }
-    if(done) vf_showlist(priv->vfilter);
+    else priv->mpvdec = vfm_probe_driver(*handle,*sh_video,*priv->psi);
+    if(!priv->mpvdec) {
+bye:
+	delete handle;
+	delete priv;
+	return NULL;
+    }
 
-    if(done) {
-	mpcv_print_codec_info(*priv);
-// memory leak here
-//	if(vprobe) { delete sh_video->codec; sh_video->codec=NULL; }
-	return handle;
-    }
-    delete priv;
-    delete handle;
-    return NULL;
+    video_probe_t probe = priv->mpvdec->get_probe_information();
+    vfm=probe.driver;
+    /* fake struct codecs_st*/
+    sh_video->codec=new(zeromem) struct codecs_st;
+    strcpy(sh_video->codec->dll_name,probe.codec_dll);
+    strcpy(sh_video->codec->driver_name,probe.driver);
+    strcpy(sh_video->codec->codec_name,sh_video->codec->dll_name);
+    memcpy(sh_video->codec->outfmt,probe.pix_fmt,sizeof(probe.pix_fmt));
+
+    vf_showlist(priv->vfilter);
+
+    mpcv_print_codec_info(*priv);
+    return handle;
 }
 
 void mpcodecs_draw_image(video_decoder_t& opaque,mp_image_t *mpi)
@@ -248,7 +203,7 @@ void mpcodecs_draw_image(video_decoder_t& opaque,mp_image_t *mpi)
 	mp_image_t *ampi[num_slices];
 	static int hello_printed=0;
 	if(!hello_printed) {
-		MSG_OK("[VC] using %u threads for video filters\n",smp_num_cpus);
+		mpxp_ok<<"[VC] using "<<smp_num_cpus<<" threads for video filters"<<std::endl;
 		hello_printed=1;
 	}
 	y=0;
@@ -262,12 +217,14 @@ void mpcodecs_draw_image(video_decoder_t& opaque,mp_image_t *mpi)
 	    for(j=0;j<num_slices;j+=smp_num_cpus) {
 #pragma omp parallel for shared(s) private(i)
 		for(i=j;i<smp_num_cpus;i++) {
-		    MSG_DBG2("parallel: dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i]->width,ampi[i]->height,ampi[i]->x,ampi[i]->y,ampi[i]->w,ampi[i]->h);
+		    mpxp_dbg2<<"parallel: dec_video.put_slice["<<ampi[i]->width<<"x"<<ampi[i]->height
+			<<"] "<<ampi[i]->x<<" "<<ampi[i]->y<<" "<<ampi[i]->w<<" "<<ampi[i]->h<<std::endl;
 		    vf_put_slice(s,ampi[i]);
 		}
 	    }
 	    for(;j<num_slices;j++) {
-		MSG_DBG2("par_tail: dec_video.put_slice[%ux%u] %i %i %i %i\n",ampi[i]->width,ampi[i]->height,ampi[i]->x,ampi[i]->y,ampi[i]->w,ampi[i]->h);
+		mpxp_dbg2<<"par_tail: dec_video.put_slice["<<ampi[i]->width<<"x"<<ampi[i]->height
+		    <<"] "<<ampi[i]->x<<" "<<ampi[i]->y<<" "<<ampi[i]->w<<" "<<ampi[i]->h<<std::endl;
 		vf_put_slice(s,ampi[j]);
 	    }
 	}
@@ -276,13 +233,14 @@ void mpcodecs_draw_image(video_decoder_t& opaque,mp_image_t *mpi)
 	{
 	    /* execute slices instead of whole frame make faster multiple filters */
 	    for(i=0;i<num_slices;i++) {
-		MSG_DBG2("dec_video.put_slice[%ux%u] %i %i %i %i -> [%i]\n",ampi[i]->width,ampi[i]->height,ampi[i]->x,ampi[i]->y,ampi[i]->w,ampi[i]->h,ampi[i]->xp_idx);
+		mpxp_dbg2<<"dec_video.put_slice["<<ampi[i]->width<<"x"<<ampi[i]->height
+		    <<"] "<<ampi[i]->x<<" "<<ampi[i]->y<<" "<<ampi[i]->w<<" "<<ampi[i]->h<<std::endl;
 		vf_put_slice(s,ampi[i]);
 	    }
 	}
 	for(i=0;i<num_slices;i++) free_mp_image(ampi[i]);
     } else {
-	MSG_DBG2("Put whole frame[%ux%u]\n",mpi->width,mpi->height);
+	mpxp_dbg2<<"Put whole frame["<<mpi->width<<"x"<<mpi->height<<"]"<<std::endl;
 	vf_put_slice(s,mpi);
     }
     free_mp_image(mpi);
@@ -304,8 +262,8 @@ int mpcv_decode(video_decoder_t& opaque,const enc_frame_t& frame){
     vf_control(s,VFCTRL_START_FRAME,NULL);
 
     priv->psi->active_slices=0;
-    mpi=priv->mpvdec->decode(*priv->ctx, frame);
-    MSG_DBG2("decvideo: decoding video %u bytes\n",frame.len);
+    mpi=priv->mpvdec->run(frame);
+    mpxp_dbg2<<"decvideo: decoding video "<<frame.len<<" bytes"<<std::endl;
     while(priv->psi->active_slices!=0) yield_timeslice();
 /* ------------------------ frame decoded. -------------------- */
 
@@ -343,7 +301,7 @@ void mpcv_resync_stream(video_decoder_t& opaque)
     decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     sh_video_t* sh_video = priv->parent;
     if(sh_video)
-    if(sh_video->inited && priv->mpvdec) priv->mpvdec->control_vd(*priv->ctx,VDCTRL_RESYNC_STREAM,NULL);
+    if(sh_video->inited && priv->mpvdec) priv->mpvdec->ctrl(VDCTRL_RESYNC_STREAM,NULL);
 }
 
 #ifdef USE_SUB
@@ -368,19 +326,6 @@ static void update_subtitle(video_decoder_t& opaque,float v_pts,unsigned xp_idx)
   }
 #endif
 
-  // DVD sub:
-#if 0
-  if(vo_flags & 0x08){
-    static vo_mpegpes_t packet;
-    static vo_mpegpes_t *pkg=&packet;
-    packet.timestamp=v_pts*90000.0;
-    packet.id=0x20; /* Subpic */
-    while((packet.size=ds_get_packet_sub_r(d_dvdsub,&packet.data))>0){
-      MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",packet.size,v_pts,d_dvdsub->pts);
-      vo_draw_frame(&pkg);
-    }
-  }else
-#endif
    if(mpxp_context().video().output->spudec){
     unsigned char* packet=NULL;
     int len,timestamp;
@@ -394,13 +339,13 @@ static void update_subtitle(video_decoder_t& opaque,float v_pts,unsigned xp_idx)
 	    if (v_pts >= 0) {
 		while((len=vobsub_get_packet(mpxp_context().video().output->vobsub, v_pts,(any_t**)&packet, &timestamp))>0){
 		    timestamp -= v_pts*90000;
-		    MSG_V("\rVOB sub: len=%d v_pts=%5.3f sub=%5.3f ts=%d \n",len,v_pts,timestamp / 90000.0,timestamp);
+		    mpxp_v<<"VOB sub: len="<<len<<" v_pts="<<v_pts<<" sub="<<(timestamp/90000.0)<<" ts="<<timestamp<<std::endl;
 		    spudec_assemble(mpxp_context().video().output->spudec,packet,len,90000*d_dvdsub->pts);
 		}
 	    }
 	} else {
 	    while((len=ds_get_packet_sub_r(*d_dvdsub,&packet))>0){
-		MSG_V("\rDVD sub: len=%d  v_pts=%5.3f  s_pts=%5.3f  \n",len,v_pts,d_dvdsub->pts);
+		mpxp_v<<"DVD sub: len="<<len<<" v_pts="<<v_pts<<" s_pts="<<d_dvdsub->pts<<std::endl;
 		spudec_assemble(mpxp_context().video().output->spudec,packet,len,90000*d_dvdsub->pts);
 	    }
 	}
@@ -425,9 +370,7 @@ MPXP_Rc mpcodecs_config_vf(video_decoder_t& opaque, int w, int h){
     int palette=0;
 
     if(!(sh->src_w && sh->src_h))
-	MSG_WARN(
-	    "VDec: driver %s didn't set sh->src_w and sh->src_h, trying to workaround!\n"
-	    ,sh->codec->codec_name);
+	mpxp_warn<<"VDec: driver "<<sh->codec->codec_name<<" didn't set sh->src_w and sh->src_h, trying to workaround!"<<std::endl;
     /* XXX: HACK, if sh->disp_* aren't set,
      * but we have w and h, set them :: atmos */
     if(!sh->src_w && w)
@@ -435,7 +378,16 @@ MPXP_Rc mpcodecs_config_vf(video_decoder_t& opaque, int w, int h){
     if(!sh->src_h && h)
 	sh->src_h=h;
 
-    MSG_V("VDec: vo config request - %d x %d\n",w,h);
+    mpxp_v<<"VDec: vo config request - "<<w<<" x "<<h<<std::endl;
+
+    if(vf_config(s,sh->src_w,sh->src_h,
+		sh->src_w,sh->src_h,
+		mpxp_context().video().output->flags,
+		out_fmt)==0){
+		    MSG_WARN(MSGTR_CannotInitVO);
+		    priv->vfilter_inited=-1;
+		    return MPXP_False;
+    }
 
 csp_again:
     // check if libvo2 and codec has common outfmt (no conversion):
@@ -445,13 +397,13 @@ csp_again:
 	out_fmt=sh->codec->outfmt[i];
 	if(out_fmt==0xFFFFFFFF||out_fmt==0x0) continue;
 	flags=vf_query_format(s,out_fmt,w,h);
-	MSG_DBG2("vo_debug[step i=%d]: query(%s %ix%i) returned 0x%X for:\n",i,vo_format_name(out_fmt),w,h,flags);
+	mpxp_dbg2<<"vo_debug[step i="<<i<<"]: query("<<vo_format_name(out_fmt)<<" "<<w<<"x"<<h<<") returned 0x"<<std::hex<<flags<<" for:"<<std::endl;
 	if(mp_conf.verbose>1) vf_showlist(s);
 	if((flags&VFCAP_CSP_SUPPORTED_BY_HW) || ((flags&VFCAP_CSP_SUPPORTED) && j<0)){
 	    // check (query) if codec really support this outfmt...
 	    sh->outfmtidx=j; // pass index to the control() function this way
-	    if(priv->mpvdec->control_vd(*priv->ctx,VDCTRL_QUERY_FORMAT,&out_fmt)==MPXP_False) {
-		MSG_DBG2("vo_debug: codec[%s] query_format(%s) returned FALSE\n",priv->mpvdec->info->driver_name,vo_format_name(out_fmt));
+	    if(priv->mpvdec->ctrl(VDCTRL_QUERY_FORMAT,&out_fmt)==MPXP_False) {
+		mpxp_dbg2<<"vo_debug: codec["<<priv->mpvdec->get_probe_information().driver<<"] query_format("<<vo_format_name(out_fmt)<<") returned FALSE"<<std::endl;
 		continue;
 	    }
 	    j=i;
@@ -460,7 +412,7 @@ csp_again:
 	} else
 	if(!palette && !(mpxp_context().video().output->flags&3) && (out_fmt==IMGFMT_RGB8||out_fmt==IMGFMT_BGR8)){
 	    sh->outfmtidx=j; // pass index to the control() function this way
-	    if(priv->mpvdec->control_vd(*priv->ctx,VDCTRL_QUERY_FORMAT,&out_fmt)!=MPXP_False)
+	    if(priv->mpvdec->ctrl(VDCTRL_QUERY_FORMAT,&out_fmt)!=MPXP_False)
 		palette=1;
 	}
     }
@@ -468,13 +420,13 @@ csp_again:
 	// TODO: no match - we should use conversion...
 	if(strcmp(vf_get_first_name(s),"fmtcvt") && palette!=1){
 	    int ind;
-	    MSG_WARN("Can't find colorspace for: ");
+	    mpxp_warn<<"Can't find colorspace for: ";
 	    for(ind=0;ind<CODECS_MAX_OUTFMT;ind++) {
 		if(sh->codec->outfmt[ind]==0xFFFFFFFF||
 		    sh->codec->outfmt[ind]==0x0) break;
-		MSG_WARN("'%s' ",vo_format_name(sh->codec->outfmt[ind]));
+		mpxp_warn<<"'"<<vo_format_name(sh->codec->outfmt[ind])<<"' "<<std::endl;
 	    }
-	    MSG_WARN("Trying -vf fmtcvt\n");
+	    mpxp_warn<<"Trying -vf fmtcvt..."<<std::endl;
 	    conf.w=sh->src_w;
 	    conf.h=sh->src_h;
 	    conf.fourcc=sh->codec->outfmt[sh->outfmtidx];
@@ -482,7 +434,7 @@ csp_again:
 	    goto csp_again;
 	} else
 	if(palette==1){
-	    MSG_V("vd: Trying -vf palette...\n");
+	    mpxp_v<<"vd: Trying -vf palette..."<<std::endl;
 	    palette=-1;
 	    conf.w=sh->src_w;
 	    conf.h=sh->src_h;
@@ -547,7 +499,7 @@ csp_again:
 	}
 	if(sh->aspect>0.01){
 	    int _w;
-	    MSG_V("Movie-Aspect is %.2f:1 - prescaling to correct movie aspect.\n",sh->aspect);
+	    mpxp_v<<"Movie-Aspect is "<<sh->aspect<<":1 - prescaling to correct movie aspect."<<std::endl;
 	    _w=(int)((float)screen_size_y*sh->aspect); _w+=_w%2; // round
 	    // we don't like horizontal downscale || user forced width:
 	    if(_w<screen_size_x || vo_conf.image_zoom>8){
@@ -557,17 +509,13 @@ csp_again:
 		    screen_size_y=sh->src_h;
 	    } else screen_size_x=_w; // keep new width
 	} else {
-	    MSG_V("Movie-Aspect is undefined - no prescaling applied.\n");
+	    mpxp_v<<"Movie-Aspect is undefined - no prescaling applied."<<std::endl;
 	}
     }
 
-    MSG_V("vf->config(%dx%d->%dx%d,flags=0x%x,'%s',%s)\n",
-	sh->src_w,sh->src_h,
-	screen_size_x,screen_size_y,
-	mpxp_context().video().output->flags,
-	"MPlayerXP",vo_format_name(out_fmt));
+    mpxp_v<<"vf->config("<<sh->src_w<<"x"<<sh->src_h<<"->"<<screen_size_x<<"x"<<screen_size_y<<",flags=0x"<<std::hex
+	<<mpxp_context().video().output->flags<<",'"<<"MPlayerXP"<<"',"<<vo_format_name(out_fmt)<<std::endl;
 
-//    MSG_DBG2("vf configuring: %s\n",vf->info->name);
     if(vf_config(s,sh->src_w,sh->src_h,
 		screen_size_x,screen_size_y,
 		mpxp_context().video().output->flags,
@@ -576,11 +524,8 @@ csp_again:
 		    priv->vfilter_inited=-1;
 		    return MPXP_False;
     }
-    MSG_DBG2("vf->config(%dx%d->%dx%d,flags=%d,'%s')\n",
-	sh->src_w,sh->src_h,
-	screen_size_x,screen_size_y,
-	mpxp_context().video().output->flags,
-	vo_format_name(out_fmt));
+    mpxp_dbg2<<"vf->config("<<sh->src_w<<"x"<<sh->src_h<<"->"<<screen_size_x<<"x"<<screen_size_y
+	<<",flags="<<mpxp_context().video().output->flags<<",'"<<vo_format_name(out_fmt)<<"')"<<std::endl;
     return MPXP_True;
 }
 
@@ -592,11 +537,10 @@ mp_image_t* mpcodecs_get_image(video_decoder_t& opaque, int mp_imgtype, int mp_i
     decvideo_priv_t* priv=reinterpret_cast<decvideo_priv_t*>(opaque.vd_private);
     sh_video_t* sh = priv->parent;
     vf_stream_t* s = priv->vfilter;
-//    MSG_DBG2("mpcodecs_get_image(vf_%s,%i,%i,%i,%i) was called\n",((vf_instance_t *)(sh->vfilter))->info->name,mp_imgtype,mp_imgflag,w,h);
     mp_image_t* mpi=vf_get_new_image(s,sh->codec->outfmt[sh->outfmtidx],mp_imgtype,mp_imgflag,w,h,dae_curr_vdecoded(mpxp_context().engine().xp_core));
     mpi->x=mpi->y=0;
     if(mpi->xp_idx==XP_IDX_INVALID)
-	MSG_V("[mpcodecs_get_image] Incorrect mpi->xp_idx. Be ready for segfault!\n");
+	mpxp_v<<"[mpcodecs_get_image] Incorrect mpi->xp_idx. Be ready for segfault!"<<std::endl;
     return mpi;
 }
 
@@ -605,3 +549,4 @@ void mpcodecs_draw_slice(video_decoder_t& opaque, mp_image_t*mpi) {
     vf_stream_t* vf = priv->vfilter;
     vf_put_slice(vf,mpi);
 }
+} // namespace	usr

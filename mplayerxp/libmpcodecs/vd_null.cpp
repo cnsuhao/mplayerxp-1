@@ -6,60 +6,57 @@ using namespace	usr;
 
 #include "vd_internal.h"
 
-struct vnull_private_t : public Opaque {
-    vnull_private_t();
-    virtual ~vnull_private_t();
+namespace	usr {
+    class vnull_decoder : public Video_Decoder {
+	public:
+	    vnull_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    virtual ~vnull_decoder();
 
-    sh_video_t* sh;
-};
-vnull_private_t::vnull_private_t() {}
-vnull_private_t::~vnull_private_t() {}
+	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
+	    virtual mp_image_t*		run(const enc_frame_t& frame);
+	    virtual video_probe_t	get_probe_information() const;
+	private:
+	    sh_video_t& sh;
+    };
 
-static const vd_info_t info = {
-    "Null video decoder",
-    "null",
-    "A'rpi",
-    "build-in"
-};
-
-static const mpxp_option_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
-};
-
-LIBVD_EXTERN(null)
-
-static const video_probe_t* __FASTCALL__ probe(uint32_t fourcc) { return NULL; }
+video_probe_t vnull_decoder::get_probe_information() const { video_probe_t probe = { NULL, NULL, 0, VCodecStatus_NotWorking, {0}, {VideoFlag_None}}; return probe; }
 
 // to set/get/query special features/parameters
-static MPXP_Rc control_vd(Opaque& ctx,int cmd,any_t* arg,...){
-    UNUSED(ctx);
+MPXP_Rc vnull_decoder::ctrl(int cmd,any_t* arg,long arg2){
+    UNUSED(arg2);
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
 }
 
-static Opaque* preinit(const video_probe_t& probe,sh_video_t *sh,put_slice_info_t& psi){
-    UNUSED(probe);
-    UNUSED(psi);
-    vnull_private_t* priv = new(zeromem) vnull_private_t;
-    priv->sh=sh;
-    return priv;
-}
-
-// init driver
-static MPXP_Rc init(Opaque& ctx,video_decoder_t& opaque){
-    vnull_private_t& priv=static_cast<vnull_private_t&>(ctx);
-    sh_video_t* sh = priv.sh;
-    return mpcodecs_config_vf(opaque,sh->src_w,sh->src_h);
+vnull_decoder::vnull_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+	    :Video_Decoder(p,_sh,psi,fourcc)
+	    ,sh(_sh)
+{
+    throw bad_format_exception();
 }
 
 // uninit driver
-static void uninit(Opaque& ctx) { UNUSED(ctx); }
+vnull_decoder::~vnull_decoder() {}
 
 // decode a frame
-static mp_image_t* decode(Opaque& ctx,const enc_frame_t& frame){
-    UNUSED(ctx);
+mp_image_t* vnull_decoder::run(const enc_frame_t& frame){
     UNUSED(frame);
     return NULL;
 }
 
+static const mpxp_option_t options[] = {
+  { NULL, NULL, 0, 0, 0, 0, NULL}
+};
+
+static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) vnull_decoder(p,sh,psi,fourcc); }
+
+extern const vd_info_t vd_null_info = {
+    "Null video decoder",
+    "null",
+    "A'rpi",
+    "build-in",
+    query_interface,
+    options
+};
+} // namespace	usr

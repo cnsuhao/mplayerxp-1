@@ -22,34 +22,28 @@ using namespace	usr;
 #include "libao3/audio_out.h"
 #include "postproc/af.h"
 
-static const unsigned MAX_AC5_FRAME=4096;
+namespace	usr {
+    class dca_decoder : public Audio_Decoder {
+	public:
+	    dca_decoder(sh_audio_t&,audio_filter_info_t&,uint32_t wtag);
+	    virtual ~dca_decoder();
 
-dca_state_t* mpxp_dca_state;
-uint32_t mpxp_dca_accel=0;
-uint32_t mpxp_dca_flags=0;
+	    virtual unsigned		run(unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts);
+	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg);
+	    virtual audio_probe_t	get_probe_information() const;
+	private:
+	    int				fillbuffer(float& pts);
+	    int				printinfo() const;
 
-struct dca_private_t : public Opaque {
-    dca_private_t();
-    virtual ~dca_private_t();
+	    float		last_pts;
+	    sh_audio_t&		sh;
+	    const audio_probe_t*probe;
 
-    float last_pts;
-    sh_audio_t* sh;
-};
-dca_private_t::dca_private_t() {}
-dca_private_t::~dca_private_t() {}
-
-static const ad_info_t info = {
-    "DTS Coherent Acoustics",
-    "libdca",
-    "Nickols_K",
-    "build-in"
-};
-
-static const mpxp_option_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
-};
-
-LIBAD_EXTERN(dca)
+	    dca_state_t*	mpxp_dca_state;
+	    uint32_t		mpxp_dca_accel;
+	    uint32_t		mpxp_dca_flags;
+	    static const unsigned MAX_AC5_FRAME=4096;
+    };
 
 static const audio_probe_t probes[] = {
     { "libdca", "libdca", 0x86,   ACodecStatus_Working, {AFMT_FLOAT32, AFMT_S24_LE, AFMT_S16_LE} },
@@ -63,51 +57,42 @@ static const audio_probe_t probes[] = {
     { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}
 };
 
-static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) {
-    unsigned i;
-    for(i=0;probes[i].driver;i++)
-	if(wtag==probes[i].wtag)
-	    return &probes[i];
-    return NULL;
-}
-
-int dca_fillbuff(dca_private_t& priv,float& pts){
+int dca_decoder::fillbuffer(float& pts){
     int length=0,flen=0;
     int flags=0;
     int sample_rate=0;
     int bit_rate=0;
     float apts=0.,null_pts;
-    sh_audio_t* sh_audio=priv.sh;
-    sh_audio->a_in_buffer_len=0;
+    sh.a_in_buffer_len=0;
     /* sync frame:*/
     while(1){
-	while(sh_audio->a_in_buffer_len<16){
-	    int c=demux_getc_r(*sh_audio->ds,apts?null_pts:apts);
-	    if(c<0) { priv.last_pts=pts=apts; return -1; } /* EOF*/
-	    sh_audio->a_in_buffer[sh_audio->a_in_buffer_len++]=c;
+	while(sh.a_in_buffer_len<16){
+	    int c=demux_getc_r(*sh.ds,apts?null_pts:apts);
+	    if(c<0) { last_pts=pts=apts; return -1; } /* EOF*/
+	    sh.a_in_buffer[sh.a_in_buffer_len++]=c;
 	}
-	length = dca_syncinfo (mpxp_dca_state,reinterpret_cast<uint8_t*>(sh_audio->a_in_buffer), reinterpret_cast<int *>(&flags), &sample_rate, &bit_rate, &flen);
-	if(length>=16 && length<=MAX_AC5_FRAME) break; /* we're done.*/
+	length = dca_syncinfo (mpxp_dca_state,reinterpret_cast<uint8_t*>(sh.a_in_buffer), reinterpret_cast<int *>(&flags), &sample_rate, &bit_rate, &flen);
+	if(length>=16 && length<=int(MAX_AC5_FRAME)) break; /* we're done.*/
 	/* bad file => resync*/
-	memmove(sh_audio->a_in_buffer,sh_audio->a_in_buffer+1,15);
-	--sh_audio->a_in_buffer_len;
+	memmove(sh.a_in_buffer,sh.a_in_buffer+1,15);
+	--sh.a_in_buffer_len;
 	apts=0;
     }
-    MSG_DBG2("dca[%08X]: len=%d  flags=0x%X  %d Hz %d bit/s frame=%u\n",*((long *)sh_audio->a_in_buffer),length,flags,sample_rate,bit_rate,flen);
-    sh_audio->rate=sample_rate;
-    sh_audio->i_bps=bit_rate/8;
-    demux_read_data_r(*sh_audio->ds,reinterpret_cast<unsigned char*>(sh_audio->a_in_buffer+16),length-16,apts?null_pts:apts);
-    priv.last_pts=pts=apts;
+    mpxp_dbg2<<"dca["<<std::hex<<std::setfill('0')<<std::setw(8)<<(*((long *)sh.a_in_buffer))<<"]: len="<<length<<" flags=0x"<<std::hex<<flags<<"  "<<sample_rate<<" Hz "<<bit_rate<<" bit/s frame="<<flen<<std::endl;
+    sh.rate=sample_rate;
+    sh.i_bps=bit_rate/8;
+    demux_read_data_r(*sh.ds,reinterpret_cast<unsigned char*>(sh.a_in_buffer+16),length-16,apts?null_pts:apts);
+    last_pts=pts=apts;
 
     return length;
 }
 
 /* returns: number of available channels*/
-static int dca_printinfo(sh_audio_t *sh_audio){
-    int flags, sample_rate, bit_rate,flen,length;
+int dca_decoder::printinfo() const {
+    int flags, sample_rate, bit_rate,flen;
     const char* mode="unknown";
     int channels=0;
-    length=dca_syncinfo (mpxp_dca_state,reinterpret_cast<uint8_t*>(sh_audio->a_in_buffer), reinterpret_cast<int*>(&flags), &sample_rate, &bit_rate,&flen);
+    dca_syncinfo (mpxp_dca_state,reinterpret_cast<uint8_t*>(sh.a_in_buffer), reinterpret_cast<int*>(&flags), &sample_rate, &bit_rate,&flen);
     switch(flags&DCA_CHANNEL_MASK){
 	case DCA_CHANNEL: mode="channel"; channels=2; break;
 	case DCA_MONO: mode="mono"; channels=1; break;
@@ -121,17 +106,19 @@ static int dca_printinfo(sh_audio_t *sh_audio){
 	case DCA_DOLBY: mode="dolby"; channels=2; break;
 	default: channels=0; break;
     }
-    MSG_INFO("DCA: %d.%d (%s%s)  %d Hz  %3.1f kbit/s Out: %u-bit\n",
-	channels, (flags&DCA_LFE)?1:0,
-	mode, (flags&DCA_LFE)?"+lfe":"",
-	sample_rate, bit_rate*0.001f,
-	afmt2bps(sh_audio->afmt)*8);
+    mpxp_info<<"DCA: "<<channels<<"."<<((flags&DCA_LFE)?1:0)<<" ("<<mode<<((flags&DCA_LFE)?"+lfe":"")<<")  "<<sample_rate<<" Hz  "<<bit_rate*0.001f<<" kbit/s Out: "<<(afmt2bps(sh.afmt)*8)<<"-bit"<<std::endl;
     return (flags&DCA_LFE) ? (channels+1) : channels;
 }
 
-Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_info_t& afi)
+dca_decoder::dca_decoder(sh_audio_t& _sh,audio_filter_info_t& afi,uint32_t wtag)
+	    :Audio_Decoder(_sh,afi,wtag)
+	    ,sh(_sh)
 {
-    UNUSED(probe);
+    unsigned i;
+    for(i=0;probes[i].driver;i++)
+	if(wtag==probes[i].wtag)
+	    probe=&probes[i];
+    if(!probe) throw bad_format_exception();
     /*	DTS audio:
 	however many channels, 2 bytes in a word, 256 samples in a block, 6 blocks in a frame */
 #ifdef WORDS_BIGENDIAN
@@ -141,43 +128,29 @@ Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_info_t& a
 #define DCA_FMT32 AFMT_S32_LE
 #define DCA_FMT24 AFMT_S24_LE
 #endif
-    sh->afmt=bps2afmt(2);
+    sh.afmt=bps2afmt(2);
     if(	af_query_fmt(afi.afilter,afmt2mpaf(AFMT_FLOAT32)) == MPXP_Ok||
 	af_query_fmt(afi.afilter,afmt2mpaf(DCA_FMT32)) == MPXP_Ok ||
-	af_query_fmt(afi.afilter,afmt2mpaf(DCA_FMT24)) == MPXP_Ok)
-    {
-	sh->afmt=AFMT_FLOAT32;
+	af_query_fmt(afi.afilter,afmt2mpaf(DCA_FMT24)) == MPXP_Ok) {
+	    sh.afmt=AFMT_FLOAT32;
     }
-    sh->audio_out_minsize=mp_conf.ao_channels*afmt2bps(sh->afmt)*256*8;
-    sh->audio_in_minsize=MAX_AC5_FRAME;
-    dca_private_t* priv = new(zeromem) dca_private_t;
-    priv->sh = sh;
-    return priv;
-}
+    sh.audio_out_minsize=mp_conf.ao_channels*afmt2bps(sh.afmt)*256*8;
+    sh.audio_in_minsize=MAX_AC5_FRAME;
 
-MPXP_Rc init(Opaque& ctx)
-{
-    dca_private_t& priv=static_cast<dca_private_t&>(ctx);
-    sh_audio_t* sh_audio = priv.sh;
     sample_t level=1, bias=384;
     float pts;
     int flags=0;
     /* Dolby AC3 audio:*/
     mpxp_dca_accel = mpxp_context().mplayer_accel;
     mpxp_dca_state = dca_init(mpxp_dca_accel);
-    if (mpxp_dca_state == NULL) {
-	MSG_ERR("dca init failed\n");
-	return MPXP_False;
-    }
-    if(dca_fillbuff(priv,pts)<0){
-	MSG_ERR("dca sync failed\n");
-	return MPXP_False;
-    }
+    if (mpxp_dca_state == NULL) throw bad_format_exception();
+    if(fillbuffer(pts)<0) throw bad_format_exception();
+
     /* 'dca cannot upmix' hotfix:*/
-    dca_printinfo(sh_audio);
-    sh_audio->nch=mp_conf.ao_channels;
-    while(sh_audio->nch>0){
-	switch(sh_audio->nch){
+    printinfo();
+    sh.nch=mp_conf.ao_channels;
+    while(sh.nch>0){
+	switch(sh.nch){
 	    case 1: mpxp_dca_flags=DCA_MONO; break;
 	    case 2: mpxp_dca_flags=DCA_STEREO; break;
 /*	    case 2: mpxp_dca_flags=DCA_DOLBY; break; */
@@ -189,40 +162,34 @@ MPXP_Rc init(Opaque& ctx)
 	}
 	/* test:*/
 	flags=mpxp_dca_flags|DCA_ADJUST_LEVEL;
-	MSG_V("dca flags before dca_frame: 0x%X\n",flags);
-	if (dca_frame (mpxp_dca_state, reinterpret_cast<uint8_t*>(sh_audio->a_in_buffer), reinterpret_cast<int*>(&flags), &level, bias)){
-	    MSG_ERR("dca: error decoding frame -> nosound\n");
-	    return MPXP_False;
-	}
-	MSG_V("dca flags after dca_frame: 0x%X\n",flags);
-	if(afmt2bps(sh_audio->afmt)==4) {
-	    if(dca_resample_init_float(mpxp_dca_state,mpxp_dca_accel,flags,sh_audio->nch)) break;
+	mpxp_v<<"dca flags before dca_frame: 0x"<<std::hex<<flags<<std::endl;
+	if (dca_frame (mpxp_dca_state, reinterpret_cast<uint8_t*>(sh.a_in_buffer), reinterpret_cast<int*>(&flags), &level, bias))
+	    throw bad_format_exception();
+	mpxp_v<<"dca flags after dca_frame: 0x"<<std::hex<<flags<<std::endl;
+	if(afmt2bps(sh.afmt)==4) {
+	    if(dca_resample_init_float(mpxp_dca_state,mpxp_dca_accel,flags,sh.nch)) break;
 	} else {
-	    if(dca_resample_init(mpxp_dca_state,mpxp_dca_accel,flags,sh_audio->nch)) break;
+	    if(dca_resample_init(mpxp_dca_state,mpxp_dca_accel,flags,sh.nch)) break;
 	}
-	--sh_audio->nch; /* try to decrease no. of channels*/
+	--sh.nch; /* try to decrease no. of channels*/
     }
-    if(sh_audio->nch<=0){
-	MSG_ERR("dca: no resampler. try different channel setup!\n");
-	return MPXP_False;
-    }
-    return MPXP_Ok;
+    if(sh.nch<=0) throw bad_format_exception();
 }
 
-void uninit(Opaque& ctx) { UNUSED(ctx); }
+dca_decoder::~dca_decoder() {}
 
-MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...)
+audio_probe_t dca_decoder::get_probe_information() const { return *probe; }
+
+MPXP_Rc dca_decoder::ctrl(int cmd,any_t* arg)
 {
-    dca_private_t& priv=static_cast<dca_private_t&>(ctx);
-    sh_audio_t* sh = priv.sh;
     UNUSED(arg);
     switch(cmd) {
 	case ADCTRL_RESYNC_STREAM:
-	    sh->a_in_buffer_len=0;   // reset ACM/DShow audio buffer
+	    sh.a_in_buffer_len=0;   // reset ACM/DShow audio buffer
 	    return MPXP_True;
 	case ADCTRL_SKIP_FRAME: {
 	    float pts;
-	    dca_fillbuff(priv,pts); // skip AC3 frame
+	    fillbuffer(pts); // skip AC3 frame
 	    return MPXP_True;
 	}
 	default:
@@ -231,22 +198,20 @@ MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...)
     return MPXP_Unknown;
 }
 
-unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts)
+unsigned dca_decoder::run(unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts)
 {
-    dca_private_t& priv=static_cast<dca_private_t&>(ctx);
     sample_t level=1, bias=384;
     unsigned i,nblocks,flags=mpxp_dca_flags|DCA_ADJUST_LEVEL;
     unsigned len=0;
-    sh_audio_t* sh_audio = priv.sh;
     UNUSED(minlen);
     UNUSED(maxlen);
-	if(!sh_audio->a_in_buffer_len) {
-	    if(dca_fillbuff(priv,pts)<0) return len; /* EOF */
+	if(!sh.a_in_buffer_len) {
+	    if(fillbuffer(pts)<0) return len; /* EOF */
 	}
-	else pts=priv.last_pts;
-	sh_audio->a_in_buffer_len=0;
-	if (dca_frame (mpxp_dca_state, reinterpret_cast<uint8_t *>(sh_audio->a_in_buffer), reinterpret_cast<int *>(&flags), &level, bias)!=0){
-	    MSG_WARN("dca: error decoding frame\n");
+	else pts=last_pts;
+	sh.a_in_buffer_len=0;
+	if (dca_frame (mpxp_dca_state, reinterpret_cast<uint8_t *>(sh.a_in_buffer), reinterpret_cast<int *>(&flags), &level, bias)!=0){
+	    mpxp_warn<<"dca: error decoding frame"<<std::endl;
 	    return len;
 	}
 //	dca_dynrng(&mpxp_dca_state, NULL, NULL);
@@ -254,13 +219,29 @@ unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,f
 	nblocks=dca_blocks_num(mpxp_dca_state);
 	for (i = 0; i < nblocks; i++) {
 	    if (dca_block (mpxp_dca_state)){
-		MSG_WARN("dca: error at deblock\n");
+		mpxp_warn<<"dca: error at deblock"<<std::endl;
 		break;
 	    }
-	    if(afmt2bps(sh_audio->afmt)==4)
+	    if(afmt2bps(sh.afmt)==4)
 		len+=4*dca_resample32(dca_samples(mpxp_dca_state),(float *)&buf[len]);
 	    else
 		len+=2*dca_resample(dca_samples(mpxp_dca_state),(int16_t *)&buf[len]);
 	}
   return len;
 }
+
+static const mpxp_option_t options[] = {
+  { NULL, NULL, 0, 0, 0, 0, NULL}
+};
+
+static Audio_Decoder* query_interface(sh_audio_t& sh,audio_filter_info_t& afi,uint32_t wtag) { return new(zeromem) dca_decoder(sh,afi,wtag); }
+
+extern const ad_info_t ad_dca_info = {
+    "DTS Coherent Acoustics",
+    "libdca",
+    "Nickols_K",
+    "build-in",
+    query_interface,
+    options
+};
+} // namespace	usr

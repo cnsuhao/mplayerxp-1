@@ -759,5 +759,4 @@ const char * __FASTCALL__ vf_get_first_name(vf_stream_t* s) {
     vf_instance_t* first=s->first;
     return first->info->name;
 }
-vf_cfg_t vf_cfg;
 } // namespace	usr

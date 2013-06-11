@@ -6,61 +6,58 @@ using namespace	usr;
 #include <unistd.h>
 #include "ad_internal.h"
 
-struct anull_private_t : public Opaque {
-    anull_private_t();
-    virtual ~anull_private_t();
+namespace	usr {
+    class anull_decoder : public Audio_Decoder {
+	public:
+	    anull_decoder(sh_audio_t&,audio_filter_info_t&,uint32_t wtag);
+	    virtual ~anull_decoder();
 
-    sh_audio_t* sh;
-};
-anull_private_t::anull_private_t() {}
-anull_private_t::~anull_private_t() {}
+	    virtual unsigned		run(unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts);
+	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg);
+	    virtual audio_probe_t	get_probe_information() const;
+	private:
+	    sh_audio_t& sh;
+    };
 
-static const ad_info_t info = {
-    "Null audio decoder",
-    "null",
-    "Nickols_K",
-    "build-in"
-};
-
-static const mpxp_option_t options[] = {
-  { NULL, NULL, 0, 0, 0, 0, NULL}
-};
-
-LIBAD_EXTERN(null)
-
-static const audio_probe_t* __FASTCALL__ probe(uint32_t wtag) { UNUSED(wtag); return NULL; }
-
-MPXP_Rc init(Opaque& ctx)
+anull_decoder::anull_decoder(sh_audio_t& _sh,audio_filter_info_t& afi,uint32_t wtag)
+	    :Audio_Decoder(_sh,afi,wtag)
+	    ,sh(_sh)
 {
-    UNUSED(ctx);
-    return MPXP_Ok;
+    throw bad_format_exception();
 }
 
-Opaque* preinit(const audio_probe_t& probe,sh_audio_t *sh,audio_filter_info_t& afi)
-{
-    UNUSED(probe);
-    UNUSED(afi);
-    anull_private_t* priv = new(zeromem) anull_private_t;
-    priv->sh = sh;
-    return priv;
-}
+anull_decoder::~anull_decoder() {}
 
-void uninit(Opaque& ctx) { UNUSED(ctx); }
+audio_probe_t anull_decoder::get_probe_information() const { audio_probe_t probe = { NULL, NULL, 0x0, ACodecStatus_NotWorking, {AFMT_S8}}; return probe; }
 
-MPXP_Rc control_ad(Opaque& ctx,int cmd,any_t* arg, ...)
+MPXP_Rc anull_decoder::ctrl(int cmd,any_t* arg)
 {
-    UNUSED(ctx);
     UNUSED(cmd);
     UNUSED(arg);
     return MPXP_Unknown;
 }
 
-unsigned decode(Opaque& ctx,unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts)
+unsigned anull_decoder::run(unsigned char *buf,unsigned minlen,unsigned maxlen,float& pts)
 {
-    UNUSED(ctx);
     UNUSED(buf);
     UNUSED(minlen);
     UNUSED(maxlen);
     pts=0;
     return 0;
 }
+
+static const mpxp_option_t options[] = {
+  { NULL, NULL, 0, 0, 0, 0, NULL}
+};
+
+static Audio_Decoder* query_interface(sh_audio_t& sh,audio_filter_info_t& afi,uint32_t wtag) { return new(zeromem) anull_decoder(sh,afi,wtag); }
+
+extern const ad_info_t ad_null_info = {
+    "Null audio decoder",
+    "null",
+    "Nickols_K",
+    "build-in",
+    query_interface,
+    options
+};
+} // namespace	usr
