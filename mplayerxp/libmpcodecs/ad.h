@@ -58,8 +58,6 @@ namespace	usr {
 	const mpxp_option_t*	options;
     };
 
-    const ad_info_t*	afm_find_driver(const std::string& name);
-    Audio_Decoder*	afm_probe_driver(sh_audio_t& sh,audio_filter_info_t& afi);
     inline float	FIX_APTS(sh_audio_t& sh_audio,float& pts,unsigned in_size) { return sh_audio.i_bps?(pts+float(in_size))/float(sh_audio.i_bps):pts; }
 } //namespace	usr
 

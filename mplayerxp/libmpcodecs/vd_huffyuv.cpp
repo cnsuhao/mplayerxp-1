@@ -23,9 +23,12 @@ using namespace	usr;
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "vd_internal.h"
 #include "mpxp_help.h"
 #include "osdep/bswap.h"
+
+#include "libvo2/img_format.h"
+#include "vd.h"
+#include "vd_msg.h"
 
 namespace	usr {
 /*
@@ -62,7 +65,7 @@ namespace	usr {
  */
     class huffyuv_decoder : public Video_Decoder {
 	public:
-	    huffyuv_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    huffyuv_decoder(VD_Interface&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
 	    virtual ~huffyuv_decoder();
 
 	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
@@ -78,7 +81,7 @@ namespace	usr {
 	    unsigned char		huff_decompress(const unsigned int* in, unsigned int *pos,
 						const DecodeTable *decode_table,const unsigned char *decode_shift);
 
-	    video_decoder_t&		parent;
+	    VD_Interface&		parent;
 	    sh_video_t&			sh;
 	    const video_probe_t*	probe;
 	    // Real image depth
@@ -175,7 +178,7 @@ const unsigned char huffyuv_decoder::classic_add_chroma[256] = {
  * Init HuffYUV decoder
  *
  */
-huffyuv_decoder::huffyuv_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+huffyuv_decoder::huffyuv_decoder(VD_Interface& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
 	    :Video_Decoder(p,_sh,psi,fourcc)
 	    ,parent(p)
 	    ,sh(_sh)
@@ -299,7 +302,7 @@ huffyuv_decoder::huffyuv_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_in
     switch (bitmaptype) {
 	case BMPTYPE_RGB:
 	case BMPTYPE_YUV:
-	    vo_ret = mpcodecs_config_vf(parent,sh.src_w,sh.src_h);
+	    vo_ret = parent.config_vf(sh.src_w,sh.src_h);
 	    break;
 	case BMPTYPE_RGBA:
 	    mpxp_v<<"[HuffYUV] RGBA not supported yet."<<std::endl;
@@ -488,9 +491,9 @@ mp_image_t* huffyuv_decoder::run(const enc_frame_t& frame)
 
     /* Do not accept stride for rgb, it gives me wrong output :-( */
     if (bitmaptype == BMPTYPE_YUV)
-	mpi=mpcodecs_get_image(parent, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,sh.src_w, sh.src_h);
+	mpi=parent.get_image(MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,sh.src_w, sh.src_h);
     else
-	mpi=mpcodecs_get_image(parent, MP_IMGTYPE_TEMP, 0,sh.src_w, sh.src_h);
+	mpi=parent.get_image(MP_IMGTYPE_TEMP, 0,sh.src_w, sh.src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     outptr = mpi->planes[0]; // Output image pointer
@@ -822,7 +825,7 @@ static const mpxp_option_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) huffyuv_decoder(p,sh,psi,fourcc); }
+static Video_Decoder* query_interface(VD_Interface& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) huffyuv_decoder(p,sh,psi,fourcc); }
 
 extern const vd_info_t vd_huffyuv_info = {
     "HuffYUV Video decoder",

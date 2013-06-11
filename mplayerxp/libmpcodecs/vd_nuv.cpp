@@ -4,21 +4,24 @@ using namespace	usr;
 #include <stdio.h>
 #include <stdlib.h>
 #include "libnuppelvideo/nuppelvideo.h"
-#include "vd_internal.h"
 #include "codecs_ld.h"
 #include "osdep/bswap.h"
+
+#include "libvo2/img_format.h"
+#include "vd.h"
+#include "vd_msg.h"
 
 namespace	usr {
     class nuv_decoder : public Video_Decoder {
 	public:
-	    nuv_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    nuv_decoder(VD_Interface&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
 	    virtual ~nuv_decoder();
 
 	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
 	    virtual mp_image_t*		run(const enc_frame_t& frame);
 	    virtual video_probe_t	get_probe_information() const;
 	private:
-	    video_decoder_t&		parent;
+	    VD_Interface&		parent;
 	    sh_video_t&			sh;
 	    const video_probe_t*	probe;
     };
@@ -31,7 +34,7 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-nuv_decoder::nuv_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+nuv_decoder::nuv_decoder(VD_Interface& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
 	    :Video_Decoder(p,_sh,psi,fourcc)
 	    ,parent(p)
 	    ,sh(_sh)
@@ -41,7 +44,7 @@ nuv_decoder::nuv_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& ps
 	if(fourcc==probes[i].fourcc)
 	    probe=&probes[i];
     if(!probe) throw bad_format_exception();
-    if(mpcodecs_config_vf(parent,sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
+    if(parent.config_vf(sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
 }
 
 // uninit driver
@@ -66,7 +69,7 @@ mp_image_t* nuv_decoder::run(const enc_frame_t& frame){
     mp_image_t* mpi;
     if(frame.len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(parent, MP_IMGTYPE_TEMP, 0, sh.src_w, sh.src_h);
+    mpi=parent.get_image(MP_IMGTYPE_TEMP, 0, sh.src_w, sh.src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     decode_nuv(reinterpret_cast<unsigned char*>(frame.data), frame.len, mpi->planes[0], sh.src_w, sh.src_h);
@@ -78,7 +81,7 @@ static const mpxp_option_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) nuv_decoder(p,sh,psi,fourcc); }
+static Video_Decoder* query_interface(VD_Interface& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) nuv_decoder(p,sh,psi,fourcc); }
 
 extern const vd_info_t vd_nuv_info = {
     "NuppelVideo decoder",

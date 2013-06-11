@@ -4,7 +4,10 @@ using namespace	usr;
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "ad_internal.h"
+
+#include "libmpdemux/demuxer_r.h"
+#include "ad.h"
+#include "ad_msg.h"
 
 namespace	usr {
     class anull_decoder : public Audio_Decoder {

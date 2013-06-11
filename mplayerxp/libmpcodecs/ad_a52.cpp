@@ -3,11 +3,11 @@
 using namespace	usr;
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #define __USE_XOPEN 1
 #include <unistd.h>
 #include <assert.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
-#include "ad_internal.h"
 #include "liba52/a52.h"
 #include "codecs_ld.h"
 
@@ -15,6 +15,10 @@ using namespace	usr;
 #include "mpxp_help.h"
 #include "osdep/cpudetect.h"
 #include "osdep/bswap.h"
+
+#include "libmpdemux/demuxer_r.h"
+#include "ad.h"
+#include "ad_msg.h"
 
 #include "osdep/mm_accel.h"
 #include "mplayerxp.h"

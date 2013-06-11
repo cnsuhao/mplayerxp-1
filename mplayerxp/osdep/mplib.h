@@ -51,5 +51,13 @@ namespace	usr {
 
 	    virtual const char*	what() const throw();
     };
+
+    class missing_driver_exception : public std::exception {
+	public:
+	    missing_driver_exception() throw();
+	    virtual ~missing_driver_exception() throw();
+
+	    virtual const char*	what() const throw();
+    };
 } // namespace	usr
 #endif

@@ -5,7 +5,6 @@ using namespace	usr;
 #include <stdlib.h>
 #include <unistd.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
-#include "ad_internal.h"
 #include "mplayerxp.h"
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"
@@ -15,6 +14,10 @@ using namespace	usr;
 #include "libao3/afmt.h"
 #include "libao3/audio_out.h"
 #include "postproc/af.h"
+
+#include "libmpdemux/demuxer_r.h"
+#include "ad.h"
+#include "ad_msg.h"
 
 namespace	usr {
 /** Opaque structure for the libmpg123 decoder handle. */

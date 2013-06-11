@@ -18,7 +18,10 @@ using namespace	usr;
 #include "libmpdemux/stheader.h"
 #include "libao3/afmt.h"
 #include "osdep/bswap.h"
-#include "ad_internal.h"
+
+#include "libmpdemux/demuxer_r.h"
+#include "ad.h"
+#include "ad_msg.h"
 
 namespace	usr {
     class libadv_decoder : public Audio_Decoder {

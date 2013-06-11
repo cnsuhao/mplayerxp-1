@@ -54,10 +54,10 @@ namespace	usr {
     };
 
     /* interface of video decoder drivers */
-    struct video_decoder_t;
+    class VD_Interface;
     class Video_Decoder : public Opaque {
 	public:
-	    Video_Decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc) { UNUSED(fourcc); }
+	    Video_Decoder(VD_Interface&,sh_video_t&,put_slice_info_t&,uint32_t fourcc) { UNUSED(fourcc); }
 	    virtual ~Video_Decoder() {}
 
 	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0) = 0;
@@ -70,17 +70,8 @@ namespace	usr {
 	const char*	driver_name; /* driver name ("dshow") */
 	const char*	author; /* interface author/maintainer */
 	const char*	url; /* URL of homepage */
-	Video_Decoder*	(*query_interface)(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	Video_Decoder*	(*query_interface)(VD_Interface&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
 	const mpxp_option_t*	options;/**< Optional: MPlayerXP's option related */
     };
-
-    const vd_info_t*	vfm_find_driver(const std::string& name);
-    Video_Decoder*	vfm_probe_driver(video_decoder_t&,sh_video_t& sh,put_slice_info_t& psi);
-
-    // callbacks:
-    MPXP_Rc		__FASTCALL__ mpcodecs_config_vf(video_decoder_t& opaque, int w, int h);
-    mp_image_t*		__FASTCALL__ mpcodecs_get_image(video_decoder_t& opaque, int mp_imgtype, int mp_imgflag,int w, int h);
-    void		__FASTCALL__ mpcodecs_draw_slice(video_decoder_t& opaque, mp_image_t*);
-    void		__FASTCALL__ mpcodecs_draw_image(video_decoder_t& opaque, mp_image_t *mpi);
 } // namespace	usr
 #endif

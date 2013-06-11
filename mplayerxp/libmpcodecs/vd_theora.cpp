@@ -12,14 +12,18 @@ using namespace	usr;
 #include "mpxp_help.h"
 #include "codecs_ld.h"
 
-#include "vd_internal.h"
 #include "vd_msg.h"
 #include "osdep/bswap.h"
+
+#include "libmpconf/codec-cfg.h"
+#include "libvo2/img_format.h"
+#include "vd.h"
+#include "vd_msg.h"
 
 namespace	usr {
     class theora_decoder : public Video_Decoder {
 	public:
-	    theora_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    theora_decoder(VD_Interface&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
 	    virtual ~theora_decoder();
 
 	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
@@ -29,7 +33,7 @@ namespace	usr {
 	    theora_state		st;
 	    theora_comment		cc;
 	    theora_info			inf;
-	    video_decoder_t&		parent;
+	    VD_Interface&		parent;
 	    sh_video_t&			sh;
 	    const video_probe_t*	probe;
 	    static const int THEORA_NUM_HEADER_PACKETS=3;
@@ -43,7 +47,7 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-theora_decoder::theora_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+theora_decoder::theora_decoder(VD_Interface& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
 	    :Video_Decoder(p,_sh,psi,fourcc)
 	    ,parent(p)
 	    ,sh(_sh)
@@ -101,7 +105,7 @@ theora_decoder::theora_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info
 
     mpxp_ok<<"INFO: Theora video init ok!"<<std::endl;
 
-    if(mpcodecs_config_vf(parent,sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
+    if(parent.config_vf(sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
 }
 
 /*
@@ -151,7 +155,7 @@ mp_image_t* theora_decoder::run(const enc_frame_t& frame)
 	return NULL;
     }
 
-    mpi = mpcodecs_get_image(parent, MP_IMGTYPE_EXPORT, 0,sh.src_w, sh.src_h);
+    mpi = parent.get_image(MP_IMGTYPE_EXPORT, 0,sh.src_w, sh.src_h);
 
     mpi->planes[0]=yuv.y;
     mpi->stride[0]=yuv.y_stride;
@@ -167,7 +171,7 @@ static const mpxp_option_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) theora_decoder(p,sh,psi,fourcc); }
+static Video_Decoder* query_interface(VD_Interface& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) theora_decoder(p,sh,psi,fourcc); }
 
 extern const vd_info_t vd_theora_info = {
    "Theora/VP3 video decoder",

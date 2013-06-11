@@ -11,9 +11,12 @@ using namespace	usr;
 
 #include "mpxp_help.h"
 #include "codecs_ld.h"
-#include "vd_internal.h"
 #include "vd_msg.h"
 #include "osdep/bswap.h"
+
+#include "libvo2/img_format.h"
+#include "vd.h"
+#include "vd_msg.h"
 
 namespace	usr {
 /* copypaste from demux_real.c - it should match to get it working! */
@@ -60,7 +63,7 @@ namespace	usr {
 
     class vreal_decoder : public Video_Decoder {
 	public:
-	    vreal_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    vreal_decoder(VD_Interface&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
 	    virtual ~vreal_decoder();
 
 	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
@@ -69,7 +72,7 @@ namespace	usr {
 	private:
 	    int				load_lib(const std::string& path);
 
-	    video_decoder_t&		parent;
+	    VD_Interface&		parent;
 	    sh_video_t&			sh;
 	    const video_probe_t*	probe;
 	    any_t*			handle;
@@ -128,7 +131,7 @@ int vreal_decoder::load_lib(const std::string& path) {
     return 1;
 }
 
-vreal_decoder::vreal_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+vreal_decoder::vreal_decoder(VD_Interface& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
 	    :Video_Decoder(p,_sh,psi,fourcc)
 	    ,parent(p)
 	    ,sh(_sh)
@@ -153,7 +156,7 @@ vreal_decoder::vreal_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t
     mpxp_v<<"realvideo codec id: 0x"<<std::hex<<extrahdr[1]<<" sub-id: 0x"<<std::hex<<extrahdr[0]<<std::endl;
 
     // only I420 supported
-    if(!mpcodecs_config_vf(parent,sh.src_w,sh.src_h)) throw bad_format_exception();
+    if(!parent.config_vf(sh.src_w,sh.src_h)) throw bad_format_exception();
     // init codec:
     result=(*rvyuv_init)(&init_data, &handle);
     if (result){
@@ -215,7 +218,7 @@ mp_image_t* vreal_decoder::run(const enc_frame_t& frame) {
 
     if(frame.len<=0 || frame.flags&2) return NULL; // skipped frame || hardframedrop
 
-    mpi=mpcodecs_get_image(parent, MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/,
+    mpi=parent.get_image(MP_IMGTYPE_TEMP, 0 /*MP_IMGFLAG_ACCEPT_STRIDE*/,
 		sh.src_w, sh.src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
@@ -229,7 +232,7 @@ static const mpxp_option_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) vreal_decoder(p,sh,psi,fourcc); }
+static Video_Decoder* query_interface(VD_Interface& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) vreal_decoder(p,sh,psi,fourcc); }
 
 extern const vd_info_t vd_real_info = {
     "RealPlayer video codecs",

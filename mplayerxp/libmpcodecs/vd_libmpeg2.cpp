@@ -14,12 +14,15 @@ using namespace	usr;
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
 #include "mplayerxp.h"
-#include "vd_internal.h"
 #include "osdep/cpudetect.h"
 #include "osdep/mm_accel.h"
 #include "postproc/postprocess.h"
 #include "codecs_ld.h"
 #include "osdep/bswap.h"
+
+#include "libvo2/img_format.h"
+#include "vd.h"
+#include "vd_msg.h"
 
 #include "libmpdemux/parse_es.h"
 #include "libvo2/video_out.h"
@@ -186,7 +189,7 @@ typedef enum {
 
     class libmpeg2_decoder : public Video_Decoder {
 	public:
-	    libmpeg2_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    libmpeg2_decoder(VD_Interface&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
 	    virtual ~libmpeg2_decoder();
 
 	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
@@ -196,7 +199,7 @@ typedef enum {
 	    MPXP_Rc		load_lib(const std::string& libname);
 	    void		draw_frame(mp_image_t *mpi,unsigned w,const mpeg2_fbuf_t *src) const;
 
-	    video_decoder_t&	parent;
+	    VD_Interface&	parent;
 	    sh_video_t&		sh;
 	    mpeg2dec_t*		mpeg2dec;
 	    any_t*		dll_handle;
@@ -247,7 +250,7 @@ MPXP_Rc libmpeg2_decoder::ctrl(int cmd,any_t* arg,long arg2){
     return MPXP_Unknown;
 }
 
-libmpeg2_decoder::libmpeg2_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+libmpeg2_decoder::libmpeg2_decoder(VD_Interface& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
 	    :Video_Decoder(p,_sh,psi,fourcc)
 	    ,parent(p)
 	    ,sh(_sh)
@@ -262,7 +265,7 @@ libmpeg2_decoder::libmpeg2_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_
 
     if(!(mpeg2dec=(*mpeg2_init_ptr)(mpxp_context().mplayer_accel))) throw bad_format_exception();
 
-    if(mpcodecs_config_vf(parent,sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
+    if(parent.config_vf(sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
 }
 
 // uninit driver
@@ -280,7 +283,7 @@ void libmpeg2_decoder::draw_frame(mp_image_t* mpi,unsigned w,const mpeg2_fbuf_t*
     mpi->stride[1]=
     mpi->stride[2]=w>>1;
     mpi->flags&=~MP_IMGFLAG_DRAW_CALLBACK;
-    mpcodecs_draw_image(parent,mpi);
+    parent.draw_image(mpi);
 }
 
 // decode a frame
@@ -313,7 +316,7 @@ mp_image_t* libmpeg2_decoder::run(const enc_frame_t& frame) {
 			mpeg2dec->decoder.mpq_store=mp_malloc(mpeg2dec->decoder.mpq_stride*((_info->sequence->picture_height+15)>>4));
 		    }
 #endif
-		    mpi=mpcodecs_get_image(parent,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK
+		    mpi=parent.get_image(MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK
 					,_info->sequence->width,_info->sequence->height);
 		    (*mpeg2_stride_ptr)(mpeg2dec,mpi->stride[0]);
 		    break;
@@ -347,7 +350,7 @@ static const mpxp_option_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) libmpeg2_decoder(p,sh,psi,fourcc); }
+static Video_Decoder* query_interface(VD_Interface& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) libmpeg2_decoder(p,sh,psi,fourcc); }
 
 extern const vd_info_t vd_libmpeg2_info = {
     "libmpeg2 MPEG 1/2 Video decoder",

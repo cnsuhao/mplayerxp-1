@@ -19,11 +19,15 @@ using namespace	usr;
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
-#include "vd_internal.h"
 #include "vd.h"
 #include "codecs_ld.h"
 #include "libvo2/video_out.h"
 #include "osdep/bswap.h"
+
+#include "libmpconf/codec-cfg.h"
+#include "libvo2/img_format.h"
+#include "vd.h"
+#include "vd_msg.h"
 
 namespace	usr {
     enum {
@@ -120,7 +124,7 @@ typedef uint32_t FourCC;
 
     class divx4_decoder : public Video_Decoder {
 	public:
-	    divx4_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    divx4_decoder(VD_Interface&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
 	    virtual ~divx4_decoder();
 
 	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
@@ -129,7 +133,7 @@ typedef uint32_t FourCC;
 	private:
 	    int				load_lib(const std::string& libname);
 
-	    video_decoder_t&		parent;
+	    VD_Interface&		parent;
 	    sh_video_t&			sh;
 	    const video_probe_t*	probe;
 
@@ -161,7 +165,7 @@ int divx4_decoder::load_lib(const std::string& libname)
     return getDecore_ptr != NULL;
 }
 
-divx4_decoder::divx4_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t _fourcc)
+divx4_decoder::divx4_decoder(VD_Interface& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t _fourcc)
 	    :Video_Decoder(p,_sh,psi,_fourcc)
 	    ,parent(p)
 	    ,sh(_sh)
@@ -176,7 +180,7 @@ divx4_decoder::divx4_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t
 
     DecInit dinit;
     int bits=12;
-    if(!(mpcodecs_config_vf(parent,sh.src_w,sh.src_h))) throw bad_format_exception();
+    if(!(parent.config_vf(sh.src_w,sh.src_h))) throw bad_format_exception();
     switch(sh.codec->outfmt[sh.outfmtidx]){
 	case IMGFMT_YV12:
 	case IMGFMT_I420:
@@ -259,8 +263,7 @@ mp_image_t* divx4_decoder::run(const enc_frame_t& frame) {
     memset(&decFrame,0,sizeof(DecFrame));
     if(frame.len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(parent, MP_IMGTYPE_TEMP, MP_IMGFLAG_PRESERVE | MP_IMGFLAG_ACCEPT_WIDTH,
-	sh.src_w, sh.src_h);
+    mpi=parent.get_image(MP_IMGTYPE_TEMP, MP_IMGFLAG_PRESERVE | MP_IMGFLAG_ACCEPT_WIDTH,sh.src_w, sh.src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     decFrame.bitstream.pBuff = frame.data;
@@ -281,7 +284,7 @@ static const mpxp_option_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) divx4_decoder(p,sh,psi,fourcc); }
+static Video_Decoder* query_interface(VD_Interface& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) divx4_decoder(p,sh,psi,fourcc); }
 
 extern const vd_info_t vd_divx4_info = {
     "DivX4Linux lib (divx4/5 mode)",

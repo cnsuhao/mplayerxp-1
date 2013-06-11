@@ -73,7 +73,7 @@ void libmpcodecs_vd_register_options(M_Config& cfg)
 	    cfg.register_options(mpcodecs_vd_drivers[i]->options);
 }
 
-const vd_info_t* vfm_find_driver(const std::string& name) {
+const vd_info_t* VD_Interface::find_driver(const std::string& name) {
     unsigned i;
     for (i=0; mpcodecs_vd_drivers[i] != &vd_null_info; i++)
 	if(name==mpcodecs_vd_drivers[i]->driver_name) {
@@ -82,13 +82,13 @@ const vd_info_t* vfm_find_driver(const std::string& name) {
     return NULL;
 }
 
-Video_Decoder* vfm_probe_driver(video_decoder_t& handle,sh_video_t& sh,put_slice_info_t& psi) {
+Video_Decoder* VD_Interface::probe_driver(sh_video_t& sh,put_slice_info_t& psi) {
     unsigned i;
     Video_Decoder* drv=NULL;
     for (i=0; mpcodecs_vd_drivers[i] != &vd_null_info; i++) {
 	mpxp_v<<"Probing: "<<mpcodecs_vd_drivers[i]->driver_name<<std::endl;
 	try {
-	    drv = mpcodecs_vd_drivers[i]->query_interface(handle,sh,psi,sh.fourcc);
+	    drv = mpcodecs_vd_drivers[i]->query_interface(*this,sh,psi,sh.fourcc);
 	    mpxp_v<<"ok"<<std::endl;
 	    mpxp_v<<"Driver: "<<mpcodecs_vd_drivers[i]->driver_name<<" supports these outfmt for ";
 		fourcc(mpxp_v,sh.fourcc);
@@ -110,7 +110,7 @@ Video_Decoder* vfm_probe_driver(video_decoder_t& handle,sh_video_t& sh,put_slice
     return drv;
 }
 
-void vfm_help() {
+void VD_Interface::print_help() {
     unsigned i;
     mpxp_info<<"Available video codec families/drivers:"<<std::endl;
     for (i=0; mpcodecs_vd_drivers[i] != &vd_null_info; i++) {

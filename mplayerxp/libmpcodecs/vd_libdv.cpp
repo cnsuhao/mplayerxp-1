@@ -18,12 +18,14 @@ using namespace	usr;
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 
-#include "vd_internal.h"
+#include "libvo2/img_format.h"
+#include "vd.h"
+#include "vd_msg.h"
 
 namespace	usr {
     class libvdv_decoder : public Video_Decoder {
 	public:
-	    libvdv_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    libvdv_decoder(VD_Interface&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
 	    virtual ~libvdv_decoder();
 
 	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
@@ -32,7 +34,7 @@ namespace	usr {
 	private:
 	    dv_decoder_t*		init_global_rawdv_decoder();
 
-	    video_decoder_t&		parent;
+	    VD_Interface&		parent;
 	    sh_video_t&			sh;
 	    const video_probe_t*	probe;
 
@@ -69,7 +71,7 @@ dv_decoder_t* libvdv_decoder::init_global_rawdv_decoder()
     return global_rawdv_decoder;
 }
 
-libvdv_decoder::libvdv_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+libvdv_decoder::libvdv_decoder(VD_Interface& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
 	    :Video_Decoder(p,_sh,psi,fourcc)
 	    ,parent(p)
 	    ,sh(_sh)
@@ -81,7 +83,7 @@ libvdv_decoder::libvdv_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info
     if(!probe) throw bad_format_exception();
 
     dvd = init_global_rawdv_decoder();
-    if(!mpcodecs_config_vf(parent,sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
+    if(!parent.config_vf(sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
 }
 
 // uninit driver
@@ -107,7 +109,7 @@ mp_image_t* libvdv_decoder::run(const enc_frame_t& frame)
 
     dv_parse_header(dvd, reinterpret_cast<uint8_t*>(frame.data));
 
-    mpi=mpcodecs_get_image(parent, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE, sh.src_w, sh.src_h);
+    mpi=parent.get_image(MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE, sh.src_w, sh.src_h);
 
     if(!mpi){	// temporary!
 	mpxp_err<<"couldn't allocate image for codec"<<std::endl;
@@ -123,7 +125,7 @@ static const mpxp_option_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) libvdv_decoder(p,sh,psi,fourcc); }
+static Video_Decoder* query_interface(VD_Interface& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) libvdv_decoder(p,sh,psi,fourcc); }
 
 extern const vd_info_t vd_libdv_info = {
     "Raw DV Video Decoder",

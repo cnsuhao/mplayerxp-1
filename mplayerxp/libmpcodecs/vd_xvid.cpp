@@ -14,10 +14,14 @@ using namespace	usr;
 
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 
-#include "vd_internal.h"
 #include "codecs_ld.h"
 #include "libvo2/video_out.h"
 #include "osdep/bswap.h"
+
+#include "libmpconf/codec-cfg.h"
+#include "libvo2/img_format.h"
+#include "vd.h"
+#include "vd_msg.h"
 
 namespace	usr {
 static const video_probe_t probes[] = {
@@ -216,7 +220,7 @@ enum {
 
     class xvid_decoder : public Video_Decoder {
 	public:
-	    xvid_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    xvid_decoder(VD_Interface&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
 	    virtual ~xvid_decoder();
 
 	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
@@ -232,7 +236,7 @@ enum {
 	    int				pp_level;
 	    int				brightness;
 	    int				resync;
-	    video_decoder_t&		parent;
+	    VD_Interface&		parent;
 	    sh_video_t&			sh;
 	    int			(*xvid_decore_ptr)(any_t* handle,
 					int dec_opt,
@@ -254,7 +258,7 @@ int xvid_decoder::load_lib(const std::string& libname)
     return xvid_decore_ptr != NULL && xvid_global_ptr!=NULL;
 }
 
-xvid_decoder::xvid_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+xvid_decoder::xvid_decoder(VD_Interface& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
 	    :Video_Decoder(p,_sh,psi,fourcc)
 	    ,parent(p)
 	    ,sh(_sh)
@@ -369,7 +373,7 @@ xvid_decoder::xvid_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& 
 	    img_type = MP_IMGTYPE_TEMP;
 	    break;
     }
-    if(mpcodecs_config_vf(parent,sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
+    if(parent.config_vf(sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
 }
 
 // uninit driver
@@ -406,8 +410,8 @@ mp_image_t* xvid_decoder::run(const enc_frame_t& frame) {
 
     if(frame.flags&3) dec.general |= XVID_DEC_DROP;
     dec.output.csp = cs;
-    mpi = mpcodecs_get_image(parent, img_type,  MP_IMGFLAG_ACCEPT_STRIDE,
-				 sh.src_w, sh.src_h);
+    mpi = parent.get_image(img_type,  MP_IMGFLAG_ACCEPT_STRIDE,
+			    sh.src_w, sh.src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
     if(cs != XVID_CSP_INTERNAL) {
 	dec.output.plane[0] = mpi->planes[0];
@@ -486,7 +490,7 @@ static const mpxp_option_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) xvid_decoder(p,sh,psi,fourcc); }
+static Video_Decoder* query_interface(VD_Interface& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) xvid_decoder(p,sh,psi,fourcc); }
 
 extern const vd_info_t vd_xvid_info = {
     "XviD MPEG4 codec ",

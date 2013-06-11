@@ -11,10 +11,13 @@ using namespace	usr;
 
 #include "osdep/bswap.h"
 #include "codecs_ld.h"
-#include "ad_internal.h"
 #include "libao3/afmt.h"
 #include "libao3/audio_out.h"
 #include "postproc/af.h"
+
+#include "libmpdemux/demuxer_r.h"
+#include "ad.h"
+#include "ad_msg.h"
 
 namespace	usr {
     // This struct is also defined in demux_ogg.c => common header ?

@@ -9,11 +9,15 @@ using namespace	usr;
 #include <stddef.h>
 #include <dlfcn.h>
 
-#include "ad_internal.h"
 #include "codecs_ld.h"
 #include "ad_msg.h"
 #include "osdep/bswap.h"
 #include "libao3/afmt.h"
+
+#include "libmpconf/codec-cfg.h"
+#include "libmpdemux/demuxer_r.h"
+#include "ad.h"
+#include "ad_msg.h"
 
 namespace	usr {
     struct ra_init_t {

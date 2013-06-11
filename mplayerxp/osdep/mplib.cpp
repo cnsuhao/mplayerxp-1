@@ -70,4 +70,8 @@ Opaque::~Opaque() {}
 bad_format_exception::bad_format_exception() throw() {}
 bad_format_exception::~bad_format_exception() throw() {}
 const char* bad_format_exception::what() const throw() { return "unknown format"; }
+
+missing_driver_exception::missing_driver_exception() throw() {}
+missing_driver_exception::~missing_driver_exception() throw() {}
+const char* missing_driver_exception::what() const throw() { return "missing driver"; }
 } // namespace	usr

@@ -12,6 +12,7 @@ using namespace	usr;
 #include "libmpstream2/stream.h"
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
+#include "dec_audio.h"
 #include "ad.h"
 #include "ad_msg.h"
 
@@ -64,7 +65,7 @@ void libmpcodecs_ad_register_options(M_Config& cfg)
     }
 }
 
-const ad_info_t* afm_find_driver(const std::string& name) {
+const ad_info_t* AD_Interface::find_driver(const std::string& name) const {
     unsigned i;
     for (i=0; mpcodecs_ad_drivers[i] != &ad_null_info; i++) {
 	if(name==mpcodecs_ad_drivers[i]->driver_name)
@@ -73,7 +74,7 @@ const ad_info_t* afm_find_driver(const std::string& name) {
     return NULL;
 }
 
-Audio_Decoder* afm_probe_driver(sh_audio_t& sh,audio_filter_info_t& afi) {
+Audio_Decoder* AD_Interface::probe_driver(sh_audio_t& sh,audio_filter_info_t& afi) const {
     unsigned i;
     Audio_Decoder* drv=NULL;
     for (i=0; mpcodecs_ad_drivers[i] != &ad_null_info; i++) {
@@ -108,7 +109,7 @@ Audio_Decoder* afm_probe_driver(sh_audio_t& sh,audio_filter_info_t& afi) {
     return drv;
 }
 
-void afm_help() {
+void AD_Interface::print_help() {
     unsigned i;
     mpxp_info<<"Available audio codec families/drivers:"<<std::endl;
     for (i=0; mpcodecs_ad_drivers[i] != &ad_null_info; i++) {

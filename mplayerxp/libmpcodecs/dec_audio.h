@@ -6,28 +6,29 @@
 
 struct codecs_st;
 namespace	usr {
-    struct audio_decoder_t {
-	Opaque*	ad_private;
+    class AD_Interface : public Opaque {
+	public:
+	    AD_Interface(sh_audio_t& sh_audio);
+	    virtual ~AD_Interface();
+
+	    virtual unsigned		run(unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float& pts) const;
+	    virtual void		resync_stream() const;
+	    virtual void		skip_frame() const;
+
+	    virtual MPXP_Rc		init_filters(unsigned in_samplerate, unsigned in_channels, mpaf_format_e in_format,
+						    unsigned out_samplerate, unsigned out_channels,mpaf_format_e out_format,
+						    unsigned out_minsize, unsigned out_maxsize) const;
+	    virtual MPXP_Rc		preinit_filters(unsigned in_samplerate, unsigned in_channels, unsigned in_format,
+						    unsigned& out_samplerate, unsigned& out_channels, unsigned& out_format) const;
+	    virtual MPXP_Rc		reinit_filters(unsigned in_samplerate, unsigned in_channels, mpaf_format_e in_format,
+						    unsigned out_samplerate, unsigned out_channels, mpaf_format_e out_format,
+						    unsigned out_minsize, unsigned out_maxsize) const;
+	    static void			print_help();
+	private:
+	    const ad_info_t*		find_driver(const std::string& name) const;
+	    Audio_Decoder*		probe_driver(sh_audio_t& sh,audio_filter_info_t& afi) const;
+
+	    Opaque&	ad_private;
     };
-
-    // dec_audio.c:
-    audio_decoder_t*		__FASTCALL__ mpca_init(sh_audio_t *sh_audio);
-    void			__FASTCALL__ mpca_uninit(audio_decoder_t& handle);
-    unsigned			__FASTCALL__ mpca_decode(audio_decoder_t& handle,unsigned char *buf,unsigned minlen,unsigned maxlen,unsigned buflen,float& pts);
-    void			__FASTCALL__ mpca_resync_stream(audio_decoder_t& handle);
-    void			__FASTCALL__ mpca_skip_frame(audio_decoder_t& handle);
-
-    MPXP_Rc mpca_init_filters(audio_decoder_t& sh_audio,
-	unsigned in_samplerate, unsigned in_channels, mpaf_format_e in_format,
-	unsigned out_samplerate, unsigned out_channels,mpaf_format_e out_format,
-	unsigned out_minsize, unsigned out_maxsize);
-    MPXP_Rc mpca_preinit_filters(audio_decoder_t& sh_audio,
-	unsigned in_samplerate, unsigned in_channels, unsigned in_format,
-	unsigned& out_samplerate, unsigned& out_channels, unsigned& out_format);
-    MPXP_Rc mpca_reinit_filters(audio_decoder_t& sh_audio,
-	unsigned in_samplerate, unsigned in_channels, mpaf_format_e in_format,
-	unsigned out_samplerate, unsigned out_channels, mpaf_format_e out_format,
-	unsigned out_minsize, unsigned out_maxsize);
-    void afm_help(void);
 } //namespace usr
 #endif

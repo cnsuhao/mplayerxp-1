@@ -91,7 +91,7 @@ namespace	usr {
 
     void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt);
     mp_image_t* new_mp_image(unsigned w,unsigned h,unsigned xp_idx);
-    void free_mp_image(mp_image_t* mpi);
+    void free_mp_image(const mp_image_t* mpi);
     mp_image_t* alloc_mpi(unsigned w, unsigned h, unsigned int fmt,unsigned xp_idx);
     void mpi_alloc_planes(mp_image_t *mpi);
     void copy_mpi(mp_image_t *dmpi,const mp_image_t *mpi);

@@ -4,9 +4,12 @@ using namespace	usr;
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "ad_internal.h"
 #include "osdep/bswap.h"
 #include "libao3/afmt.h"
+
+#include "libmpdemux/demuxer_r.h"
+#include "ad.h"
+#include "ad_msg.h"
 
 namespace	usr {
 

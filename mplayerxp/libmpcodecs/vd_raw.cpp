@@ -4,20 +4,23 @@ using namespace	usr;
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "vd_internal.h"
 #include "osdep/bswap.h"
+#include "libmpconf/codec-cfg.h"
+#include "libvo2/img_format.h"
+#include "vd.h"
+#include "vd_msg.h"
 
 namespace	usr {
     class vraw_decoder : public Video_Decoder {
 	public:
-	    vraw_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    vraw_decoder(VD_Interface&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
 	    virtual ~vraw_decoder();
 
 	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
 	    virtual mp_image_t*		run(const enc_frame_t& frame);
 	    virtual video_probe_t	get_probe_information() const;
 	private:
-	    video_decoder_t&		parent;
+	    VD_Interface&		parent;
 	    sh_video_t&			sh;
 	    const video_probe_t*	probe;
 };
@@ -73,7 +76,7 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None }}
 };
 
-vraw_decoder::vraw_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+vraw_decoder::vraw_decoder(VD_Interface& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
 	    :Video_Decoder(p,_sh,psi,fourcc)
 	    ,parent(p)
 	    ,sh(_sh)
@@ -95,7 +98,7 @@ vraw_decoder::vraw_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& 
 	if(fourcc==probes[i].fourcc)
 	    probe=&probes[i];
     if(!probe) throw bad_format_exception();
-    if(!mpcodecs_config_vf(parent,sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
+    if(!parent.config_vf(sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
 }
 
 // uninit driver
@@ -118,7 +121,7 @@ mp_image_t* vraw_decoder::run(const enc_frame_t& frame){
     mp_image_t* mpi;
     if(frame.len<=0) return NULL; // skipped frame
 
-    mpi=mpcodecs_get_image(parent, MP_IMGTYPE_EXPORT, 0, sh.src_w, sh.src_h);
+    mpi=parent.get_image(MP_IMGTYPE_EXPORT, 0, sh.src_w, sh.src_h);
     if(mpi->flags&MP_IMGFLAG_DIRECT) mpi->flags|=MP_IMGFLAG_RENDERED;
 
     if(mpi->flags&MP_IMGFLAG_PLANAR){
@@ -161,7 +164,7 @@ static const mpxp_option_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) vraw_decoder(p,sh,psi,fourcc); }
+static Video_Decoder* query_interface(VD_Interface& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) vraw_decoder(p,sh,psi,fourcc); }
 
 extern const vd_info_t vd_raw_info = {
     "RAW Uncompressed Video",

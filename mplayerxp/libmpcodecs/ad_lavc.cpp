@@ -9,7 +9,6 @@ using namespace	usr;
 #include <assert.h>
 #include <dlfcn.h> /* GLIBC specific. Exists under cygwin too! */
 #include "libao3/afmt.h"
-#include "ad_internal.h"
 
 #include "mpxp_help.h"
 #include "osdep/bswap.h"
@@ -17,6 +16,10 @@ using namespace	usr;
 
 #include "mpxp_conf_lavc.h"
 #include "codecs_ld.h"
+
+#include "libmpdemux/demuxer_r.h"
+#include "ad.h"
+#include "ad_msg.h"
 
 namespace	usr {
     class alavc_decoder: public Audio_Decoder {

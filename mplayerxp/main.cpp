@@ -311,7 +311,8 @@ void MPXPSystem::uninit_player(unsigned int mask){
     if(mask&INITED_VCODEC){
 	inited_flags&=~INITED_VCODEC;
 	MP_UNIT("uninit_vcodec");
-	mpcv_uninit(*mpxp_context().video().decoder);
+	delete mpxp_context().video().decoder;
+	mpxp_context().video().decoder=NULL;
     }
 
     if(mask&INITED_VO){
@@ -325,7 +326,8 @@ void MPXPSystem::uninit_player(unsigned int mask){
     if(mask&INITED_ACODEC){
 	inited_flags&=~INITED_ACODEC;
 	MP_UNIT("uninit_acodec");
-	mpca_uninit(*mpxp_context().audio().decoder);
+	delete mpxp_context().audio().decoder;
+	mpxp_context().audio().decoder=NULL;
     }
 
     if(mask&INITED_AO){
@@ -497,12 +499,12 @@ static MPXP_Rc init_player(const std::map<std::string,std::string>& envm)
 	return MPXP_False;
     }
     if(mp_conf.video_family && strcmp(mp_conf.video_family,"help")==0) {
-	vfm_help();
+	VD_Interface::print_help();
 	mpxp_uninit_structs();
 	return MPXP_False;
     }
     if(mp_conf.audio_family && strcmp(mp_conf.audio_family,"help")==0) {
-	afm_help();
+	AD_Interface::print_help();
 	mpxp_uninit_structs();
 	return MPXP_False;
     }
@@ -546,8 +548,8 @@ void show_long_help(const M_Config& cfg,const std::map<std::string,std::string>&
     Audio_Output::print_help();
     vf_help();
     af_help();
-    vfm_help();
-    afm_help();
+    VD_Interface::print_help();
+    AD_Interface::print_help();
 }
 
 #ifdef USE_OSD
@@ -620,14 +622,14 @@ void MPXPSystem::seek( osd_args_t *osd,const seek_args_t* _seek) const
 
 	if(sh_video){
 	    MP_UNIT("seek_video_reset");
-	    mpcv_resync_stream(*mpxp_context().video().decoder);
+	    mpxp_context().video().decoder->resync_stream();
 	    mpxp_context().video().output->reset();
 	    sh_video->chapter_change=-1;
 	}
 
 	if(sh_audio){
 	    MP_UNIT("seek_audio_reset");
-	    mpca_resync_stream(*mpxp_context().audio().decoder);
+	    mpxp_context().audio().decoder->resync_stream();
 	    mpxp_context().audio().output->reset(); // stop audio, throwing away buffered data
 	}
 
@@ -674,7 +676,7 @@ void mpxp_reset_vcache(void)
 
 void mpxp_resync_audio_stream(void)
 {
-    mpca_resync_stream(*mpxp_context().audio().decoder);
+    mpxp_context().audio().decoder->resync_stream();
 }
 
 static void init_benchmark(void)
@@ -999,19 +1001,23 @@ void MPXPSystem::read_subtitles(const std::string& filename,int forced_subs_only
 
 void MPXPSystem::find_acodec(const char *ao_subdevice) {
     int found=0;
-    audio_decoder_t* mpca=0;
+    AD_Interface* mpca=NULL;
     sh_audio_t* sh_audio=reinterpret_cast<sh_audio_t*>(_demuxer->audio->sh);
     Demuxer_Stream *d_audio=_demuxer->audio;
     sh_audio->codec=NULL;
-    mpca=mpca_init(sh_audio); // try auto-probe first
-    if(mpca) { mpxp_context().audio().decoder=mpca; found=1; }
-    if(!found) {
+    try {
+	mpca=new(zeromem) AD_Interface(*sh_audio); // try auto-probe first
+	mpxp_context().audio().decoder=mpca;
+	found=1;
+    } catch( const missing_driver_exception& e) {
+	found=0;
 	mpxp_err<<MSGTR_CantFindAudioCodec<<std::endl;
 	fourcc(mpxp_err,sh_audio->wtag);
 	mpxp_hint<<get_path(envm,"win32codecs.conf")<<":"<<MSGTR_TryUpgradeCodecsConfOrRTFM<<std::endl;
 	d_audio->sh=NULL;
 	sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
-    } else {
+    }
+    if(found) {
 	if(!(mpxp_context().audio().output=new(zeromem) Audio_Output(ao_subdevice?ao_subdevice:""))) {
 	    mpxp_err<<MSGTR_CannotInitAO<<std::endl;
 	    d_audio->sh=NULL;
@@ -1038,9 +1044,11 @@ MPXP_Rc MPXPSystem::find_vcodec() {
     if(vo_conf.softzoom)	mpxp_context().video().output->ZOOM_SET();
     if(vo_conf.flip>0)		mpxp_context().video().output->FLIP_SET();
     if(vo_conf.vidmode)		mpxp_context().video().output->VM_SET();
-    if((mpxp_context().video().decoder=mpcv_init(sh_video,mp_conf.video_codec?mp_conf.video_codec:"",mp_conf.video_family?mp_conf.video_family:"",-1,_libinput))) sh_video->inited=1;
-
-    if(!sh_video->inited) {
+    try {
+	mpxp_context().video().decoder=new(zeromem) VD_Interface(*sh_video,mp_conf.video_codec?mp_conf.video_codec:"",mp_conf.video_family?mp_conf.video_family:"",-1,_libinput);
+	sh_video->inited=1;
+	inited_flags|=INITED_VCODEC;
+    } catch(const missing_driver_exception& e) {
 	mpxp_err<<MSGTR_CantFindVideoCodec;
 	fourcc(mpxp_err,sh_video->fourcc);
 	mpxp_err<<std::endl;
@@ -1048,7 +1056,7 @@ MPXP_Rc MPXPSystem::find_vcodec() {
 	d_video->sh = NULL;
 	sh_video = reinterpret_cast<sh_video_t*>(d_video->sh);
 	rc=MPXP_False;
-    } else  inited_flags|=INITED_VCODEC;
+    }
 
     if(sh_video)
     mpxp_v<<(mp_conf.video_codec?"Forcing":"Detected")
@@ -1085,7 +1093,7 @@ int MPXPSystem::configure_audio() {
     channels=mp_conf.ao_channels?mp_conf.ao_channels:sh_audio->nch;
     format=sh_audio->afmt;
 
-    if(mpca_preinit_filters(*mpxp_context().audio().decoder,
+    if(mpxp_context().audio().decoder->preinit_filters(
 	    // input:
 	    (int)(sh_audio->rate),
 	    sh_audio->nch, sh_audio->afmt,
@@ -1110,15 +1118,14 @@ int MPXPSystem::configure_audio() {
     } else {
 	inited_flags|=INITED_AO;
 	MP_UNIT("af_init");
-	if(mpca_init_filters(*mpxp_context().audio().decoder,
-	    sh_audio->rate,
-	    sh_audio->nch, mpaf_format_e(sh_audio->afmt),
-	    mpxp_context().audio().output->samplerate(),
-	    mpxp_context().audio().output->channels(),
-	    mpaf_format_e(mpxp_context().audio().output->format()),
-	    mpxp_context().audio().output->outburst()*4,
-	    mpxp_context().audio().output->buffersize())!=MPXP_Ok) {
-		mpxp_err<<"No matching audio filter found!"<<std::endl;
+	if(mpxp_context().audio().decoder->init_filters(sh_audio->rate,
+		sh_audio->nch, mpaf_format_e(sh_audio->afmt),
+		mpxp_context().audio().output->samplerate(),
+		mpxp_context().audio().output->channels(),
+		mpaf_format_e(mpxp_context().audio().output->format()),
+		mpxp_context().audio().output->outburst()*4,
+		mpxp_context().audio().output->buffersize())!=MPXP_Ok) {
+		    mpxp_err<<"No matching audio filter found!"<<std::endl;
 	    }
     }
     return rc;
@@ -1354,7 +1361,7 @@ For future:
 		else		v_cont+=v;
 		if(v_cont > 100) v_cont=100;
 		if(v_cont < -100) v_cont = -100;
-		if(mpcv_set_colors(*mpxp_context().video().decoder,VO_EC_CONTRAST,v_cont)==MPXP_Ok) {
+		if(mpxp_context().video().decoder->set_colors(VO_EC_CONTRAST,v_cont)==MPXP_Ok) {
 #ifdef USE_OSD
 		    if(mp_conf.osd_level){
 			osd->visible=sh_video->fps; // 1 sec
@@ -1372,7 +1379,7 @@ For future:
 		else		v_bright+=v;
 		if(v_bright > 100) v_bright = 100;
 		if(v_bright < -100) v_bright = -100;
-		if(mpcv_set_colors(*mpxp_context().video().decoder,VO_EC_BRIGHTNESS,v_bright)==MPXP_Ok) {
+		if(mpxp_context().video().decoder->set_colors(VO_EC_BRIGHTNESS,v_bright)==MPXP_Ok) {
 #ifdef USE_OSD
 		    if(mp_conf.osd_level){
 			osd->visible=sh_video->fps; // 1 sec
@@ -1390,7 +1397,7 @@ For future:
 		else		v_hue+=v;
 		if(v_hue > 100) v_hue = 100;
 		if(v_hue < -100) v_hue = -100;
-		if(mpcv_set_colors(*mpxp_context().video().decoder,VO_EC_HUE,v_hue)==MPXP_Ok) {
+		if(mpxp_context().video().decoder->set_colors(VO_EC_HUE,v_hue)==MPXP_Ok) {
 #ifdef USE_OSD
 		    if(mp_conf.osd_level){
 			osd->visible=sh_video->fps; // 1 sec
@@ -1408,7 +1415,7 @@ For future:
 		else		v_saturation+=v;
 		if(v_saturation > 100) v_saturation = 100;
 		if(v_saturation < -100) v_saturation = -100;
-		if(mpcv_set_colors(*mpxp_context().video().decoder,VO_EC_SATURATION,v_saturation)==MPXP_Ok) {
+		if(mpxp_context().video().decoder->set_colors(VO_EC_SATURATION,v_saturation)==MPXP_Ok) {
 #ifdef USE_OSD
 		    if(mp_conf.osd_level){
 			osd->visible=sh_video->fps; // 1 sec
@@ -1693,7 +1700,9 @@ play_next_file:
     if(sh_audio){
 	mpxp_v<<"Initializing audio codec..."<<std::endl;
 	if(!mpxp_context().audio().decoder) {
-	    if((mpxp_context().audio().decoder=mpca_init(sh_audio))==NULL){
+	    try {
+		mpxp_context().audio().decoder=new(zeromem) AD_Interface(*sh_audio);
+	    } catch(const missing_driver_exception& e) {
 		mpxp_err<<MSGTR_CouldntInitAudioCodec<<std::endl;
 		d_audio->sh=NULL;
 		sh_audio=reinterpret_cast<sh_audio_t*>(d_audio->sh);
@@ -1730,12 +1739,12 @@ play_next_file:
 	/* Auto quality option enabled*/
 	MPXP_Rc rc;
 	unsigned quality;
-	rc=mpcv_get_quality_max(*mpxp_context().video().decoder,quality);
+	rc=mpxp_context().video().decoder->get_quality_max(quality);
 	if(rc==MPXP_Ok) mpxp_context().output_quality=quality;
 	if(mp_conf.autoq>mpxp_context().output_quality) mp_conf.autoq=mpxp_context().output_quality;
 	else mpxp_context().output_quality=mp_conf.autoq;
 	mpxp_v<<"AutoQ: setting quality to "<<mpxp_context().output_quality<<std::endl;
-	mpcv_set_quality(*mpxp_context().video().decoder,mpxp_context().output_quality);
+	mpxp_context().video().decoder->set_quality(mpxp_context().output_quality);
     }
 
 // ========== Init display (sh_video->src_w*sh_video->src_h/out_fmt) ============

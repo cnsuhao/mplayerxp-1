@@ -18,8 +18,8 @@
 namespace	usr {
     class M_Config;
     struct PlayTree_Iter;
-    struct audio_decoder_t;
-    struct video_decoder_t;
+    class AD_Interface;
+    class VD_Interface;
     /* List of all modules which require protection by pin-code */
     enum {
 	Module_Stream=0,
@@ -157,12 +157,12 @@ namespace	usr {
     };
 
     struct audio_processing_t {
-	audio_decoder_t*	decoder;
+	AD_Interface*		decoder;
 	Audio_Output*		output;
     };
 
     struct video_processing_t {
-	video_decoder_t*	decoder;
+	VD_Interface*		decoder;
 	Video_Output*		output;
     };
 

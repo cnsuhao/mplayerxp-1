@@ -19,7 +19,6 @@ using namespace	usr;
 
 #include "osdep/bswap.h"
 
-#include "vd_internal.h"
 #include "codecs_ld.h"
 #include "postproc/postprocess.h"
 #include "postproc/vf.h"
@@ -30,10 +29,15 @@ using namespace	usr;
 #include "libavformat/riff.h"
 #include "libvo2/video_out.h"
 
+#include "libmpconf/codec-cfg.h"
+#include "libvo2/img_format.h"
+#include "vd.h"
+#include "vd_msg.h"
+
 namespace	usr {
     class vlavc_decoder : public Video_Decoder {
 	public:
-	    vlavc_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    vlavc_decoder(VD_Interface&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
 	    virtual ~vlavc_decoder();
 
 	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
@@ -45,7 +49,7 @@ namespace	usr {
 	    static void			release_buffer(struct AVCodecContext *avctx, AVFrame *pic);
 	    static void			draw_slice(struct AVCodecContext *s,const AVFrame *src, int offset[4],int y, int type, int height);
 
-	    video_decoder_t&		parent;
+	    VD_Interface&		parent;
 	    sh_video_t&			sh;
 	    int				use_slices;
 	    int				cap_slices;
@@ -210,7 +214,7 @@ prn_err:
     return MPXP_Ok;
 }
 
-vlavc_decoder::vlavc_decoder(video_decoder_t& _parent,sh_video_t& _sh,put_slice_info_t& _psi,uint32_t _fourcc)
+vlavc_decoder::vlavc_decoder(VD_Interface& _parent,sh_video_t& _sh,put_slice_info_t& _psi,uint32_t _fourcc)
 	    :Video_Decoder(_parent,_sh,_psi,_fourcc)
 	    ,parent(_parent)
 	    ,sh(_sh)
@@ -390,7 +394,7 @@ vlavc_decoder::vlavc_decoder(video_decoder_t& _parent,sh_video_t& _sh,put_slice_
 	}
 	if(pp_flags) ppContext=pp2_get_context(sh.src_w,sh.src_h,pp_flags);
     }
-    if(mpcodecs_config_vf(parent,sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
+    if(parent.config_vf(sh.src_w,sh.src_h)!=MPXP_Ok) throw bad_format_exception();
 }
 
 // uninit driver
@@ -467,7 +471,7 @@ int vlavc_decoder::get_buffer(AVCodecContext *avctx, AVFrame *pic){
     }
 
     mpxp_v<<"ff width="<<width<<" height="<<height<<std::endl;
-    mpi= mpcodecs_get_image(priv.parent,type, flags, (width+align)&(~align), (height+align)&(~align));
+    mpi= priv.parent.get_image(type, flags, (width+align)&(~align), (height+align)&(~align));
     if(mpi->flags & MP_IMGFLAG_DIRECT) mpi->flags |= MP_IMGFLAG_RENDERED;
     // Palette support: libavcodec copies palette to *data[1]
     if (mpi->bpp == 8) mpi->planes[1] = new unsigned char [AVPALETTE_SIZE];
@@ -599,7 +603,7 @@ void vlavc_decoder::draw_slice(struct AVCodecContext* s,
 	    <<">["<<mpi->width<<"x"<<mpi->height<<"] "<<mpi->x<<" "
 	    <<mpi->y<<" "<<mpi->w<<" "<<mpi->h<<std::endl;
     __MP_ATOMIC(priv.psi.active_slices++);
-    mpcodecs_draw_slice (priv.parent, mpi);
+    priv.parent.draw_slice (mpi);
     mpi->xp_idx = orig_idx;
     __MP_ATOMIC(priv.psi.active_slices--);
 }
@@ -636,7 +640,7 @@ mp_image_t* vlavc_decoder::run(const enc_frame_t& frame){
 		 sh.fourcc==0x10000001 || /* mpeg1 may have b frames */
 		 lavc_codec->id==CODEC_ID_SVQ3||
 		 1;
-    _mpi= mpcodecs_get_image(parent,has_b_frames?MP_IMGTYPE_IPB:MP_IMGTYPE_IP,MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_PREFER_ALIGNED_STRIDE|MP_IMGFLAG_READABLE|MP_IMGFLAG_PRESERVE,
+    _mpi= parent.get_image(has_b_frames?MP_IMGTYPE_IPB:MP_IMGTYPE_IP,MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_PREFER_ALIGNED_STRIDE|MP_IMGFLAG_READABLE|MP_IMGFLAG_PRESERVE,
 			    16,16);
     if(cap_dr1 &&
        lavc_codec->id != CODEC_ID_H264 &&
@@ -677,7 +681,7 @@ mp_image_t* vlavc_decoder::run(const enc_frame_t& frame){
     if(!(frame.flags&3) && use_slices)
     {
 	if(_mpi) free_mp_image(_mpi);
-	_mpi=mpcodecs_get_image(parent, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,sh.src_w, sh.src_h);
+	_mpi=parent.get_image(MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,sh.src_w, sh.src_h);
 	_mpi = _mpi;
 	frame_number++;
 	ctx->draw_horiz_band=draw_slice;
@@ -702,7 +706,7 @@ mp_image_t* vlavc_decoder::run(const enc_frame_t& frame){
     if(!ctx->draw_horiz_band)
     {
 	if(_mpi) free_mp_image(_mpi);
-	_mpi=mpcodecs_get_image(parent, MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,sh.src_w,sh.src_h);
+	_mpi=parent.get_image(MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,sh.src_w,sh.src_h);
 	if(!_mpi){	// temporary!
 	    mpxp_err<<"couldn't allocate image for lavc codec"<<std::endl;
 	    return NULL;
@@ -764,7 +768,7 @@ static const mpxp_option_t options[] = {
     { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) vlavc_decoder(p,sh,psi,fourcc); }
+static Video_Decoder* query_interface(VD_Interface& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) vlavc_decoder(p,sh,psi,fourcc); }
 
 extern const vd_info_t vd_lavc_info = {
     "lavc codec family",

@@ -24,8 +24,11 @@ using namespace	usr;
 #include "libvo2/img_format.h"
 #include "osdep/timer.h"
 #include "osdep/fastmemcpy.h"
-#include "vd_internal.h"
 #include "codecs_ld.h"
+
+#include "libvo2/img_format.h"
+#include "vd.h"
+#include "vd_msg.h"
 
 namespace	usr {
 /*************************** START OF XA CODEC BINARY INTERFACE ****************/
@@ -146,7 +149,7 @@ namespace	usr {
 
     class xanim_decoder : public Video_Decoder {
 	public:
-	    xanim_decoder(video_decoder_t&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
+	    xanim_decoder(VD_Interface&,sh_video_t&,put_slice_info_t&,uint32_t fourcc);
 	    virtual ~xanim_decoder();
 
 	    virtual MPXP_Rc		ctrl(int cmd,any_t* arg,long arg2=0);
@@ -161,7 +164,7 @@ namespace	usr {
 	    xacodec_image_t*		xacodec_decode_frame(uint8_t* frame, int frame_size, int skip_flag);
 	    int				xacodec_query(XA_CODEC_HDR *codec_hdr);
 
-	    video_decoder_t&		parent;
+	    VD_Interface&		parent;
 	    sh_video_t&			sh;
 	    const video_probe_t*	probe;
 
@@ -508,7 +511,7 @@ static const video_probe_t probes[] = {
     { NULL, NULL, 0x0, VCodecStatus_NotWorking, {0x0}, { VideoFlag_None } }
 };
 
-xanim_decoder::xanim_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
+xanim_decoder::xanim_decoder(VD_Interface& p,sh_video_t& _sh,put_slice_info_t& psi,uint32_t fourcc)
 	    :Video_Decoder(p,_sh,psi,fourcc)
 	    ,parent(p)
 	    ,sh(_sh)
@@ -521,7 +524,7 @@ xanim_decoder::xanim_decoder(video_decoder_t& p,sh_video_t& _sh,put_slice_info_t
     if(!probe) throw bad_format_exception();
 
     if(xacodec_init_video(sh.codec->outfmt[sh.outfmtidx])) {
-	rc=mpcodecs_config_vf(parent,sh.src_w,sh.src_h);
+	rc=parent.config_vf(sh.src_w,sh.src_h);
     }
     if(rc!=MPXP_Ok) throw bad_format_exception();
 }
@@ -556,8 +559,7 @@ mp_image_t* xanim_decoder::run(const enc_frame_t& frame){
     _image=xacodec_decode_frame(reinterpret_cast<uint8_t*>(frame.data),frame.len,(frame.flags&3)?1:0);
     if(!_image) return NULL;
 
-    mpi=mpcodecs_get_image(parent, MP_IMGTYPE_EXPORT, MP_IMGFLAG_PRESERVE,
-	sh.src_w, sh.src_h);
+    mpi=parent.get_image(MP_IMGTYPE_EXPORT, MP_IMGFLAG_PRESERVE,sh.src_w, sh.src_h);
     if(!mpi) return NULL;
 
     mpi->planes[0]=_image->planes[0];
@@ -574,7 +576,7 @@ static const mpxp_option_t options[] = {
   { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
-static Video_Decoder* query_interface(video_decoder_t& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) xanim_decoder(p,sh,psi,fourcc); }
+static Video_Decoder* query_interface(VD_Interface& p,sh_video_t& sh,put_slice_info_t& psi,uint32_t fourcc) { return new(zeromem) xanim_decoder(p,sh,psi,fourcc); }
 
 extern const vd_info_t vd_xanim_info = {
     "XAnim codecs",

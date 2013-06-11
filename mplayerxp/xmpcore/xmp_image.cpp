@@ -150,7 +150,7 @@ mp_image_t* new_mp_image(unsigned w,unsigned h,unsigned xp_idx){
     return mpi;
 }
 
-void free_mp_image(mp_image_t* mpi){
+void free_mp_image(const mp_image_t* mpi){
     if(!mpi) return;
     if(mpi->flags&MP_IMGFLAG_ALLOCATED){
 	/* becouse we allocate the whole image in once */
