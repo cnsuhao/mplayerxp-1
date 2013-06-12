@@ -103,9 +103,9 @@ static void get_str(int isbyte, Demuxer *demuxer, char *buf, int buf_size)
     int len;
 
     if (isbyte)
-	len = demuxer->stream->read_char();
+	len = demuxer->stream->read(type_byte);
     else
-	len = demuxer->stream->read_word();
+	len = demuxer->stream->read(type_word);
 
     binary_packet bp=demuxer->stream->read((len > buf_size) ? buf_size : len); memcpy(buf,bp.data(),bp.size());
     if (len > buf_size)
@@ -119,9 +119,9 @@ static void skip_str(int isbyte, Demuxer *demuxer)
     int len;
 
     if (isbyte)
-	len = demuxer->stream->read_char();
+	len = demuxer->stream->read(type_byte);
     else
-	len = demuxer->stream->read_word();
+	len = demuxer->stream->read(type_word);
 
     demuxer->stream->skip( len);
 
@@ -158,7 +158,7 @@ static int parse_index_chunk(Demuxer *demuxer)
 read_index:
     demuxer->stream->seek( next_header_pos);
 
-    i = demuxer->stream->read_dword_le();
+    i = demuxer->stream->read_le(type_dword);
     if ((i == -256) || (i != MKTAG('I', 'N', 'D', 'X')))
     {
 	MSG_V("Something went wrong, no index chunk found on given address (%d)\n",
@@ -173,20 +173,20 @@ read_index:
     MSG_V("Reading index table from index chunk (%d)\n",
 	next_header_pos);
 
-    i = demuxer->stream->read_dword();
+    i = demuxer->stream->read(type_dword);
     MSG_V("size: %d bytes\n", i);
 
-    i = demuxer->stream->read_word();
+    i = demuxer->stream->read(type_word);
     if (i != 0)
 	MSG_V("Hmm, index table with unknown version (%d), please report it to MPlayer developers!\n", i);
 
-    entries = demuxer->stream->read_dword();
+    entries = demuxer->stream->read(type_dword);
     MSG_V("entries: %d\n", entries);
 
-    stream_id = demuxer->stream->read_word();
+    stream_id = demuxer->stream->read(type_word);
     MSG_V("stream_id: %d\n", stream_id);
 
-    next_header_pos = demuxer->stream->read_dword();
+    next_header_pos = demuxer->stream->read(type_dword);
     MSG_V("next_header_pos: %d\n", next_header_pos);
     if (entries <= 0)
     {
@@ -202,9 +202,9 @@ read_index:
     for (i = 0; i < entries; i++)
     {
 	demuxer->stream->skip( 2); /* version */
-	priv->index_table[stream_id][i].timestamp = demuxer->stream->read_dword();
-	priv->index_table[stream_id][i].offset = demuxer->stream->read_dword();
-	priv->index_table[stream_id][i].packetno = demuxer->stream->read_dword();
+	priv->index_table[stream_id][i].timestamp = demuxer->stream->read(type_dword);
+	priv->index_table[stream_id][i].offset = demuxer->stream->read(type_dword);
+	priv->index_table[stream_id][i].packetno = demuxer->stream->read(type_dword);
     }
 
     dump_index(demuxer, stream_id);
@@ -258,7 +258,7 @@ static void add_index_segment(Demuxer *demuxer, int seek_stream_id, int seek_tim
   {
     demuxer->filepos = demuxer->stream->tell();
 
-    tag = demuxer->stream->read_dword();
+    tag = demuxer->stream->read(type_dword);
     if (tag == MKTAG('A', 'T', 'A', 'D'))
     {
       demuxer->stream->skip( 14);
@@ -268,11 +268,11 @@ static void add_index_segment(Demuxer *demuxer, int seek_stream_id, int seek_tim
     if (tag == -256 || len < 12)
       break;
 
-    stream_id = demuxer->stream->read_word();
-    timestamp = demuxer->stream->read_dword();
+    stream_id = demuxer->stream->read(type_word);
+    timestamp = demuxer->stream->read(type_dword);
 
     demuxer->stream->skip( 1); /* reserved */
-    flags = demuxer->stream->read_char();
+    flags = demuxer->stream->read(type_byte);
 
     if (flags == -256)
       break;
@@ -301,7 +301,7 @@ static int generate_index(Demuxer *demuxer)
   int tag;
 
   demuxer->stream->seek( data_pos);
-  tag = demuxer->stream->read_dword();
+  tag = demuxer->stream->read(type_dword);
   if (tag != MKTAG('A', 'T', 'A', 'D'))
   {
     MSG_WARN("Something went wrong, no data chunk found on given address (%d)\n", data_pos);
@@ -330,7 +330,7 @@ static MPXP_Rc real_probe(Demuxer* demuxer)
 
     MSG_V("Checking for REAL\n");
 
-    c = demuxer->stream->read_dword_le();
+    c = demuxer->stream->read_le(type_dword);
     if (c == -256)
 	return MPXP_False; /* EOF */
     if (c != MKTAG('.', 'R', 'M', 'F'))
@@ -442,15 +442,15 @@ static int real_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
     }
 
     demuxer->filepos = demuxer->stream->tell();
-    version = demuxer->stream->read_word(); /* version */
-    len = demuxer->stream->read_word();
+    version = demuxer->stream->read(type_word); /* version */
+    len = demuxer->stream->read(type_word);
     if ((version==0x4441) && (len==0x5441)) { /* new data chunk */
 	MSG_V("demux_real: New data chunk is comming!!!\n");
 	if (priv->is_multirate) return 0; // EOF
 	demuxer->stream->skip(14);
 	demuxer->filepos = demuxer->stream->tell();
-	version = demuxer->stream->read_word(); /* version */
-	len = demuxer->stream->read_word();
+	version = demuxer->stream->read(type_word); /* version */
+	len = demuxer->stream->read(type_word);
     } else if ((version == 0x494e) && (len == 0x4458)) {
 	MSG_V("demux_real: Found INDX chunk. EOF.\n");
 	demuxer->stream->eof(1);
@@ -467,18 +467,18 @@ static int real_demux(Demuxer *demuxer,Demuxer_Stream *__ds)
 	continue; //goto loop;
     }
 
-    stream_id = demuxer->stream->read_word();
-    timestamp = demuxer->stream->read_dword();
+    stream_id = demuxer->stream->read(type_word);
+    timestamp = demuxer->stream->read(type_dword);
     pts=timestamp*0.001f;
-    reserved = demuxer->stream->read_char();
-    flags = demuxer->stream->read_char();
+    reserved = demuxer->stream->read(type_byte);
+    flags = demuxer->stream->read(type_byte);
     /* flags:		*/
     /*  0x1 - reliable  */
     /* 	0x2 - keyframe	*/
 
     if (version == 1) {
 	int tmp;
-	tmp = demuxer->stream->read_char();
+	tmp = demuxer->stream->read(type_byte);
 	MSG_DBG2("Version: %d, skipped byte is %d\n", version, tmp);
 	len--;
     }
@@ -510,10 +510,10 @@ got_audio:
 		/* AAC in Real: several AAC frames in one Real packet. */
 		/* Second byte, upper four bits: number of AAC frames */
 		/* next n * 2 bytes: length of the AAC frames in bytes, BE */
-		sub_packets = (demuxer->stream->read_word() & 0xf0) >> 4;
+		sub_packets = (demuxer->stream->read(type_word) & 0xf0) >> 4;
 		sub_packet_lengths = new(zeromem) uint16_t[sub_packets];
 		for (i = 0; i < sub_packets; i++)
-		    sub_packet_lengths[i] = demuxer->stream->read_word();
+		    sub_packet_lengths[i] = demuxer->stream->read(type_word);
 		for (i = 0; i < sub_packets; i++) {
 		    int l;
 		    dp = new(zeromem) Demuxer_Packet(sub_packet_lengths[i]);
@@ -584,14 +584,14 @@ got_video:
 		// read packet header
 		// bit 7: 1=last block in block chain
 		// bit 6: 1=short header (only one block?)
-		vpkg_header=demuxer->stream->read_char(); --len;
+		vpkg_header=demuxer->stream->read(type_byte); --len;
 		MSG_DBG2("hdr: %02X (len=%d) ",vpkg_header,len);
 
 		if (0x40==(vpkg_header&0xc0)) {
 		    // seems to be a very short header
 		    // 2 bytes, purpose of the second byte yet unknown
 		    int bummer;
-		    bummer=demuxer->stream->read_char(); --len;
+		    bummer=demuxer->stream->read(type_byte); --len;
 		    MSG_DBG2("%02X",bummer);
 		    vpkg_offset=0;
 		    vpkg_length=len;
@@ -599,7 +599,7 @@ got_video:
 
 		    if (0==(vpkg_header&0x40)) {
 			// sub-seqnum (bits 0-6: number of fragment. bit 7: ???)
-			vpkg_subseq=demuxer->stream->read_char();
+			vpkg_subseq=demuxer->stream->read(type_byte);
 			--len;
 			MSG_DBG2("subseq: %02X ",vpkg_subseq);
 			vpkg_subseq&=0x7f;
@@ -607,12 +607,12 @@ got_video:
 
 		    // size of the complete packet
 		    // bit 14 is always one (same applies to the offset)
-		    vpkg_length=demuxer->stream->read_word();
+		    vpkg_length=demuxer->stream->read(type_word);
 		    len-=2;
 		    MSG_DBG2("l: %02X %02X ",vpkg_length>>8,vpkg_length&0xff);
 		    if (!(vpkg_length&0xC000)) {
 			vpkg_length<<=16;
-			vpkg_length|=demuxer->stream->read_word();
+			vpkg_length|=demuxer->stream->read(type_word);
 			MSG_DBG2("l+: %02X %02X ",(vpkg_length>>8)&0xff,vpkg_length&0xff);
 			len-=2;
 		    } else
@@ -621,18 +621,18 @@ got_video:
 		    // offset of the following data inside the complete packet
 		    // Note: if (hdr&0xC0)==0x80 then offset is relative to the
 		    // _end_ of the packet, so it's equal to fragment size!!!
-		    vpkg_offset=demuxer->stream->read_word();
+		    vpkg_offset=demuxer->stream->read(type_word);
 		    len-=2;
 		    MSG_DBG2("o: %02X %02X ",vpkg_offset>>8,vpkg_offset&0xff);
 		    if (!(vpkg_offset&0xC000)) {
 			vpkg_offset<<=16;
-			vpkg_offset|=demuxer->stream->read_word();
+			vpkg_offset|=demuxer->stream->read(type_word);
 			MSG_DBG2("o+: %02X %02X ",(vpkg_offset>>8)&0xff,vpkg_offset&0xff);
 			len-=2;
 		    } else
 		    vpkg_offset&=0x3fff;
 
-		    vpkg_seqnum=demuxer->stream->read_char(); --len;
+		    vpkg_seqnum=demuxer->stream->read(type_byte); --len;
 		    MSG_DBG2("seq: %02X ",vpkg_seqnum);
 		}
 		MSG_DBG2("\n");
@@ -815,9 +815,9 @@ static Opaque* real_open(Demuxer* demuxer)
     demuxer->stream->skip( 4); /* header size */
     demuxer->stream->skip( 2); /* version */
 //    demuxer->stream->skip( 4);
-    i = demuxer->stream->read_dword();
+    i = demuxer->stream->read(type_dword);
     MSG_V( "real: File version: %d\n", i);
-    num_of_headers = demuxer->stream->read_dword();
+    num_of_headers = demuxer->stream->read(type_dword);
 //    demuxer->stream->skip( 4); /* number of headers */
 
     /* parse chunks */
@@ -826,8 +826,8 @@ static Opaque* real_open(Demuxer* demuxer)
 	int chunk_id, chunk_pos, chunk_size;
 
 	chunk_pos = demuxer->stream->tell();
-	chunk_id = demuxer->stream->read_dword_le();
-	chunk_size = demuxer->stream->read_dword();
+	chunk_id = demuxer->stream->read_le(type_dword);
+	chunk_size = demuxer->stream->read(type_dword);
 
 	demuxer->stream->skip( 2); /* version */
 
@@ -849,18 +849,18 @@ static Opaque* real_open(Demuxer* demuxer)
 		demuxer->stream->skip( 4); /* max packet size */
 		demuxer->stream->skip( 4); /* avg packet size */
 		demuxer->stream->skip( 4); /* nb packets */
-		demuxer->movi_length=demuxer->stream->read_dword()/1000; /* duration */
+		demuxer->movi_length=demuxer->stream->read(type_dword)/1000; /* duration */
 		demuxer->stream->skip( 4); /* preroll */
-		priv->index_chunk_offset = demuxer->stream->read_dword();
+		priv->index_chunk_offset = demuxer->stream->read(type_dword);
 		MSG_V("First index chunk offset: 0x%x\n", priv->index_chunk_offset);
-		priv->data_chunk_offset = demuxer->stream->read_dword()+10;
+		priv->data_chunk_offset = demuxer->stream->read(type_dword)+10;
 		MSG_V("First data chunk offset: 0x%x\n", priv->data_chunk_offset);
 		demuxer->stream->skip( 2); /* nb streams */
 #if 0
 		demuxer->stream->skip( 2); /* flags */
 #else
 		{
-		    int flags = demuxer->stream->read_word();
+		    int flags = demuxer->stream->read(type_word);
 
 		    if (flags)
 		    {
@@ -882,7 +882,7 @@ static Opaque* real_open(Demuxer* demuxer)
 		char *buf;
 		int len;
 
-		len = demuxer->stream->read_word();
+		len = demuxer->stream->read(type_word);
 		if (len > 0)
 		{
 		    buf = new char [len+1];
@@ -892,7 +892,7 @@ static Opaque* real_open(Demuxer* demuxer)
 		    delete buf;
 		}
 
-		len = demuxer->stream->read_word();
+		len = demuxer->stream->read(type_word);
 		if (len > 0)
 		{
 		    buf = new char [len+1];
@@ -902,7 +902,7 @@ static Opaque* real_open(Demuxer* demuxer)
 		    delete buf;
 		}
 
-		len = demuxer->stream->read_word();
+		len = demuxer->stream->read(type_word);
 		if (len > 0)
 		{
 		    buf = new char [len+1];
@@ -912,7 +912,7 @@ static Opaque* real_open(Demuxer* demuxer)
 		    delete buf;
 		}
 
-		len = demuxer->stream->read_word();
+		len = demuxer->stream->read(type_word);
 		if (len > 0)
 		{
 		    buf = new char [len+1];
@@ -933,24 +933,24 @@ static Opaque* real_open(Demuxer* demuxer)
 		int tmp,len;
 		char tmps[256];
 
-		stream_id = demuxer->stream->read_word();
+		stream_id = demuxer->stream->read(type_word);
 		MSG_V("Found new stream (id: %d)\n", stream_id);
 
 		demuxer->stream->skip( 4); /* max bitrate */
-		bitrate = demuxer->stream->read_dword(); /* avg bitrate */
+		bitrate = demuxer->stream->read(type_dword); /* avg bitrate */
 		demuxer->stream->skip( 4); /* max packet size */
 		demuxer->stream->skip( 4); /* avg packet size */
 		demuxer->stream->skip( 4); /* start time */
 		demuxer->stream->skip( 4); /* preroll */
 		demuxer->stream->skip( 4); /* duration */
 
-		tmp=demuxer->stream->read_char();
+		tmp=demuxer->stream->read(type_byte);
 		bp=demuxer->stream->read(tmp); memcpy(tmps,bp.data(),bp.size());
 		tmps[tmp]=0;
 		if(!demuxer->info().get(INFOT_DESCRIPTION))
 		    demuxer->info().add( INFOT_DESCRIPTION, tmps);
 		/* Type specific header */
-		codec_data_size = demuxer->stream->read_dword();
+		codec_data_size = demuxer->stream->read(type_dword);
 		codec_pos = demuxer->stream->tell();
 
 #ifdef MP_DEBUG
@@ -961,12 +961,12 @@ static Opaque* real_open(Demuxer* demuxer)
 	  if (strstr(tmps,"x-pn-realaudio") || strstr(tmps,"x-pn-multirate-realaudio")) {
 		// skip unknown shit - FIXME: find a better/cleaner way!
 		len=codec_data_size;
-		tmp = demuxer->stream->read_dword();
+		tmp = demuxer->stream->read(type_dword);
 //		mp_msg(MSGT_DEMUX,MSGL_DBG2,"demux_real: type_spec: len=%d  fpos=0x%X  first_dword=0x%X (%.4s)  \n",
 //		    (int)codec_data_size,(int)codec_pos,tmp,&tmp);
 		while(--len>=8){
 			if(tmp==MKTAG(0xfd, 'a', 'r', '.')) break; // audio
-			tmp=(tmp<<8)|demuxer->stream->read_char();
+			tmp=(tmp<<8)|demuxer->stream->read(type_byte);
 		}
 		if (tmp != MKTAG(0xfd, 'a', 'r', '.'))
 		{
@@ -987,7 +987,7 @@ static Opaque* real_open(Demuxer* demuxer)
 		    int hdr_size;
 
 		    MSG_V("Found audio stream!\n");
-		    version = demuxer->stream->read_word();
+		    version = demuxer->stream->read(type_word);
 		    MSG_V("version: %d\n", version);
 //		    demuxer->stream->skip( 2); /* version (4 or 5) */
 		   if (version == 3) {
@@ -995,32 +995,32 @@ static Opaque* real_open(Demuxer* demuxer)
 		    demuxer->stream->skip( 10);
 		    demuxer->stream->skip( 4);
 		    // Name, author, (c) are also in CONT tag
-		    if ((i = demuxer->stream->read_char()) != 0) {
+		    if ((i = demuxer->stream->read(type_byte)) != 0) {
 		      buft = new char [i+1];
 		      bp=demuxer->stream->read(i); memcpy(buft,bp.data(),bp.size());
 		      buft[i] = 0;
 		      demuxer->info().add( INFOT_NAME, buft);
 		      delete buft;
 		    }
-		    if ((i = demuxer->stream->read_char()) != 0) {
+		    if ((i = demuxer->stream->read(type_byte)) != 0) {
 		      buft = new char [i+1];
 		      bp=demuxer->stream->read(i); memcpy(buft,bp.data(),bp.size());
 		      buft[i] = 0;
 		      demuxer->info().add( INFOT_AUTHOR, buft);
 		      delete buft;
 		    }
-		    if ((i = demuxer->stream->read_char()) != 0) {
+		    if ((i = demuxer->stream->read(type_byte)) != 0) {
 		      buft = new char [i+1];
 		      bp=demuxer->stream->read(i); memcpy(buft,bp.data(),bp.size());
 		      buft[i] = 0;
 		      demuxer->info().add( INFOT_COPYRIGHT, buft);
 		      delete buft;
 		    }
-		    if ((i = demuxer->stream->read_char()) != 0)
+		    if ((i = demuxer->stream->read(type_byte)) != 0)
 		      MSG_WARN("Last header byte is not zero!\n");
 		    demuxer->stream->skip(1);
-		    i = demuxer->stream->read_char();
-		    sh->wtag = demuxer->stream->read_dword_le();
+		    i = demuxer->stream->read(type_byte);
+		    sh->wtag = demuxer->stream->read_le(type_dword);
 		    if (i != 4) {
 		      MSG_WARN("Audio FourCC size is not 4 (%d), please report to "
 			     "MPlayer developers\n", i);
@@ -1041,30 +1041,30 @@ static Opaque* real_open(Demuxer* demuxer)
 		    demuxer->stream->skip( 4); // ???
 		    demuxer->stream->skip( 2); /* version (4 or 5) */
 //		    demuxer->stream->skip( 4); // header size == 0x4E
-		    hdr_size = demuxer->stream->read_dword(); // header size
+		    hdr_size = demuxer->stream->read(type_dword); // header size
 		    MSG_V("header size: %d\n", hdr_size);
-		    flavor = demuxer->stream->read_word();/* codec flavor id */
-		    coded_frame_size = demuxer->stream->read_dword();/* needed by codec */
+		    flavor = demuxer->stream->read(type_word);/* codec flavor id */
+		    coded_frame_size = demuxer->stream->read(type_dword);/* needed by codec */
 		    //demuxer->stream->skip( 4); /* coded frame size */
 		    demuxer->stream->skip( 4); // big number
 		    demuxer->stream->skip( 4); // bigger number
 		    demuxer->stream->skip( 4); // 2 || -''-
 //		    demuxer->stream->skip( 2); // 0x10
-		    sub_packet_h = demuxer->stream->read_word();
+		    sub_packet_h = demuxer->stream->read(type_word);
 //		    demuxer->stream->skip( 2); /* coded frame size */
-		    frame_size = demuxer->stream->read_word();
+		    frame_size = demuxer->stream->read(type_word);
 		    MSG_V("frame_size: %d\n", frame_size);
-		    sub_packet_size = demuxer->stream->read_word();
+		    sub_packet_size = demuxer->stream->read(type_word);
 		    MSG_V("sub_packet_size: %d\n", sub_packet_size);
 		    demuxer->stream->skip( 2); // 0
 
 		    if (version == 5)
 			demuxer->stream->skip( 6); //0,srate,0
 
-		    sh->rate = demuxer->stream->read_word();
+		    sh->rate = demuxer->stream->read(type_word);
 		    demuxer->stream->skip( 2);  // 0
-		    sh->afmt = bps2afmt(demuxer->stream->read_word()/8);
-		    sh->nch = demuxer->stream->read_word();
+		    sh->afmt = bps2afmt(demuxer->stream->read(type_word)/8);
+		    sh->nch = demuxer->stream->read(type_word);
 		    MSG_V("samplerate: %d, channels: %d\n",
 			sh->rate, sh->nch);
 
@@ -1125,7 +1125,7 @@ static Opaque* real_open(Demuxer* demuxer)
 			    demuxer->stream->skip(3);  // Skip 3 unknown bytes
 			    if (version==5)
 			      demuxer->stream->skip(1);  // Skip 1 additional unknown byte
-			    codecdata_length=demuxer->stream->read_dword();
+			    codecdata_length=demuxer->stream->read(type_dword);
 			    sh->wf->cbSize = 10+codecdata_length;
 			    sh->wf = (WAVEFORMATEX*)mp_realloc(sh->wf, sizeof(WAVEFORMATEX)+sh->wf->cbSize);
 			    ((short*)(sh->wf+1))[0]=sub_packet_size;
@@ -1143,7 +1143,7 @@ static Opaque* real_open(Demuxer* demuxer)
 			    demuxer->stream->skip(3);  // Skip 3 unknown bytes
 			    if (version==5)
 				demuxer->stream->skip(1);  // Skip 1 additional unknown byte
-			    codecdata_length=demuxer->stream->read_dword();
+			    codecdata_length=demuxer->stream->read(type_dword);
 			    if (codecdata_length>=1) {
 				sh->codecdata_len = codecdata_length - 1;
 				sh->codecdata = new unsigned char [sh->codecdata_len];
@@ -1207,11 +1207,11 @@ static Opaque* real_open(Demuxer* demuxer)
 		}
 	} else if (!strncmp(tmps,"video/",6)) {
 	  if (strstr(tmps,"x-pn-realvideo") || strstr(tmps,"x-pn-multirate-realvideo")) {
-		tmp = demuxer->stream->read_dword();
+		tmp = demuxer->stream->read(type_dword);
 		len=codec_data_size;
 		while(--len>=8){
 			if(tmp==MKTAG('O', 'D', 'I', 'V')) break;  // video
-			tmp=(tmp<<8)|demuxer->stream->read_char();
+			tmp=(tmp<<8)|demuxer->stream->read(type_byte);
 		}
 		if(tmp != MKTAG('O', 'D', 'I', 'V'))
 		{
@@ -1220,41 +1220,41 @@ static Opaque* real_open(Demuxer* demuxer)
 		    /* video header */
 		    sh_video_t *sh = demuxer->new_sh_video(stream_id);
 
-		    sh->fourcc = demuxer->stream->read_dword_le(); /* fourcc */
+		    sh->fourcc = demuxer->stream->read_le(type_dword); /* fourcc */
 		    MSG_V("video fourcc: %.4s (%x)\n", (char *)&sh->fourcc, sh->fourcc);
 
 		    /* emulate BITMAPINFOHEADER */
 		    sh->bih = (BITMAPINFOHEADER*)mp_mallocz(sizeof(BITMAPINFOHEADER)+16);
 		    sh->bih->biSize = 48;
-		    sh->src_w = sh->bih->biWidth = demuxer->stream->read_word();
-		    sh->src_h = sh->bih->biHeight = demuxer->stream->read_word();
+		    sh->src_w = sh->bih->biWidth = demuxer->stream->read(type_word);
+		    sh->src_h = sh->bih->biHeight = demuxer->stream->read(type_word);
 		    sh->bih->biPlanes = 1;
 		    sh->bih->biBitCount = 24;
 		    sh->bih->biCompression = sh->fourcc;
 		    sh->bih->biSizeImage= sh->bih->biWidth*sh->bih->biHeight*3;
 
-		    sh->fps = (float) demuxer->stream->read_word();
+		    sh->fps = (float) demuxer->stream->read(type_word);
 		    if (sh->fps<=0) sh->fps=24; // we probably won't even care about fps
 
 		    demuxer->stream->skip( 4);
 //		    if(sh->wtag==0x30335652 || sh->wtag==0x30325652 )
 		    if(1)
 		    {
-			int tmp=demuxer->stream->read_word();
+			int tmp=demuxer->stream->read(type_word);
 			if(tmp>0){
 			    sh->fps=tmp;
 			}
 		    } else {
-			int fps=demuxer->stream->read_word();
+			int fps=demuxer->stream->read(type_word);
 			MSG_WARN("realvid: ignoring FPS = %d\n",fps);
 		    }
 		    demuxer->stream->skip( 2);
 
 		    // read codec sub-wtag (to make difference between low and high rate codec)
-		    ((unsigned int*)(sh->bih+1))[0]=demuxer->stream->read_dword();
+		    ((unsigned int*)(sh->bih+1))[0]=demuxer->stream->read(type_dword);
 
 		    /* h263 hack */
-		    tmp = demuxer->stream->read_dword();
+		    tmp = demuxer->stream->read(type_dword);
 		    ((unsigned int*)(sh->bih+1))[1]=tmp;
 		    MSG_V("H.263 ID: %x\n", tmp);
 		    switch (tmp)
@@ -1297,7 +1297,7 @@ static Opaque* real_open(Demuxer* demuxer)
 				    cnt = 6;
 				}
 				for (ii = 0; ii < cnt; ii++)
-				    ((unsigned char*)(sh->bih+1))[8+ii]=(unsigned short)demuxer->stream->read_char();
+				    ((unsigned char*)(sh->bih+1))[8+ii]=(unsigned short)demuxer->stream->read(type_byte);
 			    }
 		    }
 
@@ -1330,19 +1330,19 @@ static Opaque* real_open(Demuxer* demuxer)
 
 		    priv->is_multirate = 1;
 		    demuxer->stream->skip( 4); // Length of codec data (repeated)
-		    stream_cnt = demuxer->stream->read_dword(); // Get number of audio or video streams
+		    stream_cnt = demuxer->stream->read(type_dword); // Get number of audio or video streams
 		    if (stream_cnt >= MAX_STREAMS) {
 			MSG_ERR("Too many streams in %s. Big troubles ahead.\n",tmps);
 			goto skip_this_chunk;
 		    }
 		    for (i = 0; i < stream_cnt; i++)
-			stream_list[i] = demuxer->stream->read_word();
+			stream_list[i] = demuxer->stream->read(type_word);
 		    for (i = 0; i < stream_cnt; i++)
 			if (stream_list[i] >= MAX_STREAMS) {
 			    MSG_ERR("Stream id out of range: %d. Ignored.\n", stream_list[i]);
 			    demuxer->stream->skip( 4); // Skip DATA offset for broken stream
 			} else {
-			    priv->str_data_offset[stream_list[i]] = demuxer->stream->read_dword();
+			    priv->str_data_offset[stream_list[i]] = demuxer->stream->read(type_dword);
 			    MSG_V("Stream %d with DATA offset 0x%08x\n", stream_list[i], priv->str_data_offset[stream_list[i]]);
 			}
 		    // Skip the rest of this chunk
@@ -1408,7 +1408,7 @@ header_end:
 
   if(!priv->is_multirate) {
 //    printf("i=%d num_of_headers=%d   \n",i,num_of_headers);
-    priv->num_of_packets = demuxer->stream->read_dword();
+    priv->num_of_packets = demuxer->stream->read(type_dword);
 //    demuxer->stream->skip( 4); /* number of packets */
     demuxer->stream->skip( 4); /* next data header */
 
@@ -1419,10 +1419,10 @@ header_end:
   } else {
 	priv->audio_curpos = priv->str_data_offset[demuxer->audio->id] + 18;
 	demuxer->stream->seek( priv->str_data_offset[demuxer->audio->id]+10);
-	priv->a_num_of_packets = demuxer->stream->read_dword();
+	priv->a_num_of_packets = demuxer->stream->read(type_dword);
 	priv->video_curpos = priv->str_data_offset[demuxer->video->id] + 18;
 	demuxer->stream->seek( priv->str_data_offset[demuxer->video->id]+10);
-	priv->v_num_of_packets = demuxer->stream->read_dword();
+	priv->v_num_of_packets = demuxer->stream->read(type_dword);
 	priv->stream_switch = 1;
 	/* Index required for multirate playback, force building if it's not there */
 	/* but respect user request to force index regeneration */

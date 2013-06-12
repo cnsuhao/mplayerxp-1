@@ -80,47 +80,47 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
 
 static int bittab[8]={128,64,32,16,8,4,2,1};
 
-static void __FASTCALL__ convert(mp_image_t *mpi, mp_image_t *dmpi, int value0, int value1,int bpp){
+static void __FASTCALL__ convert(const mp_image_t& smpi, mp_image_t *dmpi, int value0, int value1,int bpp){
     int y;
-    for(y=0;y<mpi->h;y++){
-	unsigned char* src=mpi->planes[0]+mpi->stride[0]*y;
+    for(y=0;y<smpi.h;y++){
+	unsigned char* src=smpi.planes[0]+smpi.stride[0]*y;
 	switch(bpp){
 	case 1: {
 	    unsigned char* dst=dmpi->planes[0]+dmpi->stride[0]*y;
 	    int x;
-	    for(x=0;x<mpi->w;x++)
+	    for(x=0;x<smpi.w;x++)
 		dst[x]=(src[x>>3]&bittab[x&7]) ? value1 : value0;
 	    break; }
 	case 2: {
 	    uint16_t* dst=(uint16_t*)(dmpi->planes[0]+dmpi->stride[0]*y);
 	    int x;
-	    for(x=0;x<mpi->w;x++)
+	    for(x=0;x<smpi.w;x++)
 		dst[x]=(src[x>>3]&bittab[x&7]) ? value1 : value0;
 	    break; }
 	case 4: {
 	    uint32_t* dst=(uint32_t*)(dmpi->planes[0]+dmpi->stride[0]*y);
 	    int x;
-	    for(x=0;x<mpi->w;x++)
+	    for(x=0;x<smpi.w;x++)
 		dst[x]=(src[x>>3]&bittab[x&7]) ? value1 : value0;
 	    break; }
 	}
     }
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     mp_image_t *dmpi;
 
     // hope we'll get DR buffer:
     dmpi=vf_get_new_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	mpi->w, mpi->h,mpi->xp_idx);
+	smpi.w, smpi.h,smpi.xp_idx);
 
     switch(dmpi->imgfmt){
     case IMGFMT_Y800:
     case IMGFMT_Y8:
     case IMGFMT_BGR8:
     case IMGFMT_RGB8:
-	convert(mpi,dmpi,0,255,1);
+	convert(smpi,dmpi,0,255,1);
 	break;
     case IMGFMT_YVU9:
     case IMGFMT_411P:
@@ -129,31 +129,31 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
     case IMGFMT_IYUV:
     case IMGFMT_422P:
     case IMGFMT_444P:
-	convert(mpi,dmpi,0,255,1);
+	convert(smpi,dmpi,0,255,1);
 	memset(dmpi->planes[1],128,dmpi->stride[1]*dmpi->chroma_height);
 	memset(dmpi->planes[2],128,dmpi->stride[2]*dmpi->chroma_height);
 	break;
     case IMGFMT_YUY2:
-	convert(mpi,dmpi,0x8000,0x80ff,2);
+	convert(smpi,dmpi,0x8000,0x80ff,2);
 	break;
     case IMGFMT_BGR15:
     case IMGFMT_RGB15:
-	convert(mpi,dmpi,0,0x7fff,2);
+	convert(smpi,dmpi,0,0x7fff,2);
 	break;
     case IMGFMT_BGR16:
     case IMGFMT_RGB16:
-	convert(mpi,dmpi,0,0xffff,2);
+	convert(smpi,dmpi,0,0xffff,2);
 	break;
     case IMGFMT_BGR32:
     case IMGFMT_RGB32:
-	convert(mpi,dmpi,0,0x00ffffff,4);
+	convert(smpi,dmpi,0,0x00ffffff,4);
 	break;
     default:
 	MSG_ERR("Unhandled format: 0x%X\n",dmpi->imgfmt);
 	return 0;
     }
 
-    return vf_next_put_slice(vf,dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

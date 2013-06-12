@@ -168,9 +168,9 @@ static void add_string(struct menu_priv_s* priv, char* l) {
   }
 }
 
-static void draw(menu_t* menu, mp_image_t* mpi) {
-  int h = mpi->h*mpriv->height/100;
-  int w = mpi->w - 2* mpriv->minb;
+static void draw(menu_t* menu,const mp_image_t& mpi) {
+  int h = mpi.h*mpriv->height/100;
+  int w = mpi.w - 2* mpriv->minb;
   int x = mpriv->minb, y;
   int lw,lh,i, ll;
 
@@ -185,7 +185,7 @@ static void draw(menu_t* menu, mp_image_t* mpi) {
       menu->show = 0;
       return;
     }
-    h = mpi->h*(mpriv->height - (mpriv->height * t /mpriv->hide_time))/100;
+    h = mpi.h*(mpriv->height - (mpriv->height * t /mpriv->hide_time))/100;
   } else if(mpriv->show_time && mpriv->show_ts == 0) {
     mpriv->show_ts = GetTimerMS();
     return;
@@ -194,7 +194,7 @@ static void draw(menu_t* menu, mp_image_t* mpi) {
     if(t > mpriv->show_time)
       mpriv->show_ts = -1;
     else
-      h = mpi->h*(mpriv->height * t /mpriv->hide_time)/100;
+      h = mpi.h*(mpriv->height * t /mpriv->hide_time)/100;
   }
 
   y = h -  mpriv->vspace;
@@ -203,7 +203,7 @@ static void draw(menu_t* menu, mp_image_t* mpi) {
     return;
 
   if(mpriv->bg >= 0)
-    menu_draw_box(mpi,mpriv->bg,mpriv->bg_alpha,0,0,mpi->w,h);
+    menu_draw_box(mpi,mpriv->bg,mpriv->bg_alpha,0,0,mpi.w,h);
 
   if(!mpriv->child || !mpriv->raw_child){
     char input[strlen(mpriv->cur_history->buffer) + strlen(mpriv->prompt) + 1];
@@ -466,7 +466,6 @@ static void read_key(menu_t* menu,int c) {
 
 
 static int openMenu(menu_t* menu,const char* args) {
-
 
   menu->draw = draw;
   menu->read_cmd = read_cmd;

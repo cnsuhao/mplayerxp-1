@@ -74,7 +74,7 @@ static Opaque* vqf_open(Demuxer* demuxer) {
   {
     char chunk_id[4];
     unsigned chunk_size;
-    hi->size=chunk_size=s->read_dword(); /* include itself */
+    hi->size=chunk_size=s->read(type_dword); /* include itself */
     bp=s->read(4); memcpy(chunk_id,bp.data(),bp.size());
     if(*((uint32_t *)&chunk_id[0])==mmioFOURCC('C','O','M','M'))
     {

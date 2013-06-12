@@ -42,59 +42,59 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     return vf_next_config(vf,width,h,d_width,dh,flags,outfmt);
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     int finalize;
     mp_image_t *dmpi;
     if(vf->priv->new_frame)
     {
 	vf->priv->new_frame = 0;
-	dmpi=vf_get_new_temp_genome(vf->next,mpi);
+	dmpi=vf_get_new_temp_genome(vf->next,smpi);
 	vf_mpi_clear(dmpi,0,0,vf->priv->w,vf->priv->up_h);
-	dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
+	dmpi=vf_get_new_image(vf->next,smpi.imgfmt,
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	    vf->priv->w,vf->priv->up_h+vf->priv->h+vf->priv->dn_h,mpi->xp_idx);
+	    vf->priv->w,vf->priv->up_h+vf->priv->h+vf->priv->dn_h,smpi.xp_idx);
 	vf_mpi_clear(dmpi,0,0,vf->priv->w,vf->priv->dn_h);
     }
-    dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
+    dmpi=vf_get_new_image(vf->next,smpi.imgfmt,
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	    mpi->w,mpi->h+vf->priv->up_h,mpi->xp_idx);
+	    smpi.w,smpi.h+vf->priv->up_h,smpi.xp_idx);
     finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
-    // copy mpi->dmpi...
-    if(mpi->flags&MP_IMGFLAG_PLANAR){
+    // copy smpi.dmpi...
+    if(smpi.flags&MP_IMGFLAG_PLANAR){
 	if(finalize) {
 	stream_copy_pic(dmpi->planes[0],
-		mpi->planes[0], mpi->w, mpi->h,
-		dmpi->stride[0],mpi->stride[0]);
+		smpi.planes[0], smpi.w, smpi.h,
+		dmpi->stride[0],smpi.stride[0]);
 	stream_copy_pic(dmpi->planes[1],
-		mpi->planes[1], mpi->chroma_width, mpi->chroma_height,
-		dmpi->stride[1],mpi->stride[1]);
+		smpi.planes[1], smpi.chroma_width, smpi.chroma_height,
+		dmpi->stride[1],smpi.stride[1]);
 	stream_copy_pic(dmpi->planes[2],
-		mpi->planes[2], mpi->chroma_width, mpi->chroma_height,
-		dmpi->stride[2],mpi->stride[2]);
+		smpi.planes[2], smpi.chroma_width, smpi.chroma_height,
+		dmpi->stride[2],smpi.stride[2]);
 	} else {
 	memcpy_pic(dmpi->planes[0],
-		mpi->planes[0], mpi->w, mpi->h,
-		dmpi->stride[0],mpi->stride[0]);
+		smpi.planes[0], smpi.w, smpi.h,
+		dmpi->stride[0],smpi.stride[0]);
 	memcpy_pic(dmpi->planes[1],
-		mpi->planes[1], mpi->chroma_width, mpi->chroma_height,
-		dmpi->stride[1],mpi->stride[1]);
+		smpi.planes[1], smpi.chroma_width, smpi.chroma_height,
+		dmpi->stride[1],smpi.stride[1]);
 	memcpy_pic(dmpi->planes[2],
-		mpi->planes[2], mpi->chroma_width, mpi->chroma_height,
-		dmpi->stride[2],mpi->stride[2]);
+		smpi.planes[2], smpi.chroma_width, smpi.chroma_height,
+		dmpi->stride[2],smpi.stride[2]);
 	}
     } else {
 	if(finalize) {
 	stream_copy_pic(dmpi->planes[0],
-		mpi->planes[0], mpi->w*(dmpi->bpp/8), mpi->h,
-		dmpi->stride[0],mpi->stride[0]);
+		smpi.planes[0], smpi.w*(dmpi->bpp/8), smpi.h,
+		dmpi->stride[0],smpi.stride[0]);
 	} else {
 	memcpy_pic(dmpi->planes[0],
-		mpi->planes[0], mpi->w*(dmpi->bpp/8), mpi->h,
-		dmpi->stride[0],mpi->stride[0]);
+		smpi.planes[0], smpi.w*(dmpi->bpp/8), smpi.h,
+		dmpi->stride[0],smpi.stride[0]);
 	}
-	dmpi->planes[1] = mpi->planes[1]; // passthrough rgb8 palette
+	dmpi->planes[1] = smpi.planes[1]; // passthrough rgb8 palette
     }
-    return vf_next_put_slice(vf,dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

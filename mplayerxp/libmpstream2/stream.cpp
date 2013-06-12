@@ -190,46 +190,46 @@ void Stream::reset() {
     }
 }
 
-int Stream::read_char(){
+int Stream::read(const mplayerxp_data_type_qualifier__byte_t&){
     binary_packet rc=read(1);
     return eof()?-256:rc.cdata()[0];
 }
 
-unsigned int Stream::read_word(){
+unsigned int Stream::read(const mplayerxp_data_type_qualifier__word_t&){
     binary_packet rc=read(2);
     return me2be_16(*(uint16_t*)rc.data());
 }
 
-unsigned int Stream::read_dword(){
+unsigned int Stream::read(const mplayerxp_data_type_qualifier_dword_t&){
     binary_packet rc=read(4);
     return me2be_32(*(uint32_t*)rc.data());
 }
 
-uint64_t Stream::read_qword(){
+uint64_t Stream::read(const mplayerxp_data_type_qualifier_qword_t&){
     binary_packet rc=read(8);
     return me2be_64(*(uint64_t*)rc.data());
 }
 
-unsigned int Stream::read_word_le(){
+unsigned int Stream::read_le(const mplayerxp_data_type_qualifier__word_t&){
     binary_packet rc=read(2);
     return me2le_16(*(uint16_t*)rc.data());
 }
 
-unsigned int Stream::read_dword_le(){
+unsigned int Stream::read_le(const mplayerxp_data_type_qualifier_dword_t&){
     binary_packet rc=read(4);
     return me2le_32(*(uint32_t*)rc.data());
 }
 
-uint64_t Stream::read_qword_le(){
+uint64_t Stream::read_le(const mplayerxp_data_type_qualifier_qword_t&){
     binary_packet rc=read(8);
     return me2le_64(*(uint64_t*)rc.data());
 }
 
 unsigned int Stream::read_int24(){
     unsigned int y;
-    y = read_char();
-    y=(y<<8)|read_char();
-    y=(y<<8)|read_char();
+    y = read(type_byte);
+    y=(y<<8)|read(type_byte);
+    y=(y<<8)|read(type_byte);
     return y;
 }
 
@@ -308,4 +308,13 @@ void	Memory_Stream::eof(int e) { e?_pos=_len+1:_pos=0; }
 void	Memory_Stream::reset() { _pos=0; }
 std::string	Memory_Stream::mime_type() const { return "application/octet-stream"; }
 
+/* begin: remove this on non hacked-gcc */
+int Memory_Stream::read(const mplayerxp_data_type_qualifier__byte_t& t) { return Stream::read(t); }
+unsigned int Memory_Stream::read(const mplayerxp_data_type_qualifier__word_t& t) { return Stream::read(t); }
+unsigned int Memory_Stream::read(const mplayerxp_data_type_qualifier_dword_t& t) { return Stream::read(t); }
+uint64_t Memory_Stream::read(const mplayerxp_data_type_qualifier_qword_t& t)  { return Stream::read(t); }
+unsigned int Memory_Stream::read_le(const mplayerxp_data_type_qualifier__word_t& t) { return Stream::read_le(t); }
+unsigned int Memory_Stream::read_le(const mplayerxp_data_type_qualifier_dword_t& t) { return Stream::read_le(t); }
+uint64_t Memory_Stream::read_le(const mplayerxp_data_type_qualifier_qword_t& t) { return Stream::read_le(t); }
+/* end: remove this on non hacked-gcc */
 } //namespace	usr

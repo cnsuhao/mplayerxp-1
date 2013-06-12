@@ -48,35 +48,35 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
 
 #define rgb32tobgr32(a,b,c) shuffle_bytes_3210(a,b,c)
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     mp_image_t *dmpi;
 
     // hope we'll get DR buffer:
     dmpi=vf_get_new_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	mpi->w, mpi->h, mpi->xp_idx);
+	smpi.w, smpi.h, smpi.xp_idx);
 
-    if(mpi->stride[0]!=dmpi->stride[0] || mpi->stride[0]!=mpi->w*(mpi->bpp/8)){
+    if(smpi.stride[0]!=dmpi->stride[0] || smpi.stride[0]!=smpi.w*(smpi.bpp/8)){
 	int y;
-	unsigned char* src=mpi->planes[0];
+	unsigned char* src=smpi.planes[0];
 	unsigned char* dst=dmpi->planes[0];
-	int srcsize=mpi->w*mpi->bpp/8;
-	for(y=0;y<mpi->h;y++){
-	    if(mpi->bpp==32)
+	int srcsize=smpi.w*smpi.bpp/8;
+	for(y=0;y<smpi.h;y++){
+	    if(smpi.bpp==32)
 		rgb32tobgr32(src,dst,srcsize);
 	    else
 		rgb24tobgr24(src,dst,srcsize);
-	    src+=mpi->stride[0];
+	    src+=smpi.stride[0];
 	    dst+=dmpi->stride[0];
 	}
     } else {
-	if(mpi->bpp==32)
-	    rgb32tobgr32(mpi->planes[0],dmpi->planes[0],mpi->w*mpi->h*4);
+	if(smpi.bpp==32)
+	    rgb32tobgr32(smpi.planes[0],dmpi->planes[0],smpi.w*smpi.h*4);
 	else
-	    rgb24tobgr24(mpi->planes[0],dmpi->planes[0],mpi->w*mpi->h*3);
+	    rgb24tobgr24(smpi.planes[0],dmpi->planes[0],smpi.w*smpi.h*3);
     }
 
-    return vf_next_put_slice(vf,dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

@@ -77,15 +77,15 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& ind)
 {
     af_extrastereo_t *s = reinterpret_cast<af_extrastereo_t*>(af->setup);
     unsigned	i = 0;
-    int16_t*	a = (int16_t*)ind->audio;	// Audio data
-    unsigned	len = ind->len/2;		// Number of samples
+    int16_t*	a = (int16_t*)ind.audio;	// Audio data
+    unsigned	len = ind.len/2;		// Number of samples
     int		avg, l, r;
-    mp_aframe_t*outd = new_mp_aframe_genome(ind);
-    mp_alloc_aframe(outd);
+    mp_aframe_t outd = ind.genome();
+    outd.alloc();
 
     for (i = 0; i < len; i+=2) {
 	avg = (a[i] + a[i + 1]) / 2;
@@ -93,8 +93,8 @@ static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind)
 	l = avg + (int)(s->mul * (a[i] - avg));
 	r = avg + (int)(s->mul * (a[i + 1] - avg));
 
-	((int16_t*)outd->audio)[i] = clamp(l, SHRT_MIN, SHRT_MAX);
-	((int16_t*)outd->audio)[i + 1] = clamp(r, SHRT_MIN, SHRT_MAX);
+	((int16_t*)outd.audio)[i] = clamp(l, SHRT_MIN, SHRT_MAX);
+	((int16_t*)outd.audio)[i + 1] = clamp(r, SHRT_MIN, SHRT_MAX);
   }
 
   return outd;

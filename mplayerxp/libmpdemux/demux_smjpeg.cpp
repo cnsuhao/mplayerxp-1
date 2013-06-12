@@ -35,7 +35,7 @@ static MPXP_Rc smjpeg_probe(Demuxer* demuxer){
 
     MSG_V("Checking for SMJPEG\n");
 
-    if (demuxer->stream->read_word() == 0xA) {
+    if (demuxer->stream->read(type_word) == 0xA) {
 	binary_packet bp=demuxer->stream->read(6); memcpy(buf,bp.data(),bp.size());
 	buf[7] = 0;
 
@@ -47,7 +47,7 @@ static MPXP_Rc smjpeg_probe(Demuxer* demuxer){
     else
 	return MPXP_False;
 
-    version = demuxer->stream->read_dword();
+    version = demuxer->stream->read(type_dword);
     if (version != 0) {
 	MSG_ERR("Unknown version (%d) of SMJPEG. Please report!\n",version);
 	return MPXP_False;
@@ -69,9 +69,9 @@ static int smjpeg_demux(Demuxer *demux,Demuxer_Stream *__ds)
 
     demux->filepos = demux->stream->tell();
 
-    dtype = demux->stream->read_dword_le();
-    dpts = demux->stream->read_dword();
-    dsize = demux->stream->read_dword();
+    dtype = demux->stream->read_le(type_dword);
+    dpts = demux->stream->read(type_dword);
+    dsize = demux->stream->read(type_dword);
 
     switch(dtype)
     {
@@ -104,16 +104,16 @@ static Opaque* smjpeg_open(Demuxer* demuxer){
     demuxer->stream->skip( 4);
 
     MSG_V("This clip is %d seconds\n",
-	demuxer->stream->read_dword());
+	demuxer->stream->read(type_dword));
 
     /* stream header */
     while (i < 3)
     {
 	i++;
-	htype = demuxer->stream->read_dword_le();
+	htype = demuxer->stream->read_le(type_dword);
 	if (htype == mmioFOURCC('H','E','N','D'))
 	    break;
-	hleng = (demuxer->stream->read_word()<<16)|demuxer->stream->read_word();
+	hleng = (demuxer->stream->read(type_word)<<16)|demuxer->stream->read(type_word);
 	switch(htype)
 	{
 	case mmioFOURCC('_','V','I','D'):
@@ -125,9 +125,9 @@ static Opaque* smjpeg_open(Demuxer* demuxer){
 
 	    demuxer->stream->skip( 4); /* number of frames */
 //	    sh_video->fps = 24;
-	    sh_video->src_w = demuxer->stream->read_word();
-	    sh_video->src_h = demuxer->stream->read_word();
-	    sh_video->fourcc = demuxer->stream->read_dword_le();
+	    sh_video->src_w = demuxer->stream->read(type_word);
+	    sh_video->src_h = demuxer->stream->read(type_word);
+	    sh_video->fourcc = demuxer->stream->read_le(type_dword);
 
 	    /* these are false values */
 	    sh_video->bih->biSize = 40;
@@ -145,10 +145,10 @@ static Opaque* smjpeg_open(Demuxer* demuxer){
 
 	    sh_audio->wf = new(zeromem) WAVEFORMATEX;
 
-	    sh_audio->rate = demuxer->stream->read_word();
-	    sh_audio->wf->wBitsPerSample = demuxer->stream->read_char();
-	    sh_audio->nch = demuxer->stream->read_char();
-	    sh_audio->wtag = demuxer->stream->read_dword_le();
+	    sh_audio->rate = demuxer->stream->read(type_word);
+	    sh_audio->wf->wBitsPerSample = demuxer->stream->read(type_byte);
+	    sh_audio->nch = demuxer->stream->read(type_byte);
+	    sh_audio->wtag = demuxer->stream->read_le(type_dword);
 	    sh_audio->wf->wFormatTag = sh_audio->wtag;
 	    sh_audio->wf->nChannels = sh_audio->nch;
 	    sh_audio->wf->nSamplesPerSec = sh_audio->rate;
@@ -158,7 +158,7 @@ static Opaque* smjpeg_open(Demuxer* demuxer){
 	    sh_audio->wf->cbSize = 0;
 	    break;
 	case mmioFOURCC('_','T','X','T'):
-	    demuxer->stream->skip( demuxer->stream->read_dword());
+	    demuxer->stream->skip( demuxer->stream->read(type_dword));
 	    break;
 	}
     }

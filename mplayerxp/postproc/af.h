@@ -116,7 +116,7 @@ MPXP_Rc af_init(af_stream_t* s, int force_output);
 void af_uninit(af_stream_t* s);
 
 // Filter data chunk through the filters in the list
-mp_aframe_t* __FASTCALL__ af_play(af_stream_t* s,const mp_aframe_t* data);
+mp_aframe_t __FASTCALL__ af_play(af_stream_t* s,const mp_aframe_t& data);
 
 // send control to all filters, starting with the last until
 // one accepts the command with MPXP_Ok.
@@ -142,7 +142,7 @@ double __FASTCALL__ af_calc_delay(af_stream_t* s);
 /* Helper function used to calculate the exact buffer length needed
    when buffers are resized. The returned length is >= than what is
    needed */
-unsigned __FASTCALL__ af_lencalc(frac_t mul,const mp_aframe_t* data);
+unsigned __FASTCALL__ af_lencalc(frac_t mul,const mp_aframe_t& data);
 
 /* Helper function used to convert to gain value from dB. Returns
    MPXP_Ok if of and MPXP_Error if fail */

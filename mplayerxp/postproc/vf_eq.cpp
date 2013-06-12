@@ -241,7 +241,7 @@ static void __FASTCALL__ apply_lut (eq2_param_t *par, unsigned char *dst, unsign
   }
 }
 
-static int __FASTCALL__ put_slice (vf_instance_t *vf, mp_image_t *src)
+static int __FASTCALL__ put_slice (vf_instance_t *vf,const mp_image_t& src)
 {
   unsigned      i;
   vf_eq2_t      *eq2;
@@ -250,13 +250,13 @@ static int __FASTCALL__ put_slice (vf_instance_t *vf, mp_image_t *src)
 
   eq2 = vf->priv;
 
-  if ((eq2->buf_w[0] != src->w) || (eq2->buf_h[0] != src->h)) {
-    eq2->buf_w[0] = src->w;
-    eq2->buf_h[0] = src->h;
-      eq2->buf_w[1] = eq2->buf_w[2] = src->w >> src->chroma_x_shift;
-      eq2->buf_h[1] = eq2->buf_h[2] = src->h >> src->chroma_y_shift;
+  if ((eq2->buf_w[0] != src.w) || (eq2->buf_h[0] != src.h)) {
+    eq2->buf_w[0] = src.w;
+    eq2->buf_h[0] = src.h;
+      eq2->buf_w[1] = eq2->buf_w[2] = src.w >> src.chroma_x_shift;
+      eq2->buf_h[1] = eq2->buf_h[2] = src.h >> src.chroma_y_shift;
     img_n = eq2->buf_w[0]*eq2->buf_h[0];
-    if(src->num_planes>1){
+    if(src.num_planes>1){
       img_c = eq2->buf_w[1]*eq2->buf_h[1];
       eq2->buf[0] = (unsigned char *) mp_realloc (eq2->buf[0], img_n + 2*img_c);
       eq2->buf[1] = eq2->buf[0] + img_n;
@@ -270,21 +270,21 @@ static int __FASTCALL__ put_slice (vf_instance_t *vf, mp_image_t *src)
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-  for (i = 0; i < ((src->num_planes>1)?3:1); i++) {
+  for (i = 0; i < ((src.num_planes>1)?3:1); i++) {
     if (eq2->param[i].adjust != NULL) {
       dst->planes[i] = eq2->buf[i];
       dst->stride[i] = eq2->buf_w[i];
 
-      eq2->param[i].adjust (&eq2->param[i], dst->planes[i], src->planes[i],
-	eq2->buf_w[i], eq2->buf_h[i], dst->stride[i], src->stride[i]);
+      eq2->param[i].adjust (&eq2->param[i], dst->planes[i], src.planes[i],
+	eq2->buf_w[i], eq2->buf_h[i], dst->stride[i], src.stride[i]);
     }
     else {
-      dst->planes[i] = src->planes[i];
-      dst->stride[i] = src->stride[i];
+      dst->planes[i] = src.planes[i];
+      dst->stride[i] = src.stride[i];
     }
   }
 
-  return vf_next_put_slice (vf, dst);
+  return vf_next_put_slice (vf,*dst);
 }
 
 static void __FASTCALL__ check_values (eq2_param_t *par)

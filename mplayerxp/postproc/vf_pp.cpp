@@ -81,47 +81,47 @@ static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request, any_t* da
     return vf_next_control(vf,request,data);
 }
 
-static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *mpi){
+static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *smpi){
     if(vf->priv->pp&0xFFFF) return; // non-local filters enabled
-    if((mpi->type==MP_IMGTYPE_IPB || vf->priv->pp) &&
-	mpi->flags&MP_IMGFLAG_PRESERVE) return; // don't change
-    if(!(mpi->flags&MP_IMGFLAG_ACCEPT_STRIDE) && mpi->imgfmt!=vf->priv->outfmt)
+    if((smpi->type==MP_IMGTYPE_IPB || vf->priv->pp) &&
+	smpi->flags&MP_IMGFLAG_PRESERVE) return; // don't change
+    if(!(smpi->flags&MP_IMGFLAG_ACCEPT_STRIDE) && smpi->imgfmt!=vf->priv->outfmt)
 	return; // colorspace differ
     // ok, we can do pp in-place (or pp disabled):
-    vf->dmpi=vf_get_new_genome(vf->next,mpi);
-    mpi->planes[0]=vf->dmpi->planes[0];
-    mpi->stride[0]=vf->dmpi->stride[0];
-    mpi->width=vf->dmpi->width;
-    if(mpi->flags&MP_IMGFLAG_PLANAR){
-	mpi->planes[1]=vf->dmpi->planes[1];
-	mpi->planes[2]=vf->dmpi->planes[2];
-	mpi->stride[1]=vf->dmpi->stride[1];
-	mpi->stride[2]=vf->dmpi->stride[2];
+    vf->dmpi=vf_get_new_genome(vf->next,*smpi);
+    smpi->planes[0]=vf->dmpi->planes[0];
+    smpi->stride[0]=vf->dmpi->stride[0];
+    smpi->width=vf->dmpi->width;
+    if(smpi->flags&MP_IMGFLAG_PLANAR){
+	smpi->planes[1]=vf->dmpi->planes[1];
+	smpi->planes[2]=vf->dmpi->planes[2];
+	smpi->stride[1]=vf->dmpi->stride[1];
+	smpi->stride[2]=vf->dmpi->stride[2];
     }
-    mpi->flags|=MP_IMGFLAG_DIRECT;
+    smpi->flags|=MP_IMGFLAG_DIRECT;
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
-    if(!(mpi->flags&MP_IMGFLAG_DIRECT)){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
+    if(!(smpi.flags&MP_IMGFLAG_DIRECT)){
 	// no DR, so get a new image! hope we'll get DR buffer:
-	vf->dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
+	vf->dmpi=vf_get_new_image(vf->next,smpi.imgfmt,
 	    MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
-	    (mpi->w+7)&(~7),(mpi->h+7)&(~7),mpi->xp_idx);
+	    (smpi.w+7)&(~7),(smpi.h+7)&(~7),smpi.xp_idx);
     }
 
-    if(vf->priv->pp || !(mpi->flags&MP_IMGFLAG_DIRECT)){
+    if(vf->priv->pp || !(smpi.flags&MP_IMGFLAG_DIRECT)){
 	// do the postprocessing! (or copy if no DR)
 	pp_postprocess(
-		    const_cast<const uint8_t**>(reinterpret_cast<uint8_t**>(mpi->planes)),
-		    reinterpret_cast<int*>(mpi->stride),
+		    const_cast<const uint8_t**>(smpi.planes),
+		    reinterpret_cast<const int*>(smpi.stride),
 		    vf->dmpi->planes,
 		    reinterpret_cast<int*>(vf->dmpi->stride),
-		    (mpi->w+7)&(~7),mpi->h,
-		    reinterpret_cast<int8_t*>(mpi->qscale), mpi->qstride,
+		    (smpi.w+7)&(~7),smpi.h,
+		    reinterpret_cast<const int8_t*>(smpi.qscale), smpi.qstride,
 		    vf->priv->ppMode[ vf->priv->pp ], vf->priv->context,
-		    mpi->pict_type | (mpi->qscale_type ? PP_PICT_TYPE_QP2 : 0));
+		    smpi.pict_type | (smpi.qscale_type ? PP_PICT_TYPE_QP2 : 0));
     }
-    return vf_next_put_slice(vf,vf->dmpi);
+    return vf_next_put_slice(vf,*vf->dmpi);
 }
 
 //===========================================================================//

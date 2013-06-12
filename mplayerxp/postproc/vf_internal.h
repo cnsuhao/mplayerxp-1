@@ -39,9 +39,9 @@ struct vf_instance_t {
 	vo_flags_e flags, unsigned int outfmt);
     MPXP_Rc (* __FASTCALL__ control_vf)(vf_instance_t* vf, int request, any_t* data);
     int (* __FASTCALL__ query_format)(vf_instance_t* vf,unsigned int fmt,unsigned w,unsigned h);
-    void (* __FASTCALL__ get_image)(vf_instance_t* vf, mp_image_t *mpi);
-    int (* __FASTCALL__ put_slice)(vf_instance_t* vf, mp_image_t *mpi);
-    void (* __FASTCALL__ start_slice)(vf_instance_t* vf, mp_image_t *mpi);
+    void (* __FASTCALL__ get_image)(vf_instance_t* vf,mp_image_t* mpi);
+    int (* __FASTCALL__ put_slice)(vf_instance_t* vf,const mp_image_t& mpi);
+    void (* __FASTCALL__ start_slice)(vf_instance_t* vf,const mp_image_t& mpi);
     void (* __FASTCALL__ uninit)(vf_instance_t* vf);
     // optional: maybe NULL
     void (* __FASTCALL__ print_conf)(vf_instance_t* vf);
@@ -71,16 +71,16 @@ vf_instance_t* __FASTCALL__ vf_reinit_vo(vf_instance_t* first,unsigned w,unsigne
 
 void __FASTCALL__ vf_mpi_clear(mp_image_t* mpi,int x0,int y0,int w,int h);
 mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h,unsigned idx);
-mp_image_t* __FASTCALL__ vf_get_new_genome(vf_instance_t* vf, const mp_image_t* mpi);
-mp_image_t* __FASTCALL__ vf_get_new_exportable_genome(vf_instance_t* vf, int mp_imgtype, int mp_imgflag, const mp_image_t* mpi);
-mp_image_t* __FASTCALL__ vf_get_new_temp_genome(vf_instance_t* vf, const mp_image_t* mpi);
+mp_image_t* __FASTCALL__ vf_get_new_genome(vf_instance_t* vf, const mp_image_t& mpi);
+mp_image_t* __FASTCALL__ vf_get_new_exportable_genome(vf_instance_t* vf, int mp_imgtype, int mp_imgflag, const mp_image_t& mpi);
+mp_image_t* __FASTCALL__ vf_get_new_temp_genome(vf_instance_t* vf, const mp_image_t& mpi);
 int __FASTCALL__ vf_query_format(vf_instance_t* vf, unsigned int fmt,unsigned width,unsigned height);
 
 vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,const char *name,const char *args,libinput_t&libinput,const vf_conf_t* conf);
 vf_instance_t* __FASTCALL__ vf_open_encoder(vf_instance_t* next,const char *name,const char *args);
 
 unsigned int __FASTCALL__ vf_match_csp(vf_instance_t** vfp,unsigned int* list,const vf_conf_t* conf);
-void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst, mp_image_t* src);
+void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst,const mp_image_t& src);
 
 // default wrappers:
 int __FASTCALL__ vf_next_config(vf_instance_t* vf,
@@ -88,7 +88,7 @@ int __FASTCALL__ vf_next_config(vf_instance_t* vf,
 	vo_flags_e flags, unsigned int outfmt);
 MPXP_Rc __FASTCALL__ vf_next_control(vf_instance_t* vf, int request, any_t* data);
 int __FASTCALL__ vf_next_query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h);
-int __FASTCALL__ vf_next_put_slice(vf_instance_t* vf,mp_image_t *mpi);
+int __FASTCALL__ vf_next_put_slice(vf_instance_t* vf,const mp_image_t& mpi);
 
 vf_instance_t* __FASTCALL__ append_filters(vf_instance_t* last);
 

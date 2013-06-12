@@ -97,7 +97,7 @@ static void read_key(menu_t* menu,int c) {
 }
 
 
-static void draw(menu_t* menu,mp_image_t* mpi) {
+static void draw(menu_t* menu,const mp_image_t& mpi) {
   int x = mpriv->minb;
   int y = mpriv->minb;
   //int th = 2*mpriv->hspace + mpxp_context().video().output->font->height;
@@ -106,7 +106,7 @@ static void draw(menu_t* menu,mp_image_t* mpi) {
   if(x < 0) x = 8;
   if(y < 0) y = 8;
 
-  mpriv->disp_lines = (mpi->h + mpriv->hspace  - 2*mpriv->minb) / (  mpxp_context().video().output->font->height + mpriv->hspace);
+  mpriv->disp_lines = (mpi.h + mpriv->hspace  - 2*mpriv->minb) / (  mpxp_context().video().output->font->height + mpriv->hspace);
   if(mpriv->num_lines - mpriv->cur_line < mpriv->disp_lines) {
     i = mpriv->num_lines - 1 - mpriv->disp_lines;
     if(i < 0) i = 0;

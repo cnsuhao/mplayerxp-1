@@ -80,7 +80,7 @@ static float __FASTCALL__ conv(const int nx, const int nk, float *sx, float *sk,
 }
 
 /* Detect when the impulse response starts (significantly) */
-static int __FASTCALL__ pulse_detect(float *sx)
+static int __FASTCALL__ pulse_detect(const float *sx)
 {
     /* nmax must be the reference impulse response length (128) minus
        s->hrflen */
@@ -106,7 +106,7 @@ inline float passive_lock(float x)
 
 /* Unified active matrix decoder for 2 channel matrix encoded surround
    sources */
-inline void matrix_decode(real_t *in, const int k, const int il,
+inline void matrix_decode(const real_t *in, const int k, const int il,
 			  const int ir, const int decode_rear,
 			  const int dlbuflen,
 			  float l_fwr, float r_fwr,
@@ -200,7 +200,7 @@ inline void matrix_decode(real_t *in, const int k, const int il,
 #endif
 }
 
-inline void update_ch(af_hrtf_t *s, real_t *in, const int k)
+inline void update_ch(af_hrtf_t *s,const real_t *in, const int k)
 {
     const int fwr_pos = (k + FWRDURATION) % s->dlbuflen;
     /* Update the full wave rectified total amplitude */
@@ -377,19 +377,19 @@ frequencies).
 2. A bass compensation is introduced to ensure that 0-200 Hz are not
 damped (without any real 3D acoustical image, however).
 */
-static mp_aframe_t* __FASTCALL__ play(af_instance_t *af,const mp_aframe_t *ind)
+static mp_aframe_t __FASTCALL__ play(af_instance_t *af,const mp_aframe_t& ind)
 {
     af_hrtf_t*	s = reinterpret_cast<af_hrtf_t*>(af->setup);
-    real_t*	in = reinterpret_cast<real_t*>(ind->audio); // Input audio data
+    real_t*	in = reinterpret_cast<real_t*>(ind.audio); // Input audio data
     real_t*	out = NULL; // Output audio data
-    real_t*	end = in + ind->len / sizeof(real_t); // Loop end
+    real_t*	end = in + ind.len / sizeof(real_t); // Loop end
     float	common, left, right, diff, left_b, right_b;
     const int	dblen = s->dlbuflen, hlen = s->hrflen, blen = s->basslen;
-    mp_aframe_t*outd=new_mp_aframe_genome(ind);
-    outd->len=af_lencalc(af->mul,ind);
-    mp_alloc_aframe(outd);
+    mp_aframe_t outd=ind.genome();
+    outd.len=af_lencalc(af->mul,ind);
+    outd.alloc();
 
-    out = reinterpret_cast<real_t*>(outd->audio);
+    out = reinterpret_cast<real_t*>(outd.audio);
 
     /* MPlayer's 5 channel layout (notation for the variable):
      *
@@ -491,7 +491,7 @@ static mp_aframe_t* __FASTCALL__ play(af_instance_t *af,const mp_aframe_t *ind)
 	left  += (1 - BASSCROSS) * left_b  + BASSCROSS * right_b;
 	right += (1 - BASSCROSS) * right_b + BASSCROSS * left_b;
 	/* Also mix the LFE channel (if available) */
-	if(ind->nch >= 6) {
+	if(ind.nch >= 6) {
 	    left  += in[5] * M3_01DB;
 	    right += in[5] * M3_01DB;
 	}
@@ -521,7 +521,7 @@ static mp_aframe_t* __FASTCALL__ play(af_instance_t *af,const mp_aframe_t *ind)
 	}
 
 	/* Next sample... */
-	in = &in[ind->nch];
+	in = &in[ind.nch];
 	out = &out[af->conf.nch];
 	(s->cyc_pos)--;
 	if(s->cyc_pos < 0)

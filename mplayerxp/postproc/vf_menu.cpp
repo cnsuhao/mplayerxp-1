@@ -40,12 +40,12 @@ struct vf_priv_t {
     libinput_t&  libinput;
 };
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi);
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& mpi);
 
 void vf_menu_pause_update(vf_instance_t* vf) {
   if(pause_mpi) {
     vf->control_vf(vf,VFCTRL_START_FRAME,NULL);
-    put_slice(vf,pause_mpi);
+    put_slice(vf,*pause_mpi);
   }
 }
 
@@ -129,11 +129,11 @@ static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *mpi){
   mp_image_t *dmpi;
 
   if(mpi->type == MP_IMGTYPE_TEMP && (!(mpi->flags&MP_IMGFLAG_PRESERVE)) ) {
-    dmpi = vf_get_new_genome(vf->next,mpi);
+    dmpi = vf_get_new_genome(vf->next,*mpi);
     memcpy(mpi->planes,dmpi->planes,MP_MAX_PLANES*sizeof(unsigned char*));
     memcpy(mpi->stride,dmpi->stride,MP_MAX_PLANES*sizeof(unsigned int));
     mpi->flags|=MP_IMGFLAG_DIRECT;
-    mpi->priv=(any_t*)dmpi;
+    mpi->priv=dmpi;
     return;
   }
 }
@@ -142,14 +142,14 @@ static void key_cb(int code) {
   menu_read_key(st_priv->current,code);
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
   mp_image_t *dmpi = NULL;
 
   if (vf->priv->passthrough) {
     dmpi=vf_get_new_image(vf->next, IMGFMT_MPEGPES, MP_IMGTYPE_EXPORT,
-		      0, mpi->w, mpi->h,mpi->xp_idx);
-    dmpi->planes[0]=mpi->planes[0];
-    return vf_next_put_slice(vf,dmpi);
+		      0, smpi.w, smpi.h,smpi.xp_idx);
+    dmpi->planes[0]=smpi.planes[0];
+    return vf_next_put_slice(vf,*dmpi);
   }
 
   if(vf->priv->current->show
@@ -167,14 +167,17 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
     delay ^= 1; // after a seek
     if(!delay) break;
 
-    if(pause_mpi && (mpi->w != pause_mpi->w || mpi->h != pause_mpi->h ||
-		     mpi->imgfmt != pause_mpi->imgfmt)) {
-      free_mp_image(pause_mpi);
+    if(pause_mpi && (smpi.w != pause_mpi->w || smpi.h != pause_mpi->h ||
+		     smpi.imgfmt != pause_mpi->imgfmt)) {
+      delete pause_mpi;
       pause_mpi = NULL;
     }
-    if(!pause_mpi)
-      pause_mpi = alloc_mpi(mpi->w,mpi->h,mpi->imgfmt,XP_IDX_INVALID);
-    copy_mpi(pause_mpi,mpi);
+    if(!pause_mpi) {
+      pause_mpi = new(zeromem) mp_image_t(smpi.w,smpi.h,XP_IDX_INVALID);
+      pause_mpi->setfmt(smpi.imgfmt);
+      pause_mpi->alloc();
+    }
+    pause_mpi->copy_planes(smpi);
     mp_input_queue_cmd(vf->libinput,mp_input_parse_cmd("pause"));
     go2pause = 2;
     break;
@@ -186,39 +189,39 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
   if(mp_input_key_cb && !vf->priv->current->show)
     mp_input_key_cb = NULL;
 
-  if(mpi->flags&MP_IMGFLAG_DIRECT)
-    dmpi = reinterpret_cast<mp_image_t*>(mpi->priv);
+  if(smpi.flags&MP_IMGFLAG_DIRECT)
+    dmpi = reinterpret_cast<mp_image_t*>(smpi.priv);
   else {
-    dmpi = vf_get_new_temp_genome(vf->next,mpi);
-    copy_mpi(dmpi,mpi);
+    dmpi = vf_get_new_temp_genome(vf->next,smpi);
+    dmpi->copy_planes(smpi);
   }
-  menu_draw(vf->priv->current,dmpi);
+  menu_draw(vf->priv->current,*dmpi);
 
   } else {
     if(mp_input_key_cb)
       mp_input_key_cb = NULL;
 
-    if(mpi->flags&MP_IMGFLAG_DIRECT)
-      dmpi = reinterpret_cast<mp_image_t*>(mpi->priv);
+    if(smpi.flags&MP_IMGFLAG_DIRECT)
+      dmpi = reinterpret_cast<mp_image_t*>(smpi.priv);
     else {
-      dmpi = vf_get_new_exportable_genome(vf->next,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE, mpi);
+      dmpi = vf_get_new_exportable_genome(vf->next,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE, smpi);
 
-      dmpi->stride[0] = mpi->stride[0];
-      dmpi->stride[1] = mpi->stride[1];
-      dmpi->stride[2] = mpi->stride[2];
-      dmpi->planes[0] = mpi->planes[0];
-      dmpi->planes[1] = mpi->planes[1];
-      dmpi->planes[2] = mpi->planes[2];
-      dmpi->priv      = mpi->priv;
+      dmpi->stride[0] = smpi.stride[0];
+      dmpi->stride[1] = smpi.stride[1];
+      dmpi->stride[2] = smpi.stride[2];
+      dmpi->planes[0] = smpi.planes[0];
+      dmpi->planes[1] = smpi.planes[1];
+      dmpi->planes[2] = smpi.planes[2];
+      dmpi->priv      = smpi.priv;
     }
   }
-  return vf_next_put_slice(vf,dmpi);
+  return vf_next_put_slice(vf,*dmpi);
 }
 
 static void __FASTCALL__ uninit(vf_instance_t *vf) {
      vf->priv=NULL;
      if(pause_mpi) {
-       free_mp_image(pause_mpi);
+       delete pause_mpi;
        pause_mpi = NULL;
      }
      menu_uninit();

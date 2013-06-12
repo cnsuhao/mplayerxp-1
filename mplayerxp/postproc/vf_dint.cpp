@@ -21,7 +21,7 @@ struct vf_priv_t {
   char diff;
   uint32_t max;
   int was_dint;
-  mp_image_t *pmpi; // previous mpi
+  const mp_image_t* pmpi; // previous smpi
 
     int	frame;
     int	map;
@@ -47,24 +47,24 @@ static void __FASTCALL__ uninit(vf_instance_t* vf)
 	delete vf->priv;
 }
 
-static inline int IsRGB(mp_image_t *mpi)
+static inline int IsRGB(const mp_image_t& smpi)
 {
-	return mpi->imgfmt == IMGFMT_RGB;
+	return smpi.imgfmt == IMGFMT_RGB;
 }
 
-static inline int IsYUY2(mp_image_t *mpi)
+static inline int IsYUY2(const mp_image_t& smpi)
 {
-	return mpi->imgfmt == IMGFMT_YUY2;
+	return smpi.imgfmt == IMGFMT_YUY2;
 }
 
 #define PLANAR_Y 0
 #define PLANAR_U 1
 #define PLANAR_V 2
 
-static int __FASTCALL__ kd_put_slice(vf_instance_t* vf, mp_image_t *mpi){
-	int cw= mpi->w >> mpi->chroma_x_shift;
-	int ch= mpi->h >> mpi->chroma_y_shift;
-	int W = mpi->w, H = mpi->h;
+static int __FASTCALL__ kd_put_slice(vf_instance_t* vf,const mp_image_t& smpi){
+	int cw= smpi.w >> smpi.chroma_x_shift;
+	int ch= smpi.h >> smpi.chroma_y_shift;
+	int W = smpi.w, H = smpi.h;
 	const unsigned char *prvp, *prvpp, *prvpn, *prvpnn, *prvppp, *prvp4p, *prvp4n;
 	const unsigned char *srcp_saved;
 	const unsigned char *srcp, *srcpp, *srcpn, *srcpnn, *srcppp, *srcp3p, *srcp3n, *srcp4p, *srcp4n;
@@ -72,7 +72,8 @@ static int __FASTCALL__ kd_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 	int src_pitch;
 	int psrc_pitch;
 	int dst_pitch;
-	int x, y, z;
+	int x, y;
+	unsigned z;
 	int n = vf->priv->frame++;
 	int val, hi, lo, w, h;
 	double valf;
@@ -85,7 +86,7 @@ static int __FASTCALL__ kd_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 	int finalize;
 
 	mp_image_t *pmpi;
-	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,mpi);
+	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,smpi);
 	if(!dmpi) return 0;
 	pmpi=dmpi;
 	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
@@ -93,7 +94,7 @@ static int __FASTCALL__ kd_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-	for (z=0; z<mpi->num_planes; z++) {
+	for (z=0; z<smpi.num_planes; z++) {
 		if (z == 0) plane = PLANAR_Y;
 		else if (z == 1) plane = PLANAR_U;
 		else plane = PLANAR_V;
@@ -101,8 +102,8 @@ static int __FASTCALL__ kd_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 		h = plane == PLANAR_Y ? H : ch;
 		w = plane == PLANAR_Y ? W : cw;
 
-		srcp = srcp_saved = mpi->planes[z];
-		src_pitch = mpi->stride[z];
+		srcp = srcp_saved = smpi.planes[z];
+		src_pitch = smpi.stride[z];
 		psrc_pitch = pmpi->stride[z];
 		dstp = dstp_saved = dmpi->planes[z];
 		dst_pitch = dmpi->stride[z];
@@ -162,7 +163,7 @@ static int __FASTCALL__ kd_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 					if (map == 1)
 					{
 						int g = x & ~3;
-						if (IsRGB(mpi) == 1)
+						if (IsRGB(smpi) == 1)
 						{
 							dstp[g++] = 255;
 							dstp[g++] = 255;
@@ -170,7 +171,7 @@ static int __FASTCALL__ kd_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 							dstp[g] = 255;
 							x = g;
 						}
-						else if (IsYUY2(mpi) == 1)
+						else if (IsYUY2(smpi) == 1)
 						{
 							dstp[g++] = 235;
 							dstp[g++] = 128;
@@ -186,12 +187,12 @@ static int __FASTCALL__ kd_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 					}
 					else
 					{
-						if (IsRGB(mpi))
+						if (IsRGB(smpi))
 						{
 							hi = 255;
 							lo = 0;
 						}
-						else if (IsYUY2(mpi))
+						else if (IsYUY2(smpi))
 						{
 							hi = (x & 1) ? 240 : 235;
 							lo = 16;
@@ -259,7 +260,7 @@ static int __FASTCALL__ kd_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 			dstp  += 2*dst_pitch;
 		}
 
-		srcp = mpi->planes[z];
+		srcp = smpi.planes[z];
 		dstp = pmpi->planes[z];
 		for (y=0; y<h; y++) {
 			if(finalize)
@@ -271,7 +272,7 @@ static int __FASTCALL__ kd_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 		}
 	}
 
-	return vf_next_put_slice(vf,dmpi);
+	return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//
@@ -329,31 +330,32 @@ static int __FASTCALL__ vf_config (vf_instance_t* vf,
     return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static int __FASTCALL__ put_slice (vf_instance_t* vf, mp_image_t *mpi)
+static int __FASTCALL__ put_slice (vf_instance_t* vf,const mp_image_t& smpi)
 {
     char rrow0[MAXROWSIZE];
     char rrow1[MAXROWSIZE];
     char rrow2[MAXROWSIZE];
     char *row0 = rrow0, *row1 = rrow1, *row2 = rrow2/*, *row3 = rrow3*/;
-    int rowsize = mpi->width;
+    int rowsize = smpi.width;
     uint32_t nok = 0, max = vf->priv->max;
     int diff = vf->priv->diff;
-    int i, j;
-    register int n1, n2;
+    int i;
+    unsigned j;
+    int n1, n2;
     unsigned char *cur0, *prv0;
-    register unsigned char *cur, *prv;
+    unsigned char *cur, *prv;
 
     // check if nothing to do
-    if (mpi->imgfmt == vf->priv->imgfmt)
+    if (smpi.imgfmt == vf->priv->imgfmt)
     {
-      cur0 = mpi->planes[0] + mpi->stride[0];
-      prv0 = mpi->planes[0];
-      for (j = 1; j < mpi->height && nok <= max; j++)
+      cur0 = smpi.planes[0] + smpi.stride[0];
+      prv0 = smpi.planes[0];
+      for (j = 1; j < smpi.height && nok <= max; j++)
       {
 	cur = cur0;
 	prv = prv0;
 	// analyse row (row0)
-	if (mpi->flags & MP_IMGFLAG_PLANAR) // planar YUV - check luminance
+	if (smpi.flags & MP_IMGFLAG_PLANAR) // planar YUV - check luminance
 	  for (i = 0; i < rowsize; i++)
 	  {
 	    if (cur[0] - prv[0] > diff)
@@ -370,7 +372,7 @@ static int __FASTCALL__ put_slice (vf_instance_t* vf, mp_image_t *mpi)
 		(++nok) > max)
 	      break;
 	  }
-	else if (mpi->bpp < 24) // RGB/BGR 16 - check all colors
+	else if (smpi.bpp < 24) // RGB/BGR 16 - check all colors
 	  for (i = 0; i < rowsize; i++)
 	  {
 	    n1 = cur[0] + (cur[1]<<8);
@@ -406,16 +408,16 @@ static int __FASTCALL__ put_slice (vf_instance_t* vf, mp_image_t *mpi)
 	      row0[i] = -1;
 	    else
 	      row0[i] = 0;
-	    cur += mpi->bpp/8;
-	    prv += mpi->bpp/8;
+	    cur += smpi.bpp/8;
+	    prv += smpi.bpp/8;
 	    // check if row0 is 1 but row1 is 0, and row2 is 1 or row2 is 0
 	    // but row3 is 1 so it's interlaced ptr (nok++)
 	    if (j > 2 && row0[i] > 0 && (row1[i] < 0 || (!row1[i] && row2[i] < 0)) &&
 		(++nok) > max)
 	      break;
 	  }
-	cur0 += mpi->stride[0];
-	prv0 += mpi->stride[0];
+	cur0 += smpi.stride[0];
+	prv0 += smpi.stride[0];
 	// rotate rows
 	cur = reinterpret_cast<unsigned char*>(row2);
 	row2 = row1;
@@ -435,7 +437,7 @@ static int __FASTCALL__ put_slice (vf_instance_t* vf, mp_image_t *mpi)
       }
     }
     vf->priv->was_dint = 0;
-    return vf_next_put_slice (vf, mpi);
+    return vf_next_put_slice (vf, smpi);
 }
 
 static MPXP_Rc __FASTCALL__ vf_open (vf_instance_t *vf,const char* args){

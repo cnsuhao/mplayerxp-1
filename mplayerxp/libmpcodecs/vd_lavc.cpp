@@ -518,7 +518,7 @@ void vlavc_decoder::release_buffer(struct AVCodecContext *avctx, AVFrame *pic){
 
     if(mpi) {
 	if(mpi->bpp == 8 && mpi->planes[1]) delete mpi->planes[1];
-	if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK) free_mp_image(mpi);
+	if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK) delete mpi;
     }
 
     if(pic->type!=FF_BUFFER_TYPE_USER){
@@ -603,7 +603,7 @@ void vlavc_decoder::draw_slice(struct AVCodecContext* s,
 	    <<">["<<mpi->width<<"x"<<mpi->height<<"] "<<mpi->x<<" "
 	    <<mpi->y<<" "<<mpi->w<<" "<<mpi->h<<std::endl;
     __MP_ATOMIC(priv.psi.active_slices++);
-    priv.parent.draw_slice (mpi);
+    priv.parent.draw_slice (*mpi);
     mpi->xp_idx = orig_idx;
     __MP_ATOMIC(priv.psi.active_slices--);
 }
@@ -680,9 +680,9 @@ mp_image_t* vlavc_decoder::run(const enc_frame_t& frame){
     }
     if(!(frame.flags&3) && use_slices)
     {
-	if(_mpi) free_mp_image(_mpi);
+	if(_mpi) delete _mpi;
 	_mpi=parent.get_image(MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_DRAW_CALLBACK|MP_IMGFLAG_DIRECT,sh.src_w, sh.src_h);
-	_mpi = _mpi;
+	mpi = _mpi;
 	frame_number++;
 	ctx->draw_horiz_band=draw_slice;
     }
@@ -705,7 +705,7 @@ mp_image_t* vlavc_decoder::run(const enc_frame_t& frame){
     if(!got_picture) return NULL;	// skipped image
     if(!ctx->draw_horiz_band)
     {
-	if(_mpi) free_mp_image(_mpi);
+	if(_mpi) delete _mpi;
 	_mpi=parent.get_image(MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,sh.src_w,sh.src_h);
 	if(!_mpi){	// temporary!
 	    mpxp_err<<"couldn't allocate image for lavc codec"<<std::endl;

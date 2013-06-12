@@ -108,35 +108,35 @@ static const vf_info_t* filter_list[]={
 };
 
 //============================================================================
-// mpi stuff:
+// smpi stuff:
 
-void __FASTCALL__ vf_mpi_clear(mp_image_t* mpi,int x0,int y0,int w,int h){
+void __FASTCALL__ vf_mpi_clear(mp_image_t* smpi,int x0,int y0,int w,int h){
     int y;
-    if(mpi->flags&MP_IMGFLAG_PLANAR){
+    if(smpi->flags&MP_IMGFLAG_PLANAR){
 	y0&=~1;h+=h&1;
-	if(x0==0 && w==mpi->width){
+	if(x0==0 && w==smpi->width){
 	    // full width clear:
-	    memset(mpi->planes[0]+mpi->stride[0]*y0,0x10,mpi->stride[0]*h);
-	    memset(mpi->planes[1]+mpi->stride[1]*(y0>>mpi->chroma_y_shift),0x80,mpi->stride[1]*(h>>mpi->chroma_y_shift));
-	    memset(mpi->planes[2]+mpi->stride[2]*(y0>>mpi->chroma_y_shift),0x80,mpi->stride[2]*(h>>mpi->chroma_y_shift));
+	    memset(smpi->planes[0]+smpi->stride[0]*y0,0x10,smpi->stride[0]*h);
+	    memset(smpi->planes[1]+smpi->stride[1]*(y0>>smpi->chroma_y_shift),0x80,smpi->stride[1]*(h>>smpi->chroma_y_shift));
+	    memset(smpi->planes[2]+smpi->stride[2]*(y0>>smpi->chroma_y_shift),0x80,smpi->stride[2]*(h>>smpi->chroma_y_shift));
 	} else
 	{
 	    for(y=y0;y<y0+h;y++){
-		memset(mpi->planes[0]+x0+mpi->stride[0]*y,0x10,w);
+		memset(smpi->planes[0]+x0+smpi->stride[0]*y,0x10,w);
 	    }
-	    for(y=y0;y<y0+(h>>mpi->chroma_y_shift);y++){
-		memset(mpi->planes[1]+(x0>>mpi->chroma_x_shift)+mpi->stride[1]*y,0x80,(w>>mpi->chroma_x_shift));
-		memset(mpi->planes[2]+(x0>>mpi->chroma_x_shift)+mpi->stride[2]*y,0x80,(w>>mpi->chroma_x_shift));
+	    for(y=y0;y<y0+(h>>smpi->chroma_y_shift);y++){
+		memset(smpi->planes[1]+(x0>>smpi->chroma_x_shift)+smpi->stride[1]*y,0x80,(w>>smpi->chroma_x_shift));
+		memset(smpi->planes[2]+(x0>>smpi->chroma_x_shift)+smpi->stride[2]*y,0x80,(w>>smpi->chroma_x_shift));
 	    }
 	}
 	return;
     }
     // packed:
     for(y=y0;y<y0+h;y++){
-	unsigned char* dst=mpi->planes[0]+mpi->stride[0]*y+(mpi->bpp>>3)*x0;
-	if(mpi->flags&MP_IMGFLAG_YUV){
+	unsigned char* dst=smpi->planes[0]+smpi->stride[0]*y+(smpi->bpp>>3)*x0;
+	if(smpi->flags&MP_IMGFLAG_YUV){
 	    unsigned int* p=(unsigned int*) dst;
-	    int size=(mpi->bpp>>3)*w/4;
+	    int size=(smpi->bpp>>3)*w/4;
 	    int i;
 #ifdef WORDS_BIGENDIAN
 #define CLEAR_PACKEDYUV_PATTERN 0x10801080
@@ -145,7 +145,7 @@ void __FASTCALL__ vf_mpi_clear(mp_image_t* mpi,int x0,int y0,int w,int h){
 #define CLEAR_PACKEDYUV_PATTERN 0x80108010
 #define CLEAR_PACKEDYUV_PATTERN_SWAPPED 0x10801080
 #endif
-	    if(mpi->flags&MP_IMGFLAG_SWAPPED){
+	    if(smpi->flags&MP_IMGFLAG_SWAPPED){
 		for(i=0;i<size-3;i+=4) p[i]=p[i+1]=p[i+2]=p[i+3]=CLEAR_PACKEDYUV_PATTERN_SWAPPED;
 		for(;i<size;i++) p[i]=CLEAR_PACKEDYUV_PATTERN_SWAPPED;
 	    } else {
@@ -153,13 +153,12 @@ void __FASTCALL__ vf_mpi_clear(mp_image_t* mpi,int x0,int y0,int w,int h){
 		for(;i<size;i++) p[i]=CLEAR_PACKEDYUV_PATTERN;
 	    }
 	} else
-	    memset(dst,0,(mpi->bpp>>3)*w);
+	    memset(dst,0,(smpi->bpp>>3)*w);
     }
 }
 
 mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h,unsigned idx){
     int is_static=0;
-    mp_image_t* mpi=NULL;
     int w2=(mp_imgflag&MP_IMGFLAG_ACCEPT_ALIGNED_STRIDE)?((w+15)&(~15)):w;
     unsigned xp_idx=idx;
     MSG_DBG2("vf_get_new_image(%s,0x%X,0x%X,0x%X,0x%X,0x%X) was called\n",vf->info->name,outfmt,mp_imgtype,mp_imgflag,w,h);
@@ -180,106 +179,106 @@ mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt
 	default:
 	    break;
     }
-    mpi=new_mp_image(w2,h,xp_idx);
-    if(mpi){
-	mpi->type=mp_imgtype;
-	mpi->w=w; mpi->h=h;
+    mp_image_t* smpi=new(zeromem) mp_image_t(w2,h,xp_idx);
+    if(smpi){
+	smpi->type=mp_imgtype;
+	smpi->w=w; smpi->h=h;
 	// keep buffer allocation status & color flags only:
-	mpi->flags&=MP_IMGFLAG_ALLOCATED|MP_IMGFLAG_TYPE_DISPLAYED|MP_IMGFLAGMASK_COLORS;
+	smpi->flags&=MP_IMGFLAG_ALLOCATED|MP_IMGFLAG_TYPE_DISPLAYED|MP_IMGFLAGMASK_COLORS;
 	// accept restrictions & draw_slice flags only:
-	mpi->flags|=mp_imgflag&(MP_IMGFLAGMASK_RESTRICTIONS|MP_IMGFLAG_DRAW_CALLBACK);
-	MSG_DBG2("vf_get_new_image fills mpi structure. flags=0x%X\n",mpi->flags);
-	if(mpi->width!=w2 || mpi->height!=h){
-	    if(mpi->flags&MP_IMGFLAG_ALLOCATED){
-		if(mpi->width<w2 || mpi->height<h){
+	smpi->flags|=mp_imgflag&(MP_IMGFLAGMASK_RESTRICTIONS|MP_IMGFLAG_DRAW_CALLBACK);
+	MSG_DBG2("vf_get_new_image fills smpi structure. flags=0x%X\n",smpi->flags);
+	if(smpi->width!=w2 || smpi->height!=h){
+	    if(smpi->flags&MP_IMGFLAG_ALLOCATED){
+		if(smpi->width<w2 || smpi->height<h){
 		    // need to re-allocate buffer memory:
-		    delete mpi->planes[0];
-		    mpi->flags&=~MP_IMGFLAG_ALLOCATED;
+		    delete smpi->planes[0];
+		    smpi->flags&=~MP_IMGFLAG_ALLOCATED;
 		    MSG_DBG2("vf.c: have to REALLOCATE buffer memory :(\n");
 		}
 	    }
-	    mpi->width=w2; mpi->chroma_width=(w2 + (1<<mpi->chroma_x_shift) - 1)>>mpi->chroma_x_shift;
-	    mpi->height=h; mpi->chroma_height=(h + (1<<mpi->chroma_y_shift) - 1)>>mpi->chroma_y_shift;
+	    smpi->width=w2; smpi->chroma_width=(w2 + (1<<smpi->chroma_x_shift) - 1)>>smpi->chroma_x_shift;
+	    smpi->height=h; smpi->chroma_height=(h + (1<<smpi->chroma_y_shift) - 1)>>smpi->chroma_y_shift;
 	}
-	if(!mpi->bpp) mp_image_setfmt(mpi,outfmt);
-	MSG_DBG2("vf_get_new_image setfmt. flags=0x%X\n",mpi->flags);
-	if(!(mpi->flags&MP_IMGFLAG_ALLOCATED) && mpi->type>MP_IMGTYPE_EXPORT) {
+	if(!smpi->bpp) smpi->setfmt(outfmt);
+	MSG_DBG2("vf_get_new_image setfmt. flags=0x%X\n",smpi->flags);
+	if(!(smpi->flags&MP_IMGFLAG_ALLOCATED) && smpi->type>MP_IMGTYPE_EXPORT) {
 	    // check libvo2 first!
-	    if(vf->get_image) vf->get_image(vf,mpi);
-	    MSG_DBG2("[vf->get_image] returns xp_idx=%u\n",mpi->xp_idx);
+	    if(vf->get_image) vf->get_image(vf,smpi);
+	    MSG_DBG2("[vf->get_image] returns xp_idx=%u\n",smpi->xp_idx);
 
-	    if(!(mpi->flags&MP_IMGFLAG_DIRECT)) {
+	    if(!(smpi->flags&MP_IMGFLAG_DIRECT)) {
 		// non-direct and not yet allocated image. allocate it!
 		// check if codec prefer aligned stride:
 		if(mp_imgflag&MP_IMGFLAG_PREFER_ALIGNED_STRIDE) {
-		    int align=( mpi->flags&MP_IMGFLAG_PLANAR &&
-				mpi->flags&MP_IMGFLAG_YUV) ?
-				(8<<mpi->chroma_x_shift)-1 : 15; // -- maybe FIXME
+		    int align=( smpi->flags&MP_IMGFLAG_PLANAR &&
+				smpi->flags&MP_IMGFLAG_YUV) ?
+				(8<<smpi->chroma_x_shift)-1 : 15; // -- maybe FIXME
 		    w2=((w+align)&(~align));
-		    if(mpi->width!=w2) {
+		    if(smpi->width!=w2) {
 			// we have to change width... check if we CAN co it:
 			int flags=vf->query_format(vf,outfmt,w,h); // should not fail
 			if(!(flags&3)) MSG_WARN("??? vf_get_new_image{vf->query_format(outfmt)} failed!\n");
 			if(flags&VFCAP_ACCEPT_STRIDE){
-			    mpi->width=w2;
-			    mpi->chroma_width=(w2 + (1<<mpi->chroma_x_shift) - 1)>>mpi->chroma_x_shift;
+			    smpi->width=w2;
+			    smpi->chroma_width=(w2 + (1<<smpi->chroma_x_shift) - 1)>>smpi->chroma_x_shift;
 			}
 		    }
 		}
 		if(is_static) {
 		    unsigned idx=0;
-		    if(mpi->flags&(MP_IMGTYPE_IP|MP_IMGTYPE_IPB)) {
+		    if(smpi->flags&(MP_IMGTYPE_IP|MP_IMGTYPE_IPB)) {
 			idx=vf->imgctx.static_idx;
 			vf->imgctx.static_idx^=1;
 		    }
 		    if(!vf->imgctx.static_planes[idx]) {
-			mpi_alloc_planes(mpi);
-			vf->imgctx.static_planes[idx]=mpi->planes[0];
+			smpi->alloc();
+			vf->imgctx.static_planes[idx]=smpi->planes[0];
 		    }
-		    mpi->planes[0]=vf->imgctx.static_planes[idx];
-		    mpi->flags&=~MP_IMGFLAG_ALLOCATED;
+		    smpi->planes[0]=vf->imgctx.static_planes[idx];
+		    smpi->flags&=~MP_IMGFLAG_ALLOCATED;
 		} else
-		    mpi_alloc_planes(mpi);
+		    smpi->alloc();
 	    } // if !DIRECT
 	} else {
 	    MSG_DBG2("vf_get_new_image forces xp_idx retrieving\n");
-	    mpi->xp_idx=dae_curr_vdecoded(mpxp_context().engine().xp_core);
-	    mpi->flags&=~MP_IMGFLAG_ALLOCATED;
+	    smpi->xp_idx=dae_curr_vdecoded(mpxp_context().engine().xp_core);
+	    smpi->flags&=~MP_IMGFLAG_ALLOCATED;
 	}
-	if(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK && vf->start_slice)
-	    vf->start_slice(vf,mpi);
-	if(!(mpi->flags&MP_IMGFLAG_TYPE_DISPLAYED)){
+	if(smpi->flags&MP_IMGFLAG_DRAW_CALLBACK && vf->start_slice)
+	    vf->start_slice(vf,*smpi);
+	if(!(smpi->flags&MP_IMGFLAG_TYPE_DISPLAYED)){
 	    MSG_DBG2("*** [%s] %s%s mp_image_t, %dx%dx%dbpp %s %s, %d bytes\n",
 		vf->info->name,
-		(mpi->type==MP_IMGTYPE_EXPORT)?"Exporting":
-		((mpi->flags&MP_IMGFLAG_DIRECT)?"Direct Rendering":"Allocating"),
-		(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK)?" (slices)":"",
-		mpi->width,mpi->height,mpi->bpp,
-		(mpi->flags&MP_IMGFLAG_YUV)?"YUV":((mpi->flags&MP_IMGFLAG_SWAPPED)?"BGR":"RGB"),
-		(mpi->flags&MP_IMGFLAG_PLANAR)?"planar":"packed",
-		mpi->bpp*mpi->width*mpi->height/8);
+		(smpi->type==MP_IMGTYPE_EXPORT)?"Exporting":
+		((smpi->flags&MP_IMGFLAG_DIRECT)?"Direct Rendering":"Allocating"),
+		(smpi->flags&MP_IMGFLAG_DRAW_CALLBACK)?" (slices)":"",
+		smpi->width,smpi->height,smpi->bpp,
+		(smpi->flags&MP_IMGFLAG_YUV)?"YUV":((smpi->flags&MP_IMGFLAG_SWAPPED)?"BGR":"RGB"),
+		(smpi->flags&MP_IMGFLAG_PLANAR)?"planar":"packed",
+		smpi->bpp*smpi->width*smpi->height/8);
 	    MSG_DBG2("(imgfmt: %x, planes: %x,%x,%x strides: %d,%d,%d, chroma: %dx%d, shift: h:%d,v:%d)\n",
-		mpi->imgfmt, mpi->planes[0], mpi->planes[1], mpi->planes[2],
-		mpi->stride[0], mpi->stride[1], mpi->stride[2],
-		mpi->chroma_width, mpi->chroma_height, mpi->chroma_x_shift, mpi->chroma_y_shift);
-	    mpi->flags|=MP_IMGFLAG_TYPE_DISPLAYED;
+		smpi->imgfmt, smpi->planes[0], smpi->planes[1], smpi->planes[2],
+		smpi->stride[0], smpi->stride[1], smpi->stride[2],
+		smpi->chroma_width, smpi->chroma_height, smpi->chroma_x_shift, smpi->chroma_y_shift);
+	    smpi->flags|=MP_IMGFLAG_TYPE_DISPLAYED;
 	}
     }
     check_pin("vfilter",vf->pin,VF_PIN);
-    MSG_DBG2("vf_get_new_image returns xp_idx=%i\n",mpi->xp_idx);
-    return mpi;
+    MSG_DBG2("vf_get_new_image returns xp_idx=%i\n",smpi->xp_idx);
+    return smpi;
 }
 
-mp_image_t* __FASTCALL__ vf_get_new_genome(vf_instance_t* vf, const mp_image_t* mpi){
-    return vf_get_new_image(vf,mpi->imgfmt,mpi->type,mpi->flags,mpi->w,mpi->h,mpi->xp_idx);
+mp_image_t* __FASTCALL__ vf_get_new_genome(vf_instance_t* vf, const mp_image_t& smpi){
+    return vf_get_new_image(vf,smpi.imgfmt,smpi.type,smpi.flags,smpi.w,smpi.h,smpi.xp_idx);
 }
 
-mp_image_t* __FASTCALL__ vf_get_new_exportable_genome(vf_instance_t* vf, int mp_imgtype, int mp_imgflag, const mp_image_t* mpi){
-    return vf_get_new_image(vf,mpi->imgfmt,mp_imgtype,mp_imgflag,mpi->w,mpi->h,mpi->xp_idx);
+mp_image_t* __FASTCALL__ vf_get_new_exportable_genome(vf_instance_t* vf, int mp_imgtype, int mp_imgflag, const mp_image_t& smpi){
+    return vf_get_new_image(vf,smpi.imgfmt,mp_imgtype,mp_imgflag,smpi.w,smpi.h,smpi.xp_idx);
 }
 
-mp_image_t* __FASTCALL__ vf_get_new_temp_genome(vf_instance_t* vf, const mp_image_t* mpi){
-    return vf_get_new_exportable_genome(vf,MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,mpi);
+mp_image_t* __FASTCALL__ vf_get_new_temp_genome(vf_instance_t* vf, const mp_image_t& smpi){
+    return vf_get_new_exportable_genome(vf,MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,smpi);
 }
 
 //============================================================================
@@ -365,15 +364,15 @@ unsigned int __FASTCALL__ vf_match_csp(vf_instance_t** vfp,unsigned int* list,co
     return best;
 }
 
-void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst, mp_image_t* src){
-    dst->x=src->x;
+void __FASTCALL__ vf_clone_mpi_attributes(mp_image_t* dst,const mp_image_t& src){
+    dst->x=src.x;
     dst->y=dst->y;
-    dst->pict_type= src->pict_type;
-    dst->fields = src->fields;
-    dst->qscale_type= src->qscale_type;
-    if(dst->width == src->width && dst->height == src->height){
-	dst->qstride= src->qstride;
-	dst->qscale= src->qscale;
+    dst->pict_type= src.pict_type;
+    dst->fields = src.fields;
+    dst->qscale_type= src.qscale_type;
+    if(dst->width == src.width && dst->height == src.height){
+	dst->qstride= src.qstride;
+	dst->qscale= src.qscale;
     }
 }
 
@@ -427,10 +426,10 @@ int __FASTCALL__ vf_query_format(vf_instance_t* vf, unsigned int fmt,unsigned wi
     return vf->query_format(vf,fmt,width,height);
 }
 
-int __FASTCALL__ vf_next_put_slice(vf_instance_t* vf,mp_image_t *mpi){
+int __FASTCALL__ vf_next_put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     int rc;
-    rc = vf->next->put_slice(vf->next,mpi);
-    free_mp_image(mpi);
+    rc = vf->next->put_slice(vf->next,smpi);
+    delete &smpi;
     return rc;
 }
 
@@ -718,17 +717,17 @@ int __FASTCALL__ vf_query_format(vf_stream_t* s,unsigned int fmt,unsigned w,unsi
     vf_instance_t* first=s->first;
     return first->query_format(first,fmt,w,h);
 }
-void __FASTCALL__ vf_get_image(vf_stream_t* s,mp_image_t *mpi) {
+void __FASTCALL__ vf_get_image(vf_stream_t* s,mp_image_t *smpi) {
     vf_instance_t* first=s->first;
-    return first->get_image(first,mpi);
+    return first->get_image(first,smpi);
 }
-int __FASTCALL__ vf_put_slice(vf_stream_t* s,mp_image_t *mpi) {
+int __FASTCALL__ vf_put_slice(vf_stream_t* s,const mp_image_t& smpi) {
     vf_instance_t* first=s->first;
-    return first->put_slice(first,mpi);
+    return first->put_slice(first,smpi);
 }
-void __FASTCALL__ vf_start_slice(vf_stream_t* s,mp_image_t *mpi) {
+void __FASTCALL__ vf_start_slice(vf_stream_t* s,const mp_image_t& smpi) {
     vf_instance_t* first=s->first;
-    return first->start_slice(first,mpi);
+    return first->start_slice(first,smpi);
 }
 
 MPXP_Rc __FASTCALL__ vf_control(vf_stream_t* s,int request, any_t* data) {

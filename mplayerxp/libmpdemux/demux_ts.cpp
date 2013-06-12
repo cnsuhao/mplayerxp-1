@@ -391,7 +391,7 @@ static MPXP_Rc ts_probe(Demuxer * demuxer)
 	i = 1;
 	c = 0;
 
-	while(((c=demuxer->stream->read_char()) != 0x47)
+	while(((c=demuxer->stream->read(type_byte)) != 0x47)
 		&& (c >= 0)
 		&& (i < MAX_CHECK_SIZE)
 		&& ! demuxer->stream->eof()
@@ -1494,7 +1494,7 @@ static int ts_sync(Stream *stream)
 
 	MSG_DBG2( "TS_SYNC \n");
 
-	while(((c=stream->read_char()) != 0x47) && ! stream->eof());
+	while(((c=stream->read(type_byte)) != 0x47) && ! stream->eof());
 
 	if(c == 0x47)
 		return c;
@@ -2690,7 +2690,7 @@ static int ts_parse(Demuxer *demuxer , ES_stream_t *es, unsigned char *packet, i
 		if(afc > 1)
 		{
 			int c;
-			c = stream->read_char();
+			c = stream->read(type_byte);
 			buf_size--;
 			if(c < 0 || c > 183)	//broken from the stream layer or invalid
 			{
@@ -2701,7 +2701,7 @@ static int ts_parse(Demuxer *demuxer , ES_stream_t *es, unsigned char *packet, i
 			//c==0 is allowed!
 			if(c > 0)
 			{
-				rap_flag = (stream->read_char() & 0x40) >> 6;
+				rap_flag = (stream->read(type_byte) & 0x40) >> 6;
 				buf_size--;
 
 				c--;

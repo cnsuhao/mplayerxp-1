@@ -91,24 +91,24 @@ static void __FASTCALL__ init_echo3d(af_crystality_t *s,unsigned rate)
  * quite nice echo
  */
 
-static mp_aframe_t* __FASTCALL__ echo3d(af_crystality_t *s,const mp_aframe_t* in)
+static mp_aframe_t __FASTCALL__ echo3d(af_crystality_t *s,const mp_aframe_t& in)
 {
     unsigned x,i;
     float _left, _right, dif, leftc, rightc, left[4], right[4];
     float *inptr,*outptr;
     float lt, rt;
     unsigned weight[2][3] = { { 9, 8, 8 }, { 11, 9, 10 }};
-    mp_aframe_t* out = new_mp_aframe_genome(in);
-    mp_alloc_aframe(out);
+    mp_aframe_t out = in.genome();
+    out.alloc();
 
     s->_bufPos = s->buf_size - 1;
     s->bufPos[0] = 1 + s->buf_size - DELAY1;
     s->bufPos[1] = 1 + s->buf_size - DELAY1 - DELAY2;
     s->bufPos[2] = 1 + s->buf_size - DELAY1 - DELAY2 - DELAY3;
-    inptr = reinterpret_cast<float*>(in->audio);
-    outptr = reinterpret_cast<float*>(in->audio);
+    inptr = reinterpret_cast<float*>(in.audio);
+    outptr = reinterpret_cast<float*>(out.audio);
 
-    for (x = 0; x < in->len; x += 8) {
+    for (x = 0; x < in.len; x += 8) {
 	// ************ load sample **********
 	left[0] = inptr[0];
 	right[0] = inptr[1];
@@ -192,7 +192,7 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& in)
 {
     return echo3d(reinterpret_cast<af_crystality_t*>(af->setup),in);
 }

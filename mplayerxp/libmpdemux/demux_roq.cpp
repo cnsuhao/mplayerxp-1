@@ -66,8 +66,8 @@ static MPXP_Rc roq_probe(Demuxer *demuxer)
     demuxer->stream->reset();
     demuxer->stream->seek( demuxer->stream->start_pos());
 
-    if ((demuxer->stream->read_dword() == 0x8410FFFF) &&
-	((demuxer->stream->read_dword() & 0xFFFF0000) == 0xFFFF0000)) {
+    if ((demuxer->stream->read(type_dword) == 0x8410FFFF) &&
+	((demuxer->stream->read(type_dword) & 0xFFFF0000) == 0xFFFF0000)) {
 	demuxer->file_format=Demuxer::Type_ROQ;
 	return MPXP_Ok;
     } else return MPXP_False;
@@ -123,12 +123,12 @@ static Opaque* roq_open(Demuxer* demuxer)
 
   // position the stream and start traversing
   demuxer->stream->seek( demuxer->stream->start_pos()+6);
-  fps = demuxer->stream->read_word_le();
+  fps = demuxer->stream->read_le(type_word);
   while (!demuxer->stream->eof())
   {
-    chunk_id = demuxer->stream->read_word_le();
-    chunk_size = demuxer->stream->read_dword_le();
-    chunk_arg = demuxer->stream->read_word_le();
+    chunk_id = demuxer->stream->read_le(type_word);
+    chunk_size = demuxer->stream->read_le(type_dword);
+    chunk_arg = demuxer->stream->read_le(type_word);
 
     // this is the only useful header info in the file
     if (chunk_id == RoQ_INFO)
@@ -149,8 +149,8 @@ static Opaque* roq_open(Demuxer* demuxer)
 	// parent video demuxer stream
 	sh_video->ds = demuxer->video;
 
-	sh_video->src_w = demuxer->stream->read_word_le();
-	sh_video->src_h = demuxer->stream->read_word_le();
+	sh_video->src_w = demuxer->stream->read_le(type_word);
+	sh_video->src_h = demuxer->stream->read_le(type_word);
 	demuxer->stream->skip( 4);
 
 	// custom fourcc for internal MPlayer use

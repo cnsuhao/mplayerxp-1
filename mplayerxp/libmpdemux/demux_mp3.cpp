@@ -116,7 +116,7 @@ static int read_mp3v1_tags(Demuxer *demuxer,uint8_t *hdr, off_t pos )
 	  sprintf(buf,"%d",trk);
 	  demuxer->info().add(INFOT_TRACK,buf);
 	}
-	g = s->read_char();
+	g = s->read(type_byte);
 	demuxer->info().add(INFOT_GENRE,genres[g]);
       }
     }
@@ -363,9 +363,9 @@ static int read_id3v2_tags(Demuxer *demuxer)
     Stream* s=demuxer->stream;
     unsigned vers,rev,flags,hsize;
     s->seek(3); /* skip 'ID3' */
-    vers=s->read_char();
-    rev=s->read_char();
-    flags=s->read_char();
+    vers=s->read(type_byte);
+    rev=s->read(type_byte);
+    flags=s->read(type_byte);
     binary_packet bp=s->read(4);
     memcpy(buf,bp.data(),bp.size());
     hsize=(buf[0] << 21) + (buf[1] << 14) + (buf[2] << 7) + buf[3];
@@ -388,7 +388,7 @@ static int mp3_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigned *
   *brate=*samplerate=*channels=0;
   s = demuxer->stream;
   s->seek(fptr);
-  fcc=fcc1=s->read_dword();
+  fcc=fcc1=s->read(type_dword);
   fcc1=me2be_32(fcc1);
   p = (uint8_t *)&fcc1;
   s->seek(fptr);
@@ -409,7 +409,7 @@ static MPXP_Rc mp3_probe(Demuxer* demuxer)
   Stream *s;
   uint8_t *p;
   s = demuxer->stream;
-  fcc1=s->read_dword();
+  fcc1=s->read(type_dword);
   fcc1=me2be_32(fcc1);
   p = (uint8_t *)&fcc1;
   if(p[0] == 'I' && p[1] == 'D' && p[2] == '3' && (p[3] >= 2)) return MPXP_Ok;
@@ -450,11 +450,11 @@ static void  Xing_test(Stream *s,uint8_t *hdr,mp3_priv_t *priv)
 	priv->is_xing=1;
 	priv->lsf=mpeg1?0:1;
 	priv->srate=sr_table[sr_index&0x3];
-	head_flags = s->read_dword();
-	if(head_flags & FRAMES_FLAG)	priv->nframes=s->read_dword();
-	if(head_flags & BYTES_FLAG)	priv->nbytes=s->read_dword();
+	head_flags = s->read(type_dword);
+	if(head_flags & FRAMES_FLAG)	priv->nframes=s->read(type_dword);
+	if(head_flags & BYTES_FLAG)	priv->nbytes=s->read(type_dword);
 	if(head_flags & TOC_FLAG)	{ bp=s->read(100); memcpy(priv->toc,bp.data(),bp.size()); }
-	if(head_flags & VBR_SCALE_FLAG)	priv->scale = s->read_dword();
+	if(head_flags & VBR_SCALE_FLAG)	priv->scale = s->read(type_dword);
 	MSG_DBG2("Found Xing VBR header: flags=%08X nframes=%u nbytes=%u scale=%i srate=%u\n"
 	,head_flags,priv->nframes,priv->nbytes,priv->scale,priv->srate);
 	s->seek(fpos);

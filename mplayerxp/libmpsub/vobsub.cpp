@@ -143,7 +143,7 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
     bp=mpeg->stream->read(4); memcpy(buf,bp.data(),bp.size());
     if (bp.size() != 4) return -1;
     while (memcmp(buf, wanted, sizeof(wanted)) != 0) {
-	c = mpeg->stream->read_char();
+	c = mpeg->stream->read(type_byte);
 	if (c < 0)
 	    return -1;
 	memmove(buf, buf + 1, 3);
@@ -153,7 +153,7 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
     case 0xb9:			/* System End Code */
 	break;
     case 0xba:			/* Packet start code */
-	c = mpeg->stream->read_char();
+	c = mpeg->stream->read(type_byte);
 	if (c < 0)
 	    return -1;
 	if ((c & 0xc0) == 0x40)
@@ -180,13 +180,13 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 	if (bp.size() != 2) return -1;
 	len = buf[0] << 8 | buf[1];
 	idx = mpeg_tell(mpeg);
-	c = mpeg->stream->read_char();
+	c = mpeg->stream->read(type_byte);
 	if (c < 0)
 	    return -1;
 	if ((c & 0xC0) == 0x40) { /* skip STD scale & size */
-	    if (mpeg->stream->read_char() < 0)
+	    if (mpeg->stream->read(type_byte) < 0)
 		return -1;
-	    c = mpeg->stream->read_char();
+	    c = mpeg->stream->read(type_byte);
 	    if (c < 0)
 		return -1;
 	}
@@ -200,11 +200,11 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 	}
 	else if ((c & 0xc0) == 0x80) { /* System-2 (.VOB) stream */
 	    unsigned int pts_flags, hdrlen, dataidx;
-	    c = mpeg->stream->read_char();
+	    c = mpeg->stream->read(type_byte);
 	    if (c < 0)
 		return -1;
 	    pts_flags = c;
-	    c = mpeg->stream->read_char();
+	    c = mpeg->stream->read(type_byte);
 	    if (c < 0)
 		return -1;
 	    hdrlen = c;
@@ -231,7 +231,7 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 		/* abort(); */
 	    }
 	    mpeg->stream->seek( dataidx);
-	    mpeg->aid = mpeg->stream->read_char();
+	    mpeg->aid = mpeg->stream->read(type_byte);
 	    if (mpeg->aid < 0) {
 		MSG_ERR( "Bogus aid %d\n", mpeg->aid);
 		return -1;

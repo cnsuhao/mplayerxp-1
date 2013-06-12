@@ -36,9 +36,9 @@ struct af_sinesuppress_t
     double pos;
 };
 
-static mp_aframe_t* play_s16(af_instance_t* af,const mp_aframe_t* data);
+static mp_aframe_t play_s16(af_instance_t* af,const mp_aframe_t& data);
 #if 0
-static mp_aframe_t* play_float(af_instance_t* af,const mp_aframe_t* data);
+static mp_aframe_t play_float(af_instance_t* af,const mp_aframe_t& data);
 #endif
 
 // Initialization and runtime control_af
@@ -90,15 +90,15 @@ static void uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* play_s16(af_instance_t* af,const mp_aframe_t* ind)
+static mp_aframe_t play_s16(af_instance_t* af,const mp_aframe_t& ind)
 {
     af_sinesuppress_t *s = reinterpret_cast<af_sinesuppress_t*>(af->setup);
     unsigned	i = 0;
-    int16_t*	in = (int16_t*)ind->audio;// Audio data
-    unsigned	len = ind->len/2;	// Number of samples
-    mp_aframe_t*outd = new_mp_aframe_genome(ind);
-    mp_alloc_aframe(outd);
-    int16_t*	out = (int16_t*)outd->audio;// Audio data
+    int16_t*	in = (int16_t*)ind.audio;// Audio data
+    unsigned	len = ind.len/2;	// Number of samples
+    mp_aframe_t outd = ind.genome();
+    outd.alloc();
+    int16_t*	out = (int16_t*)outd.audio;// Audio data
 
     for (i = 0; i < len; i++) {
 	double co= cos(s->pos);
@@ -114,7 +114,7 @@ static mp_aframe_t* play_s16(af_instance_t* af,const mp_aframe_t* ind)
 	s->imag -= s->imag * s->decay;
 	s->ref  -= s->ref  * s->decay;
 
-	s->pos += 2 * M_PI * s->freq / ind->rate;
+	s->pos += 2 * M_PI * s->freq / ind.rate;
     }
 
     MSG_V("[sinesuppress] f:%8.2f: amp:%8.2f\n", s->freq, sqrt(s->real*s->real + s->imag*s->imag) / s->ref);
@@ -123,12 +123,12 @@ static mp_aframe_t* play_s16(af_instance_t* af,const mp_aframe_t* ind)
 }
 
 #if 0
-static mp_aframe_t* play_float(af_instance_t* af,const mp_aframe_t* ind)
+static mp_aframe_t play_float(af_instance_t* af,const mp_aframe_t& ind)
 {
     af_sinesuppress_t *s = af->setup;
     unsigned	i = 0;
-    float*	a = (float*)ind->audio;	// Audio data
-    unsigned	len = ind->len/4;	// Number of samples
+    float*	a = (float*)ind.audio;	// Audio data
+    unsigned	len = ind.len/4;	// Number of samples
     float avg, l, r;
 
     for (i = 0; i < len; i+=2) {

@@ -118,14 +118,14 @@ ebml_read_id (Stream *s, int *length)
   int i, len_mask = 0x80;
   uint32_t id;
 
-  for (i=0, id=s->read_char(); i<4 && !(id & len_mask); i++)
+  for (i=0, id=s->read(type_byte); i<4 && !(id & len_mask); i++)
     len_mask >>= 1;
   if (i >= 4)
     return EBML_ID_INVALID;
   if (length)
     *length = i + 1;
   while (i--)
-    id = (id << 8) | s->read_char();
+    id = (id << 8) | s->read(type_byte);
   return id;
 }
 
@@ -186,7 +186,7 @@ ebml_read_length (Stream *s, int *length)
   int i, j, num_ffs = 0, len_mask = 0x80;
   uint64_t len;
 
-  for (i=0, len=s->read_char(); i<8 && !(len & len_mask); i++)
+  for (i=0, len=s->read(type_byte); i<8 && !(len & len_mask); i++)
     len_mask >>= 1;
   if (i >= 8)
     return EBML_UINT_INVALID;
@@ -197,7 +197,7 @@ ebml_read_length (Stream *s, int *length)
     num_ffs++;
   while (i--)
     {
-      len = (len << 8) | s->read_char();
+      len = (len << 8) | s->read(type_byte);
       if ((len & 0xFF) == 0xFF)
 	num_ffs++;
     }
@@ -222,7 +222,7 @@ ebml_read_uint (Stream *s, uint64_t *length)
     *length = len + l;
 
   while (len--)
-    value = (value << 8) | s->read_char();
+    value = (value << 8) | s->read(type_byte);
 
   return value;
 }
@@ -244,12 +244,12 @@ ebml_read_int (Stream *s, uint64_t *length)
     *length = len + l;
 
   len--;
-  l = s->read_char();
+  l = s->read(type_byte);
   if (l & 0x80)
     value = -1;
   value = (value << 8) | l;
   while (len--)
-    value = (value << 8) | s->read_char();
+    value = (value << 8) | s->read(type_byte);
 
   return value;
 }
@@ -270,7 +270,7 @@ ebml_read_float (Stream *s, uint64_t *length)
     case 4:
       {
 	union {uint32_t i; float f;} u;
-	u.i = s->read_dword();
+	u.i = s->read(type_dword);
 	value = u.f;
 	break;
       }
@@ -278,7 +278,7 @@ ebml_read_float (Stream *s, uint64_t *length)
     case 8:
       {
 	union {uint64_t i; double d;} u;
-	u.i = s->read_qword();
+	u.i = s->read(type_qword);
 	value = u.d;
 	break;
       }

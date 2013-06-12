@@ -31,24 +31,24 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     return vf_next_config(vf,width,height,d_width,d_height,flags,IMGFMT_YUY2);
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     mp_image_t *dmpi;
 
     // hope we'll get DR buffer:
     dmpi=vf_get_new_image(vf->next,IMGFMT_YUY2,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	mpi->w, mpi->h,mpi->xp_idx);
+	smpi.w, smpi.h,smpi.xp_idx);
 
-    if(mpi->imgfmt==IMGFMT_422P)
-    yuv422ptoyuy2(mpi->planes[0],mpi->planes[1],mpi->planes[2], dmpi->planes[0],
-	    mpi->w,mpi->h, mpi->stride[0],mpi->stride[1],dmpi->stride[0]);
+    if(smpi.imgfmt==IMGFMT_422P)
+    yuv422ptoyuy2(smpi.planes[0],smpi.planes[1],smpi.planes[2], dmpi->planes[0],
+	    smpi.w,smpi.h, smpi.stride[0],smpi.stride[1],dmpi->stride[0]);
     else
-    yv12toyuy2(mpi->planes[0],mpi->planes[1],mpi->planes[2], dmpi->planes[0],
-	    mpi->w,mpi->h, mpi->stride[0],mpi->stride[1],dmpi->stride[0]);
+    yv12toyuy2(smpi.planes[0],smpi.planes[1],smpi.planes[2], dmpi->planes[0],
+	    smpi.w,smpi.h, smpi.stride[0],smpi.stride[1],dmpi->stride[0]);
 
-    vf_clone_mpi_attributes(dmpi, mpi);
+    vf_clone_mpi_attributes(dmpi, smpi);
 
-    return vf_next_put_slice(vf,dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

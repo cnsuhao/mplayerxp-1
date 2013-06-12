@@ -186,7 +186,7 @@ static float clear_sub;
 static MPXP_Rc ogg_probe(Demuxer *demuxer)
 {
     uint32_t fcc;
-    fcc=me2be_32(demuxer->stream->read_dword());
+    fcc=me2be_32(demuxer->stream->read(type_dword));
     if(fcc != mmioFOURCC('O','g','g','S')) return MPXP_False;
     demuxer->file_format=Demuxer::Type_OGG;
     demuxer->stream->seek(0);

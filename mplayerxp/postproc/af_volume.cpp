@@ -139,41 +139,41 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& in)
 {
     af_volume_t*s = (af_volume_t*)af->setup;	// Setup for this instance
     unsigned ch = 0;				// Channel counter
-    unsigned nch = in->nch;			// Number of channels
+    unsigned nch = in.nch;			// Number of channels
     unsigned i = 0;
 
-    mp_aframe_t* out = new_mp_aframe_genome(in);
-    mp_alloc_aframe(out);
+    mp_aframe_t out = in.genome();
+    out.alloc();
 
     // Basic operation volume control_af only (used on slow machines)
     if(af->conf.format == (MPAF_SI | MPAF_NE)){
-	int16_t* _out = (int16_t*)out->audio;	// Audio data
-	int16_t* _in  = (int16_t*)in->audio;	// Audio data
-	unsigned len = in->len/2;			// Number of samples
+	int16_t* _out = (int16_t*)out.audio;	// Audio data
+	int16_t* _in  = (int16_t*)in.audio;	// Audio data
+	unsigned len = in.len/2;			// Number of samples
 	for(ch = 0; ch < nch ; ch++){
 	    if(s->enable[ch]){
-		register int vol = (int)(255.0 * s->level[ch]);
+		int vol = (int)(255.0 * s->level[ch]);
 		for(i=ch;i<len;i+=nch) {
-		    register int x = (_in[i] * vol) >> 8;
+		    int x = (_in[i] * vol) >> 8;
 		    _out[i]=clamp(x,SHRT_MIN,SHRT_MAX);
 		}
 	    }
 	}
     } else { // Machine is fast and data is floating point
-	float* _out = (float*)out->audio;
-	float* _in  = (float*)in->audio;
-	unsigned len = in->len/4;	// Number of samples
+	float* _out = (float*)out.audio;
+	float* _in  = (float*)in.audio;
+	unsigned len = in.len/4;	// Number of samples
 	for(ch = 0; ch < nch ; ch++){
 	    // Volume control_af (fader)
 	    if(s->enable[ch]){
 		float t = 1.0 - s->time;
 		for(i=ch;i<len;i+=nch){
-		    register float x	= _in[i];
-		    register float _pow	= x*x;
+		    float x	= _in[i];
+		    float _pow	= x*x;
 		    // Check maximum power value
 		    if(_pow > s->max[ch]) s->max[ch] = _pow;
 		    x *= s->level[ch]; // Set volume

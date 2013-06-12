@@ -46,7 +46,7 @@ struct vf_priv_t {
 
 /***************************************************************************/
 
-static void __FASTCALL__ interleave(uint8_t *dst, uint8_t *src, int w, int h, int dstStride, int srcStride, int interleave, int swap,int finalize){
+static void __FASTCALL__ interleave(uint8_t *dst,const uint8_t *src, int w, int h, int dstStride, int srcStride, int interleave, int swap,int finalize){
 	const int a= swap;
 	const int b= 1-a;
 	const int m= h>>1;
@@ -90,33 +90,33 @@ static void __FASTCALL__ interleave(uint8_t *dst, uint8_t *src, int w, int h, in
 	}
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
 	int w,finalize;
 	FilterParam *luma  = &vf->priv->lumaParam;
 	FilterParam *chroma= &vf->priv->chromaParam;
 
-	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,mpi);
+	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,smpi);
 
-	if(mpi->flags&MP_IMGFLAG_PLANAR)
-		w= mpi->w;
+	if(smpi.flags&MP_IMGFLAG_PLANAR)
+		w= smpi.w;
 	else
-		w= mpi->w * mpi->bpp/8;
+		w= smpi.w * smpi.bpp/8;
 	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
-	interleave(dmpi->planes[0], mpi->planes[0],
-		w, mpi->h, dmpi->stride[0], mpi->stride[0], luma->interleave, luma->swap,finalize);
+	interleave(dmpi->planes[0], smpi.planes[0],
+		w, smpi.h, dmpi->stride[0], smpi.stride[0], luma->interleave, luma->swap,finalize);
 
-	if(mpi->flags&MP_IMGFLAG_PLANAR){
-		int cw= mpi->w >> mpi->chroma_x_shift;
-		int ch= mpi->h >> mpi->chroma_y_shift;
+	if(smpi.flags&MP_IMGFLAG_PLANAR){
+		int cw= smpi.w >> smpi.chroma_x_shift;
+		int ch= smpi.h >> smpi.chroma_y_shift;
 
-		interleave(dmpi->planes[1], mpi->planes[1], cw,ch,
-			dmpi->stride[1], mpi->stride[1], chroma->interleave, luma->swap,finalize);
-		interleave(dmpi->planes[2], mpi->planes[2], cw,ch,
-			dmpi->stride[2], mpi->stride[2], chroma->interleave, luma->swap,finalize);
+		interleave(dmpi->planes[1], smpi.planes[1], cw,ch,
+			dmpi->stride[1], smpi.stride[1], chroma->interleave, luma->swap,finalize);
+		interleave(dmpi->planes[2], smpi.planes[2], cw,ch,
+			dmpi->stride[2], smpi.stride[2], chroma->interleave, luma->swap,finalize);
 	}
 
-	return vf_next_put_slice(vf,dmpi);
+	return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

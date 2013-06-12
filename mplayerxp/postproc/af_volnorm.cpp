@@ -117,15 +117,15 @@ static void __FASTCALL__ uninit(af_instance_t* af)
     if(af->setup) delete af->setup;
 }
 
-static mp_aframe_t* __FASTCALL__ method1_int16(af_volnorm_t *s,const mp_aframe_t *c)
+static mp_aframe_t __FASTCALL__ method1_int16(af_volnorm_t *s,const mp_aframe_t& c)
 {
     unsigned i = 0;
-    int16_t *data = (int16_t*)c->audio;	// Audio data
-    unsigned len = c->len/2;		// Number of samples
+    int16_t *data = (int16_t*)c.audio;	// Audio data
+    unsigned len = c.len/2;		// Number of samples
     float curavg = 0.0, newavg, neededmul;
     int tmp;
-    mp_aframe_t* out = new_mp_aframe_genome(c);
-    mp_alloc_aframe(out);
+    mp_aframe_t out = c.genome();
+    out.alloc();
 
     for (i = 0; i < len; i++) {
 	tmp = data[i];
@@ -148,7 +148,7 @@ static mp_aframe_t* __FASTCALL__ method1_int16(af_volnorm_t *s,const mp_aframe_t
     for (i = 0; i < len; i++) {
 	tmp = s->mul * data[i];
 	tmp = clamp(tmp, SHRT_MIN, SHRT_MAX);
-	((int16_t *)out->audio)[i] = tmp;
+	((int16_t *)out.audio)[i] = tmp;
     }
 
     // Evaulation of newavg (not 100% accurate because of values clamping)
@@ -159,14 +159,14 @@ static mp_aframe_t* __FASTCALL__ method1_int16(af_volnorm_t *s,const mp_aframe_t
     return out;
 }
 
-static mp_aframe_t* __FASTCALL__ method1_float(af_volnorm_t *s,const mp_aframe_t *c)
+static mp_aframe_t __FASTCALL__ method1_float(af_volnorm_t *s,const mp_aframe_t& c)
 {
     unsigned	i = 0;
-    float*	data = (float*)c->audio;	// Audio data
-    unsigned	len = c->len/4;		// Number of samples
+    float*	data = (float*)c.audio;	// Audio data
+    unsigned	len = c.len/4;		// Number of samples
     float	curavg = 0.0, newavg, neededmul, tmp;
-    mp_aframe_t*out = new_mp_aframe_genome(c);
-    mp_alloc_aframe(out);
+    mp_aframe_t out = c.genome();
+    out.alloc();
 
     for (i = 0; i < len; i++) {
 	tmp = data[i];
@@ -187,7 +187,7 @@ static mp_aframe_t* __FASTCALL__ method1_float(af_volnorm_t *s,const mp_aframe_t
 
     // Scale & clamp the samples
     for (i = 0; i < len; i++)
-	((float*)out->audio)[i] = data[i] * s->mul;
+	((float*)out.audio)[i] = data[i] * s->mul;
 
     // Evaulation of newavg (not 100% accurate because of values clamping)
     newavg = s->mul * curavg;
@@ -197,15 +197,15 @@ static mp_aframe_t* __FASTCALL__ method1_float(af_volnorm_t *s,const mp_aframe_t
     return out;
 }
 
-static mp_aframe_t* __FASTCALL__ method2_int16(af_volnorm_t *s,const mp_aframe_t *c)
+static mp_aframe_t __FASTCALL__ method2_int16(af_volnorm_t *s,const mp_aframe_t& c)
 {
     unsigned	i = 0;
-    int16_t*	data = (int16_t*)c->audio;	// Audio data
-    unsigned	len = c->len/2;		// Number of samples
+    int16_t*	data = (int16_t*)c.audio;	// Audio data
+    unsigned	len = c.len/2;		// Number of samples
     float	curavg = 0.0, newavg, avg = 0.0;
     int		tmp, totallen = 0;
-    mp_aframe_t*out = new_mp_aframe_genome(c);
-    mp_alloc_aframe(out);
+    mp_aframe_t out = c.genome();
+    out.alloc();
 
     for (i = 0; i < len; i++) {
 	tmp = data[i];
@@ -232,7 +232,7 @@ static mp_aframe_t* __FASTCALL__ method2_int16(af_volnorm_t *s,const mp_aframe_t
     for (i = 0; i < len; i++) {
 	tmp = s->mul * data[i];
 	tmp = clamp(tmp, SHRT_MIN, SHRT_MAX);
-	((int16_t*)out->audio)[i] = tmp;
+	((int16_t*)out.audio)[i] = tmp;
     }
 
     // Evaulation of newavg (not 100% accurate because of values clamping)
@@ -245,15 +245,15 @@ static mp_aframe_t* __FASTCALL__ method2_int16(af_volnorm_t *s,const mp_aframe_t
     return out;
 }
 
-static mp_aframe_t* __FASTCALL__ method2_float(af_volnorm_t *s,const mp_aframe_t *c)
+static mp_aframe_t __FASTCALL__ method2_float(af_volnorm_t *s,const mp_aframe_t& c)
 {
     unsigned	i = 0;
-    float*	data = (float*)c->audio;	// Audio data
-    unsigned	len = c->len/4;		// Number of samples
+    float*	data = (float*)c.audio;	// Audio data
+    unsigned	len = c.len/4;		// Number of samples
     float	curavg = 0.0, newavg, avg = 0.0, tmp;
     unsigned	totallen = 0;
-    mp_aframe_t*out = new_mp_aframe_genome(c);
-    mp_alloc_aframe(out);
+    mp_aframe_t out = c.genome();
+    out.alloc();
 
     for (i = 0; i < len; i++) {
 	tmp = data[i];
@@ -277,7 +277,7 @@ static mp_aframe_t* __FASTCALL__ method2_float(af_volnorm_t *s,const mp_aframe_t
     }
 
     // Scale & clamp the samples
-    for (i = 0; i < len; i++) ((float*)out->audio)[i] = data[i] * s->mul;
+    for (i = 0; i < len; i++) ((float*)out.audio)[i] = data[i] * s->mul;
 
     // Evaulation of newavg (not 100% accurate because of values clamping)
      newavg = s->mul * curavg;
@@ -290,10 +290,10 @@ static mp_aframe_t* __FASTCALL__ method2_float(af_volnorm_t *s,const mp_aframe_t
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& in)
 {
     af_volnorm_t *s = reinterpret_cast<af_volnorm_t*>(af->setup);
-    mp_aframe_t* out;
+    mp_aframe_t out=in.genome();
 
     if(af->conf.format == (MPAF_SI | MPAF_NE)) {
 	if (s->method)	out=method2_int16(s, in);

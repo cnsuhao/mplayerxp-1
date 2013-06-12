@@ -328,68 +328,68 @@ static void __FASTCALL__ scale(struct SwsContext *sws1, struct SwsContext *sws2,
     }
 }
 
-static int __FASTCALL__ put_frame(vf_instance_t* vf, mp_image_t *mpi){
-    mp_image_t *dmpi;//=mpi->priv;
+static int __FASTCALL__ put_frame(vf_instance_t* vf,const mp_image_t& smpi){
+    mp_image_t *dmpi;//=smpi.priv;
     const uint8_t *planes[4];
     unsigned stride[4];
-    planes[0]=mpi->planes[0];
-    stride[0]=mpi->stride[0];
-    if(mpi->flags&MP_IMGFLAG_PLANAR){
-	  planes[1]=mpi->planes[1];
-	  planes[2]=mpi->planes[2];
-	  planes[3]=mpi->planes[3];
-	  stride[1]=mpi->stride[1];
-	  stride[2]=mpi->stride[2];
-	  stride[3]=mpi->stride[3];
+    planes[0]=smpi.planes[0];
+    stride[0]=smpi.stride[0];
+    if(smpi.flags&MP_IMGFLAG_PLANAR){
+	  planes[1]=smpi.planes[1];
+	  planes[2]=smpi.planes[2];
+	  planes[3]=smpi.planes[3];
+	  stride[1]=smpi.stride[1];
+	  stride[2]=smpi.stride[2];
+	  stride[3]=smpi.stride[3];
     }
     MSG_DBG2("vf_scale.put_frame was called\n");
     dmpi=vf_get_new_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
-	vf->priv->w, vf->priv->h,mpi->xp_idx);
-    scale(vf->priv->ctx, vf->priv->ctx2, planes, stride, mpi->y, mpi->h, dmpi->planes, dmpi->stride, vf->priv->interlaced);
-    return vf_next_put_slice(vf,dmpi);
+	vf->priv->w, vf->priv->h,smpi.xp_idx);
+    scale(vf->priv->ctx, vf->priv->ctx2, planes, stride, smpi.y, smpi.h, dmpi->planes, dmpi->stride, vf->priv->interlaced);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
-    mp_image_t *dmpi;//=mpi->priv;
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
+    mp_image_t *dmpi;//=smpi.priv;
     const uint8_t *planes[4];
     uint8_t* dplanes[4];
     unsigned stride[4];
-    planes[0]=mpi->planes[0];
-    stride[0]=mpi->stride[0];
-    if(mpi->flags&MP_IMGFLAG_PLANAR){
-	  planes[1]=mpi->planes[1];
-	  planes[2]=mpi->planes[2];
-	  planes[3]=mpi->planes[3];
-	  stride[1]=mpi->stride[1];
-	  stride[2]=mpi->stride[2];
-	  stride[3]=mpi->stride[3];
+    planes[0]=smpi.planes[0];
+    stride[0]=smpi.stride[0];
+    if(smpi.flags&MP_IMGFLAG_PLANAR){
+	  planes[1]=smpi.planes[1];
+	  planes[2]=smpi.planes[2];
+	  planes[3]=smpi.planes[3];
+	  stride[1]=smpi.stride[1];
+	  stride[2]=smpi.stride[2];
+	  stride[3]=smpi.stride[3];
     }
-    MSG_DBG2("vf_scale.put_slice was called[%i %i]\n",mpi->y, mpi->h);
+    MSG_DBG2("vf_scale.put_slice was called[%i %i]\n",smpi.y, smpi.h);
     dmpi=vf_get_new_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
-	vf->priv->w, vf->priv->h,mpi->xp_idx);
+	vf->priv->w, vf->priv->h,smpi.xp_idx);
     /* Try to fake first slice*/
     dplanes[0] = dmpi->planes[0];
-    if(mpi->flags&MP_IMGFLAG_PLANAR) {
+    if(smpi.flags&MP_IMGFLAG_PLANAR) {
 	dplanes[1] = dmpi->planes[1];
 	dplanes[2] = dmpi->planes[2];
 	dplanes[3] = dmpi->planes[3];
     }
-    planes[0]  += mpi->y*mpi->stride[0];
-    dplanes[0] += mpi->y*dmpi->stride[0];
-    if(mpi->flags&MP_IMGFLAG_PLANAR){
-	planes[1] += (mpi->y>>mpi->chroma_y_shift)*mpi->stride[1];
-	planes[2] += (mpi->y>>mpi->chroma_y_shift)*mpi->stride[2];
-	planes[3] += (mpi->y>>mpi->chroma_y_shift)*mpi->stride[3];
-	dplanes[1]+= (mpi->y>>dmpi->chroma_y_shift)*dmpi->stride[0];
-	dplanes[2]+= (mpi->y>>dmpi->chroma_y_shift)*dmpi->stride[1];
-	dplanes[3]+= (mpi->y>>dmpi->chroma_y_shift)*dmpi->stride[2];
+    planes[0]  += smpi.y*smpi.stride[0];
+    dplanes[0] += smpi.y*dmpi->stride[0];
+    if(smpi.flags&MP_IMGFLAG_PLANAR){
+	planes[1] += (smpi.y>>smpi.chroma_y_shift)*smpi.stride[1];
+	planes[2] += (smpi.y>>smpi.chroma_y_shift)*smpi.stride[2];
+	planes[3] += (smpi.y>>smpi.chroma_y_shift)*smpi.stride[3];
+	dplanes[1]+= (smpi.y>>dmpi->chroma_y_shift)*dmpi->stride[0];
+	dplanes[2]+= (smpi.y>>dmpi->chroma_y_shift)*dmpi->stride[1];
+	dplanes[3]+= (smpi.y>>dmpi->chroma_y_shift)*dmpi->stride[2];
     }
-    scale(vf->priv->ctx, vf->priv->ctx2, planes, stride, 0, mpi->h, dplanes, dmpi->stride, vf->priv->interlaced);
-    dmpi->y = mpi->y;
-    dmpi->h = mpi->h;
-    return vf_next_put_slice(vf,dmpi);
+    scale(vf->priv->ctx, vf->priv->ctx2, planes, stride, 0, smpi.h, dplanes, dmpi->stride, vf->priv->interlaced);
+    dmpi->y = smpi.y;
+    dmpi->h = smpi.h;
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request, any_t* data){

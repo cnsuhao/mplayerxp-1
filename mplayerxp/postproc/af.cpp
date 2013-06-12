@@ -487,28 +487,28 @@ static af_instance_t* af_add(af_stream_t* s,char* name){
 }
 
 // Filter data chunk through the filters in the list
-mp_aframe_t* __FASTCALL__ af_play(af_stream_t* s,const mp_aframe_t* data)
+mp_aframe_t __FASTCALL__ af_play(af_stream_t* s,const mp_aframe_t& data)
 {
-    mp_aframe_t* in = const_cast<mp_aframe_t*>(data);
-    mp_aframe_t* out;
+    mp_aframe_t* in = &const_cast<mp_aframe_t&>(data);
+    mp_aframe_t out = mp_aframe_t(data);
     af_instance_t* af=s->first;
     // Iterate through all filters
     do{
 	MSG_DBG2("filtering %s\n",af->info->name);
-	out=af->play(af,in);
-	if(out!=in && in!=data) free_mp_aframe(in);
-	in=out;
+	out=af->play(af,*in);
+	if(in!=&data) delete in;
+	in=&out;
 	af=af->next;
-    }while(af && out);
+    }while(af);
     return out;
 }
 
 /* Helper function used to calculate the exact buffer length needed
    when buffers are resized. The returned length is >= than what is
    needed */
-unsigned __FASTCALL__ af_lencalc(frac_t mul,const mp_aframe_t* d){
-  unsigned t = (d->format&MPAF_BPS_MASK)*d->nch;
-  return t*(((d->len/t)*mul.n)/(unsigned)mul.d + 1);
+unsigned __FASTCALL__ af_lencalc(frac_t mul,const mp_aframe_t& d){
+  unsigned t = (d.format&MPAF_BPS_MASK)*d.nch;
+  return t*(((d.len/t)*mul.n)/(unsigned)mul.d + 1);
 }
 
 /* Calculate how long the output from the filters will be given the
@@ -518,7 +518,7 @@ int __FASTCALL__ af_outputlen(const af_stream_t* s, int len)
 {
   unsigned t = (s->input.format&MPAF_BPS_MASK)*s->input.nch;
   af_instance_t* af=s->first;
-  register frac_t mul = {1,1};
+  frac_t mul = {1,1};
   // Iterate through all filters
   do{
     mul.n *= af->mul.n;
@@ -536,7 +536,7 @@ int __FASTCALL__ af_inputlen(const af_stream_t* s, int len)
 {
   unsigned t = (s->input.format&MPAF_BPS_MASK)*s->input.nch;
   af_instance_t* af=s->first;
-  register frac_t mul = {1,1};
+  frac_t mul = {1,1};
   // Iterate through all filters
   do{
     mul.n *= af->mul.n;
@@ -550,7 +550,7 @@ int __FASTCALL__ af_inputlen(const af_stream_t* s, int len)
 double __FASTCALL__ af_calc_delay(af_stream_t* s)
 {
   af_instance_t* af=s->first;
-  register double delay = 0.0;
+  double delay = 0.0;
   // Iterate through all filters
   while(af){
     delay += af->delay;

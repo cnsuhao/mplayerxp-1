@@ -14,7 +14,7 @@ struct menu_t {
     ~menu_t() {}
 
     struct MPContext *ctx;
-    void (*draw)(menu_t* menu,mp_image_t* mpi);
+    void (*draw)(menu_t* menu,const mp_image_t& mpi);
     void (*read_cmd)(menu_t* menu,int cmd);
     void (*read_key)(menu_t* menu,int cmd);
     void (*close)(menu_t* menu);
@@ -54,7 +54,7 @@ void menu_uninit(void);
 /// Open a menu defined in the config file
 menu_t* menu_open(const std::string& name,libinput_t&libinput);
 
-void menu_draw(menu_t* menu,mp_image_t* mpi);
+void menu_draw(menu_t* menu,const mp_image_t& mpi);
 void menu_read_cmd(menu_t* menu,int cmd);
 void menu_close(menu_t* menu);
 void menu_read_key(menu_t* menu,int cmd);
@@ -74,7 +74,7 @@ enum {
     MENU_TEXT_HMASK	=(MENU_TEXT_LEFT|MENU_TEXT_HCENTER|MENU_TEXT_RIGHT),
     MENU_TEXT_CENTER	=(MENU_TEXT_VCENTER|MENU_TEXT_HCENTER)
 };
-void menu_draw_text(mp_image_t* mpi,const std::string& txt, int x, int y);
+void menu_draw_text(const mp_image_t& mpi,const std::string& txt, int x, int y);
 int menu_text_length(const std::string& txt);
 int menu_text_num_lines(const std::string& txt, int max_width);
 
@@ -82,9 +82,9 @@ void menu_text_size(const std::string& txt,int max_width,
 		    int vspace, int warp,
 		    int* _w, int* _h);
 
-void menu_draw_text_full(mp_image_t* mpi,const std::string& txt,
+void menu_draw_text_full(const mp_image_t& mpi,const std::string& txt,
 			 int x, int y,int w, int h,
 			 int vspace, int warp, int align, int anchor);
 
-void menu_draw_box(const mp_image_t* mpi, unsigned char grey, unsigned char alpha, int x, int y, int w, int h);
+void menu_draw_box(const mp_image_t& mpi, unsigned char grey, unsigned char alpha, int x, int y, int w, int h);
 #endif

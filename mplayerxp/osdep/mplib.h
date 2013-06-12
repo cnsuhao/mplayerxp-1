@@ -18,6 +18,12 @@
 #include "mp_malloc.h"
 
 namespace	usr {
+
+    enum mplayerxp_data_type_qualifier__byte_t{ type_byte=0 };
+    enum mplayerxp_data_type_qualifier__word_t{ type_word=0 };
+    enum mplayerxp_data_type_qualifier_dword_t{ type_dword=0 };
+    enum mplayerxp_data_type_qualifier_qword_t{ type_qword=0 };
+
     class Opaque {
 	public:
 	    Opaque();

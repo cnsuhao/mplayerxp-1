@@ -51,7 +51,7 @@ static MPXP_Rc realaud_probe(Demuxer* demuxer)
 {
     unsigned int chunk_id;
 
-    chunk_id = demuxer->stream->read_dword_le();
+    chunk_id = demuxer->stream->read_le(type_dword);
     if (chunk_id == FOURCC_DOTRA)
 	return MPXP_Ok;
     else
@@ -112,7 +112,7 @@ static Opaque* realaud_open(Demuxer* demuxer)
 	sh->ds=demuxer->audio;
 	demuxer->audio->sh = sh;
 
-	realaud_priv->version = demuxer->stream->read_word();
+	realaud_priv->version = demuxer->stream->read(type_word);
 	MSG_V("[RealAudio] File version: %d\n", realaud_priv->version);
 	if ((realaud_priv->version < 3) || (realaud_priv->version > 4)) {
 		MSG_WARN("[RealAudio] ra version %d is not supported yet, please "
@@ -120,40 +120,40 @@ static Opaque* realaud_open(Demuxer* demuxer)
 		return 0;
 	}
 	if (realaud_priv->version == 3) {
-		realaud_priv->hdr_size = demuxer->stream->read_word();
+		realaud_priv->hdr_size = demuxer->stream->read(type_word);
 		demuxer->stream->skip( 10);
-		realaud_priv->data_size = demuxer->stream->read_dword();
+		realaud_priv->data_size = demuxer->stream->read(type_dword);
 	} else {
 		demuxer->stream->skip( 2);
-		realaud_priv->dotranum = demuxer->stream->read_dword();
-		realaud_priv->data_size = demuxer->stream->read_dword();
-		realaud_priv->version2 = demuxer->stream->read_word();
-		realaud_priv->hdr_size = demuxer->stream->read_dword();
-		realaud_priv->codec_flavor = demuxer->stream->read_word();
-		realaud_priv->coded_framesize = demuxer->stream->read_dword();
+		realaud_priv->dotranum = demuxer->stream->read(type_dword);
+		realaud_priv->data_size = demuxer->stream->read(type_dword);
+		realaud_priv->version2 = demuxer->stream->read(type_word);
+		realaud_priv->hdr_size = demuxer->stream->read(type_dword);
+		realaud_priv->codec_flavor = demuxer->stream->read(type_word);
+		realaud_priv->coded_framesize = demuxer->stream->read(type_dword);
 		demuxer->stream->skip( 4); // data size?
 		demuxer->stream->skip( 8);
-		realaud_priv->sub_packet_h = demuxer->stream->read_word();
-		realaud_priv->frame_size = demuxer->stream->read_word();
+		realaud_priv->sub_packet_h = demuxer->stream->read(type_word);
+		realaud_priv->frame_size = demuxer->stream->read(type_word);
 		MSG_V("[RealAudio] Frame size: %d\n", realaud_priv->frame_size);
-		realaud_priv->sub_packet_size = demuxer->stream->read_word();
+		realaud_priv->sub_packet_size = demuxer->stream->read(type_word);
 		MSG_V("[RealAudio] Sub packet size: %d\n", realaud_priv->sub_packet_size);
 		demuxer->stream->skip( 2);
-		sh->rate = demuxer->stream->read_word();
+		sh->rate = demuxer->stream->read(type_word);
 		demuxer->stream->skip( 2);
-		sh->afmt = bps2afmt(demuxer->stream->read_word());
-		sh->nch = demuxer->stream->read_word();
+		sh->afmt = bps2afmt(demuxer->stream->read(type_word));
+		sh->nch = demuxer->stream->read(type_word);
 		MSG_V("[RealAudio] %d channel, %d bit, %dHz\n", sh->nch,
 			afmt2bps(sh->afmt), sh->rate);
-		i = demuxer->stream->read_char();
-		*((unsigned int *)(realaud_priv->genr)) = demuxer->stream->read_dword();
+		i = demuxer->stream->read(type_byte);
+		*((unsigned int *)(realaud_priv->genr)) = demuxer->stream->read(type_dword);
 		if (i != 4) {
 			MSG_WARN("[RealAudio] Genr size is not 4 (%d), please report to "
 				"MPlayer developers\n", i);
 			demuxer->stream->skip( i - 4);
 		}
-		i = demuxer->stream->read_char();
-		sh->wtag = demuxer->stream->read_dword_le();
+		i = demuxer->stream->read(type_byte);
+		sh->wtag = demuxer->stream->read_le(type_dword);
 		if (i != 4) {
 			MSG_WARN("[RealAudio] FourCC size is not 4 (%d), please report to "
 				"MPlayer developers\n", i);
@@ -162,28 +162,28 @@ static Opaque* realaud_open(Demuxer* demuxer)
 		demuxer->stream->skip( 3);
 	}
 
-	if ((i = demuxer->stream->read_char()) != 0) {
+	if ((i = demuxer->stream->read(type_byte)) != 0) {
 		buf = new char [i+1];
 		bp=demuxer->stream->read(i); memcpy(buf,bp.data(),bp.size());
 		buf[i] = 0;
 		demuxer->info().add( INFOT_NAME, buf);
 		delete buf;
 	}
-	if ((i = demuxer->stream->read_char()) != 0) {
+	if ((i = demuxer->stream->read(type_byte)) != 0) {
 		buf = new char [i+1];
 		bp=demuxer->stream->read(i); memcpy(buf,bp.data(),bp.size());
 		buf[i] = 0;
 		demuxer->info().add( INFOT_AUTHOR, buf);
 		delete buf;
 	}
-	if ((i = demuxer->stream->read_char()) != 0) {
+	if ((i = demuxer->stream->read(type_byte)) != 0) {
 		buf = new char [i+1];
 		bp=demuxer->stream->read(i); memcpy(buf,bp.data(),bp.size());
 		buf[i] = 0;
 		demuxer->info().add( INFOT_COPYRIGHT, buf);
 		delete buf;
 	}
-	if ((i = demuxer->stream->read_char()) != 0) {
+	if ((i = demuxer->stream->read(type_byte)) != 0) {
 		buf = new char [i+1];
 		bp=demuxer->stream->read(i); memcpy(buf,bp.data(),bp.size());
 		buf[i] = 0;
@@ -194,8 +194,8 @@ static Opaque* realaud_open(Demuxer* demuxer)
 	if (realaud_priv->version == 3) {
 	    if(realaud_priv->hdr_size + 8 > demuxer->stream->tell()) {
 		demuxer->stream->skip( 1);
-		i = demuxer->stream->read_char();
-		sh->wtag = demuxer->stream->read_dword_le();
+		i = demuxer->stream->read(type_byte);
+		sh->wtag = demuxer->stream->read_le(type_dword);
 		if (i != 4) {
 			MSG_WARN("[RealAudio] FourCC size is not 4 (%d), please report to "
 				"MPlayer developers\n", i);

@@ -164,21 +164,21 @@ static float steering_matrix[][12] = {
 //static int amp_L = 0, amp_R = 0, amp_C = 0, amp_S = 0;
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind){
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& ind){
     af_surround_t*s   = (af_surround_t*)af->setup;
     float*	m   = steering_matrix[0];
-    float*	in  = reinterpret_cast<float*>(ind->audio);	// Input audio data
+    float*	in  = reinterpret_cast<float*>(ind.audio);	// Input audio data
     float*	out = NULL;		// Output audio data
-    float*	end = in + ind->len / sizeof(float); // Loop end
+    float*	end = in + ind.len / sizeof(float); // Loop end
     int		i   = s->i;	// Filter queue index
     int		ri  = s->ri;	// Read index for delay queue
     int		wi  = s->wi;	// Write index for delay queue
 
-    mp_aframe_t* outd = new_mp_aframe_genome(ind);
-    outd->len=af_lencalc(af->mul,ind);
-    mp_alloc_aframe(outd);
+    mp_aframe_t outd = ind.genome();
+    outd.len=af_lencalc(af->mul,ind);
+    outd.alloc();
 
-    out = reinterpret_cast<float*>(outd->audio);
+    out = reinterpret_cast<float*>(outd.audio);
 
     while(in < end){
     /* Dominance:
@@ -231,8 +231,8 @@ static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind){
 	ADDQUE(i, s->lq, m[4]*in[0]+m[5]*in[1]);
 #endif
 	// Next sample...
-	in = &in[ind->nch];
-	out = &out[outd->nch];
+	in = &in[ind.nch];
+	out = &out[outd.nch];
     }
 
     // Save indexes

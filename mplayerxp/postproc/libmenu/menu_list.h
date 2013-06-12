@@ -39,7 +39,7 @@ typedef void (*free_entry_t)(list_entry_t* entry);
 
 void menu_list_read_cmd(menu_t* menu,int cmd);
 void menu_list_read_key(menu_t* menu,int c,int jump_to);
-void menu_list_draw(menu_t* menu,mp_image_t* mpi);
+void menu_list_draw(menu_t* menu,const mp_image_t& mpi);
 void menu_list_add_entry(menu_t* menu,list_entry_t* entry);
 void menu_list_init(menu_t* menu);
 void menu_list_uninit(menu_t* menu,free_entry_t free_func);

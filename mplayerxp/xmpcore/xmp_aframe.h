@@ -1,7 +1,8 @@
 #ifndef __XMP_AUDIO_FRAME_INCLUDED_H
 #define __XMP_AUDIO_FRAME_INCLUDED_H 1
-
 #include "mpxp_config.h"
+#include "osdep/mplib.h"
+
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -51,9 +52,9 @@ namespace	usr {
 
     /* Decodes the format from mplayer format to libaf format */
     mpaf_format_e __FASTCALL__ afmt2mpaf(unsigned format);
-    unsigned __FASTCALL__      mpaf2afmt(mpaf_format_e fmt);
-    char* __FASTCALL__         mpaf_fmt2str(mpaf_format_e format, char* str, size_t size);
-    mpaf_format_e __FASTCALL__ mpaf_str2fmt(const char *str);
+    unsigned      __FASTCALL__ mpaf2afmt(mpaf_format_e fmt);
+    std::string   __FASTCALL__ mpaf_fmt2str(mpaf_format_e format);
+    mpaf_format_e __FASTCALL__ mpaf_str2fmt(const std::string& str);
 
     inline int mpaf_test(mpaf_format_e f,unsigned bits) { return f&bits; }
     inline int mpaf_testa(mpaf_format_e f,unsigned bits) { return (f&bits)==bits; }
@@ -62,7 +63,16 @@ namespace	usr {
 	MP_AFLG_FINALIZED		=0x80000000
     };
 
-    struct mp_aframe_t {
+    struct mp_aframe_t : public Opaque {
+	mp_aframe_t(unsigned rate,unsigned nch,mpaf_format_e format,unsigned xp_idx);
+	mp_aframe_t(const mp_aframe_t& in);
+	virtual ~mp_aframe_t();
+
+	virtual void		alloc();
+	virtual mp_aframe_t	genome() const;
+
+	mp_aframe_t&		operator=(const mp_aframe_t&);
+
 	unsigned	flags; /* currently unused */
 	float		pts;   /* PTS if this frame */
 	unsigned	xp_idx;/* index in ring buffer */
@@ -73,10 +83,5 @@ namespace	usr {
 	unsigned	nch;   /* number of channels */
 	mpaf_format_e	format;/* PCM format of audio */
     };
-
-    mp_aframe_t*	new_mp_aframe(unsigned rate,unsigned nch,mpaf_format_e format,unsigned xp_idx);
-    mp_aframe_t*	new_mp_aframe_genome(const mp_aframe_t* in);
-    void		mp_alloc_aframe(mp_aframe_t* it);
-    int			free_mp_aframe(mp_aframe_t* mpaf);
 } // namespace
 #endif

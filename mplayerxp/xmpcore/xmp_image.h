@@ -1,10 +1,10 @@
 #ifndef __XMP_IMAGE_H_INCLUDED
 #define __XMP_IMAGE_H_INCLUDED 1
-
 #include <stdlib.h>
 #include <limits.h>
 
 #include "mpxp_config.h"
+#include "osdep/mplib.h"
 
 namespace	usr {
     //--- buffer content restrictions:
@@ -65,8 +65,20 @@ namespace	usr {
     };
 
     enum { XP_IDX_INVALID=UINT_MAX };
-    struct mp_image_t {
-	unsigned		xp_idx; /* index of xp_frame associated with this image */
+    struct mp_image_t : public Opaque {
+	mp_image_t(unsigned w,unsigned h,unsigned xp_idx);
+	mp_image_t(const mp_image_t& in);
+	virtual ~mp_image_t();
+
+	mp_image_t&		operator=(const mp_image_t&);
+
+	virtual void	setfmt(unsigned int out_fmt);
+	virtual void	alloc();
+	virtual void	copy_planes(const mp_image_t& mpi);
+	virtual void	copy_genome(const mp_image_t& mpi);
+	virtual void	fake_slice(const mp_image_t& mpi,unsigned y,unsigned h);
+
+	unsigned	xp_idx; /* index of xp_frame associated with this image */
 	unsigned int	flags;
 	unsigned char	type;
 	unsigned char	bpp;  // bits/pixel. NOT depth! for RGB it will be n*8
@@ -86,15 +98,7 @@ namespace	usr {
 	int		chroma_height;
 	int		chroma_x_shift; // horizontal
 	int		chroma_y_shift; // vertical
-	any_t*		priv; /* for private use by filter or vo driver (to store buffer id or dmpi) */
+	Opaque*		priv; /* for private use by filter or vo driver (to store buffer id or dmpi) */
     };
-
-    void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt);
-    mp_image_t* new_mp_image(unsigned w,unsigned h,unsigned xp_idx);
-    void free_mp_image(const mp_image_t* mpi);
-    mp_image_t* alloc_mpi(unsigned w, unsigned h, unsigned int fmt,unsigned xp_idx);
-    void mpi_alloc_planes(mp_image_t *mpi);
-    void copy_mpi(mp_image_t *dmpi,const mp_image_t *mpi);
-    void mpi_fake_slice(mp_image_t *dmpi,const mp_image_t *mpi,unsigned y,unsigned height);
 }// namespace
 #endif

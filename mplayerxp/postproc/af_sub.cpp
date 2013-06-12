@@ -128,18 +128,18 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& ind)
 {
     af_sub_t*	s   = reinterpret_cast<af_sub_t*>(af->setup); // Setup for this instance
-    float*	in  = reinterpret_cast<float*>(ind->audio);// Audio data
-    unsigned	len = ind->len/4;// Number of samples in current audio block
-    unsigned	nch = ind->nch;	 // Number of channels
+    float*	in  = reinterpret_cast<float*>(ind.audio);// Audio data
+    unsigned	len = ind.len/4;// Number of samples in current audio block
+    unsigned	nch = ind.nch;	 // Number of channels
     unsigned	ch  = s->ch;	 // Channel in which to insert the sub audio
     unsigned	i;
 
-    mp_aframe_t* outd = new_mp_aframe_genome(ind);
-    mp_alloc_aframe(outd);
-    float*	out = reinterpret_cast<float*>(outd->audio);	 // Audio data
+    mp_aframe_t outd = ind.genome();
+    outd.alloc();
+    float*	out = reinterpret_cast<float*>(outd.audio);	 // Audio data
 
     // Run filter
     for(i=0;i<len;i+=nch){

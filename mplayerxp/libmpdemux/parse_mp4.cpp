@@ -22,7 +22,7 @@ int mp4_read_descr_len(Memory_Stream& s) {
   uint32_t length = 0;
 
   do {
-    b = s.read_char();
+    b = s.read(type_byte);
     numBytes++;
     length = (length << 7) | (b & 0x7F);
   } while ((b & 0x80) && numBytes < 4);
@@ -44,18 +44,18 @@ int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
 #endif
   memset(esds, 0, sizeof(esds_t));
 
-  esds->version = s.read_char();
+  esds->version = s.read(type_byte);
   esds->flags = s.read_int24();
   MSG_V("ESDS MPEG4 version: %d  flags: 0x%06X\n",
       esds->version, esds->flags);
 
   /* get and verify ES_DescrTag */
-  if (s.read_char() == MP4ESDescrTag) {
+  if (s.read(type_byte) == MP4ESDescrTag) {
     /* read length */
     len = mp4_read_descr_len(s);
 
-    esds->ESId = s.read_word();
-    esds->streamPriority = s.read_char();
+    esds->ESId = s.read(type_word);
+    esds->streamPriority = s.read(type_byte);
     MSG_V(
 	"ESDS MPEG4 ES Descriptor (%dBytes):\n"
 	" -> ESId: %d\n"
@@ -67,14 +67,14 @@ int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
       return 1;
     }
   } else {
-    esds->ESId = s.read_word();
+    esds->ESId = s.read(type_word);
     MSG_V(
 	"ESDS MPEG4 ES Descriptor (%dBytes):\n"
 	" -> ESId: %d\n", 2, esds->ESId);
   }
 
   /* get and verify DecoderConfigDescrTab */
-  if (s.read_char() != MP4DecConfigDescrTag) {
+  if (s.read(type_byte) != MP4DecConfigDescrTag) {
     delete &s;
     return 1;
   }
@@ -82,11 +82,11 @@ int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
   /* read length */
   len = mp4_read_descr_len(s);
 
-  esds->objectTypeId = s.read_char();
-  esds->streamType = s.read_char();
+  esds->objectTypeId = s.read(type_byte);
+  esds->streamType = s.read(type_byte);
   esds->bufferSizeDB = s.read_int24();
-  esds->maxBitrate = s.read_dword();
-  esds->avgBitrate = s.read_dword();
+  esds->maxBitrate = s.read(type_dword);
+  esds->avgBitrate = s.read(type_dword);
   MSG_V(
       "ESDS MPEG4 Decoder Config Descriptor (%dBytes):\n"
       " -> objectTypeId: %d\n"
@@ -106,7 +106,7 @@ int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
   }
 
   /* get and verify DecSpecificInfoTag */
-  if (s.read_char() != MP4DecSpecificDescrTag) {
+  if (s.read(type_byte) != MP4DecSpecificDescrTag) {
     delete &s;
     return 0;
   }
@@ -124,7 +124,7 @@ int mp4_parse_esds(unsigned char *data, int datalen, esds_t *esds) {
   MSG_V("ESDS MPEG4 Decoder Specific Descriptor (%dBytes)\n", len);
 
   /* get and verify SLConfigDescrTag */
-  if(s.read_char() != MP4SLConfigDescrTag) {
+  if(s.read(type_byte) != MP4SLConfigDescrTag) {
     delete &s;
     return 0;
   }

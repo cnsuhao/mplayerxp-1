@@ -43,7 +43,7 @@ struct vf_priv_t {
 	int Coefs[4][512*16];
 	unsigned char *Line;
 	unsigned short *Frame[3];
-	mp_image_t *pmpi;
+	const mp_image_t* pmpi;
 };
 
 
@@ -77,7 +77,7 @@ static inline unsigned int LowPassMul(unsigned int PrevMul, unsigned int CurrMul
     return CurrMul + Coef[d];
 }
 
-static void __FASTCALL__ deNoise(unsigned char *Frame,        // mpi->planes[x]
+static void __FASTCALL__ deNoise(unsigned char *Frame,        // smpi->planes[x]
 		    unsigned char *FramePrev,    // pmpi->planes[x]
 		    unsigned char *FrameDest,    // dmpi->planes[x]
 		    unsigned char *LineAnt,      // vf->priv->Line (width bytes)
@@ -119,7 +119,7 @@ static void __FASTCALL__ deNoise(unsigned char *Frame,        // mpi->planes[x]
     }
 }
 
-static void __FASTCALL__ hqDeNoise(unsigned char *Frame,        // mpi->planes[x]
+static void __FASTCALL__ hqDeNoise(unsigned char *Frame,        // smpi->planes[x]
 		    unsigned char *FrameDest,    // dmpi->planes[x]
 		    unsigned int *LineAnt,      // vf->priv->Line (width bytes)
 		    unsigned short **FrameAntPtr,
@@ -177,12 +177,12 @@ static void __FASTCALL__ hqDeNoise(unsigned char *Frame,        // mpi->planes[x
     }
 }
 
-static int __FASTCALL__ hq_put_slice(vf_instance_t* vf, mp_image_t *mpi){
-	int cw= mpi->w >> mpi->chroma_x_shift;
-	int ch= mpi->h >> mpi->chroma_y_shift;
-	int W = mpi->w, H = mpi->h;
+static int __FASTCALL__ hq_put_slice(vf_instance_t* vf,const mp_image_t& smpi){
+	int cw= smpi.w >> smpi.chroma_x_shift;
+	int ch= smpi.h >> smpi.chroma_y_shift;
+	int W = smpi.w, H = smpi.h;
 
-	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,mpi);
+	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,smpi);
 
 	if(!dmpi) return 0;
 #ifdef _OPENMP
@@ -190,75 +190,75 @@ static int __FASTCALL__ hq_put_slice(vf_instance_t* vf, mp_image_t *mpi){
 {
 #pragma omp section
 #endif
-	hqDeNoise(mpi->planes[0], dmpi->planes[0],
+	hqDeNoise(smpi.planes[0], dmpi->planes[0],
 		reinterpret_cast<unsigned*>(vf->priv->Line),
 		&vf->priv->Frame[0], W, H,
-		mpi->stride[0], dmpi->stride[0],
+		smpi.stride[0], dmpi->stride[0],
 		vf->priv->Coefs[0],
 		vf->priv->Coefs[0],
 		vf->priv->Coefs[1]);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-	hqDeNoise(mpi->planes[1], dmpi->planes[1],
+	hqDeNoise(smpi.planes[1], dmpi->planes[1],
 		reinterpret_cast<unsigned*>(vf->priv->Line),
 		&vf->priv->Frame[1], cw, ch,
-		mpi->stride[1], dmpi->stride[1],
+		smpi.stride[1], dmpi->stride[1],
 		vf->priv->Coefs[2],
 		vf->priv->Coefs[2],
 		vf->priv->Coefs[3]);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-	hqDeNoise(mpi->planes[2], dmpi->planes[2],
+	hqDeNoise(smpi.planes[2], dmpi->planes[2],
 		reinterpret_cast<unsigned*>(vf->priv->Line),
 		&vf->priv->Frame[2], cw, ch,
-		mpi->stride[2], dmpi->stride[2],
+		smpi.stride[2], dmpi->stride[2],
 		vf->priv->Coefs[2],
 		vf->priv->Coefs[2],
 		vf->priv->Coefs[3]);
 #ifdef _OPENMP
 }
 #endif
-	return vf_next_put_slice(vf,dmpi);
+	return vf_next_put_slice(vf,*dmpi);
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
-	int cw= mpi->w >> mpi->chroma_x_shift;
-	int ch= mpi->h >> mpi->chroma_y_shift;
-	int W = mpi->w, H = mpi->h;
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
+	int cw= smpi.w >> smpi.chroma_x_shift;
+	int ch= smpi.h >> smpi.chroma_y_shift;
+	int W = smpi.w, H = smpi.h;
 
-	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,mpi);
+	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,smpi);
 
 	if(!dmpi) return 0;
-	if (!vf->priv->pmpi) vf->priv->pmpi=mpi;
+	if (!vf->priv->pmpi) vf->priv->pmpi=&smpi;
 
 #ifdef _OPENMP
 #pragma omp parallel sections
 {
 #pragma omp section
 #endif
-	deNoise(mpi->planes[0], vf->priv->pmpi->planes[0], dmpi->planes[0],
+	deNoise(smpi.planes[0], vf->priv->pmpi->planes[0], dmpi->planes[0],
 		vf->priv->Line, W, H,
-		mpi->stride[0], vf->priv->pmpi->stride[0], dmpi->stride[0],
+		smpi.stride[0], vf->priv->pmpi->stride[0], dmpi->stride[0],
 		vf->priv->Coefs[0] + 256,
 		vf->priv->Coefs[0] + 256,
 		vf->priv->Coefs[1] + 256);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-	deNoise(mpi->planes[1], vf->priv->pmpi->planes[1], dmpi->planes[1],
+	deNoise(smpi.planes[1], vf->priv->pmpi->planes[1], dmpi->planes[1],
 		vf->priv->Line, cw, ch,
-		mpi->stride[1], vf->priv->pmpi->stride[1], dmpi->stride[1],
+		smpi.stride[1], vf->priv->pmpi->stride[1], dmpi->stride[1],
 		vf->priv->Coefs[2] + 256,
 		vf->priv->Coefs[2] + 256,
 		vf->priv->Coefs[3] + 256);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-	deNoise(mpi->planes[2], vf->priv->pmpi->planes[2], dmpi->planes[2],
+	deNoise(smpi.planes[2], vf->priv->pmpi->planes[2], dmpi->planes[2],
 		vf->priv->Line, cw, ch,
-		mpi->stride[2], vf->priv->pmpi->stride[2], dmpi->stride[2],
+		smpi.stride[2], vf->priv->pmpi->stride[2], dmpi->stride[2],
 		vf->priv->Coefs[2] + 256,
 		vf->priv->Coefs[2] + 256,
 		vf->priv->Coefs[3] + 256);
@@ -266,7 +266,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 }
 #endif
 	vf->priv->pmpi=dmpi; // save reference image
-	return vf_next_put_slice(vf,dmpi);
+	return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

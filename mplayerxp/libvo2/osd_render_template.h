@@ -120,7 +120,7 @@ static inline void PVECTOR_RENAME(vo_draw_alpha_yuy2)(int w,int h,const unsigned
 #endif
 PROFILE_START();
     for(y=0;y<h;y++){
-	register int x=0;
+	int x=0;
 #ifdef HAVE_INT_PVECTOR
 	/* TODO: port this stuff on PVector */
 	__m64 mm[8];
@@ -181,8 +181,8 @@ PROFILE_END("vo_draw_alpha_yuy2");
 static inline void PVECTOR_RENAME(vo_draw_alpha_rgb24)(int w,int h,const unsigned char* src,const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
     for(y=0;y<h;y++){
-	register unsigned char *dst = dstbase;
-	register int x=0;
+	unsigned char *dst = dstbase;
+	int x=0;
 #ifdef HAVE_INT_PVECTOR
 	__m64 mm[8];
 	_ivec_prefetchw(&dstbase[x]);
@@ -254,7 +254,7 @@ static inline void PVECTOR_RENAME(vo_draw_alpha_rgb32)(int w,int h,const unsigne
     int y;
 PROFILE_START();
     for(y=0;y<h;y++){
-	register int x=0;
+	int x=0;
 #ifdef HAVE_INT_PVECTOR
 	__m64 mm[8];
 	_ivec_prefetchw(&dstbase[x]);

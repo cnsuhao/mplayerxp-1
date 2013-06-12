@@ -512,34 +512,34 @@ while(!done)
 
 	    p_start=stream->tell();
 	    p_end = p_start+apriv->asf_packetsize; /* FIXME: parser is not ready for variable packet length */
-	    ecc_flags=stream->read_char(); /* read v82 header */
+	    ecc_flags=stream->read(type_byte); /* read v82 header */
 	    MSG_DBG2("ecc=%02X ecc_flags=%u\n",ecc_flags,ecc_flags&0x0F);
 	    stream->skip(ecc_flags&15);
-	    flags=stream->read_char();
-	    segtype=stream->read_char();
+	    flags=stream->read(type_byte);
+	    segtype=stream->read(type_byte);
 
 	    /* Read packet size (plen): */
 	    switch((flags>>5)&3){
-	    case 3: plen=stream->read_dword_le();break;	// dword
-	    case 2: plen=stream->read_word_le();break;	// word
-	    case 1: plen=stream->read_char();break;	// byte
+	    case 3: plen=stream->read_le(type_dword);break;	// dword
+	    case 2: plen=stream->read_le(type_word);break;	// word
+	    case 1: plen=stream->read(type_byte);break;	// byte
 	    default: plen=0; /* not present */
 //		MSG_V("Invalid plen type! assuming plen=0 (flags=%02X)\n",flags);
 	    }
 
 	    /* Read sequence: */
 	    switch((flags>>1)&3){
-	    case 3: sequence=stream->read_dword_le();break;// dword
-	    case 2: sequence=stream->read_word_le();break;	// word
-	    case 1: sequence=stream->read_char();break;	// byte
+	    case 3: sequence=stream->read_le(type_dword);break;// dword
+	    case 2: sequence=stream->read_le(type_word);break;	// word
+	    case 1: sequence=stream->read(type_byte);break;	// byte
 	    default: sequence=0;
 	    }
 
 	    /* Read padding size (padding): */
 	    switch((flags>>3)&3){
-	    case 3: padding=stream->read_dword_le();break;	// dword
-	    case 2: padding=stream->read_word_le();break;	// word
-	    case 1: padding=stream->read_char();break;	// byte
+	    case 3: padding=stream->read_le(type_dword);break;	// dword
+	    case 2: padding=stream->read_le(type_word);break;	// word
+	    case 1: padding=stream->read(type_byte);break;	// byte
 	    default: padding=0;
 	    }
 
@@ -553,12 +553,12 @@ while(!done)
 	    }
 
 	    // Read time & duration:
-	    time = stream->read_dword_le();
-	    duration = stream->read_word_le();
+	    time = stream->read_le(type_dword);
+	    duration = stream->read_le(type_word);
 
 	    // Read payload flags:
 	    if(flags&1){
-		unsigned char sf=stream->read_char();
+		unsigned char sf=stream->read(type_byte);
 		// multiple sub-packets
 		segsizetype=sf>>6;
 		segs=sf & 0x3F;
@@ -580,31 +580,31 @@ while(!done)
 
 	      if(stream->tell()>=p_end) MSG_V("Warning! invalid packet 1, sig11 coming soon...\n");
 
-	      st=stream->read_char();
+	      st=stream->read(type_byte);
 	      streamno=st&0x7F;
 	      if(st&0x80) keyframe=1;
 
 	      // Read media object number (seq):
 	      switch((segtype>>4)&3){
-	      case 3: seq=stream->read_dword_le();break;// dword
-	      case 2: seq=stream->read_word_le();break;	// word
-	      case 1: seq=stream->read_char();break;	// byte
+	      case 3: seq=stream->read_le(type_dword);break;// dword
+	      case 2: seq=stream->read_le(type_word);break;	// word
+	      case 1: seq=stream->read(type_byte);break;	// byte
 	      default: seq=0;
 	      }
 
 	      // Read offset or timestamp:
 	      switch((segtype>>2)&3){
-	      case 3: x=stream->read_dword_le();break;	// dword
-	      case 2: x=stream->read_word_le();break;	// word
-	      case 1: x=stream->read_char();break;	// byte
+	      case 3: x=stream->read_le(type_dword);break;	// dword
+	      case 2: x=stream->read_le(type_word);break;	// word
+	      case 1: x=stream->read(type_byte);break;	// byte
 	      default: x=0;
 	      }
 
 	      // Read replic.data len:
 	      switch((segtype)&3){
-	      case 3: rlen=stream->read_dword_le();break;	// dword
-	      case 2: rlen=stream->read_word_le();break;	// word
-	      case 1: rlen=stream->read_char();break;	// byte
+	      case 3: rlen=stream->read_le(type_dword);break;	// dword
+	      case 2: rlen=stream->read_le(type_word);break;	// word
+	      case 1: rlen=stream->read(type_byte);break;	// byte
 	      default: rlen=0;
 	      }
 
@@ -615,7 +615,7 @@ while(!done)
 	      default:
 		if(rlen>=8){
 		    stream->skip(4);// skip object size
-		    time2=stream->read_dword_le(); // read PTS
+		    time2=stream->read_le(type_dword); // read PTS
 		    stream->skip(rlen-8);
 		} else {
 		    MSG_V("unknown segment type (rlen): 0x%02X  \n",rlen);
@@ -627,9 +627,9 @@ while(!done)
 	      if(flags&1){
 		// multiple segments
 		switch(segsizetype){
-		  case 3: len=stream->read_dword_le();break;	// dword
-		  case 2: len=stream->read_word_le();break;	// word
-		  case 1: len=stream->read_char();break;		// byte
+		  case 3: len=stream->read_le(type_dword);break;	// dword
+		  case 2: len=stream->read_le(type_word);break;	// word
+		  case 1: len=stream->read(type_byte);break;		// byte
 		  default: len=plen-(stream->tell()-p_start); // ???
 		}
 	      } else {
@@ -645,7 +645,7 @@ while(!done)
 	      case 0x01:
 		// GROUPING:
 		while(len>0){
-		  int len2=stream->read_char();
+		  int len2=stream->read(type_byte);
 		  if(len2<0) len2=0;
 		  done=demux_asf_read_packet(demux,stream->tell(),len2,streamno,seq,x,duration,-1,keyframe);
 		  len-=len2+1;

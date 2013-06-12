@@ -251,27 +251,26 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& in)
 {
     af_channels_t*s = reinterpret_cast<af_channels_t*>(af->setup);
     int		i;
 
-    mp_aframe_t*out;
-    out=new_mp_aframe_genome(in);
-    out->len=af_lencalc(af->mul,in);
-    mp_alloc_aframe(out);
+    mp_aframe_t out=in.genome();
+    out.len=af_lencalc(af->mul,in);
+    out.alloc();
 
     // Reset unused channels
-    memset(out->audio,0,(in->len*af->mul.n)/af->mul.d);
+    memset(out.audio,0,(in.len*af->mul.n)/af->mul.d);
 
-    if(MPXP_Ok == check_routes(s,in->nch,out->nch))
+    if(MPXP_Ok == check_routes(s,in.nch,out.nch))
 	for(i=0;i<s->nr;i++)
-	    af_copy(in->audio,out->audio,in->nch,s->route[i][FR],
-		out->nch,s->route[i][TO],in->len,in->format&MPAF_BPS_MASK);
+	    af_copy(in.audio,out.audio,in.nch,s->route[i][FR],
+		out.nch,s->route[i][TO],in.len,in.format&MPAF_BPS_MASK);
 
     // Set output data
-    out->len = (in->len*af->mul.n)/af->mul.d;
-    out->nch = af->conf.nch;
+    out.len = (in.len*af->mul.n)/af->mul.d;
+    out.nch = af->conf.nch;
 
     return out;
 }

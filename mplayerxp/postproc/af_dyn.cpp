@@ -65,17 +65,17 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& ind)
 {
     unsigned	i = 0;
-    float*	in = (float*)ind->audio;// Audio data
+    float*	in = (float*)ind.audio;// Audio data
     af_dyn_t*	s=reinterpret_cast<af_dyn_t*>(af->setup);
-    unsigned	nsamples = ind->len/4;	// Number of samples
+    unsigned	nsamples = ind.len/4;	// Number of samples
     float	d,l;
     int sign;
-    mp_aframe_t*outd= new_mp_aframe_genome(ind);
-    mp_alloc_aframe(outd);
-    float*	out = (float*)outd->audio;// Audio data
+    mp_aframe_t outd= ind.genome();
+    outd.alloc();
+    float*	out = (float*)outd.audio;// Audio data
 
     for(i = 0; i < nsamples; i++) {
 	d = *in;

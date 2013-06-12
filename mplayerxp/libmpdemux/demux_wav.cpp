@@ -49,7 +49,7 @@ static MPXP_Rc audio_probe(Demuxer* demuxer)
   Stream *s;
   uint8_t *p;
   s = demuxer->stream;
-  fcc1=s->read_dword();
+  fcc1=s->read(type_dword);
   fcc1=me2be_32(fcc1);
   p = (uint8_t *)&fcc1;
   if(fcc1 == mmioFOURCC('R','I','F','F'))
@@ -124,7 +124,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
 		    break;
 		}
 		if(s->eof()) break;
-		chunk_len=s->read_dword_le();
+		chunk_len=s->read_le(type_dword);
 		s->skip(chunk_len);
 	    }
 	    MSG_DBG2("Restore stream pos %llu\n",fpos);
@@ -155,7 +155,7 @@ static Opaque* audio_open(Demuxer* demuxer) {
     do
     {
       chunk_type = s->read_fourcc();
-      chunk_size = s->read_dword_le();
+      chunk_size = s->read_le(type_dword);
       fpos=s->tell();
       switch(chunk_type)
       {
@@ -168,12 +168,12 @@ static Opaque* audio_open(Demuxer* demuxer) {
 			delete sh_audio;
 			return NULL;
 		    }
-		    w->wFormatTag = sh_audio->wtag = s->read_word_le();
-		    w->nChannels = sh_audio->nch = s->read_word_le();
-		    w->nSamplesPerSec = sh_audio->rate = s->read_dword_le();
-		    w->nAvgBytesPerSec = s->read_dword_le();
-		    w->nBlockAlign = s->read_word_le();
-		    w->wBitsPerSample =  s->read_word_le();
+		    w->wFormatTag = sh_audio->wtag = s->read_le(type_word);
+		    w->nChannels = sh_audio->nch = s->read_le(type_word);
+		    w->nSamplesPerSec = sh_audio->rate = s->read_le(type_dword);
+		    w->nAvgBytesPerSec = s->read_le(type_dword);
+		    w->nBlockAlign = s->read_le(type_word);
+		    w->wBitsPerSample =  s->read_le(type_word);
 		    sh_audio->afmt = bps2afmt((w->wBitsPerSample+7)/8);
 		    w->cbSize = 0;
 		    l -= 16;
@@ -200,8 +200,8 @@ static Opaque* audio_open(Demuxer* demuxer) {
 		    char note[256];
 		    MSG_DBG2("RIFF 'list' accepted\n");
 		    subchunk_type = s->read_fourcc();
-		    subchunk_size = s->read_dword_le();
-		    subchunk_id = s->read_dword_le();
+		    subchunk_size = s->read_le(type_dword);
+		    subchunk_id = s->read_le(type_dword);
 		    if(subchunk_type==mmioFOURCC('l','a','b','l'))
 		    {
 			slen=subchunk_size-4;

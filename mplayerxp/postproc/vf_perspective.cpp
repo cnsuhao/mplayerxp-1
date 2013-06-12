@@ -255,13 +255,13 @@ static inline void resampleLinear(uint8_t *dst, uint8_t *src, int w, int h, int 
 	}
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
-	int cw= mpi->w >> mpi->chroma_x_shift;
-	int ch= mpi->h >> mpi->chroma_y_shift;
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
+	int cw= smpi.w >> smpi.chroma_x_shift;
+	int ch= smpi.h >> smpi.chroma_y_shift;
 
-	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,mpi);
+	mp_image_t *dmpi=vf_get_new_temp_genome(vf->next,smpi);
 
-	assert(mpi->flags&MP_IMGFLAG_PLANAR);
+	assert(smpi.flags&MP_IMGFLAG_PLANAR);
 
 	if(vf->priv->cubic){
 #ifdef _OPENMP
@@ -269,18 +269,18 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 {
 #pragma omp section
 #endif
-		resampleCubic(dmpi->planes[0], mpi->planes[0], mpi->w,mpi->h, dmpi->stride[0], mpi->stride[0],
+		resampleCubic(dmpi->planes[0], smpi.planes[0], smpi.w,smpi.h, dmpi->stride[0], smpi.stride[0],
 				vf->priv, 0, 0);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-		resampleCubic(dmpi->planes[1], mpi->planes[1], cw    , ch   , dmpi->stride[1], mpi->stride[1],
-				vf->priv, mpi->chroma_x_shift, mpi->chroma_y_shift);
+		resampleCubic(dmpi->planes[1], smpi.planes[1], cw    , ch   , dmpi->stride[1], smpi.stride[1],
+				vf->priv, smpi.chroma_x_shift, smpi.chroma_y_shift);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-		resampleCubic(dmpi->planes[2], mpi->planes[2], cw    , ch   , dmpi->stride[2], mpi->stride[2],
-				vf->priv, mpi->chroma_x_shift, mpi->chroma_y_shift);
+		resampleCubic(dmpi->planes[2], smpi.planes[2], cw    , ch   , dmpi->stride[2], smpi.stride[2],
+				vf->priv, smpi.chroma_x_shift, smpi.chroma_y_shift);
 #ifdef _OPENMP
 }
 #endif
@@ -290,24 +290,24 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 {
 #pragma omp section
 #endif
-		resampleLinear(dmpi->planes[0], mpi->planes[0], mpi->w,mpi->h, dmpi->stride[0], mpi->stride[0],
+		resampleLinear(dmpi->planes[0], smpi.planes[0], smpi.w,smpi.h, dmpi->stride[0], smpi.stride[0],
 				vf->priv, 0, 0);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-		resampleLinear(dmpi->planes[1], mpi->planes[1], cw    , ch   , dmpi->stride[1], mpi->stride[1],
-				vf->priv, mpi->chroma_x_shift, mpi->chroma_y_shift);
+		resampleLinear(dmpi->planes[1], smpi.planes[1], cw    , ch   , dmpi->stride[1], smpi.stride[1],
+				vf->priv, smpi.chroma_x_shift, smpi.chroma_y_shift);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-		resampleLinear(dmpi->planes[2], mpi->planes[2], cw    , ch   , dmpi->stride[2], mpi->stride[2],
-				vf->priv, mpi->chroma_x_shift, mpi->chroma_y_shift);
+		resampleLinear(dmpi->planes[2], smpi.planes[2], cw    , ch   , dmpi->stride[2], smpi.stride[2],
+				vf->priv, smpi.chroma_x_shift, smpi.chroma_y_shift);
 #ifdef _OPENMP
 }
 #endif
 	}
 
-	return vf_next_put_slice(vf,dmpi);
+	return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

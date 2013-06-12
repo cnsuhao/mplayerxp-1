@@ -70,21 +70,21 @@ Originally published Boston, Nov 98
 
 */
 
-static void __FASTCALL__ unsharp( uint8_t *dst, uint8_t *src, int dstStride, int srcStride, int width, int height, FilterParam *fp, int finalize ) {
+static void __FASTCALL__ unsharp( uint8_t *dst,const uint8_t *src, int dstStride, int srcStride, int width, int height,FilterParam& fp, int finalize ) {
 
-    uint32_t **SC = fp->SC;
+    uint32_t **SC = fp.SC;
     uint32_t SR[MAX_MATRIX_SIZE-1], Tmp1, Tmp2;
-    uint8_t* src2 = src; // avoid gcc warning
+    const uint8_t* src2 = src; // avoid gcc warning
 
     int32_t res;
     int x, y, z;
-    int amount = fp->amount * 65536.0;
-    int stepsX = fp->msizeX/2;
-    int stepsY = fp->msizeY/2;
+    int amount = fp.amount * 65536.0;
+    int stepsX = fp.msizeX/2;
+    int stepsY = fp.msizeY/2;
     int scalebits = (stepsX+stepsY)*2;
     int32_t halfscale = 1 << ((stepsX+stepsY)*2-1);
 
-    if( !fp->amount ) {
+    if( !fp.amount ) {
 	if( src == dst )
 	    return;
 	if( dstStride == srcStride ) {
@@ -120,7 +120,7 @@ static void __FASTCALL__ unsharp( uint8_t *dst, uint8_t *src, int dstStride, int
 		Tmp1 = SC[z+1][x+stepsX] + Tmp2; SC[z+1][x+stepsX] = Tmp2;
 	    }
 	    if( x>=stepsX && y>=stepsY ) {
-		uint8_t* srx = src - stepsY*srcStride + x - stepsX;
+		const uint8_t* srx = src - stepsY*srcStride + x - stepsX;
 		uint8_t* dsx = dst - stepsY*dstStride + x - stepsX;
 
 		res = (int32_t)*srx + ( ( ( (int32_t)*srx - (int32_t)((Tmp1+halfscale) >> scalebits) ) * amount ) >> 16 );
@@ -177,32 +177,32 @@ static int __FASTCALL__ vf_config( vf_instance_t* vf,
 
 //===========================================================================//
 
-static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *mpi ) {
-    if( mpi->flags & MP_IMGFLAG_PRESERVE )
+static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *smpi ) {
+    if( smpi->flags & MP_IMGFLAG_PRESERVE )
 	return; // don't change
-    if( mpi->imgfmt!=vf->priv->outfmt )
+    if( smpi->imgfmt!=vf->priv->outfmt )
 	return; // colorspace differ
 
-    vf->dmpi = vf_get_new_genome(vf->next,mpi);
-    mpi->planes[0] = vf->dmpi->planes[0];
-    mpi->stride[0] = vf->dmpi->stride[0];
-    mpi->width = vf->dmpi->width;
-    if( mpi->flags & MP_IMGFLAG_PLANAR ) {
-	mpi->planes[1] = vf->dmpi->planes[1];
-	mpi->planes[2] = vf->dmpi->planes[2];
-	mpi->stride[1] = vf->dmpi->stride[1];
-	mpi->stride[2] = vf->dmpi->stride[2];
+    vf->dmpi = vf_get_new_genome(vf->next,*smpi);
+    smpi->planes[0] = vf->dmpi->planes[0];
+    smpi->stride[0] = vf->dmpi->stride[0];
+    smpi->width = vf->dmpi->width;
+    if( smpi->flags & MP_IMGFLAG_PLANAR ) {
+	smpi->planes[1] = vf->dmpi->planes[1];
+	smpi->planes[2] = vf->dmpi->planes[2];
+	smpi->stride[1] = vf->dmpi->stride[1];
+	smpi->stride[2] = vf->dmpi->stride[2];
     }
-    mpi->flags |= MP_IMGFLAG_DIRECT;
+    smpi->flags |= MP_IMGFLAG_DIRECT;
 }
 
-static int __FASTCALL__ put_slice( vf_instance_t* vf, mp_image_t *mpi ) {
+static int __FASTCALL__ put_slice( vf_instance_t* vf,const mp_image_t& smpi ) {
     int finalize;
     mp_image_t *dmpi;
 
-    if( !(mpi->flags & MP_IMGFLAG_DIRECT) )
+    if( !(smpi.flags & MP_IMGFLAG_DIRECT) )
 	// no DR, so get a new image! hope we'll get DR buffer:
-	vf->dmpi = vf_get_new_image( vf->next,vf->priv->outfmt, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE, mpi->w, mpi->h,mpi->xp_idx);
+	vf->dmpi = vf_get_new_image( vf->next,vf->priv->outfmt, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE, smpi.w, smpi.h,smpi.xp_idx);
     dmpi= vf->dmpi;
     finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
@@ -211,19 +211,19 @@ static int __FASTCALL__ put_slice( vf_instance_t* vf, mp_image_t *mpi ) {
 {
 #pragma omp section
 #endif
-    unsharp( dmpi->planes[0], mpi->planes[0], dmpi->stride[0], mpi->stride[0], mpi->w,   mpi->h,   &vf->priv->lumaParam, finalize );
+    unsharp( dmpi->planes[0], smpi.planes[0], dmpi->stride[0], smpi.stride[0], smpi.w,   smpi.h,   vf->priv->lumaParam, finalize );
 #ifdef _OPENMP
 #pragma omp section
 #endif
-    unsharp( dmpi->planes[1], mpi->planes[1], dmpi->stride[1], mpi->stride[1], mpi->w/2, mpi->h/2, &vf->priv->chromaParam, finalize );
+    unsharp( dmpi->planes[1], smpi.planes[1], dmpi->stride[1], smpi.stride[1], smpi.w/2, smpi.h/2, vf->priv->chromaParam, finalize );
 #ifdef _OPENMP
 #pragma omp section
 #endif
-    unsharp( dmpi->planes[2], mpi->planes[2], dmpi->stride[2], mpi->stride[2], mpi->w/2, mpi->h/2, &vf->priv->chromaParam, finalize );
+    unsharp( dmpi->planes[2], smpi.planes[2], dmpi->stride[2], smpi.stride[2], smpi.w/2, smpi.h/2, vf->priv->chromaParam, finalize );
 #ifdef _OPENMP
 }
 #endif
-    vf_clone_mpi_attributes(dmpi, mpi);
+    vf_clone_mpi_attributes(dmpi, smpi);
 
 #ifdef CAN_COMPILE_MMX
     if(gCpuCaps.hasMMX)
@@ -241,7 +241,7 @@ static int __FASTCALL__ put_slice( vf_instance_t* vf, mp_image_t *mpi ) {
 	asm volatile ("sfence\n\t");
 #endif
 
-    return vf_next_put_slice( vf, dmpi );
+    return vf_next_put_slice( vf,*dmpi );
 }
 
 static void __FASTCALL__ uninit( vf_instance_t* vf ) {

@@ -239,7 +239,7 @@ menu_t* menu_open(const std::string& name,libinput_t& libinput) {
   return NULL;
 }
 
-void menu_draw(menu_t* menu,mp_image_t* mpi) {
+void menu_draw(menu_t* menu,const mp_image_t& mpi) {
   if(menu->show && menu->draw)
     menu->draw(menu,mpi);
 }
@@ -334,9 +334,9 @@ static char *menu_fribidi(char *txt)
 }
 #endif
 
-void menu_draw_text(mp_image_t* mpi,const std::string& _txt, int x, int y) {
+void menu_draw_text(const mp_image_t& mpi,const std::string& _txt, int x, int y) {
   const char* txt = _txt.c_str();
-  const LocalPtr<OSD_Render> draw_alpha(new(zeromem) OSD_Render(mpi->imgfmt));
+  const LocalPtr<OSD_Render> draw_alpha(new(zeromem) OSD_Render(mpi.imgfmt));
   int font;
   int finalize=mpxp_context().video().output->is_final();
 
@@ -347,19 +347,18 @@ void menu_draw_text(mp_image_t* mpi,const std::string& _txt, int x, int y) {
 
   while (*txt) {
     int c=utf8_get_char((const char**)&txt);
-    if ((font=mpxp_context().video().output->font->font[c])>=0 && (x + mpxp_context().video().output->font->width[c] <= mpi->w) && (y + mpxp_context().video().output->font->pic_a[font]->h <= mpi->h))
+    if ((font=mpxp_context().video().output->font->font[c])>=0 && (x + mpxp_context().video().output->font->width[c] <= mpi.w) && (y + mpxp_context().video().output->font->pic_a[font]->h <= mpi.h))
       draw_alpha->render(mpxp_context().video().output->font->width[c], mpxp_context().video().output->font->pic_a[font]->h,
 		 mpxp_context().video().output->font->pic_b[font]->bmp+mpxp_context().video().output->font->start[c],
 		 mpxp_context().video().output->font->pic_a[font]->bmp+mpxp_context().video().output->font->start[c],
 		 mpxp_context().video().output->font->pic_a[font]->w,
-		 mpi->planes[0] + y * mpi->stride[0] + x * (mpi->bpp>>3),
-		 mpi->stride[0],finalize);
+		 mpi.planes[0] + y * mpi.stride[0] + x * (mpi.bpp>>3),
+		 mpi.stride[0],finalize);
     x+=mpxp_context().video().output->font->width[c]+mpxp_context().video().output->font->charspace;
   }
-
 }
 
-void menu_draw_text_full(mp_image_t* mpi,const std::string& _txt,
+void menu_draw_text_full(const mp_image_t& mpi,const std::string& _txt,
 			 int x, int y,int w, int h,
 			 int vspace, int warp, int align, int anchor) {
   const char* txt=_txt.c_str();
@@ -369,40 +368,40 @@ void menu_draw_text_full(mp_image_t* mpi,const std::string& _txt,
   int ll = 0;
   int font;
   int finalize=mpxp_context().video().output->is_final();
-  const LocalPtr<OSD_Render> draw_alpha(new(zeromem) OSD_Render(mpi->imgfmt));
+  const LocalPtr<OSD_Render> draw_alpha(new(zeromem) OSD_Render(mpi.imgfmt));
 
 #ifdef USE_FRIBIDI
   txt = menu_fribidi(txt);
 #endif
   render_txt(txt);
 
-  if(x > mpi->w || y > mpi->h)
+  if(x > mpi.w || y > mpi.h)
     return;
 
   if(anchor & MENU_TEXT_VCENTER) {
-    if(h <= 0) h = mpi->h;
+    if(h <= 0) h = mpi.h;
     ymin = y - h/2;
     ymax = y + h/2;
   }  else if(anchor & MENU_TEXT_BOT) {
-    if(h <= 0) h = mpi->h - y;
+    if(h <= 0) h = mpi.h - y;
     ymin = y - h;
     ymax = y;
   } else {
-    if(h <= 0) h = mpi->h - y;
+    if(h <= 0) h = mpi.h - y;
     ymin = y;
     ymax = y + h;
   }
 
   if(anchor & MENU_TEXT_HCENTER) {
-    if(w <= 0) w = mpi->w;
+    if(w <= 0) w = mpi.w;
     xmin = x - w/2;
     xmax = x + w/2;
   }  else if(anchor & MENU_TEXT_RIGHT) {
-    if(w <= 0) w = mpi->w -x;
+    if(w <= 0) w = mpi.w -x;
     xmin = x - w;
     xmax = x;
   } else {
-    if(w <= 0) w = mpi->w -x;
+    if(w <= 0) w = mpi.w -x;
     xmin = x;
     xmax = x + w;
   }
@@ -431,8 +430,8 @@ void menu_draw_text_full(mp_image_t* mpi,const std::string& _txt,
   // Clamp the bb to the mpi size
   if(ymin < 0) ymin = 0;
   if(xmin < 0) xmin = 0;
-  if(ymax > mpi->h) ymax = mpi->h;
-  if(xmax > mpi->w) xmax = mpi->w;
+  if(ymax > mpi.h) ymax = mpi.h;
+  if(xmax > mpi.w) xmax = mpi.w;
 
   // Jump some the beginnig text if needed
   while(sy < ymin && *txt) {
@@ -521,8 +520,8 @@ void menu_draw_text_full(mp_image_t* mpi,const std::string& _txt,
 		     mpxp_context().video().output->font->pic_a[font]->bmp+mpxp_context().video().output->font->start[c] +
 		     cs * mpxp_context().video().output->font->pic_a[font]->w,
 		     mpxp_context().video().output->font->pic_a[font]->w,
-		     mpi->planes[0] + sy * mpi->stride[0] + sx * (mpi->bpp>>3),
-		     mpi->stride[0],finalize);
+		     mpi.planes[0] + sy * mpi.stride[0] + sx * (mpi.bpp>>3),
+		     mpi.stride[0],finalize);
 	//	else
 	//printf("Can't draw '%c'\n",c);
       }
@@ -602,29 +601,26 @@ static const char* menu_text_get_next_line(const char* txt, int max_width) {
 }
 
 
-void menu_draw_box(const mp_image_t* mpi,unsigned char grey,unsigned char alpha, int x, int y, int w, int h) {
-  const LocalPtr<OSD_Render> draw_alpha(new(zeromem) OSD_Render(mpi->imgfmt));
-  int g;
+void menu_draw_box(const mp_image_t& mpi,unsigned char grey,unsigned char alpha, int x, int y, int w, int h) {
+    const LocalPtr<OSD_Render> draw_alpha(new(zeromem) OSD_Render(mpi.imgfmt));
+    int g;
 
-  if(x > mpi->w || y > mpi->h) return;
+    if(x > mpi.w || y > mpi.h) return;
 
-  if(x < 0) w += x, x = 0;
-  if(x+w > mpi->w) w = mpi->w-x;
-  if(y < 0) h += y, y = 0;
-  if(y+h > mpi->h) h = mpi->h-y;
+    if(x < 0) w += x, x = 0;
+    if(x+w > mpi.w) w = mpi.w-x;
+    if(y < 0) h += y, y = 0;
+    if(y+h > mpi.h) h = mpi.h-y;
 
-  g = ((256-alpha)*grey)>>8;
-  if(g < 1) g = 1;
+    g = ((256-alpha)*grey)>>8;
+    if(g < 1) g = 1;
 
-  {
     int finalize = mpxp_context().video().output->is_final();
     int stride = (w+7)&(~7); // round to 8
     unsigned char pic[stride*h],pic_alpha[stride*h];
     memset(pic,g,stride*h);
     memset(pic_alpha,alpha,stride*h);
     draw_alpha->render(w,h,pic,pic_alpha,stride,
-	       mpi->planes[0] + y * mpi->stride[0] + x * (mpi->bpp>>3),
-	       mpi->stride[0],finalize);
-  }
-
+	       mpi.planes[0] + y * mpi.stride[0] + x * (mpi.bpp>>3),
+	       mpi.stride[0],finalize);
 }

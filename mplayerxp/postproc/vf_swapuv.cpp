@@ -33,41 +33,41 @@ using namespace	usr;
 #include "pp_msg.h"
 //===========================================================================//
 
-static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *mpi){
-    mp_image_t *dmpi= vf_get_new_genome(vf->next,mpi);
+static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *smpi){
+    mp_image_t *dmpi= vf_get_new_genome(vf->next,*smpi);
 
-    mpi->planes[0]=dmpi->planes[0];
-    mpi->planes[1]=dmpi->planes[2];
-    mpi->planes[2]=dmpi->planes[1];
-    mpi->stride[0]=dmpi->stride[0];
-    mpi->stride[1]=dmpi->stride[2];
-    mpi->stride[2]=dmpi->stride[1];
-    mpi->width=dmpi->width;
+    smpi->planes[0]=dmpi->planes[0];
+    smpi->planes[1]=dmpi->planes[2];
+    smpi->planes[2]=dmpi->planes[1];
+    smpi->stride[0]=dmpi->stride[0];
+    smpi->stride[1]=dmpi->stride[2];
+    smpi->stride[2]=dmpi->stride[1];
+    smpi->width=dmpi->width;
 #if 0
-    mpi->flags|=MP_IMGFLAG_DIRECT;
+    smpi->flags|=MP_IMGFLAG_DIRECT;
 #endif
-    mpi->priv=(any_t*)dmpi;
+    smpi->priv=dmpi;
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     mp_image_t *dmpi;
 
-    if(mpi->flags&MP_IMGFLAG_DIRECT){
-	dmpi=(mp_image_t*)mpi->priv;
+    if(smpi.flags&MP_IMGFLAG_DIRECT){
+	dmpi=(mp_image_t*)smpi.priv;
     } else {
-	dmpi=vf_get_new_exportable_genome(vf->next, MP_IMGTYPE_EXPORT, 0, mpi);
-	assert(mpi->flags&MP_IMGFLAG_PLANAR);
-	dmpi->planes[0]=mpi->planes[0];
-	dmpi->planes[1]=mpi->planes[2];
-	dmpi->planes[2]=mpi->planes[1];
-	dmpi->stride[0]=mpi->stride[0];
-	dmpi->stride[1]=mpi->stride[2];
-	dmpi->stride[2]=mpi->stride[1];
-	dmpi->width=mpi->width;
+	dmpi=vf_get_new_exportable_genome(vf->next, MP_IMGTYPE_EXPORT, 0, smpi);
+	assert(smpi.flags&MP_IMGFLAG_PLANAR);
+	dmpi->planes[0]=smpi.planes[0];
+	dmpi->planes[1]=smpi.planes[2];
+	dmpi->planes[2]=smpi.planes[1];
+	dmpi->stride[0]=smpi.stride[0];
+	dmpi->stride[1]=smpi.stride[2];
+	dmpi->stride[2]=smpi.stride[1];
+	dmpi->width=smpi.width;
     }
 
-    vf_clone_mpi_attributes(dmpi, mpi);
-    return vf_next_put_slice(vf,dmpi);
+    vf_clone_mpi_attributes(dmpi,smpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

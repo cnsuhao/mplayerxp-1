@@ -57,12 +57,11 @@ enum {
     ODD		=0x00000010 // Make filter HP
 };
 // Exported functions
-extern _ftype_t __FASTCALL__ fir(unsigned int n, _ftype_t* w, _ftype_t* x);
+extern _ftype_t __FASTCALL__ fir(unsigned int n,const _ftype_t* w,const _ftype_t* x);
 
-extern _ftype_t* __FASTCALL__ pfir(unsigned int n, unsigned int k, unsigned int xi, _ftype_t** w, _ftype_t** x, _ftype_t* y, unsigned int s);
+extern _ftype_t* __FASTCALL__ pfir(unsigned int n, unsigned int k, unsigned int xi,const _ftype_t** w,const _ftype_t** x, _ftype_t* y, unsigned int s);
 
-extern int __FASTCALL__ updateq(unsigned int n, unsigned int xi, _ftype_t* xq, _ftype_t* in);
-extern int __FASTCALL__ updatepq(unsigned int n, unsigned int k, unsigned int xi, _ftype_t** xq, _ftype_t* in, unsigned int s);
+extern int __FASTCALL__ updatepq(unsigned int n, unsigned int k, unsigned int xi, _ftype_t** xq,const _ftype_t* in, unsigned int s);
 
 extern int __FASTCALL__ design_fir(unsigned int n, _ftype_t* w, _ftype_t* fc, unsigned int flags, _ftype_t opt);
 
@@ -75,10 +74,12 @@ extern int __FASTCALL__ szxform(_ftype_t* a, _ftype_t* b, _ftype_t Q, _ftype_t f
    current index for xq and n the length of the filter. xq must be n*2
    long.
 */
-#define updateq(n,xi,xq,in)\
-  xq[xi]=(xq)[(xi)+(n)]=*(in);\
-  xi=(++(xi))&((n)-1);
-
+#if 0
+static inline void updateq(unsigned int n, unsigned int& xi, _ftype_t* xq,const _ftype_t* in) {
+    xq[xi]=xq[xi+n]=*in;
+    xi=(++xi)&(n-1);
+}
+#endif
 #include <math.h>
 /* Private data for Highpass effect
 	      --------------
@@ -157,9 +158,9 @@ static inline float IIR(float in,const float *w,float *q) {
 }
 
 /* some mmx_optimized stuff */
-extern void (* __FASTCALL__ change_bps)(const mp_aframe_t* in, mp_aframe_t* out);
-extern void (* __FASTCALL__ float2int)(const mp_aframe_t* in, mp_aframe_t* out);
-extern void (* __FASTCALL__ int2float)(const mp_aframe_t* in, mp_aframe_t* out);
+extern void (* __FASTCALL__ change_bps)(const mp_aframe_t& in, mp_aframe_t* out);
+extern void (* __FASTCALL__ float2int)(const mp_aframe_t& in, mp_aframe_t* out);
+extern void (* __FASTCALL__ int2float)(const mp_aframe_t& in, mp_aframe_t* out);
 extern int32_t (* __FASTCALL__ FIR_i16)(const int16_t *x,const int16_t *w);
 extern float (* __FASTCALL__ FIR_f32)(const float *x,const float *w);
 

@@ -131,10 +131,10 @@ static const unsigned char RTjpeg_chrom_quant_tbl[64] = {
 
 int RTjpeg_b2s(__s16 *data, __s8 *strm, __u8 bt8)
 {
- register int ci, co=1;
- register __s16 ZZvalue;
- register unsigned char bitten;
- register unsigned char bitoff;
+ int ci, co=1;
+ __s16 ZZvalue;
+ unsigned char bitten;
+ unsigned char bitoff;
 
 #ifdef SHOWBLOCK
 
@@ -302,10 +302,10 @@ fprintf(stdout, "\n\n");
 int RTjpeg_s2b(__s16 *data, __s8 *strm, __u8 bt8, __u32 *qtbl)
 {
  int ci;
- register int co;
- register int i;
- register unsigned char bitten;
- register unsigned char bitoff;
+ int co;
+ int i;
+ unsigned char bitten;
+ unsigned char bitoff;
 
  /* first byte always read */
  i=RTjpeg_ZZ[0];
@@ -445,8 +445,8 @@ fprintf(stdout, "\n\n");
 
 int RTjpeg_b2s(__s16 *data, __s8 *strm, __u8 bt8)
 {
- register int ci, co=1, tmp;
- register __s16 ZZvalue;
+ int ci, co=1, tmp;
+ __s16 ZZvalue;
 
 #ifdef SHOWBLOCK
 
@@ -505,7 +505,7 @@ int RTjpeg_b2s(__s16 *data, __s8 *strm, __u8 bt8)
 int RTjpeg_s2b(__s16 *data, __s8 *strm, __u8 bt8, __u32 *qtbl)
 {
  int ci=1, co=1, tmp;
- register int i;
+ int i;
 
  i=RTjpeg_ZZ[0];
  data[i]=((__u8)strm[0])*qtbl[i];
@@ -735,7 +735,7 @@ void RTjpeg_dctY(__u8 *idata, __s16 *odata, int rskip)
   }
 #else
   volatile mmx_t tmp6, tmp7;
-  register mmx_t *dataptr = (mmx_t *)odata;
+  mmx_t *dataptr = (mmx_t *)odata;
   mmx_t *idata2 = (mmx_t *)idata;
 
    // first copy the input 8 bit to the destination 16 bits
@@ -1573,7 +1573,7 @@ static mmx_t fix_108n184	= (mmx_t)(long long)0xcf04cf04cf04cf04LL;
 
   mmx_t workspace[64];
   mmx_t *wsptr = workspace;
-  register mmx_t *dataptr = (mmx_t *)odata;
+  mmx_t *dataptr = (mmx_t *)odata;
   mmx_t *idata = (mmx_t *)data;
 
   rskip = rskip>>3;
@@ -2852,11 +2852,11 @@ void RTjpeg_init_decompress(__u32 *buf, int width, int height)
 int RTjpeg_compressYUV420(__s8 *sp, unsigned char *bp)
 {
  __s8 * sb;
- register __u8 * bp1 = bp + (RTjpeg_width<<3);
- register __u8 * bp2 = bp + RTjpeg_Ysize;
- register __u8 * bp3 = bp2 + (RTjpeg_Csize>>1);
- register int i;
- register unsigned j, k;
+ __u8 * bp1 = bp + (RTjpeg_width<<3);
+ __u8 * bp2 = bp + RTjpeg_Ysize;
+ __u8 * bp3 = bp2 + (RTjpeg_Csize>>1);
+ int i;
+ unsigned j, k;
 
 #ifdef MMX
  emms();
@@ -2907,10 +2907,10 @@ int RTjpeg_compressYUV420(__s8 *sp, unsigned char *bp)
 int RTjpeg_compressYUV422(__s8 *sp, unsigned char *bp)
 {
  __s8 * sb;
- register __u8 * bp2 = bp + RTjpeg_Ysize;
- register __u8 * bp3 = bp2 + RTjpeg_Csize;
- register int i;
- register unsigned j, k;
+ __u8 * bp2 = bp + RTjpeg_Ysize;
+ __u8 * bp3 = bp2 + RTjpeg_Csize;
+ int i;
+ unsigned j, k;
 
 #ifdef MMX
  emms();
@@ -2979,8 +2979,8 @@ int RTjpeg_compress8(__s8 *sp, unsigned char *bp)
 
 void RTjpeg_decompressYUV422(__s8 *sp, __u8 *bp)
 {
- register __u8 * bp2 = bp + RTjpeg_Ysize;
- register __u8 * bp3 = bp2 + (RTjpeg_Csize);
+ __u8 * bp2 = bp + RTjpeg_Ysize;
+ __u8 * bp3 = bp2 + (RTjpeg_Csize);
  int i;
  unsigned j,k;
 
@@ -3028,9 +3028,9 @@ void RTjpeg_decompressYUV422(__s8 *sp, __u8 *bp)
 
 void RTjpeg_decompressYUV420(__s8 *sp, __u8 *bp)
 {
- register __u8 * bp1 = bp + (RTjpeg_width<<3);
- register __u8 * bp2 = bp + RTjpeg_Ysize;
- register __u8 * bp3 = bp2 + (RTjpeg_Csize>>1);
+ __u8 * bp1 = bp + (RTjpeg_width<<3);
+ __u8 * bp2 = bp + RTjpeg_Ysize;
+ __u8 * bp3 = bp2 + (RTjpeg_Csize>>1);
  int i;
  unsigned j,k;
 
@@ -3204,10 +3204,10 @@ int RTjpeg_mcompressYUV420(__s8 *sp, unsigned char *bp, __u16 lmask, __u16 cmask
 {
  __s8 * sb;
 //rh __s16 *block;
- register __u8 * bp1 = bp + (RTjpeg_width<<3);
- register __u8 * bp2 = bp + RTjpeg_Ysize;
- register __u8 * bp3 = bp2 + (RTjpeg_Csize>>1);
- register int i;
+ __u8 * bp1 = bp + (RTjpeg_width<<3);
+ __u8 * bp2 = bp + RTjpeg_Ysize;
+ __u8 * bp3 = bp2 + (RTjpeg_Csize>>1);
+ int i;
  unsigned j, k;
 
 #ifdef MMX
@@ -3297,9 +3297,9 @@ int RTjpeg_mcompressYUV422(__s8 *sp, unsigned char *bp, __u16 lmask, __u16 cmask
 {
  __s8 * sb;
  __s16 *_block;
- register __u8 * bp2;
- register __u8 * bp3;
- register int i;
+ __u8 * bp2;
+ __u8 * bp3;
+ int i;
  unsigned j, k;
 
 #ifdef MMX

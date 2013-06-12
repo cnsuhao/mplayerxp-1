@@ -562,37 +562,37 @@ unsigned Video_Output::get_num_frames() const {
     return priv.dri.num_xp_frames;
 }
 
-MPXP_Rc Video_Output::draw_slice(const mp_image_t *mpi) const
+MPXP_Rc Video_Output::draw_slice(const mp_image_t& smpi) const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
     unsigned i,_w[4],_h[4],x,y;
-    mpxp_dbg3<<"dri_vo_dbg: vo_draw_slice mpi.xywh="<<mpi->x<<" "<<mpi->y<<" "<<mpi->w<<" "<<mpi->h<<std::endl;
+    mpxp_dbg3<<"dri_vo_dbg: vo_draw_slice smpi.xywh="<<smpi.x<<" "<<smpi.y<<" "<<smpi.w<<" "<<smpi.h<<std::endl;
     if(priv.dri.has_dri) {
 	uint8_t *dst[4];
 	const uint8_t *ps_src[4];
 	int dstStride[4];
 	int finalize=is_final();
-	unsigned idx = mpi->xp_idx;
+	unsigned idx = smpi.xp_idx;
 	dri_surface_t surf;
 	surf.idx=idx;
 	priv.vo_iface->get_surface(&surf);
 	for(i=0;i<4;i++) {
 	    dst[i]=surf.planes[i]+priv.dri.off[i];
 	    dstStride[i]=priv.dri.cap.strides[i];
-	    dst[i]+=((mpi->y*dstStride[i])*priv.vod.y_mul[i])/priv.vod.y_div[i];
-	    dst[i]+=(mpi->x*priv.vod.x_mul[i])/priv.vod.x_div[i];
-	    _w[i]=(mpi->w*priv.vod.x_mul[i])/priv.vod.x_div[i];
-	    _h[i]=(mpi->h*priv.vod.y_mul[i])/priv.vod.y_div[i];
-	    y = i?(mpi->y>>mpi->chroma_y_shift):mpi->y;
-	    x = i?(mpi->x>>mpi->chroma_x_shift):mpi->x;
-	    ps_src[i] = mpi->planes[i]+(y*mpi->stride[i])+x+priv.ps_off[i];
+	    dst[i]+=((smpi.y*dstStride[i])*priv.vod.y_mul[i])/priv.vod.y_div[i];
+	    dst[i]+=(smpi.x*priv.vod.x_mul[i])/priv.vod.x_div[i];
+	    _w[i]=(smpi.w*priv.vod.x_mul[i])/priv.vod.x_div[i];
+	    _h[i]=(smpi.h*priv.vod.y_mul[i])/priv.vod.y_div[i];
+	    y = i?(smpi.y>>smpi.chroma_y_shift):smpi.y;
+	    x = i?(smpi.x>>smpi.chroma_x_shift):smpi.x;
+	    ps_src[i] = smpi.planes[i]+(y*smpi.stride[i])+x+priv.ps_off[i];
 	}
 	for(i=0;i<4;i++) {
-	    if(mpi->stride[i] && dstStride[i]) {
+	    if(smpi.stride[i] && dstStride[i]) {
 		if(finalize)
-		    stream_copy_pic(dst[i],ps_src[i],_w[i],_h[i],dstStride[i],mpi->stride[i]);
+		    stream_copy_pic(dst[i],ps_src[i],_w[i],_h[i],dstStride[i],smpi.stride[i]);
 		else
-		    memcpy_pic(dst[i],ps_src[i],_w[i],_h[i],dstStride[i],mpi->stride[i]);
+		    memcpy_pic(dst[i],ps_src[i],_w[i],_h[i],dstStride[i],smpi.stride[i]);
 	    }
 	}
 	return MPXP_Ok;

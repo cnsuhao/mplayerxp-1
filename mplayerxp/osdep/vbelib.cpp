@@ -33,7 +33,7 @@ static struct VesaModeInfoBlock curr_mode_info;
 
 static inline int VERR(const any_t*p)
 {
-  register int retval;
+  int retval;
   __asm __volatile(
 	"xorl	%0, %0\n\t"
 	"verr	%1\n\t"
@@ -47,7 +47,7 @@ static inline int VERR(const any_t*p)
 #if 0
 static inline int VERW(const any_t*p)
 {
-  register int retval;
+  int retval;
   __asm __volatile(
 	"xorl	%0, %0\n\t"
 	"verw	%1\n\t"

@@ -114,29 +114,29 @@ static int __FASTCALL__ rgb_config(vf_instance_t* vf,
     return vf_next_config(vf,width,height,d_width,d_height,flags,vf->priv->fmt);
 }
 
-static int __FASTCALL__ rgb_put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ rgb_put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     mp_image_t *dmpi;
     int x, y;
 
     // hope we'll get DR buffer:
     dmpi=vf_get_new_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	mpi->w, mpi->h, mpi->xp_idx);
+	smpi.w, smpi.h, smpi.xp_idx);
 
-     for(y=0; y<mpi->h; y++){
-	 for(x=0; x<mpi->w; x++){
-	     int c= 256*x/mpi->w;
+     for(y=0; y<smpi.h; y++){
+	 for(x=0; x<smpi.w; x++){
+	     int c= 256*x/smpi.w;
 	     int r=0,g=0,b=0;
 
-	     if(3*y<mpi->h)        r=c;
-	     else if(3*y<2*mpi->h) g=c;
+	     if(3*y<smpi.h)        r=c;
+	     else if(3*y<2*smpi.h) g=c;
 	     else                  b=c;
 
 	     rgb_put_pixel(dmpi->planes[0], x, y, dmpi->stride[0], r, g, b, vf->priv->fmt);
 	 }
      }
 
-    return vf_next_put_slice(vf,dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 static int __FASTCALL__ rgb_query_format(vf_instance_t* vf, unsigned int outfmt,unsigned w,unsigned h){
@@ -165,7 +165,7 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
 
 static double c[64];
 
-static void initIdct(void)
+static void initIdct()
 {
 	int i;
 
@@ -180,7 +180,7 @@ static void initIdct(void)
 }
 
 
-static void __FASTCALL__ idct(uint8_t *dst, int dstStride, int src[64])
+static void __FASTCALL__ idct(uint8_t *dst, int dstStride, int const src[64])
 {
 	int i, j, k;
 	double tmp[64];
@@ -240,7 +240,7 @@ static void __FASTCALL__ drawBasis(uint8_t *dst, int stride, int amp, int freq, 
 	idct(dst, stride, src);
 }
 
-static void __FASTCALL__ drawCbp(uint8_t *dst[3], int stride[3], int cbp, int amp, int dc)
+static void __FASTCALL__ drawCbp(uint8_t *dst[3], int const stride[3], int cbp, int amp, int dc)
 {
 	if(cbp&1) drawBasis(dst[0]              , stride[0], amp, 1, dc);
 	if(cbp&2) drawBasis(dst[0]+8            , stride[0], amp, 1, dc);
@@ -296,7 +296,7 @@ static void __FASTCALL__ amp1Test(uint8_t *dst, int stride, int off)
 	}
 }
 
-static void __FASTCALL__ cbp1Test(uint8_t *dst[3], int stride[3], int off)
+static void __FASTCALL__ cbp1Test(uint8_t *dst[3], int const stride[3], int off)
 {
 	int y;
 	int cbp=0;
@@ -369,14 +369,14 @@ static void __FASTCALL__ ring2Test(uint8_t *dst, int stride, int off)
 	}
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     mp_image_t *dmpi;
     int frame= vf->priv->frame_num;
 
     // hope we'll get DR buffer:
     dmpi=vf_get_new_image(vf->next,IMGFMT_YV12,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	mpi->w,mpi->h,mpi->xp_idx);
+	smpi.w,smpi.h,smpi.xp_idx);
 
     // clean
     memset(dmpi->planes[0], 0, dmpi->stride[0]*dmpi->h);
@@ -402,7 +402,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 
     frame++;
     vf->priv->frame_num= frame;
-    return vf_next_put_slice(vf,dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

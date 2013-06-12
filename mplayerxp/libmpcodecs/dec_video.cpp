@@ -186,16 +186,16 @@ bye:
     print_codec_info();
 }
 
-void VD_Interface::draw_image(const mp_image_t* mpi) const
+void VD_Interface::draw_image(const mp_image_t& smpi) const
 {
     decvideo_priv_t& priv=reinterpret_cast<decvideo_priv_t&>(vd_private);
     vf_stream_t* s;
     const unsigned h_step=16;
-    unsigned num_slices = mpi->h/h_step;
+    unsigned num_slices = smpi.h/h_step;
     s=priv.vfilter;
 
-  if(!(mpi->flags&(MP_IMGFLAG_DRAW_CALLBACK))){
-    if(mpi->h%h_step) num_slices++;
+  if(!(smpi.flags&(MP_IMGFLAG_DRAW_CALLBACK))){
+    if(smpi.h%h_step) num_slices++;
     if(priv.psi.vf_flags&VF_FLAGS_SLICES)
     {
 	unsigned j,i,y;
@@ -207,8 +207,8 @@ void VD_Interface::draw_image(const mp_image_t* mpi) const
 	}
 	y=0;
 	for(i=0;i<num_slices;i++) {
-	    ampi[i]=new_mp_image(mpi->w,y,h_step);
-	    mpi_fake_slice(ampi[i],mpi,y,h_step);
+	    ampi[i]=new(zeromem) mp_image_t(smpi.w,y,h_step);
+	    ampi[i]->fake_slice(smpi,y,h_step);
 	    y+=h_step;
 	}
 #ifdef _OPENMP
@@ -218,13 +218,13 @@ void VD_Interface::draw_image(const mp_image_t* mpi) const
 		for(i=j;i<priv.smp_num_cpus;i++) {
 		    mpxp_dbg2<<"parallel: dec_video.put_slice["<<ampi[i]->width<<"x"<<ampi[i]->height
 			<<"] "<<ampi[i]->x<<" "<<ampi[i]->y<<" "<<ampi[i]->w<<" "<<ampi[i]->h<<std::endl;
-		    vf_put_slice(s,ampi[i]);
+		    vf_put_slice(s,*ampi[i]);
 		}
 	    }
 	    for(;j<num_slices;j++) {
 		mpxp_dbg2<<"par_tail: dec_video.put_slice["<<ampi[i]->width<<"x"<<ampi[i]->height
 		    <<"] "<<ampi[i]->x<<" "<<ampi[i]->y<<" "<<ampi[i]->w<<" "<<ampi[i]->h<<std::endl;
-		vf_put_slice(s,ampi[j]);
+		vf_put_slice(s,*ampi[j]);
 	    }
 	}
 	else
@@ -234,16 +234,15 @@ void VD_Interface::draw_image(const mp_image_t* mpi) const
 	    for(i=0;i<num_slices;i++) {
 		mpxp_dbg2<<"dec_video.put_slice["<<ampi[i]->width<<"x"<<ampi[i]->height
 		    <<"] "<<ampi[i]->x<<" "<<ampi[i]->y<<" "<<ampi[i]->w<<" "<<ampi[i]->h<<std::endl;
-		vf_put_slice(s,ampi[i]);
+		vf_put_slice(s,*ampi[i]);
 	    }
 	}
-	for(i=0;i<num_slices;i++) free_mp_image(ampi[i]);
+	for(i=0;i<num_slices;i++) delete ampi[i];
     } else {
-	mpxp_dbg2<<"Put whole frame["<<mpi->width<<"x"<<mpi->height<<"]"<<std::endl;
-	mp_image_t dmpi=*mpi;
-	vf_put_slice(s,&dmpi);
+	mpxp_dbg2<<"Put whole frame["<<smpi.width<<"x"<<smpi.height<<"]"<<std::endl;
+	vf_put_slice(s,smpi);
     }
-    free_mp_image(mpi);
+    delete &smpi;
   }
 }
 
@@ -267,7 +266,7 @@ int VD_Interface::run(const enc_frame_t& frame) const {
 /* ------------------------ frame decoded. -------------------- */
 
     if(!mpi) return 0; // error / skipped frame
-    draw_image(mpi);
+    draw_image(*mpi);
 
     t2=GetTimer();t=t2-t;
     tt = t*0.000001f;
@@ -537,10 +536,9 @@ mp_image_t* VD_Interface::get_image(int mp_imgtype, int mp_imgflag,int w, int h)
     return mpi;
 }
 
-void VD_Interface::draw_slice(const mp_image_t* mpi) const {
+void VD_Interface::draw_slice(const mp_image_t& mpi) const {
     decvideo_priv_t& priv=reinterpret_cast<decvideo_priv_t&>(vd_private);
     vf_stream_t* vf = priv.vfilter;
-    mp_image_t dmpi = *mpi;
-    vf_put_slice(vf,&dmpi);
+    vf_put_slice(vf,mpi);
 }
 } // namespace	usr

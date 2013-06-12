@@ -190,7 +190,7 @@ namespace	usr {
 
 	    virtual int		check_events() const;
 	    virtual unsigned	get_num_frames() const;
-	    virtual MPXP_Rc	draw_slice(const mp_image_t *mpi) const;
+	    virtual MPXP_Rc	draw_slice(const mp_image_t& mpi) const;
 	    virtual void	select_frame(unsigned idx) const;
 	    virtual void	flush_page(unsigned decoder_idx) const;
 	    virtual void	draw_osd(unsigned idx) const;

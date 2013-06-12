@@ -51,7 +51,7 @@ static int musepack_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsig
   *brate=*samplerate=*channels=0;
   s = demuxer->stream;
   s->seek(fptr);
-  fcc=fcc1=s->read_dword();
+  fcc=fcc1=s->read(type_dword);
   fcc1=me2be_32(fcc1);
   p = (uint8_t *)&fcc1;
   s->seek(fptr);
@@ -67,7 +67,7 @@ static MPXP_Rc musepack_probe(Demuxer* demuxer)
   Stream *s;
   uint8_t *p;
   s = demuxer->stream;
-  fcc1=s->read_dword();
+  fcc1=s->read(type_dword);
   fcc1=me2be_32(fcc1);
   p = (uint8_t *)&fcc1;
   if(musepack_get_raw_id(demuxer,0,&fcc1,&fcc2,&fcc2)) return MPXP_Ok;
@@ -130,9 +130,9 @@ static Opaque* musepack_open(Demuxer* demuxer) {
     unsigned char bt;
     sh_audio->wtag = mmioFOURCC('M','P','C',' ');
     s->seek(4);
-    frames = s->read_dword();
+    frames = s->read(type_dword);
     s->skip(2);
-    bt=s->read_char();
+    bt=s->read(type_byte);
     sh_audio->wf = new WAVEFORMATEX;
     sh_audio->wf->wFormatTag = sh_audio->wtag;
     sh_audio->wf->nChannels = 2;
@@ -181,7 +181,7 @@ static uint32_t mpc_get_bits(musepack_priv_t* priv, Stream* s, int bits) {
     out >>= (32 - priv->pos);
   }
   else {
-    priv->dword=s->read_dword();
+    priv->dword=s->read(type_dword);
     priv->dword = le2me_32(priv->dword);
     priv->pos -= 32;
     if (priv->pos) {

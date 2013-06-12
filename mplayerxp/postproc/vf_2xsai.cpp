@@ -280,20 +280,20 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     return vf_next_config(vf,2*width,2*height,2*d_width,2*d_height,flags,outfmt);
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     mp_image_t *dmpi;
 
     // hope we'll get DR buffer:
-    dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
+    dmpi=vf_get_new_image(vf->next,smpi.imgfmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	2*mpi->w, 2*mpi->h,mpi->xp_idx);
+	2*smpi.w, 2*smpi.h,smpi.xp_idx);
 
-    Super2xSaI_ex(mpi->planes[0], mpi->stride[0],
+    Super2xSaI_ex(smpi.planes[0], smpi.stride[0],
 		  dmpi->planes[0], dmpi->stride[0],
-		  mpi->x, mpi->y,
-		  mpi->w, mpi->h);
+		  smpi.x, smpi.y,
+		  smpi.w, smpi.h);
 
-    return vf_next_put_slice(vf,dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

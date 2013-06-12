@@ -168,23 +168,23 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 // Deallocate memory
 static void __FASTCALL__ uninit(af_instance_t* af)
 {
-  if(af->setup) delete af->setup;
+    if(af->setup) delete af->setup;
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& ind)
 {
     af_equalizer_t*	s	= (af_equalizer_t*)af->setup; 	// Setup
     uint32_t		ci	= af->conf.nch;		// Index for channels
     uint32_t		nch	= af->conf.nch;		// Number of channels
-    mp_aframe_t* outd = new_mp_aframe_genome(ind);
-    mp_alloc_aframe(outd);
+    mp_aframe_t outd = ind.genome();
+    outd.alloc();
 
     while(ci--){
 	float*	g   = s->g[ci];      // Gain factor
-	float*	in  = ((float*)ind->audio)+ci;
-	float*	out = ((float*)outd->audio)+ci;
-	float*	end = in + ind->len/4; // Block loop end
+	float*	in  = ((float*)ind.audio)+ci;
+	float*	out = ((float*)outd.audio)+ci;
+	float*	end = in + ind.len/4; // Block loop end
 
 	while(in < end){
 	    uint32_t	k  = 0;		// Frequency band index

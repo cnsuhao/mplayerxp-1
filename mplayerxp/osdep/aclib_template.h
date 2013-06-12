@@ -10,8 +10,8 @@
 #ifdef __x86_64__
 #define small_memcpy(to,from,n)\
 {\
-register unsigned long int siz;\
-register unsigned long int dummy;\
+unsigned long int siz;\
+unsigned long int dummy;\
     siz=n&0x7;  n>>=3;\
     if(siz)\
 __asm__ __volatile__(\
@@ -35,7 +35,7 @@ __asm__ __volatile__(\
 #else
 #define small_memcpy(to,from,n)\
 {\
-register unsigned long int dummy;\
+unsigned long int dummy;\
 __asm__ __volatile__(\
 	"rep; movsb"\
 	:"=&D"(to), "=&S"(from), "=&c"(dummy)\
@@ -78,7 +78,7 @@ __asm__ __volatile__(\
 \
     if(len >= MIN_LEN)\
     {\
-	register unsigned long int delta;\
+	unsigned long int delta;\
 	/* Align destinition to cache-line size -boundary */\
 	delta = ((unsigned long int)tto)&(gCpuCaps.cl_size-1);\
 	if(delta) {\

@@ -64,35 +64,36 @@ static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request, any_t*dat
     }
     return vf_next_control(vf, request, data);
 }
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t* mpi){
+
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     mp_image_t* dmpi;
     int finalize;
-    unsigned int bpp = mpi->bpp / 8;
+    unsigned int bpp = smpi.bpp / 8;
     unsigned int x, y, w, h;
-    dmpi = vf_get_new_exportable_genome(vf->next, MP_IMGTYPE_TEMP,MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE, mpi);
+    dmpi = vf_get_new_exportable_genome(vf->next, MP_IMGTYPE_TEMP,MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE, smpi);
     finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
     if(finalize)
-    stream_copy_pic(dmpi->planes[0],mpi->planes[0],mpi->w*bpp, mpi->h,
-		    dmpi->stride[0],mpi->stride[0]);
+    stream_copy_pic(dmpi->planes[0],smpi.planes[0],smpi.w*bpp, smpi.h,
+		    dmpi->stride[0],smpi.stride[0]);
     else
-    memcpy_pic(dmpi->planes[0],mpi->planes[0],mpi->w*bpp, mpi->h,
-	       dmpi->stride[0],mpi->stride[0]);
-    if(mpi->flags&MP_IMGFLAG_PLANAR && mpi->flags&MP_IMGFLAG_YUV){
+    memcpy_pic(dmpi->planes[0],smpi.planes[0],smpi.w*bpp, smpi.h,
+	       dmpi->stride[0],smpi.stride[0]);
+    if(smpi.flags&MP_IMGFLAG_PLANAR && smpi.flags&MP_IMGFLAG_YUV){
 	if(finalize) {
-	stream_copy_pic(dmpi->planes[1],mpi->planes[1],
-		   mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift,
-		   dmpi->stride[1],mpi->stride[1]);
-	stream_copy_pic(dmpi->planes[2],mpi->planes[2],
-		   mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift,
-		   dmpi->stride[2],mpi->stride[2]);
+	stream_copy_pic(dmpi->planes[1],smpi.planes[1],
+		   smpi.w>>smpi.chroma_x_shift, smpi.h>>smpi.chroma_y_shift,
+		   dmpi->stride[1],smpi.stride[1]);
+	stream_copy_pic(dmpi->planes[2],smpi.planes[2],
+		   smpi.w>>smpi.chroma_x_shift, smpi.h>>smpi.chroma_y_shift,
+		   dmpi->stride[2],smpi.stride[2]);
 	} else {
-	memcpy_pic(dmpi->planes[1],mpi->planes[1],
-		   mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift,
-		   dmpi->stride[1],mpi->stride[1]);
-	memcpy_pic(dmpi->planes[2],mpi->planes[2],
-		   mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift,
-		   dmpi->stride[2],mpi->stride[2]);
+	memcpy_pic(dmpi->planes[1],smpi.planes[1],
+		   smpi.w>>smpi.chroma_x_shift, smpi.h>>smpi.chroma_y_shift,
+		   dmpi->stride[1],smpi.stride[1]);
+	memcpy_pic(dmpi->planes[2],smpi.planes[2],
+		   smpi.w>>smpi.chroma_x_shift, smpi.h>>smpi.chroma_y_shift,
+		   dmpi->stride[2],smpi.stride[2]);
 	}
     }
 
@@ -131,7 +132,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t* mpi){
 	while (count--)
 	    p[count] = 0xff - p[count];
     }
-    if (h != 1 && vf->priv->y + vf->priv->h - 1 <= mpi->height) {
+    if (h != 1 && vf->priv->y + vf->priv->h - 1 <= smpi.height) {
 	unsigned char *p = dmpi->planes[0] + (vf->priv->y + vf->priv->h - 1) * dmpi->stride[0] + x * bpp;
 	unsigned int count = w * bpp;
 	while (count--)
@@ -147,7 +148,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t* mpi){
 	    p += dmpi->stride[0];
 	}
     }
-    if (w != 1 && vf->priv->x + vf->priv->w - 1 <= mpi->width) {
+    if (w != 1 && vf->priv->x + vf->priv->w - 1 <= smpi.width) {
 	unsigned char *p = dmpi->planes[0] + y * dmpi->stride[0] + (vf->priv->x + vf->priv->w - 1) * bpp;
 	unsigned int count = h;
 	while (count--) {
@@ -157,7 +158,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t* mpi){
 	    p += dmpi->stride[0];
 	}
     }
-    return vf_next_put_slice(vf, dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t* vf,const char* args) {

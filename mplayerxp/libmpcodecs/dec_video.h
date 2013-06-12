@@ -23,8 +23,8 @@ namespace	usr {
 
 	    virtual MPXP_Rc	config_vf(int w, int h) const;
 	    virtual mp_image_t*	get_image(int mp_imgtype, int mp_imgflag,int w, int h) const;
-	    virtual void	draw_slice(const mp_image_t*) const;
-	    virtual void	draw_image(const mp_image_t*) const;
+	    virtual void	draw_slice(const mp_image_t&) const;
+	    virtual void	draw_image(const mp_image_t&) const;
 	    static void		print_help();
 	private:
 	    void		print_codec_info() const;

@@ -101,7 +101,7 @@ static int y4m_demux(Demuxer *demux,Demuxer_Stream *__ds) {
   {
     int c;
 
-    c = demux->stream->read_char(); /* F */
+    c = demux->stream->read(type_byte); /* F */
     if (c == -256)
 	return 0; /* EOF */
     if (c != 'F')
@@ -156,7 +156,7 @@ static Opaque* y4m_open(Demuxer* demuxer){
 	buf[3] = 0;
 	sh->src_h = atoi(buf);
 	demuxer->stream->skip( 1); /* space */
-	buf[0] = demuxer->stream->read_char();
+	buf[0] = demuxer->stream->read(type_byte);
 	buf[1] = 0;
 	frame_rate_code = atoi(buf);
 	demuxer->stream->skip( 1); /* new-line */

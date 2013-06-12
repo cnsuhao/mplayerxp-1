@@ -127,10 +127,9 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
     UNUSED(arg);
     switch(cmd){
 	case AF_CONTROL_SHOWCONF: {
-	    char sbuf[256];
 	    const ao_info_t*info=mpxp_context().audio().output->get_info();
 	    MSG_INFO("AO-CONF: [%s] %uHz nch=%u %s (%3.1f-kbit)\n"
-		,info->short_name,s->rate,s->nch,mpaf_fmt2str(s->format,sbuf,sizeof(sbuf))
+		,info->short_name,s->rate,s->nch,mpaf_fmt2str(s->format).c_str()
 		,(s->rate*s->nch*(s->format&MPAF_BPS_MASK)*8)*0.001f);
 	    return MPXP_Ok;
 	}
@@ -146,11 +145,11 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* data)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& data)
 {
   // Do something necessary to get rid of annoying warning during compile
     if(!af) MSG_ERR("EEEK: Argument af == NULL in af_dummy.c play().");
-    return const_cast<mp_aframe_t*>(data);
+    return data;
 }
 
 // Allocate memory and set function pointers

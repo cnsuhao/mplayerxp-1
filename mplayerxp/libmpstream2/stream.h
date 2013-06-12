@@ -76,15 +76,15 @@ namespace	usr {
 	    virtual float	stream_pts() const;	/**< PTS correction for idiotics DVD's discontinuities */
 	    virtual std::string mime_type() const;
 
-	    virtual int		read_char();
-	    virtual unsigned	read_word();
-	    virtual unsigned	read_dword();
-	    virtual unsigned	read_word_le();
-	    virtual unsigned	read_dword_le();
-	    virtual uint64_t	read_qword();
-	    virtual uint64_t	read_qword_le();
+	    virtual int		read(const mplayerxp_data_type_qualifier__byte_t&);
+	    virtual unsigned	read(const mplayerxp_data_type_qualifier__word_t&);
+	    virtual unsigned	read(const mplayerxp_data_type_qualifier_dword_t&);
+	    virtual uint64_t	read(const mplayerxp_data_type_qualifier_qword_t&);
+	    virtual unsigned	read_le(const mplayerxp_data_type_qualifier__word_t&);
+	    virtual unsigned	read_le(const mplayerxp_data_type_qualifier_dword_t&);
+	    virtual uint64_t	read_le(const mplayerxp_data_type_qualifier_qword_t&);
 	    virtual unsigned	read_int24();
-	    uint32_t		read_fourcc() { return read_dword_le(); }
+	    uint32_t		read_fourcc() { return read_le(type_dword); }
 
 	    Opaque		unusable;
 	    unsigned		pin;		/**< personal identification number */
@@ -117,6 +117,16 @@ namespace	usr {
 	    virtual int		eof() const;
 	    virtual void	eof(int eof);
 	    virtual void	reset();
+
+	    /* begin: remove this on non hacked-gcc */
+	    virtual int		read(const mplayerxp_data_type_qualifier__byte_t&);
+	    virtual unsigned	read(const mplayerxp_data_type_qualifier__word_t&);
+	    virtual unsigned	read(const mplayerxp_data_type_qualifier_dword_t&);
+	    virtual uint64_t	read(const mplayerxp_data_type_qualifier_qword_t&);
+	    virtual unsigned	read_le(const mplayerxp_data_type_qualifier__word_t&);
+	    virtual unsigned	read_le(const mplayerxp_data_type_qualifier_dword_t&);
+	    virtual uint64_t	read_le(const mplayerxp_data_type_qualifier_qword_t&);
+	    /* end: remove this on non hacked-gcc */
 
 	    virtual off_t	start_pos() const;	/**< real start of stream (without internet's headers) */
 	    virtual off_t	end_pos() const;	/**< real end of stream (media may be not fully filled) */

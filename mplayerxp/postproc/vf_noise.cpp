@@ -325,32 +325,32 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *mpi){
-    if(mpi->flags&MP_IMGFLAG_PRESERVE) return; // don't change
-    if(mpi->imgfmt!=vf->priv->outfmt) return; // colorspace differ
+static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *smpi){
+    if(smpi->flags&MP_IMGFLAG_PRESERVE) return; // don't change
+    if(smpi->imgfmt!=vf->priv->outfmt) return; // colorspace differ
     // ok, we can do pp in-place (or pp disabled):
-    vf->dmpi=vf_get_new_genome(vf->next,mpi);
-    mpi->planes[0]=vf->dmpi->planes[0];
-    mpi->stride[0]=vf->dmpi->stride[0];
-    mpi->width=vf->dmpi->width;
-    if(mpi->flags&MP_IMGFLAG_PLANAR){
-	mpi->planes[1]=vf->dmpi->planes[1];
-	mpi->planes[2]=vf->dmpi->planes[2];
-	mpi->stride[1]=vf->dmpi->stride[1];
-	mpi->stride[2]=vf->dmpi->stride[2];
+    vf->dmpi=vf_get_new_genome(vf->next,*smpi);
+    smpi->planes[0]=vf->dmpi->planes[0];
+    smpi->stride[0]=vf->dmpi->stride[0];
+    smpi->width=vf->dmpi->width;
+    if(smpi->flags&MP_IMGFLAG_PLANAR){
+	smpi->planes[1]=vf->dmpi->planes[1];
+	smpi->planes[2]=vf->dmpi->planes[2];
+	smpi->stride[1]=vf->dmpi->stride[1];
+	smpi->stride[2]=vf->dmpi->stride[2];
     }
-    mpi->flags|=MP_IMGFLAG_DIRECT;
+    smpi->flags|=MP_IMGFLAG_DIRECT;
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
 	int finalize;
 	mp_image_t *dmpi;
 
-	if(!(mpi->flags&MP_IMGFLAG_DIRECT)){
+	if(!(smpi.flags&MP_IMGFLAG_DIRECT)){
 		// no DR, so get a new image! hope we'll get DR buffer:
 		vf->dmpi=vf_get_new_image(vf->next,vf->priv->outfmt,
 		MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-		mpi->w,mpi->h,mpi->xp_idx);
+		smpi.w,smpi.h,smpi.xp_idx);
 //printf("nodr\n");
 	}
 //else printf("dr\n");
@@ -362,19 +362,19 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 {
 #pragma omp section
 #endif
-	noise(dmpi->planes[0], mpi->planes[0], dmpi->stride[0], mpi->stride[0], mpi->w, mpi->h, &vf->priv->lumaParam,finalize);
+	noise(dmpi->planes[0], smpi.planes[0], dmpi->stride[0], smpi.stride[0], smpi.w, smpi.h, &vf->priv->lumaParam,finalize);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-	noise(dmpi->planes[1], mpi->planes[1], dmpi->stride[1], mpi->stride[1], mpi->w/2, mpi->h/2, &vf->priv->chromaParam,finalize);
+	noise(dmpi->planes[1], smpi.planes[1], dmpi->stride[1], smpi.stride[1], smpi.w/2, smpi.h/2, &vf->priv->chromaParam,finalize);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-	noise(dmpi->planes[2], mpi->planes[2], dmpi->stride[2], mpi->stride[2], mpi->w/2, mpi->h/2, &vf->priv->chromaParam,finalize);
+	noise(dmpi->planes[2], smpi.planes[2], dmpi->stride[2], smpi.stride[2], smpi.w/2, smpi.h/2, &vf->priv->chromaParam,finalize);
 #ifdef _OPENMP
 }
 #endif
-	vf_clone_mpi_attributes(dmpi, mpi);
+	vf_clone_mpi_attributes(dmpi, smpi);
 
 #ifdef CAN_COMPILE_MMX
 	if(gCpuCaps.hasMMX) asm volatile ("emms\n\t":::"memory"
@@ -390,7 +390,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 	if(gCpuCaps.hasMMX2) asm volatile ("sfence\n\t");
 #endif
 
-	return vf_next_put_slice(vf,dmpi);
+	return vf_next_put_slice(vf,*dmpi);
 }
 
 static void __FASTCALL__ uninit(vf_instance_t* vf){

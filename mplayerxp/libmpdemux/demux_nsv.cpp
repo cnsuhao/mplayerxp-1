@@ -169,27 +169,27 @@ static Opaque* nsv_open( Demuxer* demuxer )
     if(!(hdr[0]==0x4E && hdr[1]==0x53 && hdr[2]==0x56)){
 	// todo: replace this with a decent string search algo
 	while(1){
-	    hdr[0]=demuxer->stream->read_char();
+	    hdr[0]=demuxer->stream->read(type_byte);
 	    if(demuxer->stream->eof())
 		return 0;
 	    if(hdr[0]!=0x4E)
 		continue;
 
-	    hdr[1]=demuxer->stream->read_char();
+	    hdr[1]=demuxer->stream->read(type_byte);
 
 	    if(demuxer->stream->eof())
 		return 0;
 	    if(hdr[1]!=0x53)
 		continue;
 
-	    hdr[2]=demuxer->stream->read_char();
+	    hdr[2]=demuxer->stream->read(type_byte);
 
 	    if(demuxer->stream->eof())
 		return 0;
 	    if(hdr[2]!=0x56)
 		continue;
 
-	    hdr[3]=demuxer->stream->read_char();
+	    hdr[3]=demuxer->stream->read(type_byte);
 
 	    if(demuxer->stream->eof())
 		return 0;
@@ -208,7 +208,7 @@ static Opaque* nsv_open( Demuxer* demuxer )
 
 	if(hdr[3]==0x66){
 	    // NSVf
-	    int len=demuxer->stream->read_dword_le();
+	    int len=demuxer->stream->read_le(type_dword);
 	    // TODO: parse out metadata!!!!
 	    demuxer->stream->skip(len-8);
 
@@ -331,7 +331,7 @@ static MPXP_Rc nsv_probe ( Demuxer* demuxer )
     MSG_V("Checking for Nullsoft Streaming Video\n" );
 
     //---- check NSVx header:
-    id=demuxer->stream->read_dword_le();
+    id=demuxer->stream->read_le(type_dword);
     if(id!=mmioFOURCC('N','S','V','f') && id!=mmioFOURCC('N','S','V','s'))
 	return MPXP_False; // not an NSV file
 

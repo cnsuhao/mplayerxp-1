@@ -148,7 +148,7 @@ static Opaque* aiff_open(Demuxer* demuxer) {
 	bp.resize(bp.size()+1);
 	bp[chunk_size]=0;
 	demuxer->info().add(INFOT_NAME, bp.cdata());
-	if(priv->verc && (chunk_size&1)) s->read_char();
+	if(priv->verc && (chunk_size&1)) s->read(type_byte);
     }
     else
     if(*((uint32_t *)&preamble[0])==mmioFOURCC('A','U','T','H'))
@@ -157,7 +157,7 @@ static Opaque* aiff_open(Demuxer* demuxer) {
 	bp.resize(bp.size()+1);
 	bp[chunk_size]=0;
 	demuxer->info().add(INFOT_AUTHOR, bp.cdata());
-	if(priv->verc && (chunk_size&1)) s->read_char();
+	if(priv->verc && (chunk_size&1)) s->read(type_byte);
     }
     else
     if(*((uint32_t *)&preamble[0])==mmioFOURCC('(','c',')',' '))
@@ -166,7 +166,7 @@ static Opaque* aiff_open(Demuxer* demuxer) {
 	bp.resize(bp.size()+1);
 	bp[chunk_size]=0;
 	demuxer->info().add(INFOT_COPYRIGHT, bp.cdata());
-	if(priv->verc && (chunk_size&1)) s->read_char();
+	if(priv->verc && (chunk_size&1)) s->read(type_byte);
     }
     else
     if(*((uint32_t *)&preamble[0])==mmioFOURCC('A','N','N','O'))
@@ -175,7 +175,7 @@ static Opaque* aiff_open(Demuxer* demuxer) {
 	bp.resize(bp.size()+1);
 	bp[chunk_size]=0;
 	demuxer->info().add(INFOT_DESCRIPTION, bp.cdata());
-	if(priv->verc && (chunk_size&1)) s->read_char();
+	if(priv->verc && (chunk_size&1)) s->read(type_byte);
     }
     else
     {

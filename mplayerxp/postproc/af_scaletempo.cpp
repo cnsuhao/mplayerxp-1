@@ -83,10 +83,10 @@ struct af_scaletempo_t
   short   speed_pitch;
 };
 
-static int fill_queue(af_instance_t* af,const mp_aframe_t* data, int offset)
+static int fill_queue(af_instance_t* af,const mp_aframe_t& data, int offset)
 {
   af_scaletempo_t* s = reinterpret_cast<af_scaletempo_t*>(af->setup);
-  int bytes_in = data->len - offset;
+  int bytes_in = data.len - offset;
   int offset_unchanged = offset;
 
   if (s->bytes_to_slide > 0) {
@@ -111,7 +111,7 @@ static int fill_queue(af_instance_t* af,const mp_aframe_t* data, int offset)
   if (bytes_in > 0) {
     int bytes_copy = std::min(s->bytes_queue - s->bytes_queued, bytes_in);
     memcpy(s->buf_queue + s->bytes_queued,
-	   (int8_t*)data->audio + offset,
+	   (int8_t*)data.audio + offset,
 	   bytes_copy);
     s->bytes_queued += bytes_copy;
     offset += bytes_copy;
@@ -168,20 +168,20 @@ static void output_overlap_float(af_scaletempo_t* s, int8_t* buf_out,
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& ind)
 {
     af_scaletempo_t* s = reinterpret_cast<af_scaletempo_t*>(af->setup);
     unsigned	offset_in;
     int8_t*	pout;
 
-    if (s->scale == 1.0) return const_cast<mp_aframe_t*>(ind);
+    if (s->scale == 1.0) return ind;
 
-    mp_aframe_t* out = new_mp_aframe_genome(ind);
-    out->len = ((int)(ind->len/s->bytes_stride_scaled)+1)*s->bytes_stride;
-    mp_alloc_aframe(out);
+    mp_aframe_t out = ind.genome();
+    out.len = ((int)(ind.len/s->bytes_stride_scaled)+1)*s->bytes_stride;
+    out.alloc();
 
     offset_in = fill_queue(af, ind, 0);
-    pout = reinterpret_cast<int8_t*>(out->audio);
+    pout = reinterpret_cast<int8_t*>(out.audio);
     while (s->bytes_queued >= s->bytes_queue) {
 	int ti;
 	float tf;
@@ -193,7 +193,7 @@ static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind)
 		bytes_off = s->best_overlap_offset(s);
 	    s->output_overlap(s, pout, bytes_off);
 	}
-	if(out->flags&MP_AFLG_FINALIZED)
+	if(out.flags&MP_AFLG_FINALIZED)
 	stream_copy(pout + s->bytes_overlap,
 	   s->buf_queue + bytes_off + s->bytes_overlap,
 	   s->bytes_standing);
@@ -220,7 +220,7 @@ static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind)
     // after receiving only a part of that input.
     af->delay = s->bytes_queued - s->bytes_to_slide;
 
-    out->len  = pout - (int8_t *)out->audio;
+    out.len  = pout - (int8_t *)out.audio;
     return out;
 }
 

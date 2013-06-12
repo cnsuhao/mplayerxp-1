@@ -338,17 +338,17 @@ static MPXP_Rc mov_probe(Demuxer* demuxer){
     while(1){
 	int i;
 	int skipped=8;
-	off_t len=demuxer->stream->read_dword();
-	unsigned int id=demuxer->stream->read_dword();
+	off_t len=demuxer->stream->read(type_dword);
+	unsigned int id=demuxer->stream->read(type_dword);
 	if(demuxer->stream->eof()) break; // EOF
 	if (len == 1) /* real size is 64bits - cjb */
 	{
 #ifndef _LARGEFILE_SOURCE
-	    if (demuxer->stream->read_dword() != 0)
+	    if (demuxer->stream->read(type_dword) != 0)
 		MSG_WARN( "64bit file, but you've compiled MPlayer without LARGEFILE support!\n");
-	    len = demuxer->stream->read_dword();
+	    len = demuxer->stream->read(type_dword);
 #else
-	    len = demuxer->stream->read_qword();
+	    len = demuxer->stream->read(type_qword);
 #endif
 	    skipped += 8;
 	}
@@ -370,7 +370,7 @@ static MPXP_Rc mov_probe(Demuxer* demuxer){
 	  // char[4]  compatible_brands[]  (eg. 'mp41')
 	  // compatible_brands list spans to the end of box
 #if 1
-	  tmp = demuxer->stream->read_dword();
+	  tmp = demuxer->stream->read(type_dword);
 	  switch(tmp) {
 	    case MOV_FOURCC('i','s','o','m'):
 	      MSG_V("MOV: File-Type Major-Brand: ISO Media File\n");
@@ -413,12 +413,12 @@ static MPXP_Rc mov_probe(Demuxer* demuxer){
 	      tmp = BE_32(tmp);
 	      MSG_WARN("MOV: File-Type unknown Major-Brand: %.4s\n",&tmp);
 	  }
-	  ver=demuxer->stream->read_dword();
+	  ver=demuxer->stream->read(type_dword);
 	  MSG_V("MOV: File-Type Minor-Version: %d\n",ver);
 	  skipped += 8;
 	  // List all compatible brands
 	  for(i = 0; i < ((len-16)/4); i++) {
-	    tmp = BE_32(demuxer->stream->read_dword());
+	    tmp = BE_32(demuxer->stream->read(type_dword));
 	    MSG_V("MOV: File-Type Compatible-Brands #%d: %.4s\n",i,&tmp);
 	    skipped += 4;
 	  }
@@ -432,24 +432,24 @@ static MPXP_Rc mov_probe(Demuxer* demuxer){
 	  MSG_DBG2("MOV: Movie header: start: %x end: %x\n",
 	    priv->moov_start, priv->moov_end);
 	  skipped+=8;
-	  i = demuxer->stream->read_dword()-8;
-	  if(demuxer->stream->read_dword()==MOV_FOURCC('r','m','r','a')){
+	  i = demuxer->stream->read(type_dword)-8;
+	  if(demuxer->stream->read(type_dword)==MOV_FOURCC('r','m','r','a')){
 	      skipped+=i;
 	      MSG_V("MOV: Reference Media file!!!\n");
 	      //set demuxer type to playlist ...
 	      //demuxer->type=DEMUXER_TYPE_PLAYLIST;
 	      while(i>0){
-		  int len=demuxer->stream->read_dword()-8;
-		  int fcc=demuxer->stream->read_dword();
+		  int len=demuxer->stream->read(type_dword)-8;
+		  int fcc=demuxer->stream->read(type_dword);
 		  if(len<0) break; // EOF!?
 		  i-=8;
 		  switch(fcc){
 		  case MOV_FOURCC('r','m','d','a'):
 		      continue;
 		  case MOV_FOURCC('r','d','r','f'): {
-		      demuxer->stream->read_dword();
-		      /*int type=*/demuxer->stream->read_dword_le();
-		      int slen=demuxer->stream->read_dword();
+		      demuxer->stream->read(type_dword);
+		      /*int type=*/demuxer->stream->read_le(type_dword);
+		      int slen=demuxer->stream->read(type_dword);
 		      //char* s=mp_malloc(slen+1);
 		      //demuxer->stream->read(s,slen);
 
@@ -467,13 +467,13 @@ static MPXP_Rc mov_probe(Demuxer* demuxer){
 		      len-=12+slen;i-=12+slen; break;
 		    }
 		  case MOV_FOURCC('r','m','d','r'): {
-		      demuxer->stream->read_dword();
-		      int rate=demuxer->stream->read_dword();
+		      demuxer->stream->read(type_dword);
+		      int rate=demuxer->stream->read(type_dword);
 		      MSG_V("  min. data rate: %d bits/sec\n",rate);
 		      len-=8; i-=8; break;
 		    }
 		  case MOV_FOURCC('r','m','q','u'): {
-		      int q=demuxer->stream->read_dword();
+		      int q=demuxer->stream->read(type_dword);
 		      MSG_V("  quality index: %d\n",q);
 		      len-=4; i-=4; break;
 		    }
@@ -608,10 +608,10 @@ static void lschunks(Demuxer* demuxer,int level,off_t endpos,mov_track_t* trak){
 	//
 	pos=demuxer->stream->tell();
 	if(pos>=endpos) return; // END
-	len=demuxer->stream->read_dword();
+	len=demuxer->stream->read(type_dword);
 	if(len<8) return; // error
 	len-=8;
-	id=demuxer->stream->read_dword();
+	id=demuxer->stream->read(type_dword);
 	//
 	MSG_DBG2("lschunks %.4s  %d\n",&id,(int)len);
 	//
@@ -621,13 +621,13 @@ static void lschunks(Demuxer* demuxer,int level,off_t endpos,mov_track_t* trak){
 	} else { /* not in track */
 	  switch(id) {
 	    case MOV_FOURCC('m','v','h','d'): {
-		int version = demuxer->stream->read_char();
+		int version = demuxer->stream->read(type_byte);
 		demuxer->stream->skip( (version == 1) ? 19 : 11);
-		priv->timescale=demuxer->stream->read_dword();
+		priv->timescale=demuxer->stream->read(type_dword);
 		if (version == 1)
-		    priv->duration=demuxer->stream->read_qword();
+		    priv->duration=demuxer->stream->read(type_qword);
 		else
-		    priv->duration=demuxer->stream->read_dword();
+		    priv->duration=demuxer->stream->read(type_dword);
 		MSG_V("MOV: %*sMovie header (%d bytes): tscale=%d  dur=%d\n",level,"",(int)len,
 		    (int)priv->timescale,(int)priv->duration);
 		break;
@@ -1316,14 +1316,14 @@ quit_vorbis_block:
 	    break;
 	}
 	case MOV_FOURCC('d','c','o','m'): {
-//	    int temp=demuxer->stream->read_dword();
-	    unsigned int algo=be2me_32(demuxer->stream->read_dword());
+//	    int temp=demuxer->stream->read(type_dword);
+	    unsigned int algo=be2me_32(demuxer->stream->read(type_dword));
 	    MSG_V( "Compressed header uses %.4s algo!\n",&algo);
 	    break;
 	}
 	case MOV_FOURCC('c','m','v','d'): {
-//	    int temp=demuxer->stream->read_dword();
-	    unsigned int moov_sz=demuxer->stream->read_dword();
+//	    int temp=demuxer->stream->read(type_dword);
+	    unsigned int moov_sz=demuxer->stream->read(type_dword);
 	    unsigned int cmov_sz=len-4;
 	    unsigned char* cmov_buf=new unsigned char[cmov_sz];
 	    unsigned char* moov_buf=new unsigned char[moov_sz+16];
@@ -1383,8 +1383,8 @@ quit_vorbis_block:
 
 	    while((len > 8) && (udta_size > 8))
 	    {
-		udta_len = demuxer->stream->read_dword();
-		udta_id = demuxer->stream->read_dword();
+		udta_len = demuxer->stream->read(type_dword);
+		udta_id = demuxer->stream->read(type_dword);
 		udta_size -= 8;
 		MSG_DBG2( "udta_id: %.4s (len: %d)\n", &udta_id, udta_len);
 		switch (udta_id)
@@ -1406,7 +1406,7 @@ quit_vorbis_block:
 		    case MOV_FOURCC(0xa9,'a','u','t'):
 		    case MOV_FOURCC(0xa9,'s','w','r'):
 		    {
-			off_t text_len = demuxer->stream->read_word();
+			off_t text_len = demuxer->stream->read(type_word);
 			char text[text_len+2+1];
 			bp=demuxer->stream->read(text_len+2);
 			memcpy(&text,bp.data(),bp.size());
@@ -1542,26 +1542,26 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
       break;
     }
     case MOV_FOURCC('m','d','h','d'): {
-      int version = demuxer->stream->read_char();
+      int version = demuxer->stream->read(type_byte);
       MSG_V("MOV: %*sMedia header!\n", level, "");
       demuxer->stream->skip( (version == 1) ? 19 : 11);
       // read timescale
-      trak->timescale = demuxer->stream->read_dword();
+      trak->timescale = demuxer->stream->read(type_dword);
       // read length
       if (version == 1)
-	  trak->length = demuxer->stream->read_qword();
+	  trak->length = demuxer->stream->read(type_qword);
       else
-	  trak->length = demuxer->stream->read_dword();
+	  trak->length = demuxer->stream->read(type_dword);
       break;
     }
     case MOV_FOURCC('h','d','l','r'): {
-      demuxer->stream->read_dword();
-      unsigned int type = demuxer->stream->read_dword_le();
-      unsigned int subtype = demuxer->stream->read_dword_le();
-      unsigned int manufact = demuxer->stream->read_dword_le();
-      /*unsigned int comp_flags =*/ demuxer->stream->read_dword();
-      /*unsigned int comp_mask =*/ demuxer->stream->read_dword();
-      unsigned _len = demuxer->stream->read_char();
+      demuxer->stream->read(type_dword);
+      unsigned int type = demuxer->stream->read_le(type_dword);
+      unsigned int subtype = demuxer->stream->read_le(type_dword);
+      unsigned int manufact = demuxer->stream->read_le(type_dword);
+      /*unsigned int comp_flags =*/ demuxer->stream->read(type_dword);
+      /*unsigned int comp_mask =*/ demuxer->stream->read(type_dword);
+      unsigned _len = demuxer->stream->read(type_byte);
       char* str = new char [_len + 1];
       bp=demuxer->stream->read(_len);
       memcpy(str,bp.data(),bp.size());
@@ -1605,14 +1605,14 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
       break;
     }
     case MOV_FOURCC('s','t','s','d'): {
-      int i = demuxer->stream->read_dword(); // temp!
-      int count = demuxer->stream->read_dword();
+      int i = demuxer->stream->read(type_dword); // temp!
+      int count = demuxer->stream->read(type_dword);
       MSG_V( "MOV: %*sDescription list! (cnt:%d)\n",
 	     level, "", count);
       for (i = 0; i < count; i++) {
 	off_t _pos = demuxer->stream->tell();
-	unsigned _len = demuxer->stream->read_dword();
-	unsigned int fourcc = demuxer->stream->read_dword_le();
+	unsigned _len = demuxer->stream->read(type_dword);
+	unsigned int fourcc = demuxer->stream->read_le(type_dword);
 	/* some files created with Broadcast 2000 (e.g. ilacetest.mov)
 	   contain raw I420 video but have a yv12 fourcc */
 	if (fourcc == mmioFOURCC('y','v','1','2'))
@@ -1639,15 +1639,15 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
       break;
     }
     case MOV_FOURCC('s','t','t','s'): {
-      demuxer->stream->read_dword();
-      unsigned i,_len = demuxer->stream->read_dword();
+      demuxer->stream->read(type_dword);
+      unsigned i,_len = demuxer->stream->read(type_dword);
       unsigned int pts = 0;
       MSG_V("MOV: %*sSample duration table! (%d blocks)\n", level, "", _len);
       trak->durmap = new mov_durmap_t[_len];
       trak->durmap_size = _len;
       for (i = 0; i < _len; i++) {
-	trak->durmap[i].num = demuxer->stream->read_dword();
-	trak->durmap[i].dur = demuxer->stream->read_dword();
+	trak->durmap[i].num = demuxer->stream->read(type_dword);
+	trak->durmap[i].dur = demuxer->stream->read(type_dword);
 	pts += trak->durmap[i].num * trak->durmap[i].dur;
       }
       if (trak->length != pts)
@@ -1655,8 +1655,8 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
       break;
     }
     case MOV_FOURCC('s','t','s','c'): {
-      unsigned temp = demuxer->stream->read_dword();
-      unsigned i,_len = demuxer->stream->read_dword();
+      unsigned temp = demuxer->stream->read(type_dword);
+      unsigned i,_len = demuxer->stream->read(type_dword);
       unsigned ver = (temp << 24);
       unsigned flags = (temp << 16) | (temp << 8) | temp;
       MSG_V( "MOV: %*sSample->Chunk mapping table!  (%d blocks) (ver:%d,flags:%ld)\n", level, "",
@@ -1665,18 +1665,18 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
       trak->chunkmap_size = _len;
       trak->chunkmap = new mov_chunkmap_t[_len];
       for (i = 0; i < _len; i++) {
-	trak->chunkmap[i].first = demuxer->stream->read_dword() - 1;
-	trak->chunkmap[i].spc = demuxer->stream->read_dword();
-	trak->chunkmap[i].sdid = demuxer->stream->read_dword();
+	trak->chunkmap[i].first = demuxer->stream->read(type_dword) - 1;
+	trak->chunkmap[i].spc = demuxer->stream->read(type_dword);
+	trak->chunkmap[i].sdid = demuxer->stream->read(type_dword);
       }
       break;
     }
     case MOV_FOURCC('s','t','s','z'): {
-      int temp = demuxer->stream->read_dword();
-      int ss=demuxer->stream->read_dword();
+      int temp = demuxer->stream->read(type_dword);
+      int ss=demuxer->stream->read(type_dword);
       int ver = (temp << 24);
       int flags = (temp << 16) | (temp << 8) | temp;
-      int entries = demuxer->stream->read_dword();
+      int entries = demuxer->stream->read(type_dword);
       int i;
       MSG_V("MOV: %*sSample size table! (entries=%d ss=%d) (ver:%d,flags:%ld)\n", level, "",
 	     entries, ss, ver, flags);
@@ -1688,13 +1688,13 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
 		(mov_sample_t*)mp_calloc(entries, sizeof(mov_sample_t));
 	trak->samples_size = entries;
 	for (i = 0; i < entries; i++)
-	  trak->samples[i].size = demuxer->stream->read_dword();
+	  trak->samples[i].size = demuxer->stream->read(type_dword);
       }
       break;
     }
     case MOV_FOURCC('s','t','c','o'): {
-      demuxer->stream->read_dword();
-      unsigned i,_len = demuxer->stream->read_dword();
+      demuxer->stream->read(type_dword);
+      unsigned i,_len = demuxer->stream->read(type_dword);
       MSG_V( "MOV: %*sChunk offset table! (%d chunks)\n", level, "",
 	     _len);
       // extend array if needed:
@@ -1706,12 +1706,12 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
       }
       // read elements:
       for(i = 0; i < _len; i++)
-	trak->chunks[i].pos = demuxer->stream->read_dword();
+	trak->chunks[i].pos = demuxer->stream->read(type_dword);
       break;
     }
     case MOV_FOURCC('c','o','6','4'): {
-      demuxer->stream->read_dword();
-      unsigned i,_len = demuxer->stream->read_dword();
+      demuxer->stream->read(type_dword);
+      unsigned i,_len = demuxer->stream->read(type_dword);
       MSG_V( "MOV: %*s64bit chunk offset table! (%d chunks)\n", level, "",
 	     _len);
       // extend array if needed:
@@ -1724,18 +1724,18 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
       // read elements:
       for (i = 0; i < _len; i++) {
 #ifndef	_LARGEFILE_SOURCE
-	if (demuxer->stream->read_dword() != 0)
+	if (demuxer->stream->read(type_dword) != 0)
 	  MSG_WARN( "Chunk %d has got 64bit address, but you've MPlayer compiled without LARGEFILE support!\n", i);
-	trak->chunks[i].pos = demuxer->stream->read_dword();
+	trak->chunks[i].pos = demuxer->stream->read(type_dword);
 #else
-	trak->chunks[i].pos = demuxer->stream->read_qword();
+	trak->chunks[i].pos = demuxer->stream->read(type_qword);
 #endif
       }
       break;
     }
     case MOV_FOURCC('s','t','s','s'): {
-      int temp = demuxer->stream->read_dword();
-      int entries = demuxer->stream->read_dword();
+      int temp = demuxer->stream->read(type_dword);
+      int entries = demuxer->stream->read(type_dword);
       int ver = (temp << 24);
       int flags = (temp << 16) | (temp<<8) | temp;
       int i;
@@ -1744,7 +1744,7 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
       trak->keyframes_size = entries;
       trak->keyframes = new unsigned int [entries];
       for (i = 0; i < entries; i++)
-	trak->keyframes[i] = demuxer->stream->read_dword() - 1;
+	trak->keyframes[i] = demuxer->stream->read(type_dword) - 1;
       break;
     }
     case MOV_FOURCC('m','d','i','a'): {
@@ -1768,8 +1768,8 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
       break;
     }
     case MOV_FOURCC('e','l','s','t'): {
-      int temp = demuxer->stream->read_dword();
-      int entries = demuxer->stream->read_dword();
+      int temp = demuxer->stream->read(type_dword);
+      int entries = demuxer->stream->read(type_dword);
       int ver = (temp << 24);
       int flags = (temp << 16) | (temp << 8) | temp;
       int i;
@@ -1779,9 +1779,9 @@ static int lschunks_intrak(Demuxer* demuxer, int level, unsigned int id,
       trak->editlist_size = entries;
       trak->editlist = new mov_editlist_t[trak->editlist_size];
       for (i = 0; i < entries; i++) {
-	int dur = demuxer->stream->read_dword();
-	int mt = demuxer->stream->read_dword();
-	int mr = demuxer->stream->read_dword(); // 16.16fp
+	int dur = demuxer->stream->read(type_dword);
+	int mt = demuxer->stream->read(type_dword);
+	int mr = demuxer->stream->read(type_dword); // 16.16fp
 	trak->editlist[i].dur = dur;
 	trak->editlist[i].pos = mt;
 	trak->editlist[i].speed = mr;
@@ -1880,7 +1880,7 @@ static Opaque* mov_open(Demuxer* demuxer){
 			trak->stdata_len>=16 &&
 			char2int(trak->stdata,12)==MOV_FOURCC('z','l','i','b')
 		    ){
-			int newlen=demuxer->stream->read_dword();
+			int newlen=demuxer->stream->read(type_dword);
 #ifdef HAVE_ZLIB
 			// unzip:
 			z_stream zstrm;

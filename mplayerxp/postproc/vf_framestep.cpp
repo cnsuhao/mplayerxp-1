@@ -77,7 +77,7 @@ struct vf_priv_t {
 };
 
 /* Filter handler */
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi)
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi)
 {
     mp_image_t        *dmpi;
     vf_priv_t  *priv;
@@ -89,7 +89,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi)
      * current file time (in second) and the frame number on the console ;-)
      */
     if (priv->dump_iframe) {
-	if (mpi->pict_type == 1) {
+	if (smpi.pict_type == 1) {
 		MSG_INFO("I!\n");
 	}
     }
@@ -97,7 +97,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi)
     /* decide if frame must be shown */
     if (priv->dump_iframe == 2) {
 	/* Only key frame */
-	skip = mpi->pict_type == 1 ? 0 : 1;
+	skip = smpi.pict_type == 1 ? 0 : 1;
     }
     else {
 	/* Only 1 every frame_step */
@@ -111,21 +111,21 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi)
 
     if (skip == 0) {
 	/* Get image, export type (we don't modify tghe image) */
-	dmpi=vf_get_new_exportable_genome(vf->next, MP_IMGTYPE_EXPORT, 0, mpi);
+	dmpi=vf_get_new_exportable_genome(vf->next, MP_IMGTYPE_EXPORT, 0, smpi);
 	/* Copy only the pointer ( MP_IMGTYPE_EXPORT ! ) */
-	dmpi->planes[0] = mpi->planes[0];
-	dmpi->planes[1] = mpi->planes[1];
-	dmpi->planes[2] = mpi->planes[2];
+	dmpi->planes[0] = smpi.planes[0];
+	dmpi->planes[1] = smpi.planes[1];
+	dmpi->planes[2] = smpi.planes[2];
 
-	dmpi->stride[0] = mpi->stride[0];
-	dmpi->stride[1] = mpi->stride[1];
-	dmpi->stride[2] = mpi->stride[2];
+	dmpi->stride[0] = smpi.stride[0];
+	dmpi->stride[1] = smpi.stride[1];
+	dmpi->stride[2] = smpi.stride[2];
 
-	dmpi->width     = mpi->width;
-	dmpi->height    = mpi->height;
+	dmpi->width     = smpi.width;
+	dmpi->height    = smpi.height;
 
 	/* Chain to next filter / output ... */
-	return vf_next_put_slice(vf, dmpi);
+	return vf_next_put_slice(vf,*dmpi);
     }
 
     /* Skip the frame */

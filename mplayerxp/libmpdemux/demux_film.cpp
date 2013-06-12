@@ -244,7 +244,7 @@ static Opaque* film_open(Demuxer* demuxer)
 
   // get the header size, which implicitly points past the header and
   // to the start of the data
-  header_size = demuxer->stream->read_dword();
+  header_size = demuxer->stream->read(type_dword);
   film_data->film_version = demuxer->stream->read_fourcc();
   demuxer->movi_start = header_size;
   demuxer->movi_end = demuxer->stream->end_pos();
@@ -261,7 +261,7 @@ static Opaque* film_open(Demuxer* demuxer)
   {
     // fetch the chunk type and size
     chunk_type = demuxer->stream->read_fourcc();
-    chunk_size = demuxer->stream->read_dword();
+    chunk_size = demuxer->stream->read(type_dword);
     header_size -= chunk_size;
 
     switch (chunk_type)
@@ -279,8 +279,8 @@ static Opaque* film_open(Demuxer* demuxer)
 	sh_video->ds = demuxer->video;
 
 	sh_video->fourcc= video_format;
-	sh_video->src_h = demuxer->stream->read_dword();
-	sh_video->src_w = demuxer->stream->read_dword();
+	sh_video->src_h = demuxer->stream->read(type_dword);
+	sh_video->src_w = demuxer->stream->read(type_dword);
 	MSG_V(
 	  "  FILM video: %d x %d\n", sh_video->src_w,
 	  sh_video->src_h);
@@ -303,7 +303,7 @@ static Opaque* film_open(Demuxer* demuxer)
       // don't do this if the file is a quirky file with NULL version
       if (film_data->film_version)
       {
-	audio_channels = demuxer->stream->read_char();
+	audio_channels = demuxer->stream->read(type_byte);
 	if (audio_channels > 0)
 	{
 	  // create and initialize the audio stream header
@@ -317,9 +317,9 @@ static Opaque* film_open(Demuxer* demuxer)
 	  sh_audio->wf->wFormatTag = 1;
 	  sh_audio->wtag = 1;
 	  sh_audio->wf->nChannels = audio_channels;
-	  sh_audio->wf->wBitsPerSample = demuxer->stream->read_char();
+	  sh_audio->wf->wBitsPerSample = demuxer->stream->read(type_byte);
 	  demuxer->stream->skip( 1);  // skip unknown byte
-	  sh_audio->wf->nSamplesPerSec = demuxer->stream->read_word();
+	  sh_audio->wf->nSamplesPerSec = demuxer->stream->read(type_word);
 	  sh_audio->wf->nAvgBytesPerSec =
 	    sh_audio->wf->nSamplesPerSec * sh_audio->wf->wBitsPerSample
 	    * sh_audio->wf->nChannels / 8;
@@ -366,11 +366,11 @@ static Opaque* film_open(Demuxer* demuxer)
 
       if (sh_video)
       {
-	sh_video->fps = demuxer->stream->read_dword();
+	sh_video->fps = demuxer->stream->read(type_dword);
       }
 
       // fetch the number of chunks
-      film_data->total_chunks = demuxer->stream->read_dword();
+      film_data->total_chunks = demuxer->stream->read(type_dword);
       film_data->current_chunk = 0;
       MSG_V(
 	"  STAB chunk contains %d chunks\n", film_data->total_chunks);
@@ -384,10 +384,10 @@ static Opaque* film_open(Demuxer* demuxer)
       {
 	film_chunk = film_data->chunks[i];
 	film_chunk.chunk_offset =
-	  demuxer->movi_start + demuxer->stream->read_dword();
-	film_chunk.chunk_size = demuxer->stream->read_dword();
-	film_chunk.syncinfo1 = demuxer->stream->read_dword();
-	film_chunk.syncinfo2 = demuxer->stream->read_dword();
+	  demuxer->movi_start + demuxer->stream->read(type_dword);
+	film_chunk.chunk_size = demuxer->stream->read(type_dword);
+	film_chunk.syncinfo1 = demuxer->stream->read(type_dword);
+	film_chunk.syncinfo2 = demuxer->stream->read(type_dword);
 
 	// count chunks for the purposes of seeking
 	if (counting_chunks)

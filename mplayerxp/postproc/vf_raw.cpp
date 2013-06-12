@@ -33,23 +33,23 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     mp_image_t *dmpi;
 
     // hope we'll get DR buffer:
-    dmpi=vf_get_new_temp_genome(vf->next,mpi);
-    if(mpi->flags&MP_IMGFLAG_PLANAR){
-	    vf->priv->out.write((char*)(mpi->planes[0]),mpi->stride[0]*mpi->h);
-	    vf->priv->out.write((char*)(mpi->planes[1]),mpi->stride[1]*mpi->h>>mpi->chroma_y_shift);
-	    vf->priv->out.write((char*)(mpi->planes[2]),mpi->stride[2]*mpi->h>>mpi->chroma_y_shift);
+    dmpi=vf_get_new_temp_genome(vf->next,smpi);
+    if(smpi.flags&MP_IMGFLAG_PLANAR){
+	    vf->priv->out.write((char*)(smpi.planes[0]),smpi.stride[0]*smpi.h);
+	    vf->priv->out.write((char*)(smpi.planes[1]),smpi.stride[1]*smpi.h>>smpi.chroma_y_shift);
+	    vf->priv->out.write((char*)(smpi.planes[2]),smpi.stride[2]*smpi.h>>smpi.chroma_y_shift);
 	    MSG_V("[vf_raw] dumping %lu bytes\n"
-	    ,mpi->stride[0]*mpi->h+
-	    (((mpi->stride[1]+mpi->stride[2])*mpi->h)>>mpi->chroma_y_shift));
+	    ,smpi.stride[0]*smpi.h+
+	    (((smpi.stride[1]+smpi.stride[2])*smpi.h)>>smpi.chroma_y_shift));
     } else {
-	    vf->priv->out.write((char*)(mpi->planes[0]),mpi->stride[0]*mpi->h);
-	    MSG_V("[vf_raw] dumping %lu bytes\n",mpi->stride[0]*mpi->h);
+	    vf->priv->out.write((char*)(smpi.planes[0]),smpi.stride[0]*smpi.h);
+	    MSG_V("[vf_raw] dumping %lu bytes\n",smpi.stride[0]*smpi.h);
     }
-    return vf_next_put_slice(vf,dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

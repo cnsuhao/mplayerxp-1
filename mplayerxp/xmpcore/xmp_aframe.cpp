@@ -1,6 +1,9 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
 using namespace	usr;
+#include <sstream>
+#include <iomanip>
+
 #include <string.h>
 #include <stdio.h>
 
@@ -218,8 +221,9 @@ static const struct fmt_alias_s {
 };
 
 // Convert from string to format
-mpaf_format_e mpaf_str2fmt(const char *str)
+mpaf_format_e mpaf_str2fmt(const std::string& _str)
 {
+    const char* str = _str.c_str();
     unsigned i,fmt;
     char val[3];
     fmt=0;
@@ -267,9 +271,9 @@ mpaf_format_e mpaf_str2fmt(const char *str)
 
 /* Convert format to str input str is a buffer for the
    converted string, size is the size of the buffer */
-char* mpaf_fmt2str(mpaf_format_e format, char* str, size_t size)
+std::string mpaf_fmt2str(mpaf_format_e format)
 {
-    int i=0;
+    std::ostringstream oss;
     // Print endinaness
 
     if(format & MPAF_SPECIAL_MASK) {
@@ -278,51 +282,73 @@ char* mpaf_fmt2str(mpaf_format_e format, char* str, size_t size)
 	wtag = format >> 16;
 	for(j=0;j<sizeof(fmt_aliases)/sizeof(struct fmt_alias_s);j++) {
 	    if(fmt_aliases[j].wtag==wtag) {
-		i+=snprintf(&str[i],size-i,fmt_aliases[j].name);
+		oss<<fmt_aliases[j].name;
 		break;
 	    }
 	}
     } else {
 	// Type
-	if(MPAF_F == (format & MPAF_POINT_MASK)) i+=snprintf(&str[i],size,"FLOAT");
+	if(MPAF_F == (format & MPAF_POINT_MASK)) oss<<"FLOAT";
 	else {
-	    if(MPAF_US == (format & MPAF_SIGN_MASK)) i+=snprintf(&str[i],size-i,"U");
-	    else i+=snprintf(&str[i],size-i,"S");
+	    if(MPAF_US == (format & MPAF_SIGN_MASK)) oss<<"U";
+	    else oss<<"S";
 	}
 	// size
-	i+=snprintf(&str[i],size,"%d",(format&MPAF_BPS_MASK)*8);
+	oss<<((format&MPAF_BPS_MASK)*8);
 	// endian
-	if(MPAF_LE == (format & MPAF_END_MASK)) i+=snprintf(&str[i],size,"LE");
-	else i+=snprintf(&str[i],size,"BE");
+	if(MPAF_LE == (format & MPAF_END_MASK)) oss<<"LE";
+	else oss<<"BE";
     }
-    return str;
+    return oss.str();
 }
 
-
-mp_aframe_t* new_mp_aframe(unsigned rate,unsigned nch,mpaf_format_e format,unsigned xp_idx) {
-    mp_aframe_t*  mpaf = new(zeromem) mp_aframe_t;
-    if(!mpaf) return NULL;
-    mpaf->rate = rate;
-    mpaf->nch = nch;
-    mpaf->format = format;
-    mpaf->xp_idx = xp_idx;
-    return mpaf;
+mp_aframe_t::mp_aframe_t(unsigned _rate,unsigned _nch,mpaf_format_e _format,unsigned _xp_idx)
+	    :xp_idx(_xp_idx)
+	    ,rate(_rate)
+	    ,nch(_nch)
+	    ,format(_format)
+{
+    audio=NULL;
 }
 
-int free_mp_aframe(mp_aframe_t* mpaf) {
-    if(!mpaf) return 0;
-    if(mpaf->audio) delete mpaf->audio;
-    delete mpaf;
-    return 1;
+mp_aframe_t::mp_aframe_t(const mp_aframe_t& in)
+	:flags(in.flags)
+	,pts(in.pts)
+	,xp_idx(in.xp_idx)
+	,len(in.len)
+	,rate(in.rate)
+	,nch(in.nch)
+	,format(in.format)
+{
+    alloc();
+    memcpy(audio,in.audio,len);
 }
 
-mp_aframe_t* new_mp_aframe_genome(const mp_aframe_t* in) {
-    mp_aframe_t* out = new(zeromem) mp_aframe_t;
-    memcpy(out,in,sizeof(mp_aframe_t));
-    out->audio = NULL;
+mp_aframe_t& mp_aframe_t::operator=(const mp_aframe_t& in) {
+    flags=in.flags;
+    pts=in.pts;
+    xp_idx=in.xp_idx;
+    len=in.len;
+    rate=in.rate;
+    nch=in.nch;
+    format=in.format;
+    if(audio) delete audio;
+    alloc();
+    memcpy(audio,in.audio,len);
+    return *this;
+}
+
+mp_aframe_t::~mp_aframe_t() {
+    if(audio) delete audio;
+}
+
+void mp_aframe_t::alloc() { audio = new uint8_t[len]; }
+
+mp_aframe_t mp_aframe_t::genome() const {
+    mp_aframe_t out = mp_aframe_t(rate,nch,format,xp_idx);
+    out.flags=flags;
+    out.pts=pts;
+    out.len=len;
     return out;
 }
-
-void mp_alloc_aframe(mp_aframe_t* it) { it->audio = new uint8_t[it->len]; }
-
 } // namespace	usr

@@ -31,19 +31,18 @@ using namespace	usr;
 
 /* Functions used by play to convert the input audio to the correct
    format */
-typedef mp_aframe_t* (*convert_audio_t)(const af_instance_t* af,const mp_aframe_t* in);
-struct af_format_t
-{
-  mpaf_format_e fmt;
-  std::vector<convert_audio_t> cvt_chain;
+typedef mp_aframe_t (*convert_audio_t)(const af_instance_t* af,const mp_aframe_t& in);
+struct af_format_t {
+    mpaf_format_e fmt;
+    std::vector<convert_audio_t> cvt_chain;
 };
 
 // Switch endianess
-static void endian(const mp_aframe_t* in, mp_aframe_t* out);
+static void endian(const mp_aframe_t& in, mp_aframe_t* out);
 // From singed to unsigned
-static void si2us(const mp_aframe_t* in, mp_aframe_t* out);
+static void si2us(const mp_aframe_t& in, mp_aframe_t* out);
 // From unsinged to signed
-static void us2si(const mp_aframe_t* in, mp_aframe_t* out);
+static void us2si(const mp_aframe_t& in, mp_aframe_t* out);
 
 uint32_t load24bit(const any_t* data, int pos) {
 #if WORDS_BIGENDIAN
@@ -69,131 +68,125 @@ void store24bit(any_t* data, int pos, uint32_t expanded_value) {
 #endif
 }
 
-static void endian(const mp_aframe_t* in, mp_aframe_t* out)
+static void endian(const mp_aframe_t& in, mp_aframe_t* out)
 {
-    unsigned i,nsamples=in->len/in->format&MPAF_BPS_MASK;
-    unsigned bps=in->format&MPAF_BPS_MASK;
+    unsigned i,nsamples=in.len/in.format&MPAF_BPS_MASK;
+    unsigned bps=in.format&MPAF_BPS_MASK;
     switch(bps){
 	case 2:
-	    for(i=0;i<nsamples;i++) ((uint16_t*)out->audio)[i]=bswap_16(((uint16_t*)in->audio)[i]);
+	    for(i=0;i<nsamples;i++) ((uint16_t*)out->audio)[i]=bswap_16(((uint16_t*)in.audio)[i]);
 	    break;
 	case 3:{
-	    register uint8_t s;
+	    uint8_t s;
 	    for(i=0;i<nsamples;i++){
-		s=((uint8_t*)in->audio)[3*i];
-		((uint8_t*)out->audio)[3*i]=((uint8_t*)in->audio)[3*i+2];
-		if (in->audio != out->audio) ((uint8_t*)out->audio)[3*i+1]=((uint8_t*)in->audio)[3*i+1];
+		s=((uint8_t*)in.audio)[3*i];
+		((uint8_t*)out->audio)[3*i]=((uint8_t*)in.audio)[3*i+2];
+		if (in.audio != out->audio) ((uint8_t*)out->audio)[3*i+1]=((uint8_t*)in.audio)[3*i+1];
 		((uint8_t*)out->audio)[3*i+2]=s;
 	    }
 	    break;
 	}
 	case 4:
-	    for(i=0;i<nsamples;i++) ((uint32_t*)out->audio)[i]=bswap_32(((uint32_t*)in->audio)[i]);
+	    for(i=0;i<nsamples;i++) ((uint32_t*)out->audio)[i]=bswap_32(((uint32_t*)in.audio)[i]);
 	    break;
     }
 }
 
-static void si2us(const mp_aframe_t* in, mp_aframe_t* out)
+static void si2us(const mp_aframe_t& in, mp_aframe_t* out)
 {
-    unsigned i,nsamples=in->len/in->format&MPAF_BPS_MASK;
-    unsigned bps=in->format&MPAF_BPS_MASK;
+    unsigned i,nsamples=in.len/in.format&MPAF_BPS_MASK;
+    unsigned bps=in.format&MPAF_BPS_MASK;
     switch(bps) {
 	case 1:
-	    for(i=0;i<nsamples;i++) ((uint8_t*)out->audio)[i]=(uint8_t)(SCHAR_MAX+((int)((int8_t*)in->audio)[i]));
+	    for(i=0;i<nsamples;i++) ((uint8_t*)out->audio)[i]=(uint8_t)(SCHAR_MAX+((int)((int8_t*)in.audio)[i]));
 	    break;
 	case 2:
-	    for(i=0;i<nsamples;i++) ((uint16_t*)out->audio)[i]=(uint16_t)(SHRT_MAX+((int)((int16_t*)in->audio)[i]));
+	    for(i=0;i<nsamples;i++) ((uint16_t*)out->audio)[i]=(uint16_t)(SHRT_MAX+((int)((int16_t*)in.audio)[i]));
 	    break;
 	case 3:
-	    for(i=0;i<nsamples;i++) store24bit(out->audio, i, (uint32_t)(INT_MAX+(int32_t)load24bit(in->audio, i)));
+	    for(i=0;i<nsamples;i++) store24bit(out->audio, i, (uint32_t)(INT_MAX+(int32_t)load24bit(in.audio, i)));
 	    break;
 	case 4:
-	    for(i=0;i<nsamples;i++) ((uint32_t*)out->audio)[i]=(uint32_t)(INT_MAX+((int32_t*)in->audio)[i]);
+	    for(i=0;i<nsamples;i++) ((uint32_t*)out->audio)[i]=(uint32_t)(INT_MAX+((int32_t*)in.audio)[i]);
 	    break;
     }
 }
 
-static void us2si(const mp_aframe_t* in, mp_aframe_t* out)
+static void us2si(const mp_aframe_t& in, mp_aframe_t* out)
 {
-    unsigned i,nsamples=in->len/in->format&MPAF_BPS_MASK;
-    unsigned bps=in->format&MPAF_BPS_MASK;
+    unsigned i,nsamples=in.len/in.format&MPAF_BPS_MASK;
+    unsigned bps=in.format&MPAF_BPS_MASK;
     switch(bps){
 	case 1:
-	    for(i=0;i<nsamples;i++) ((int8_t*)out->audio)[i]=(int8_t)(SCHAR_MIN+((int)((uint8_t*)in->audio)[i]));
+	    for(i=0;i<nsamples;i++) ((int8_t*)out->audio)[i]=(int8_t)(SCHAR_MIN+((int)((uint8_t*)in.audio)[i]));
 	    break;
 	case 2:
-	    for(i=0;i<nsamples;i++) ((int16_t*)out->audio)[i]=(int16_t)(SHRT_MIN+((int)((uint16_t*)in->audio)[i]));
+	    for(i=0;i<nsamples;i++) ((int16_t*)out->audio)[i]=(int16_t)(SHRT_MIN+((int)((uint16_t*)in.audio)[i]));
 	    break;
 	case 3:
-	    for(i=0;i<nsamples;i++) store24bit(out->audio, i, (int32_t)(INT_MIN+(uint32_t)load24bit(in->audio, i)));
+	    for(i=0;i<nsamples;i++) store24bit(out->audio, i, (int32_t)(INT_MIN+(uint32_t)load24bit(in.audio, i)));
 	    break;
 	case 4:
-	    for(i=0;i<nsamples;i++) ((int32_t*)out->audio)[i]=(int32_t)(INT_MIN+((uint32_t*)in->audio)[i]);
+	    for(i=0;i<nsamples;i++) ((int32_t*)out->audio)[i]=(int32_t)(INT_MIN+((uint32_t*)in.audio)[i]);
 	    break;
     }
 }
 
-static void print_fmts(const char *pfx,const mp_aframe_t* in,const mp_aframe_t*out) {
-    char buff[4096],buff2[4096];
+static void print_fmts(const char *pfx,const mp_aframe_t& in,const mp_aframe_t& out) {
     MSG_V("%s in_fmt=%s[len=%i] -> out_fmt=%s[len=%i]\n"
     ,pfx
-    ,mpaf_fmt2str(in->format,buff,sizeof(buff))
-    ,in->len
-    ,mpaf_fmt2str(out->format,buff2,sizeof(buff2))
-    ,out->len);
+    ,mpaf_fmt2str(in.format).c_str()
+    ,in.len
+    ,mpaf_fmt2str(out.format).c_str()
+    ,out.len);
 }
 
-static mp_aframe_t* change_endian(const af_instance_t* af,const mp_aframe_t* in) {
-    mp_aframe_t* out;
-    out=new_mp_aframe_genome(in);
-    mp_alloc_aframe(out);
-    endian(in,out);
-    out->format^=MPAF_LE;
+static mp_aframe_t change_endian(const af_instance_t* af,const mp_aframe_t& in) {
+    mp_aframe_t out=in.genome();
+    out.alloc();
+    endian(in,&out);
+    out.format^=MPAF_LE;
     return out;
 }
 
-static mp_aframe_t* convert_audio_f(const af_instance_t* af,const mp_aframe_t*in) {
-    mp_aframe_t* out;
-    out=new_mp_aframe_genome(in);
-    out->len=af_lencalc(af->mul,in);
-    mp_alloc_aframe(out);
+static mp_aframe_t convert_audio_f(const af_instance_t* af,const mp_aframe_t& in) {
+    mp_aframe_t out=in.genome();
+    out.len=af_lencalc(af->mul,in);
+    out.alloc();
 
-    if(in->format&MPAF_F) {
-	out->format=af->conf.format;
-	float2int(in, out);
+    if(in.format&MPAF_F) {
+	out.format=af->conf.format;
+	float2int(in,&out);
     }
-    if((out->format&(MPAF_SPECIAL_MASK|MPAF_POINT_MASK))==MPAF_F) {
-	int2float(in, out);
-	out->format=MPAF_PCM|MPAF_NE|MPAF_F|MPAF_BPS_4;
+    if((out.format&(MPAF_SPECIAL_MASK|MPAF_POINT_MASK))==MPAF_F) {
+	int2float(in,&out);
+	out.format=MPAF_PCM|MPAF_NE|MPAF_F|MPAF_BPS_4;
     }
     return out;
 }
 
-static mp_aframe_t* convert_audio_i(const af_instance_t* af,const mp_aframe_t*in) {
-    mp_aframe_t* out;
-    out=new_mp_aframe_genome(in);
-    out->len=af_lencalc(af->mul,in);
-    mp_alloc_aframe(out);
-    out->format=af->conf.format;
-    change_bps(in, out); // works with US only for now
+static mp_aframe_t convert_audio_i(const af_instance_t* af,const mp_aframe_t& in) {
+    mp_aframe_t out=in.genome();
+    out.len=af_lencalc(af->mul,in);
+    out.alloc();
+    out.format=af->conf.format;
+    change_bps(in,&out); // works with US only for now
     return out;
 }
 
-static mp_aframe_t* convert_si2us(const af_instance_t* af,const mp_aframe_t*in) {
-    mp_aframe_t* out;
-    out=new_mp_aframe_genome(in);
-    mp_alloc_aframe(out);
-    out->format|=MPAF_US;
-    si2us(in, out);
+static mp_aframe_t convert_si2us(const af_instance_t* af,const mp_aframe_t& in) {
+    mp_aframe_t out=in.genome();
+    out.alloc();
+    out.format|=MPAF_US;
+    si2us(in,&out);
     return out;
 }
 
-static mp_aframe_t* convert_us2si(const af_instance_t* af,const mp_aframe_t*in) {
-    mp_aframe_t* out;
-    out=new_mp_aframe_genome(in);
-    mp_alloc_aframe(out);
-    out->format&=~MPAF_US;
-    us2si(in, out);
+static mp_aframe_t convert_us2si(const af_instance_t* af,const mp_aframe_t& in) {
+    mp_aframe_t out=in.genome();
+    out.alloc();
+    out.format&=~MPAF_US;
+    us2si(in,&out);
     return out;
 }
 
@@ -217,10 +210,9 @@ static MPXP_Rc build_cvt_chain(af_instance_t* af,const af_conf_t* in) {
 // Sanity check for unsupported formats
 static MPXP_Rc __FASTCALL__ check_format(mpaf_format_e format)
 {
-    char buf[256];
     if((format&MPAF_SPECIAL_MASK)!=MPAF_PCM){
 	    MSG_ERR("[format] Sample format %s not yet supported \n",
-	    mpaf_fmt2str(format,buf,255));
+	    mpaf_fmt2str(format).c_str());
 	    return MPXP_Error;
     }
     if((format&MPAF_BPS_MASK) < 1 || (format&MPAF_BPS_MASK) > 4) {
@@ -251,12 +243,11 @@ static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
 static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 {
     af_format_t* s = reinterpret_cast<af_format_t*>(af->setup);
-    char buf1[256],buf2[256];
     switch(cmd){
 	case AF_CONTROL_SHOWCONF:
 	    MSG_INFO("[af_format] Changing sample format %s -> %s\n",
-		mpaf_fmt2str(s->fmt,buf1,255),
-		mpaf_fmt2str(af->conf.format,buf2,255));
+		mpaf_fmt2str(s->fmt).c_str(),
+		mpaf_fmt2str(af->conf.format).c_str());
 	    return MPXP_Ok;
 	case AF_CONTROL_COMMAND_LINE:{
 	    int format = MPAF_NE;
@@ -288,19 +279,20 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af, const mp_aframe_t* data)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af, const mp_aframe_t& data)
 {
     af_format_t* s = reinterpret_cast<af_format_t*>(af->setup);
-    mp_aframe_t* out=NULL,* in=const_cast<mp_aframe_t*>(data);
+    mp_aframe_t* in=&const_cast<mp_aframe_t&>(data);
+    mp_aframe_t out=data.genome();
     std::vector<convert_audio_t>::iterator it;
     for ( it=s->cvt_chain.begin(); it < s->cvt_chain.end(); it++ ) {
 	convert_audio_t cvt;
 	cvt=*it;
-	out=(*cvt)(af,in);
-	if(in!=data) free_mp_aframe(in);
-	in=out;
+	out=(*cvt)(af,*in);
+	if(in!=&data) delete in;
+	in=&out;
     }
-    out->format=af->conf.format;
+    out.format=af->conf.format;
     return out;
 }
 

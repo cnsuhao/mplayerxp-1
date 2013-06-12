@@ -283,7 +283,7 @@ void libmpeg2_decoder::draw_frame(mp_image_t* mpi,unsigned w,const mpeg2_fbuf_t*
     mpi->stride[1]=
     mpi->stride[2]=w>>1;
     mpi->flags&=~MP_IMGFLAG_DRAW_CALLBACK;
-    parent.draw_image(mpi);
+    parent.draw_image(*mpi);
 }
 
 // decode a frame

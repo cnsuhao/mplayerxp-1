@@ -106,11 +106,8 @@ MPXP_Rc Oss_Stream_Interface::open(const std::string& filename,unsigned flags)
     }
     if(err<0) mpxp_err<<"[s_oss] Can't set channels to "<<tmp<<" (will use "<<nchannels<<")"<<std::endl;
     else mpxp_dbg2<<"[o_oss] Did set channels to "<<nchannels<<std::endl;
-    mp_aframe_t afd;
+//    mp_aframe_t afd(samplerate,nchannels,sampleformat,0);
     int oss_fmt;
-    afd.rate=samplerate;
-    afd.nch=nchannels;
-    afd.format=sampleformat;
     oss_fmt=mpaf2afmt(sampleformat);
     tmp=oss_fmt;
     if(::ioctl(fd, SNDCTL_DSP_SETFMT, &oss_fmt)<0)

@@ -63,11 +63,11 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* data)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& data)
 {
     // Do something necessary to get rid of annoying warning during compile
     if(!af) MSG_ERR("EEEK: Argument af == NULL in af_lp.c play().");
-    return const_cast<mp_aframe_t*>(data);
+    return data;
 }
 
 // Allocate memory and set function pointers

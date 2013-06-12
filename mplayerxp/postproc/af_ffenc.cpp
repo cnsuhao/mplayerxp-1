@@ -154,19 +154,19 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& in)
 {
     unsigned tlen,ilen,olen,delta;
     af_ffenc_t *s=reinterpret_cast<af_ffenc_t*>(af->setup);
     uint8_t *inp,*outp;
-    mp_aframe_t* out = new_mp_aframe_genome(in);
-    mp_alloc_aframe(out);
+    mp_aframe_t out = in.genome();
+    out.alloc();
 
-    ilen=tlen=in->len;
-    if(out->audio) {
-	out->len=0;
-	inp=reinterpret_cast<uint8_t*>(in->audio);
-	outp=reinterpret_cast<uint8_t*>(out->audio);
+    ilen=tlen=in.len;
+    if(out.audio) {
+	out.len=0;
+	inp=reinterpret_cast<uint8_t*>(in.audio);
+	outp=reinterpret_cast<uint8_t*>(out.audio);
 	if(s->tail_size && s->tail_size+ilen>=s->frame_size) {
 	    delta=s->frame_size-s->tail_size;
 	    memcpy(&s->tail[s->tail_size],inp,delta);
@@ -174,7 +174,7 @@ static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
 	    olen = avcodec_encode_audio(s->lavc_context, outp, tlen, (const short *)s->tail);
 	    MSG_DBG2("encoding tail %u bytes + %u stream => %u compressed\n",s->tail_size,delta,olen);
 	    inp+=delta;
-	    out->len += olen;
+	    out.len += olen;
 	    outp+=olen;
 	    tlen-=olen;
 	    s->tail_size=0;
@@ -182,7 +182,7 @@ static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
 	while(ilen>=s->frame_size) {
 	    olen = avcodec_encode_audio(s->lavc_context, outp, tlen, (const short *)inp);
 	    MSG_DBG2("encoding [out %p %lu in %p %lu]=>%u compressed\n",outp,tlen,inp,ilen,olen);
-	    out->len += olen;
+	    out.len += olen;
 	    inp+=s->frame_size;
 	    ilen-=s->frame_size;
 	    tlen-=olen;

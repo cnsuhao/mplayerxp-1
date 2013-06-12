@@ -102,7 +102,7 @@ static inline int mirror(int x, int w){
     return x;
 }
 
-static inline void decompose(float *dstL, float *dstH, float *src, int stride, int w){
+static inline void decompose(float *dstL, float *dstH,const float *src, int stride, int w){
     int x, i;
     for(x=0; x<w; x++){
 	double sumL= src[x*stride] * coeff[0][0];
@@ -118,7 +118,7 @@ static inline void decompose(float *dstL, float *dstH, float *src, int stride, i
     }
 }
 
-static inline void compose(float *dst, float *srcL, float *srcH, int stride, int w){
+static inline void compose(float *dst,const float *srcL,const float *srcH, int stride, int w){
     int x, i;
     for(x=0; x<w; x++){
 	double sumL= srcL[x*stride] * icoeff[0][0];
@@ -134,33 +134,33 @@ static inline void compose(float *dst, float *srcL, float *srcH, int stride, int
     }
 }
 
-static inline void decompose2D(float *dstL, float *dstH, float *src, int xstride, int ystride, int step, int stx, int sty, int w, int h){
+static inline void decompose2D(float *dstL, float *dstH,const float *src, int xstride, int ystride, int step, int stx, int sty, int w, int h){
     int y, x;
     for(y=sty; y<h; y++)
 	for(x=stx; x<step; x++)
 	    decompose(dstL + ystride*y + xstride*x, dstH + ystride*y + xstride*x, src + ystride*y + xstride*x, step*xstride, (w-x+step-1)/step);
 }
 
-static inline void compose2D(float *dst, float *srcL, float *srcH, int xstride, int ystride, int step, int stx, int sty, int w, int h){
+static inline void compose2D(float *dst,const float *srcL,const float *srcH, int xstride, int ystride, int step, int stx, int sty, int w, int h){
     int y, x;
     for(y=sty; y<h; y++)
 	for(x=stx; x<step; x++)
 	    compose(dst + ystride*y + xstride*x, srcL + ystride*y + xstride*x, srcH + ystride*y + xstride*x, step*xstride, (w-x+step-1)/step);
 }
 
-static void __FASTCALL__ decompose2D2(float *dst[4], float *src, float *temp[2], int stride, int step, int x, int y, int w, int h){
+static void __FASTCALL__ decompose2D2(float *dst[4],const float *src, float *temp[2], int stride, int step, int x, int y, int w, int h){
     decompose2D(temp[0], temp[1], src    , 1, stride, step  , x, y, w, h);
     decompose2D( dst[0],  dst[1], temp[0], stride, 1, step  , x, y, h, w);
     decompose2D( dst[2],  dst[3], temp[1], stride, 1, step  , x, y, h, w);
 }
 
-static void __FASTCALL__ compose2D2(float *dst, float *src[4], float *temp[2], int stride, int step, int x, int y, int w, int h){
+static void __FASTCALL__ compose2D2(float *dst,const float *src[4], float *temp[2], int stride, int step, int x, int y, int w, int h){
     compose2D(temp[0],  src[0],  src[1], stride, 1, step  , x, y, h, w);
     compose2D(temp[1],  src[2],  src[3], stride, 1, step  , x, y, h, w);
     compose2D(dst    , temp[0], temp[1], 1, stride, step  , x, y, w, h);
 }
 
-static void __FASTCALL__ filter(vf_priv_t *p, uint8_t *dst, uint8_t *src, int dst_stride, int src_stride, int stx, int sty, int width, int height, int is_luma){
+static void __FASTCALL__ filter(vf_priv_t *p, uint8_t *dst,const uint8_t *src, int dst_stride, int src_stride, int stx, int sty, int width, int height, int is_luma){
     int x,y, i, j;
 //    double sum=0;
     double s= p->strength[!is_luma];
@@ -190,7 +190,7 @@ static void __FASTCALL__ filter(vf_priv_t *p, uint8_t *dst, uint8_t *src, int ds
 	}
     }
     for(i=depth-1; i>=0; i--){
-	compose2D2(p->plane[i][0], p->plane[i+1], p->plane[0]+1, p->stride, 1<<i, stx, sty, width, height);
+	compose2D2(p->plane[i][0], const_cast<const float**>(p->plane[i+1]), p->plane[0]+1, p->stride, 1<<i, stx, sty, width, height);
     }
 
     for(y=sty; y<height; y++)
@@ -217,33 +217,33 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf, int width, int height, int 
     return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *mpi){
-    if(mpi->flags&MP_IMGFLAG_PRESERVE) return; // don't change
+static void __FASTCALL__ get_image(vf_instance_t* vf, mp_image_t *smpi){
+    if(smpi->flags&MP_IMGFLAG_PRESERVE) return; // don't change
     // ok, we can do pp in-place (or pp disabled):
-    vf->dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
-	mpi->type, mpi->flags | MP_IMGFLAG_READABLE, mpi->width, mpi->height,mpi->xp_idx);
-    mpi->planes[0]=vf->dmpi->planes[0];
-    mpi->stride[0]=vf->dmpi->stride[0];
-    mpi->width=vf->dmpi->width;
-    if(mpi->flags&MP_IMGFLAG_PLANAR){
-	mpi->planes[1]=vf->dmpi->planes[1];
-	mpi->planes[2]=vf->dmpi->planes[2];
-	mpi->stride[1]=vf->dmpi->stride[1];
-	mpi->stride[2]=vf->dmpi->stride[2];
+    vf->dmpi=vf_get_new_image(vf->next,smpi->imgfmt,
+	smpi->type, smpi->flags | MP_IMGFLAG_READABLE, smpi->width, smpi->height,smpi->xp_idx);
+    smpi->planes[0]=vf->dmpi->planes[0];
+    smpi->stride[0]=vf->dmpi->stride[0];
+    smpi->width=vf->dmpi->width;
+    if(smpi->flags&MP_IMGFLAG_PLANAR){
+	smpi->planes[1]=vf->dmpi->planes[1];
+	smpi->planes[2]=vf->dmpi->planes[2];
+	smpi->stride[1]=vf->dmpi->stride[1];
+	smpi->stride[2]=vf->dmpi->stride[2];
     }
-    mpi->flags|=MP_IMGFLAG_DIRECT;
+    smpi->flags|=MP_IMGFLAG_DIRECT;
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     mp_image_t *dmpi;
 
-    if(!(mpi->flags&MP_IMGFLAG_DIRECT)){
+    if(!(smpi.flags&MP_IMGFLAG_DIRECT)){
 	// no DR, so get a new image! hope we'll get DR buffer:
-	dmpi=vf_get_new_image(vf->next,mpi->imgfmt,
+	dmpi=vf_get_new_image(vf->next,smpi.imgfmt,
 	    MP_IMGTYPE_TEMP,
 	    MP_IMGFLAG_ACCEPT_STRIDE|MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
-	    mpi->width,mpi->height,mpi->xp_idx);
-	vf_clone_mpi_attributes(dmpi, mpi);
+	    smpi.width,smpi.height,smpi.xp_idx);
+	vf_clone_mpi_attributes(dmpi, smpi);
     }else{
 	dmpi=vf->dmpi;
     }
@@ -253,19 +253,19 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 {
 #pragma omp section
 #endif
-    filter(vf->priv, dmpi->planes[0], mpi->planes[0], dmpi->stride[0], mpi->stride[0], mpi->x, mpi->y, mpi->w, mpi->h, 1);
+    filter(vf->priv, dmpi->planes[0], smpi.planes[0], dmpi->stride[0], smpi.stride[0], smpi.x, smpi.y, smpi.w, smpi.h, 1);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-    filter(vf->priv, dmpi->planes[1], mpi->planes[1], dmpi->stride[1], mpi->stride[1], mpi->x>>mpi->chroma_x_shift, mpi->y>>mpi->chroma_y_shift, mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift, 0);
+    filter(vf->priv, dmpi->planes[1], smpi.planes[1], dmpi->stride[1], smpi.stride[1], smpi.x>>smpi.chroma_x_shift, smpi.y>>smpi.chroma_y_shift, smpi.w>>smpi.chroma_x_shift, smpi.h>>smpi.chroma_y_shift, 0);
 #ifdef _OPENMP
 #pragma omp section
 #endif
-    filter(vf->priv, dmpi->planes[2], mpi->planes[2], dmpi->stride[2], mpi->stride[2], mpi->x>>mpi->chroma_x_shift, mpi->y>>mpi->chroma_y_shift, mpi->w>>mpi->chroma_x_shift, mpi->h>>mpi->chroma_y_shift, 0);
+    filter(vf->priv, dmpi->planes[2], smpi.planes[2], dmpi->stride[2], smpi.stride[2], smpi.x>>smpi.chroma_x_shift, smpi.y>>smpi.chroma_y_shift, smpi.w>>smpi.chroma_x_shift, smpi.h>>smpi.chroma_y_shift, 0);
 #ifdef _OPENMP
 }
 #endif
-    return vf_next_put_slice(vf,dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 static void __FASTCALL__ uninit(vf_instance_t* vf){

@@ -82,8 +82,8 @@ static struct mpg_stat_s {
 static unsigned int read_mpeg_timestamp(Stream* s,int c){
   int d,e;
   unsigned int pts;
-  d=s->read_word();
-  e=s->read_word();
+  d=s->read(type_word);
+  e=s->read(type_word);
   if( ((c&1)!=1) || ((d&1)!=1) || ((e&1)!=1) ){
     bad_pts:
     return MPGPES_BAD_PTS;
@@ -104,19 +104,19 @@ static int parse_psm(Demuxer *demux, int len) {
   if(! len)
     return 0;
 
-  c = demux->stream->read_char();
+  c = demux->stream->read(type_byte);
   if(! (c & 0x80)) {
     demux->stream->skip( len - 1);  //not yet valid, discard
     return 0;
   }
   demux->stream->skip( 1);
-  prog_len = demux->stream->read_word();		//length of program descriptors
+  prog_len = demux->stream->read(type_word);		//length of program descriptors
   demux->stream->skip( prog_len);			//.. that we ignore
-  es_map_len = demux->stream->read_word();		//length of elementary streams map
+  es_map_len = demux->stream->read(type_word);		//length of elementary streams map
   es_map_len = std::min(es_map_len, len - prog_len - 8);	//sanity check
   while(es_map_len > 0) {
-    type = demux->stream->read_char();
-    id = demux->stream->read_char();
+    type = demux->stream->read(type_byte);
+    id = demux->stream->read(type_byte);
     if(id >= 0xB0 && id <= 0xEF && priv) {
       int idoffset = id - 0xB0;
       switch(type) {
@@ -146,7 +146,7 @@ static int parse_psm(Demuxer *demux, int len) {
       }
       MSG_DBG2("PSM ES, id=0x%x, type=%x, stype: %x\n", id, type, priv->es_map[idoffset]);
     }
-    plen = demux->stream->read_word();		//length of elementary stream descriptors
+    plen = demux->stream->read(type_word);		//length of elementary stream descriptors
     plen = std::min(plen, es_map_len);			//sanity check
     demux->stream->skip( plen);			//skip descriptors for now
     es_map_len -= 4 + plen;
@@ -209,7 +209,7 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
 //}
 
 //  if(id==0x1BA) return -1;
-  len=demux->stream->read_word();
+  len=demux->stream->read(type_word);
   MSG_DBG3("PACKET len=%d\n",len);
   if(id<0x1BC || id>=0x1F0 || id==0x1BE || id==0x1BF || id==0x1BA)
   {
@@ -230,13 +230,13 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
   }
 
   while(len>0){   // Skip stuFFing bytes
-    c=demux->stream->read_char();--len;
+    c=demux->stream->read(type_byte);--len;
     if(c!=0xFF)break;
   }
   if((c>>6)==1){  // Read (skip) STD scale & size value
-    d=((c&0x1F)<<8)|demux->stream->read_char();
+    d=((c&0x1F)<<8)|demux->stream->read(type_byte);
     len-=2;
-    c=demux->stream->read_char();
+    c=demux->stream->read(type_byte);
   }
   // Read System-1 stream timestamps:
   if((c>>4)==2){
@@ -245,7 +245,7 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
   } else
   if((c>>4)==3){
     pts=read_mpeg_timestamp(demux->stream,c);
-    c=demux->stream->read_char();
+    c=demux->stream->read(type_byte);
     if((c>>4)!=1) pts=0;
     dts=read_mpeg_timestamp(demux->stream,c);
     len-=4+1+4;
@@ -256,20 +256,20 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
     // System-2 (.VOB) stream:
     if((c>>4)&3) MSG_WARN("Encrypted VOB found! That should never happens");
 
-    c=demux->stream->read_char(); pts_flags=c>>6;
-    c=demux->stream->read_char(); hdrlen=c;
+    c=demux->stream->read(type_byte); pts_flags=c>>6;
+    c=demux->stream->read(type_byte); hdrlen=c;
     len-=2;
     MSG_DBG3("  hdrlen=%d  (len=%d)",hdrlen,len);
     if(hdrlen>len){ MSG_V("demux_mpg: invalid header length  \n"); return -1;}
     if(pts_flags==2 && hdrlen>=5){
-      c=demux->stream->read_char();
+      c=demux->stream->read(type_byte);
       pts=read_mpeg_timestamp(demux->stream,c);
       len-=5;hdrlen-=5;
     } else
     if(pts_flags==3 && hdrlen>=10){
-      c=demux->stream->read_char();
+      c=demux->stream->read(type_byte);
       pts=read_mpeg_timestamp(demux->stream,c);
-      c=demux->stream->read_char();
+      c=demux->stream->read(type_byte);
       dts=read_mpeg_timestamp(demux->stream,c);
       len-=10;hdrlen-=10;
     }
@@ -278,7 +278,7 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
 
     //============== DVD Audio sub-stream ======================
     if(id==0x1BD){
-      int aid=demux->stream->read_char();--len;
+      int aid=demux->stream->read(type_byte);--len;
       if(len<3) return -1; // invalid audio packet
 
       // AID:
@@ -311,9 +311,9 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
 	ds=demux->audio;
 	if(!ds->sh) ds->sh=demux->get_sh_audio(aid);
 	// READ Packet: Skip additional audio header data:
-	c=demux->stream->read_char();//num of frames
-	type=demux->stream->read_char();//startpos hi
-	type=(type<<8)|demux->stream->read_char();//startpos lo
+	c=demux->stream->read(type_byte);//num of frames
+	type=demux->stream->read(type_byte);//startpos hi
+	type=(type<<8)|demux->stream->read(type_byte);//startpos lo
 	len-=3;
 	if((aid&0xE0)==0xA0 && len>=3){
 	  unsigned char* hdr;
@@ -325,13 +325,13 @@ static int demux_mpg_read_packet(Demuxer *demux,int id){
 	  hdr=((sh_audio_t*)(ds->sh))->codecdata;
 	  // read LPCM header:
 	  // emphasis[1], mute[1], rvd[1], frame number[5]:
-	  hdr[0]=demux->stream->read_char();
+	  hdr[0]=demux->stream->read(type_byte);
 //          printf(" [%01X:%02d]",c>>5,c&31);
 	  // quantization[2],freq[2],rvd[1],channels[3]
-	  hdr[1]=demux->stream->read_char();
+	  hdr[1]=demux->stream->read(type_byte);
 //          printf("[%01X:%01X] ",c>>4,c&15);
 	  // dynamic range control (0x80=off):
-	  hdr[2]=demux->stream->read_char();
+	  hdr[2]=demux->stream->read(type_byte);
 //          printf("[%02X] ",c);
 	  len-=3;
 	  if(len<=0) MSG_V("End of packet while searching for PCM header\n");
@@ -453,12 +453,12 @@ static int mpgps_demux(Demuxer *demux,Demuxer_Stream *__ds){
 // System stream
 do{
   demux->filepos=demux->stream->tell();
-  head=demux->stream->read_dword();
+  head=demux->stream->read(type_dword);
   if((head&0xFFFFFF00)!=0x100){
    // sync...
    demux->filepos-=skipped;
    while(1){
-    int c=demux->stream->read_char();
+    int c=demux->stream->read(type_byte);
     if(c<0) break; //EOF
     head<<=8;
     if(head!=0x100){
@@ -649,21 +649,21 @@ static MPXP_Rc mpgps_probe(Demuxer*demuxer)
     mpg_d = new(zeromem) mpg_demuxer_t;
     demuxer->priv = mpg_d;
 
-    code = demuxer->stream->read_dword_le();
+    code = demuxer->stream->read_le(type_dword);
     if(code == mmioFOURCC('R','I','F','F')) {
-	demuxer->stream->read_dword_le(); /*filesize */
-	id=demuxer->stream->read_dword_le(); /* "CDXA" */
+	demuxer->stream->read_le(type_dword); /*filesize */
+	id=demuxer->stream->read_le(type_dword); /* "CDXA" */
 	if(id == mmioFOURCC('C','D','X','A')) {
 	    MSG_V("RIFF CDXA has been found\n");
-	    id=demuxer->stream->read_dword_le(); /* "fmt " */
+	    id=demuxer->stream->read_le(type_dword); /* "fmt " */
 	    if(id == mmioFOURCC('f','m','t',' ')) {
-		tmp=demuxer->stream->read_dword_le(); /* "head len" */
+		tmp=demuxer->stream->read_le(type_dword); /* "head len" */
 		demuxer->stream->skip(tmp);
-		id=demuxer->stream->read_dword_le(); /* "data" */
+		id=demuxer->stream->read_le(type_dword); /* "data" */
 		if(id == mmioFOURCC('d','a','t','a')) {
-		    demuxer->stream->read_dword(); /* size of data */
-		    code=demuxer->stream->read_dword_le();
-		    while((bswap_32(code) & 0xffffff00) != 0x100) code=demuxer->stream->read_dword_le();
+		    demuxer->stream->read(type_dword); /* size of data */
+		    code=demuxer->stream->read_le(type_dword);
+		    while((bswap_32(code) & 0xffffff00) != 0x100) code=demuxer->stream->read_le(type_dword);
 		}
 		else { delete mpg_d; return MPXP_False; }
 	    }
@@ -681,9 +681,9 @@ static MPXP_Rc mpgps_probe(Demuxer*demuxer)
 	while(pes>=0){
 	    /* try to pre-detect PES:*/
 	    tmppos=demuxer->stream->tell();
-	    tmp=demuxer->stream->read_dword();
+	    tmp=demuxer->stream->read(type_dword);
 	    if(tmp==0x1E0 || tmp==0x1C0){
-		tmp=demuxer->stream->read_word();
+		tmp=demuxer->stream->read(type_word);
 		if(tmp>1 && tmp<=2048) pes=0; /* demuxer->synced=3; // PES...*/
 	    }
 	    demuxer->stream->seek(tmppos);

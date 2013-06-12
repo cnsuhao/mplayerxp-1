@@ -15,14 +15,14 @@ using namespace	usr;
 #include "postproc/swscale.h"
 #include "pp_msg.h"
 
-typedef void (* __FASTCALL__ mirror_f)(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt,int finalize);
+typedef void (* __FASTCALL__ mirror_f)(unsigned char* dst,const unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt,int finalize);
 struct vf_priv_t {
     unsigned dw,dh;
     int dir;
     mirror_f method;
 };
 
-static void __FASTCALL__ mirror_y(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt,int finalize){
+static void __FASTCALL__ mirror_y(unsigned char* dst,const unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt,int finalize){
     int y;
     src+=srcstride*(h-1);
     for(y=0;y<h;y++){
@@ -35,7 +35,7 @@ static void __FASTCALL__ mirror_y(unsigned char* dst,unsigned char* src,unsigned
     }
 }
 
-static void __FASTCALL__ mirror_x(unsigned char* dst,unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt,int finalize){
+static void __FASTCALL__ mirror_x(unsigned char* dst,const unsigned char* src,unsigned dststride,unsigned srcstride,unsigned w,unsigned h,unsigned bpp,unsigned int fmt,int finalize){
     int y;
     for(y=0;y<h;y++){
 	int x;
@@ -96,29 +96,29 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     mp_image_t *dmpi;
     int finalize;
     // hope we'll get DR buffer:
-    dmpi=vf_get_new_temp_genome(vf->next,mpi);
+    dmpi=vf_get_new_temp_genome(vf->next,smpi);
     finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
-    if(mpi->flags&MP_IMGFLAG_PLANAR){
-	    vf->priv->method(dmpi->planes[0],mpi->planes[0],
-	       dmpi->stride[0],mpi->stride[0],
-	       dmpi->w,dmpi->h,1,mpi->imgfmt,finalize);
-	    vf->priv->method(dmpi->planes[1],mpi->planes[1],
-	       dmpi->stride[1],mpi->stride[1],
-	       dmpi->w>>mpi->chroma_x_shift,dmpi->h>>mpi->chroma_y_shift,1,mpi->imgfmt,finalize);
-	    vf->priv->method(dmpi->planes[2],mpi->planes[2],
-	       dmpi->stride[2],mpi->stride[2],
-	       dmpi->w>>mpi->chroma_x_shift,dmpi->h>>mpi->chroma_y_shift,1,mpi->imgfmt,finalize);
+    if(smpi.flags&MP_IMGFLAG_PLANAR){
+	    vf->priv->method(dmpi->planes[0],smpi.planes[0],
+	       dmpi->stride[0],smpi.stride[0],
+	       dmpi->w,dmpi->h,1,smpi.imgfmt,finalize);
+	    vf->priv->method(dmpi->planes[1],smpi.planes[1],
+	       dmpi->stride[1],smpi.stride[1],
+	       dmpi->w>>smpi.chroma_x_shift,dmpi->h>>smpi.chroma_y_shift,1,smpi.imgfmt,finalize);
+	    vf->priv->method(dmpi->planes[2],smpi.planes[2],
+	       dmpi->stride[2],smpi.stride[2],
+	       dmpi->w>>smpi.chroma_x_shift,dmpi->h>>smpi.chroma_y_shift,1,smpi.imgfmt,finalize);
     } else {
-	    vf->priv->method(dmpi->planes[0],mpi->planes[0],
-	       dmpi->stride[0],mpi->stride[0],
-	       dmpi->w,dmpi->h,dmpi->bpp>>3,mpi->imgfmt,finalize);
-	    dmpi->planes[1]=mpi->planes[1]; // passthrough rgb8 palette
+	    vf->priv->method(dmpi->planes[0],smpi.planes[0],
+	       dmpi->stride[0],smpi.stride[0],
+	       dmpi->w,dmpi->h,dmpi->bpp>>3,smpi.imgfmt,finalize);
+	    dmpi->planes[1]=smpi.planes[1]; // passthrough rgb8 palette
     }
-    return vf_next_put_slice(vf,dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

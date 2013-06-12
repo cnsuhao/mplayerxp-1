@@ -174,13 +174,13 @@ static void __FASTCALL__ uninit( af_instance_t* af )
    af audio filter instance
    data audio data
 */
-static mp_aframe_t* __FASTCALL__ play( af_instance_t* af,const mp_aframe_t* data)
+static mp_aframe_t __FASTCALL__ play( af_instance_t* af,const mp_aframe_t& data)
 {
-    const mp_aframe_t*c   = data; // Current working data
+    const mp_aframe_t& c = data; // Current working data
     af_export_t*s   = reinterpret_cast<af_export_t*>(af->setup); // Setup for this instance
-    int16_t*	a   = reinterpret_cast<int16_t*>(c->audio);   // Incomming sound
-    unsigned	nch = c->nch;  // Number of channels
-    unsigned	len = c->len/(c->format&MPAF_BPS_MASK); // Number of sample in data chunk
+    int16_t*	a   = reinterpret_cast<int16_t*>(c.audio);   // Incomming sound
+    unsigned	nch = c.nch;  // Number of channels
+    unsigned	len = c.len/(c.format&MPAF_BPS_MASK); // Number of sample in data chunk
     unsigned	sz  = s->sz; // buffer size (in samples)
     unsigned	flag = 0; // Set to 1 if buffer is filled
 
@@ -205,12 +205,12 @@ static mp_aframe_t* __FASTCALL__ play( af_instance_t* af,const mp_aframe_t* data
     // Export buffer to mmaped area
     if(flag){
 	// update buffer in mapped area
-	stream_copy(reinterpret_cast<char*>(s->mmap_area) + SIZE_HEADER, s->buf[0], sz * (c->format&MPAF_BPS_MASK) * nch);
+	stream_copy(reinterpret_cast<char*>(s->mmap_area) + SIZE_HEADER, s->buf[0], sz * (c.format&MPAF_BPS_MASK) * nch);
 	s->count++; // increment counter (to sync)
 	stream_copy(reinterpret_cast<char*>(s->mmap_area) + SIZE_HEADER - sizeof(s->count), &(s->count), sizeof(s->count));
     }
     // We don't modify data, just export it
-    return const_cast<mp_aframe_t*>(data);
+    return data;
 }
 
 /* Allocate memory and set function pointers

@@ -20,10 +20,12 @@ struct vf_priv_t {
 	long long out;
 };
 
-static inline any_t*my_memcpy_pic(any_t* dst, any_t* src, int bytesPerLine, int height, int dstStride, int srcStride, int finalize)
+static inline any_t*my_memcpy_pic(any_t* _dst,const any_t* _src, int bytesPerLine, int height, int dstStride, int srcStride, int finalize)
 {
 	int i;
-	any_t*retval=dst;
+	uint8_t* dst=(uint8_t*)_dst;
+	const uint8_t* src = (const uint8_t*)_src;
+	any_t* retval=dst;
 
 	for(i=0; i<height; i++)
 	{
@@ -38,14 +40,14 @@ static inline any_t*my_memcpy_pic(any_t* dst, any_t* src, int bytesPerLine, int 
 	return retval;
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi)
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi)
 {
 	mp_image_t *dmpi;
 	int ret = 0,finalize;
-	int flags = mpi->fields;
+	int flags = smpi.fields;
 	int state = vf->priv->state;
 
-	dmpi = vf_get_new_exportable_genome(vf->next, MP_IMGTYPE_STATIC, MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PRESERVE, mpi);
+	dmpi = vf_get_new_exportable_genome(vf->next, MP_IMGTYPE_STATIC, MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PRESERVE, smpi);
 
 	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 	vf->priv->in++;
@@ -63,65 +65,65 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi)
 	}
 
 	if (state == 0) {
-		ret = vf_next_put_slice(vf, mpi);
+		ret = vf_next_put_slice(vf, smpi);
 		vf->priv->out++;
 		if (flags & MP_IMGFIELD_REPEAT_FIRST) {
 			my_memcpy_pic(dmpi->planes[0],
-				   mpi->planes[0], mpi->w, mpi->h/2,
-				   dmpi->stride[0]*2, mpi->stride[0]*2,finalize);
-			if (mpi->flags & MP_IMGFLAG_PLANAR) {
+				   smpi.planes[0], smpi.w, smpi.h/2,
+				   dmpi->stride[0]*2, smpi.stride[0]*2,finalize);
+			if (smpi.flags & MP_IMGFLAG_PLANAR) {
 				my_memcpy_pic(dmpi->planes[1],
-					      mpi->planes[1],
-					      mpi->chroma_width,
-					      mpi->chroma_height/2,
+					      smpi.planes[1],
+					      smpi.chroma_width,
+					      smpi.chroma_height/2,
 					      dmpi->stride[1]*2,
-					      mpi->stride[1]*2,finalize);
+					      smpi.stride[1]*2,finalize);
 				my_memcpy_pic(dmpi->planes[2],
-					      mpi->planes[2],
-					      mpi->chroma_width,
-					      mpi->chroma_height/2,
+					      smpi.planes[2],
+					      smpi.chroma_width,
+					      smpi.chroma_height/2,
 					      dmpi->stride[2]*2,
-					      mpi->stride[2]*2,finalize);
+					      smpi.stride[2]*2,finalize);
 			}
 			state=1;
 		}
 	} else {
 		my_memcpy_pic(dmpi->planes[0]+dmpi->stride[0],
-			      mpi->planes[0]+mpi->stride[0], mpi->w, mpi->h/2,
-			      dmpi->stride[0]*2, mpi->stride[0]*2,finalize);
-		if (mpi->flags & MP_IMGFLAG_PLANAR) {
+			      smpi.planes[0]+smpi.stride[0], smpi.w, smpi.h/2,
+			      dmpi->stride[0]*2, smpi.stride[0]*2,finalize);
+		if (smpi.flags & MP_IMGFLAG_PLANAR) {
 			my_memcpy_pic(dmpi->planes[1]+dmpi->stride[1],
-				      mpi->planes[1]+mpi->stride[1],
-				      mpi->chroma_width, mpi->chroma_height/2,
-				      dmpi->stride[1]*2, mpi->stride[1]*2,finalize);
+				      smpi.planes[1]+smpi.stride[1],
+				      smpi.chroma_width, smpi.chroma_height/2,
+				      dmpi->stride[1]*2, smpi.stride[1]*2,finalize);
 			my_memcpy_pic(dmpi->planes[2]+dmpi->stride[2],
-				      mpi->planes[2]+mpi->stride[2],
-				      mpi->chroma_width, mpi->chroma_height/2,
-				      dmpi->stride[2]*2, mpi->stride[2]*2,finalize);
+				      smpi.planes[2]+smpi.stride[2],
+				      smpi.chroma_width, smpi.chroma_height/2,
+				      dmpi->stride[2]*2, smpi.stride[2]*2,finalize);
 		}
-		ret = vf_next_put_slice(vf, dmpi);
+		ret = vf_next_put_slice(vf,*dmpi);
 		vf->priv->out++;
 		if (flags & MP_IMGFIELD_REPEAT_FIRST) {
-			ret |= vf_next_put_slice(vf, mpi);
+			ret |= vf_next_put_slice(vf, smpi);
 			vf->priv->out++;
 			state=0;
 		} else {
 			my_memcpy_pic(dmpi->planes[0],
-				      mpi->planes[0], mpi->w, mpi->h/2,
-				      dmpi->stride[0]*2, mpi->stride[0]*2,finalize);
-			if (mpi->flags & MP_IMGFLAG_PLANAR) {
+				      smpi.planes[0], smpi.w, smpi.h/2,
+				      dmpi->stride[0]*2, smpi.stride[0]*2,finalize);
+			if (smpi.flags & MP_IMGFLAG_PLANAR) {
 				my_memcpy_pic(dmpi->planes[1],
-					      mpi->planes[1],
-					      mpi->chroma_width,
-					      mpi->chroma_height/2,
+					      smpi.planes[1],
+					      smpi.chroma_width,
+					      smpi.chroma_height/2,
 					      dmpi->stride[1]*2,
-					      mpi->stride[1]*2,finalize);
+					      smpi.stride[1]*2,finalize);
 				my_memcpy_pic(dmpi->planes[2],
-					      mpi->planes[2],
-					      mpi->chroma_width,
-					      mpi->chroma_height/2,
+					      smpi.planes[2],
+					      smpi.chroma_width,
+					      smpi.chroma_height/2,
 					      dmpi->stride[2]*2,
-					      mpi->stride[2]*2,finalize);
+					      smpi.stride[2]*2,finalize);
 			}
 		}
 	}

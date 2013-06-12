@@ -50,7 +50,7 @@ static int snd_au_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigne
   *brate=*samplerate=*channels=0;
   s = demuxer->stream;
   s->seek(fptr);
-  fcc1=s->read_dword();
+  fcc1=s->read(type_dword);
   fcc1=me2be_32(fcc1);
   s->seek(fptr);
   binary_packet bp=s->read(32);
@@ -65,7 +65,7 @@ static MPXP_Rc snd_au_probe(Demuxer* demuxer)
   Stream *s;
   uint8_t *p;
   s = demuxer->stream;
-  fcc1=s->read_dword();
+  fcc1=s->read(type_dword);
   fcc1=me2be_32(fcc1);
   p = (uint8_t *)&fcc1;
   if(snd_au_get_raw_id(demuxer,0,&fcc1,&fcc2,&fcc2)) return MPXP_Ok;
@@ -123,9 +123,9 @@ static Opaque* snd_au_open(Demuxer* demuxer) {
 	uint32_t id;
 	WAVEFORMATEX* w;
 	sh_audio->wf = w = new WAVEFORMATEX;
-	hsize=s->read_dword();
-	dsize=s->read_dword();
-	id = s->read_dword();
+	hsize=s->read(type_dword);
+	dsize=s->read(type_dword);
+	id = s->read(type_dword);
 	sh_audio->afmt=bps2afmt(2);
 	if(id == 1) id = WAVE_FORMAT_MULAW;
 	else
@@ -135,8 +135,8 @@ static Opaque* snd_au_open(Demuxer* demuxer) {
 	w->wFormatTag = sh_audio->wtag = id;
 	/* Trickly mplayerxp will threat 'raw ' as big-endian */
 	if(id == 0x1) sh_audio->wtag=mmioFOURCC('r','a','w',' ');
-	w->nSamplesPerSec = sh_audio->rate = s->read_dword();
-	w->nChannels = sh_audio->nch = s->read_dword();
+	w->nSamplesPerSec = sh_audio->rate = s->read(type_dword);
+	w->nChannels = sh_audio->nch = s->read(type_dword);
 	w->nAvgBytesPerSec = sh_audio->rate*afmt2bps(sh_audio->afmt)*sh_audio->nch;
 	w->nBlockAlign = sh_audio->nch*afmt2bps(sh_audio->afmt);
 	w->wBitsPerSample = 8*afmt2bps(sh_audio->afmt);

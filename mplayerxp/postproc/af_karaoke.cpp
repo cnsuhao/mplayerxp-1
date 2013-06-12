@@ -43,16 +43,16 @@ static void uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* play(af_instance_t* af,const mp_aframe_t* ind)
+static mp_aframe_t play(af_instance_t* af,const mp_aframe_t& ind)
 {
-    const mp_aframe_t*c	= ind;		 // Current working data
-    float*	in	= reinterpret_cast<float*>(c->audio);	 // Audio data
-    unsigned	len	= c->len/4;	 // Number of samples in current audio block
-    unsigned	nch	= c->nch;	 // Number of channels
+    const mp_aframe_t& c= ind;		 // Current working data
+    float*	in	= reinterpret_cast<float*>(c.audio);	 // Audio data
+    unsigned	len	= c.len/4;	 // Number of samples in current audio block
+    unsigned	nch	= c.nch;	 // Number of channels
     unsigned	i;
-    mp_aframe_t* outd = new_mp_aframe_genome(ind);
-    mp_alloc_aframe(outd);
-    float*	out	= reinterpret_cast<float*>(outd->audio);	 // Audio data
+    mp_aframe_t outd = ind.genome();
+    outd.alloc();
+    float*	out	= reinterpret_cast<float*>(outd.audio);	 // Audio data
     UNUSED(af);
     /*
 	FIXME1 add a low band pass filter to avoid suppressing

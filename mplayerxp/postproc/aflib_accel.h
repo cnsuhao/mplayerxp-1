@@ -168,61 +168,61 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_int16)(const int32_t* in_data, 
 	out_data[i]=(uint16_t)((in_data[i])>>16);
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(change_bps)(const mp_aframe_t* in, mp_aframe_t* out)
+static void __FASTCALL__ PVECTOR_RENAME(change_bps)(const mp_aframe_t& in, mp_aframe_t* out)
 {
-    unsigned i,bps=in->format&MPAF_BPS_MASK,outbps=out->format&MPAF_BPS_MASK;
+    unsigned i,bps=in.format&MPAF_BPS_MASK,outbps=out->format&MPAF_BPS_MASK;
   // Change the number of bits
     switch(bps){
 	case 1:
 	switch(outbps){
 	    case 2:
-		PVECTOR_RENAME(int8_to_int16)(reinterpret_cast<int8_t*>(in->audio),reinterpret_cast<int16_t*>(out->audio),in->len,out->flags&MP_AFLG_FINALIZED);
+		PVECTOR_RENAME(int8_to_int16)(reinterpret_cast<int8_t*>(in.audio),reinterpret_cast<int16_t*>(out->audio),in.len,out->flags&MP_AFLG_FINALIZED);
 		break;
 	    case 3:
-		for(i=0;i<in->len;i++) {
+		for(i=0;i<in.len;i++) {
 		    ((uint8_t*)out->audio)[3*i]=
 		    ((uint8_t*)out->audio)[3*i+1]=0;
-		    ((uint8_t*)out->audio)[3*i+2]=(((uint8_t*)in->audio)[i]);
+		    ((uint8_t*)out->audio)[3*i+2]=(((uint8_t*)in.audio)[i]);
 		}
 		break;
 	    case 4:
-		for(i=0;i<in->len;i++) ((uint32_t*)out->audio)[i]=((uint32_t)((uint8_t*)in->audio)[i])<<24;
+		for(i=0;i<in.len;i++) ((uint32_t*)out->audio)[i]=((uint32_t)((uint8_t*)in.audio)[i])<<24;
 		break;
 	}
 	break;
 	case 2:
 	switch(outbps){
 	    case 1:
-		PVECTOR_RENAME(int16_to_int8)(reinterpret_cast<int16_t*>(in->audio),reinterpret_cast<int8_t*>(out->audio),in->len,out->flags&MP_AFLG_FINALIZED);
+		PVECTOR_RENAME(int16_to_int8)(reinterpret_cast<int16_t*>(in.audio),reinterpret_cast<int8_t*>(out->audio),in.len,out->flags&MP_AFLG_FINALIZED);
 		break;
 	    case 3:
-		for(i=0;i<in->len;i++) {
+		for(i=0;i<in.len;i++) {
 		    ((uint8_t*)out->audio)[3*i]=0;
-		    ((uint8_t*)out->audio)[3*i+1]=(((uint8_t*)in->audio)[2*i]);
-		    ((uint8_t*)out->audio)[3*i+2]=(((uint8_t*)in->audio)[2*i+1]);
+		    ((uint8_t*)out->audio)[3*i+1]=(((uint8_t*)in.audio)[2*i]);
+		    ((uint8_t*)out->audio)[3*i+2]=(((uint8_t*)in.audio)[2*i+1]);
 		}
 		break;
 	    case 4:
-		PVECTOR_RENAME(int16_to_int32)(reinterpret_cast<int16_t*>(in->audio),reinterpret_cast<int32_t*>(out->audio),in->len,out->flags&MP_AFLG_FINALIZED);
+		PVECTOR_RENAME(int16_to_int32)(reinterpret_cast<int16_t*>(in.audio),reinterpret_cast<int32_t*>(out->audio),in.len,out->flags&MP_AFLG_FINALIZED);
 		break;
 	}
 	break;
 	case 3:
 	switch(outbps){
 	    case 1:
-		for(i=0;i<in->len;i++) ((uint8_t*)out->audio)[i]=(((uint8_t*)in->audio)[3*i]);
+		for(i=0;i<in.len;i++) ((uint8_t*)out->audio)[i]=(((uint8_t*)in.audio)[3*i]);
 		break;
 	    case 2:
-		for(i=0;i<in->len;i++) {
-		    ((uint8_t*)out->audio)[2*i]=(uint8_t)(((uint8_t*)in->audio)[3*i+1]);
-		    ((uint8_t*)out->audio)[2*i+1]=(uint8_t)(((uint8_t*)in->audio)[3*i+2]);
+		for(i=0;i<in.len;i++) {
+		    ((uint8_t*)out->audio)[2*i]=(uint8_t)(((uint8_t*)in.audio)[3*i+1]);
+		    ((uint8_t*)out->audio)[2*i+1]=(uint8_t)(((uint8_t*)in.audio)[3*i+2]);
 		}
 		break;
 	    case 4:
-		for(i=0;i<in->len;i++) {
-		    ((uint8_t*)out->audio)[4*i+1]=((uint8_t*)in->audio)[3*i];
-		    ((uint8_t*)out->audio)[4*i+2]=((uint8_t*)in->audio)[3*i+1];
-		    ((uint8_t*)out->audio)[4*i+3]=((uint8_t*)in->audio)[3*i+2];
+		for(i=0;i<in.len;i++) {
+		    ((uint8_t*)out->audio)[4*i+1]=((uint8_t*)in.audio)[3*i];
+		    ((uint8_t*)out->audio)[4*i+2]=((uint8_t*)in.audio)[3*i+1];
+		    ((uint8_t*)out->audio)[4*i+3]=((uint8_t*)in.audio)[3*i+2];
 		    ((uint8_t*)out->audio)[4*i]=0;
 		}
 		break;
@@ -231,16 +231,16 @@ static void __FASTCALL__ PVECTOR_RENAME(change_bps)(const mp_aframe_t* in, mp_af
 	case 4:
 	switch(outbps){
 	    case 1:
-		for(i=0;i<in->len;i++) ((uint8_t*)out->audio)[i]=(uint8_t)((((uint32_t*)in->audio)[i])>>24);
+		for(i=0;i<in.len;i++) ((uint8_t*)out->audio)[i]=(uint8_t)((((uint32_t*)in.audio)[i])>>24);
 		break;
 	    case 2:
-		PVECTOR_RENAME(int32_to_int16)(reinterpret_cast<int32_t*>(in->audio),reinterpret_cast<int16_t*>(out->audio),in->len,out->flags&MP_AFLG_FINALIZED);
+		PVECTOR_RENAME(int32_to_int16)(reinterpret_cast<int32_t*>(in.audio),reinterpret_cast<int16_t*>(out->audio),in.len,out->flags&MP_AFLG_FINALIZED);
 		break;
 	    case 3:
-		for(i=0;i<in->len;i++) {
-		    ((uint8_t*)out->audio)[3*i]=(((uint8_t*)in->audio)[4*i+1]);
-		    ((uint8_t*)out->audio)[3*i+1]=(((uint8_t*)in->audio)[4*i+2]);
-		    ((uint8_t*)out->audio)[3*i+2]=(((uint8_t*)in->audio)[4*i+3]);
+		for(i=0;i<in.len;i++) {
+		    ((uint8_t*)out->audio)[3*i]=(((uint8_t*)in.audio)[4*i+1]);
+		    ((uint8_t*)out->audio)[3*i+1]=(((uint8_t*)in.audio)[4*i+2]);
+		    ((uint8_t*)out->audio)[3*i+2]=(((uint8_t*)in.audio)[4*i+3]);
 		}
 	    break;
 	}
@@ -416,14 +416,14 @@ static void __FASTCALL__ PVECTOR_RENAME(int32_to_float)(const int32_t* in, float
       out[i]=(1.0/std::numeric_limits<int32_t>::max())*((float)in[i]);
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(float2int)(const mp_aframe_t* in, mp_aframe_t* out)
+static void __FASTCALL__ PVECTOR_RENAME(float2int)(const mp_aframe_t& in, mp_aframe_t* out)
 {
     float ftmp;
     unsigned i,bps=out->format&MPAF_BPS_MASK;
     switch(bps){
 	case 1:
-	for(i=0;i<in->len;i++) {
-	    ftmp=((float*)in->audio)[i];
+	for(i=0;i<in.len;i++) {
+	    ftmp=((float*)in.audio)[i];
 	    saturate(ftmp,-1.0f,+1.0f);
 	    ((int8_t*)out->audio)[i]=(int8_t)lrintf(std::numeric_limits<int16_t>::max()*ftmp);
 	}
@@ -431,58 +431,58 @@ static void __FASTCALL__ PVECTOR_RENAME(float2int)(const mp_aframe_t* in, mp_afr
 	case 2:
 #ifdef HAVE_INT_PVECTOR
 	{
-	    int32_t __attribute__((aligned(64))) itmp[in->len];
+	    int32_t __attribute__((aligned(64))) itmp[in.len];
 	    /* unfortunatelly there is now universal way for convertion on perfectly different chips */
-	    PVECTOR_RENAME(float_to_int32)(reinterpret_cast<float*>(in->audio), itmp, in->len, 0);
-	    PVECTOR_RENAME(int32_to_int16)(itmp, reinterpret_cast<int16_t*>(out->audio), in->len, out->flags&MP_AFLG_FINALIZED);
+	    PVECTOR_RENAME(float_to_int32)(reinterpret_cast<float*>(in.audio), itmp, in.len, 0);
+	    PVECTOR_RENAME(int32_to_int16)(itmp, reinterpret_cast<int16_t*>(out->audio), in.len, out->flags&MP_AFLG_FINALIZED);
 	}
 #else
-	    for(i=0;i<in->len;i++) {
-		ftmp=((float*)in->audio)[i];
+	    for(i=0;i<in.len;i++) {
+		ftmp=((float*)in.audio)[i];
 		saturate(ftmp,-1.0f,+1.0f);
 		((int16_t*)out->audio)[i]=(int16_t)lrintf(std::numeric_limits<int16_t>::max()*ftmp);
 	    }
 #endif
 	    break;
 	case 3:
-	    for(i=0;i<in->len;i++) {
-		ftmp=((float*)in->audio)[i];
+	    for(i=0;i<in.len;i++) {
+		ftmp=((float*)in.audio)[i];
 		saturate(ftmp,-1.0f,+1.0f);
 		store24bit(out->audio, i, (int32_t)lrintf((std::numeric_limits<int32_t>::max()-1)*ftmp));
 	    }
 	    break;
 	case 4:
-	    PVECTOR_RENAME(float_to_int32)(reinterpret_cast<float*>(in->audio), reinterpret_cast<int32_t*>(out->audio),in->len,out->flags&MP_AFLG_FINALIZED);
+	    PVECTOR_RENAME(float_to_int32)(reinterpret_cast<float*>(in.audio), reinterpret_cast<int32_t*>(out->audio),in.len,out->flags&MP_AFLG_FINALIZED);
 	    break;
     }
 }
 
-static void __FASTCALL__ PVECTOR_RENAME(int2float)(const mp_aframe_t* in, mp_aframe_t* out)
+static void __FASTCALL__ PVECTOR_RENAME(int2float)(const mp_aframe_t& in, mp_aframe_t* out)
 {
-    unsigned i,bps=in->format&MPAF_BPS_MASK;
+    unsigned i,bps=in.format&MPAF_BPS_MASK;
     switch(bps){
     case 1:
-	for(i=0;i<in->len;i++)
-	    ((float*)out->audio)[i]=(1.0/std::numeric_limits<int16_t>::max())*((float)((int8_t*)in->audio)[i]);
+	for(i=0;i<in.len;i++)
+	    ((float*)out->audio)[i]=(1.0/std::numeric_limits<int16_t>::max())*((float)((int8_t*)in.audio)[i]);
 	break;
     case 2:
 #ifdef HAVE_INT_PVECTOR
 	{
-	int32_t __attribute__((aligned(64))) itmp[in->len*2];
-	PVECTOR_RENAME(int16_to_int32)(reinterpret_cast<int16_t*>(in->audio), itmp, in->len, 0);
-	PVECTOR_RENAME(int32_to_float)(itmp, reinterpret_cast<float*>(out->audio),in->len*2,out->flags&MP_AFLG_FINALIZED);
+	int32_t __attribute__((aligned(64))) itmp[in.len*2];
+	PVECTOR_RENAME(int16_to_int32)(reinterpret_cast<int16_t*>(in.audio), itmp, in.len, 0);
+	PVECTOR_RENAME(int32_to_float)(itmp, reinterpret_cast<float*>(out->audio),in.len*2,out->flags&MP_AFLG_FINALIZED);
 	}
 #else
-	for(i=0;i<in->len;i++)
-	    ((float*)out->audio)[i]=(1.0/std::numeric_limits<int16_t>::max())*((float)((int16_t*)in->audio)[i]);
+	for(i=0;i<in.len;i++)
+	    ((float*)out->audio)[i]=(1.0/std::numeric_limits<int16_t>::max())*((float)((int16_t*)in.audio)[i]);
 #endif
 	break;
     case 3:
-	for(i=0;i<in->len;i++)
-	    ((float*)out->audio)[i]=(1.0/std::numeric_limits<int32_t>::max())*((float)((int32_t)load24bit(in->audio, i)));
+	for(i=0;i<in.len;i++)
+	    ((float*)out->audio)[i]=(1.0/std::numeric_limits<int32_t>::max())*((float)((int32_t)load24bit(in.audio, i)));
 	break;
     case 4:
-	PVECTOR_RENAME(int32_to_float)(reinterpret_cast<int32_t*>(in->audio),reinterpret_cast<float*>(out->audio),in->len,out->flags&MP_AFLG_FINALIZED);
+	PVECTOR_RENAME(int32_to_float)(reinterpret_cast<int32_t*>(in.audio),reinterpret_cast<float*>(out->audio),in.len,out->flags&MP_AFLG_FINALIZED);
 	break;
     }
 }

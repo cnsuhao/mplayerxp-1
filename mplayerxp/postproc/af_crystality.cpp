@@ -196,13 +196,13 @@ static float left0p = 0, right0p = 0;
 static float buf[BUF_SIZE];
 static unsigned _bufPos = BUF_SIZE - 1;
 static unsigned bufPos[3];
-static mp_aframe_t* __FASTCALL__ echo3d(af_crystality_t *setup,const mp_aframe_t* in)
+static mp_aframe_t __FASTCALL__ echo3d(af_crystality_t *setup,const mp_aframe_t& in)
 {
   unsigned x,i,datasize;
   float _left, _right, dif, difh, leftc, rightc, left[4], right[4];
   float lt, rt;
-  mp_aframe_t* out = new_mp_aframe_genome(in);
-  mp_alloc_aframe(out);
+  mp_aframe_t out = in.genome();
+  out.alloc();
   float *inptr,*outptr;
 
 #if 0
@@ -215,9 +215,9 @@ static mp_aframe_t* __FASTCALL__ echo3d(af_crystality_t *setup,const mp_aframe_t
   bufPos[1] = 1 + BUF_SIZE - DELAY1 - DELAY2;
   bufPos[2] = 1 + BUF_SIZE - DELAY1 - DELAY2 - DELAY3;
 
-  inptr = reinterpret_cast<float*>(in->audio);
-  outptr = reinterpret_cast<float*>(out->audio);
-  datasize= out->len;
+  inptr = reinterpret_cast<float*>(in.audio);
+  outptr = reinterpret_cast<float*>(out.audio);
+  datasize= out.len;
 
   for (x = 0; x < datasize; x += 8) {
 
@@ -399,7 +399,7 @@ static struct Interpolation bandext_amplitude;
 /*
  * exact bandwidth extender ("exciter") routine
  */
-static mp_aframe_t* __FASTCALL__ bandext(const af_crystality_t *setup,const mp_aframe_t*in)
+static mp_aframe_t __FASTCALL__ bandext(const af_crystality_t *setup,const mp_aframe_t& in)
 {
     unsigned x,i,datasize;
     float _left, _right;
@@ -409,13 +409,13 @@ static mp_aframe_t* __FASTCALL__ bandext(const af_crystality_t *setup,const mp_a
     static float ramplUp, ramplDown;
     float lampl, rampl;
     float tmp;
-    mp_aframe_t* out=new_mp_aframe_genome(in);
-    mp_alloc_aframe(out);
+    mp_aframe_t out=in.genome();
+    out.alloc();
     float *inptr,*outptr;
 
-    inptr = reinterpret_cast<float*>(in->audio);
-    outptr = reinterpret_cast<float*>(out->audio);
-    datasize= out->len;
+    inptr = reinterpret_cast<float*>(in.audio);
+    outptr = reinterpret_cast<float*>(out.audio);
+    datasize= out.len;
 
     for (x = 0; x < datasize; x += 8) {
 
@@ -528,14 +528,12 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& in)
 {
     af_crystality_t* s = reinterpret_cast<af_crystality_t*>(af->setup);
-    mp_aframe_t* out,*tmp;
 
-    tmp=echo3d(s,in);
-    out=bandext(s,tmp);
-    free_mp_aframe(tmp);
+    mp_aframe_t tmp=echo3d(s,in);
+    mp_aframe_t out=bandext(s,tmp);
 
     return out;
 }

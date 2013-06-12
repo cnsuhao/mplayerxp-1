@@ -50,7 +50,7 @@ static int flac_get_raw_id(Demuxer *demuxer,off_t fptr,unsigned *brate,unsigned 
   *brate=*samplerate=*channels=0;
   s = demuxer->stream;
   s->seek(fptr);
-  fcc1=s->read_dword();
+  fcc1=s->read(type_dword);
   fcc1=me2be_32(fcc1);
   s->seek(fptr);
   binary_packet bp=s->read(32);
@@ -70,7 +70,7 @@ static MPXP_Rc flac_probe(Demuxer* demuxer)
   Stream *s;
   uint8_t *p;
   s = demuxer->stream;
-  fcc1=s->read_dword();
+  fcc1=s->read(type_dword);
   fcc1=me2be_32(fcc1);
   p = (uint8_t *)&fcc1;
   if(flac_get_raw_id(demuxer,0,&fcc1,&fcc2,&fcc2)) return MPXP_Ok;

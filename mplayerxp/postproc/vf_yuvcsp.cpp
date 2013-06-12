@@ -32,37 +32,37 @@ static inline int clamp_c(int x){
     return (x > 240) ? 240 : (x < 16) ? 16 : x;
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     unsigned i,j,y,x;
     uint8_t *y_in, *cb_in, *cr_in;
     uint8_t *y_out, *cb_out, *cr_out;
 
-    vf->dmpi=vf_get_new_temp_genome(vf->next,mpi);
+    vf->dmpi=vf_get_new_temp_genome(vf->next,smpi);
 
-    y_in = mpi->planes[0];
-    cb_in = mpi->planes[1];
-    cr_in = mpi->planes[2];
+    y_in = smpi.planes[0];
+    cb_in = smpi.planes[1];
+    cr_in = smpi.planes[2];
 
     y_out = vf->dmpi->planes[0];
     cb_out = vf->dmpi->planes[1];
     cr_out = vf->dmpi->planes[2];
 
-    for (i = 0; i < mpi->h; i++)
-	for (j = mpi->x; j < mpi->w; j++) {
-	    y = i+mpi->y;
-	    x = j+mpi->x;
-	    y_out[y*vf->dmpi->stride[0]+x] = clamp_y(y_in[y*mpi->stride[0]+x]);
+    for (i = 0; i < smpi.h; i++)
+	for (j = smpi.x; j < smpi.w; j++) {
+	    y = i+smpi.y;
+	    x = j+smpi.x;
+	    y_out[y*vf->dmpi->stride[0]+x] = clamp_y(y_in[y*smpi.stride[0]+x]);
 	}
-    for (i = 0; i < mpi->chroma_height; i++)
-	for (j = (mpi->x)>>(mpi->chroma_x_shift); j < mpi->chroma_width; j++)
+    for (i = 0; i < smpi.chroma_height; i++)
+	for (j = (smpi.x)>>(smpi.chroma_x_shift); j < smpi.chroma_width; j++)
 	{
-	    y=i+(mpi->y>>mpi->chroma_y_shift);
-	    x=j+(mpi->y>>mpi->chroma_x_shift);
-	    cb_out[y*vf->dmpi->stride[1]+x] = clamp_c(cb_in[y*mpi->stride[1]+x]);
-	    cr_out[y*vf->dmpi->stride[2]+x] = clamp_c(cr_in[y*mpi->stride[2]+x]);
+	    y=i+(smpi.y>>smpi.chroma_y_shift);
+	    x=j+(smpi.y>>smpi.chroma_x_shift);
+	    cb_out[y*vf->dmpi->stride[1]+x] = clamp_c(cb_in[y*smpi.stride[1]+x]);
+	    cr_out[y*vf->dmpi->stride[2]+x] = clamp_c(cr_in[y*smpi.stride[2]+x]);
 	}
 
-    return vf_next_put_slice(vf,vf->dmpi);
+    return vf_next_put_slice(vf,*vf->dmpi);
 }
 
 //===========================================================================//

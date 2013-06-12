@@ -116,26 +116,26 @@ static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigne
 }
 
 static void __FASTCALL__ get_image(vf_instance_t* vf,
-	mp_image_t *mpi){
+	mp_image_t *smpi){
     MPXP_Rc retval;
     UNUSED(vf);
     int finalize = mpxp_context().video().output->is_final();
-    retval=mpxp_context().video().output->get_surface(mpi);
+    retval=mpxp_context().video().output->get_surface(smpi);
     if(retval==MPXP_Ok) {
-	mpi->flags |= MP_IMGFLAG_FINAL|MP_IMGFLAG_DIRECT;
-	if(finalize) mpi->flags |= MP_IMGFLAG_FINALIZED;
+	smpi->flags |= MP_IMGFLAG_FINAL|MP_IMGFLAG_DIRECT;
+	if(finalize) smpi->flags |= MP_IMGFLAG_FINALIZED;
 	mpxp_dbg2<<"vf_vo_get_image was called successfully"<<std::endl;
     } else mpxp_dbg2<<"vf_vo_get_image was called failed"<<std::endl;
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
-  if(!vo_config_count) return 0; // vo not configured?
-  if(!(mpi->flags & MP_IMGFLAG_FINAL) || (vf_first(vf)==vf && !(mpi->flags & MP_IMGFLAG_RENDERED))) {
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
+    if(!vo_config_count) return 0; // vo not configured?
+    if(!(smpi.flags & MP_IMGFLAG_FINAL) || (vf_first(vf)==vf && !(smpi.flags & MP_IMGFLAG_RENDERED))) {
 	mpxp_dbg2<<"vf_vo_put_slice was called("
-		<<mpi->xp_idx<<"): "<<mpi->x<<" "<<mpi->y<<" "<<mpi->w<<" "<<mpi->h<<std::endl;
-	mpxp_context().video().output->draw_slice(mpi);
-  }
-  return 1;
+		<<smpi.xp_idx<<"): "<<smpi.x<<" "<<smpi.y<<" "<<smpi.w<<" "<<smpi.h<<std::endl;
+	mpxp_context().video().output->draw_slice(smpi);
+    }
+    return 1;
 }
 
 static void __FASTCALL__ uninit( vf_instance_t* vf ) {

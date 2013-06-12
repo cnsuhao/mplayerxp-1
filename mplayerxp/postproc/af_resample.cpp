@@ -91,9 +91,8 @@ static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
     if(avfmt==AV_SAMPLE_FMT_NONE) rv=MPXP_Error;
     if(nch==0) rv=MPXP_Error;
     if(rv!=MPXP_Ok) {
-	char buff[256];
 	MSG_V("[af_resample] doesn't work with '%s' x %i\n"
-	,mpaf_fmt2str(arg->format,buff,sizeof(buff))
+	,mpaf_fmt2str(arg->format).c_str()
 	,arg->nch);
     }
     s->ctx = swr_alloc_set_opts(NULL,
@@ -150,26 +149,26 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& in)
 {
     int rc;
-    mp_aframe_t* out = new_mp_aframe_genome(in);
-    out->len=af_lencalc(af->mul,in);
-    mp_alloc_aframe(out);
+    mp_aframe_t out = in.genome();
+    out.len=af_lencalc(af->mul,in);
+    out.alloc();
 
     af_resample_t*	s = (af_resample_t*)af->setup;
 
     const uint8_t*	ain[SWR_CH_MAX];
     uint8_t*		aout[SWR_CH_MAX];
 
-    aout[0]=reinterpret_cast<uint8_t*>(out->audio);
-    ain[0]=reinterpret_cast<uint8_t*>(in->audio);
+    aout[0]=reinterpret_cast<uint8_t*>(out.audio);
+    ain[0]=reinterpret_cast<uint8_t*>(in.audio);
 
-    rc=swr_convert(s->ctx,aout,out->len/(out->nch*(out->format&MPAF_BPS_MASK)),ain,in->len/(in->nch*(in->format&MPAF_BPS_MASK)));
+    rc=swr_convert(s->ctx,aout,out.len/(out.nch*(out.format&MPAF_BPS_MASK)),ain,in.len/(in.nch*(in.format&MPAF_BPS_MASK)));
     if(rc<0)	MSG_ERR("%i=swr_convert\n",rc);
-    else	out->len=rc*out->nch*(out->format&MPAF_BPS_MASK);
+    else	out.len=rc*out.nch*(out.format&MPAF_BPS_MASK);
 
-    out->rate = af->conf.rate;
+    out.rate = af->conf.rate;
     return out;
 }
 

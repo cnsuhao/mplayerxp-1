@@ -28,14 +28,14 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     return vf_next_config(vf,width,height,d_width,d_height,flags,IMGFMT_YV12);
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     mp_image_t *dmpi;
     int y,w,h,finalize;
 
     // hope we'll get DR buffer:
     dmpi=vf_get_new_image(vf->next,IMGFMT_YV12,
 	MP_IMGTYPE_TEMP, 0/*MP_IMGFLAG_ACCEPT_STRIDE*/,
-	mpi->w, mpi->h,mpi->xp_idx);
+	smpi.w, smpi.h,smpi.xp_idx);
     finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
 #ifdef _OPENMP
@@ -43,29 +43,29 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
 {
 #pragma omp section
 #endif
-    for(y=0;y<mpi->h;y++) {
+    for(y=0;y<smpi.h;y++) {
 	if(finalize)
 	stream_copy(dmpi->planes[0]+dmpi->stride[0]*y,
-	       mpi->planes[0]+mpi->stride[0]*y,
-	       mpi->w);
+	       smpi.planes[0]+smpi.stride[0]*y,
+	       smpi.w);
 	else
 	memcpy(dmpi->planes[0]+dmpi->stride[0]*y,
-	       mpi->planes[0]+mpi->stride[0]*y,
-	       mpi->w);
+	       smpi.planes[0]+smpi.stride[0]*y,
+	       smpi.w);
     }
 #ifdef _OPENMP
 #pragma omp section
 #endif
-    (*vu9_to_vu12)( mpi->planes[1], mpi->planes[2],
+    (*vu9_to_vu12)( smpi.planes[1], smpi.planes[2],
 		    dmpi->planes[1], dmpi->planes[2],
-		    w,h,mpi->stride[1],mpi->stride[2],
+		    w,h,smpi.stride[1],smpi.stride[2],
 		    dmpi->stride[1],dmpi->stride[2]);
 #ifdef _OPENMP
 }
 #endif
-    vf_clone_mpi_attributes(dmpi, mpi);
+    vf_clone_mpi_attributes(dmpi, smpi);
 
-    return vf_next_put_slice(vf,dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

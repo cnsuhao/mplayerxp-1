@@ -78,7 +78,7 @@ static int fli_demux(Demuxer *demuxer,Demuxer_Stream *__ds){
 static MPXP_Rc fli_probe(Demuxer* demuxer){
   unsigned magic_number;
   demuxer->movi_end = demuxer->stream->skip(4);
-  magic_number = demuxer->stream->read_word_le();
+  magic_number = demuxer->stream->read_le(type_word);
   if ((magic_number != 0xAF11) && (magic_number != 0xAF12)) return MPXP_False;
   demuxer->file_format=Demuxer::Type_FLI;
   return MPXP_Ok;
@@ -103,9 +103,9 @@ static Opaque* fli_open(Demuxer* demuxer){
   demuxer->stream->seek( 0);
 
   demuxer->movi_start = 128;
-  demuxer->movi_end = demuxer->stream->read_dword_le();
+  demuxer->movi_end = demuxer->stream->read_le(type_dword);
 
-  magic_number = demuxer->stream->read_word_le();
+  magic_number = demuxer->stream->read_le(type_word);
 
   if ((magic_number != 0xAF11) && (magic_number != 0xAF12))
   {
@@ -117,7 +117,7 @@ static Opaque* fli_open(Demuxer* demuxer){
   }
 
   // fetch the number of frames
-  frames->num_frames = demuxer->stream->read_word_le();
+  frames->num_frames = demuxer->stream->read_le(type_word);
   frames->current_frame = 0;
 
   // allocate enough entries for the indices
@@ -139,8 +139,8 @@ static Opaque* fli_open(Demuxer* demuxer){
   // custom fourcc for internal MPlayer use
   sh_video->fourcc = mmioFOURCC('F', 'L', 'I', 'C');
 
-  sh_video->src_w = demuxer->stream->read_word_le();
-  sh_video->src_h = demuxer->stream->read_word_le();
+  sh_video->src_w = demuxer->stream->read_le(type_word);
+  sh_video->src_h = demuxer->stream->read_le(type_word);
 
   // pass extradata to codec
   sh_video->bih = (BITMAPINFOHEADER*)header;
@@ -155,7 +155,7 @@ static Opaque* fli_open(Demuxer* demuxer){
   demuxer->stream->skip( 4);
 
   // get the speed
-  speed = demuxer->stream->read_word_le();
+  speed = demuxer->stream->read_le(type_word);
   if (speed == 0)
     speed = 1;
   if (magic_number == 0xAF11)
@@ -168,8 +168,8 @@ static Opaque* fli_open(Demuxer* demuxer){
   while ((!demuxer->stream->eof()) && (frame_number < frames->num_frames))
   {
     frames->filepos[frame_number] = demuxer->stream->tell();
-    frame_size = demuxer->stream->read_dword_le();
-    magic_number = demuxer->stream->read_word_le();
+    frame_size = demuxer->stream->read_le(type_dword);
+    magic_number = demuxer->stream->read_le(type_word);
     demuxer->stream->skip( frame_size - 6);
 
     // if this chunk has the right magic number, index it

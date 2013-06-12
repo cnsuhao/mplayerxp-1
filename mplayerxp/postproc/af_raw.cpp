@@ -144,13 +144,13 @@ static void __FASTCALL__ uninit( af_instance_t* af )
    af audio filter instance
    data audio data
 */
-static mp_aframe_t* __FASTCALL__ play( af_instance_t* af,const mp_aframe_t* ind)
+static mp_aframe_t __FASTCALL__ play( af_instance_t* af,const mp_aframe_t& ind)
 {
   af_raw_t*	s   = reinterpret_cast<af_raw_t*>(af->setup); // Setup for this instance
-  if(s->fd.is_open()) s->fd.write((char*)(ind->audio),ind->len);
-  s->wavhdr.data_length += ind->len;
+  if(s->fd.is_open()) s->fd.write((char*)(ind.audio),ind.len);
+  s->wavhdr.data_length += ind.len;
   // We don't modify data, just export it
-  return const_cast<mp_aframe_t*>(ind);
+  return ind;
 }
 
 /* Allocate memory and set function pointers

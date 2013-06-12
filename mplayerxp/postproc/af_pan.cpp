@@ -122,22 +122,22 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* ind)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& ind)
 {
-    const mp_aframe_t*c= ind;		// Current working data
+    const mp_aframe_t&c= ind;		// Current working data
     af_pan_t*	s    = reinterpret_cast<af_pan_t*>(af->setup);	// Setup for this instance
-    float*	in   = reinterpret_cast<float*>(c->audio);// Input audio data
+    float*	in   = reinterpret_cast<float*>(c.audio);// Input audio data
     float*	out  = NULL;		// Output audio data
-    float*	end  = in+c->len/4; 	// End of loop
-    unsigned	nchi = c->nch;		// Number of input channels
+    float*	end  = in+c.len/4; 	// End of loop
+    unsigned	nchi = c.nch;		// Number of input channels
     unsigned	ncho = af->conf.nch;	// Number of output channels
     unsigned	j,k;
 
-    mp_aframe_t* outd = new_mp_aframe_genome(ind);
-    outd->len = af_lencalc(af->mul,ind);
-    mp_alloc_aframe(outd);
+    mp_aframe_t outd = ind.genome();
+    outd.len = af_lencalc(af->mul,ind);
+    outd.alloc();
 
-    out = reinterpret_cast<float*>(outd->audio);
+    out = reinterpret_cast<float*>(outd.audio);
     // Execute panning
     // FIXME: Too slow
     while(in < end){

@@ -23,8 +23,8 @@ struct vf_priv_t {
 	int scaleh;
 };
 
-static void __FASTCALL__ toright(unsigned char *dst[3], unsigned char *src[3],
-		    unsigned int dststride[3], unsigned int srcstride[3],
+static void __FASTCALL__ toright(unsigned char *dst[3],const unsigned char* const src[3],
+		    unsigned int dststride[3], unsigned int const srcstride[3],
 		    int w, int h, vf_priv_t* p,int finalize)
 {
 	int k;
@@ -33,8 +33,8 @@ static void __FASTCALL__ toright(unsigned char *dst[3], unsigned char *src[3],
 #pragma omp parallel for
 #endif
 	for (k = 0; k < 3; k++) {
-		unsigned char* fromL = src[k];
-		unsigned char* fromR = src[k];
+		const unsigned char* fromL = src[k];
+		const unsigned char* fromR = src[k];
 		unsigned char* to = dst[k];
 		unsigned int src = srcstride[k];
 		unsigned int dst = dststride[k];
@@ -55,8 +55,8 @@ static void __FASTCALL__ toright(unsigned char *dst[3], unsigned char *src[3],
 		for ( ; i > 0; i--) {
 			int j;
 			unsigned char* t = to;
-			unsigned char* sL = fromL;
-			unsigned char* sR = fromR;
+			const unsigned char* sL = fromL;
+			const unsigned char* sR = fromR;
 
 			if (p->scalew == 1) {
 				for (j = dd; j > 0; j--) {
@@ -88,21 +88,21 @@ static void __FASTCALL__ toright(unsigned char *dst[3], unsigned char *src[3],
 	}
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi)
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi)
 {
 	mp_image_t *dmpi;
 	int finalize;
 	// hope we'll get DR buffer:
 	dmpi=vf_get_new_image(vf->next, IMGFMT_YV12,
 			  MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-			  mpi->w * vf->priv->scalew,
-			  mpi->h / vf->priv->scaleh - vf->priv->skipline,mpi->xp_idx);
+			  smpi.w * vf->priv->scalew,
+			  smpi.h / vf->priv->scaleh - vf->priv->skipline,smpi.xp_idx);
 	finalize = dmpi->flags&MP_IMGFLAG_FINALIZED;
 
-	toright(dmpi->planes, mpi->planes, dmpi->stride,
-		mpi->stride, mpi->w, mpi->h, vf->priv,finalize);
+	toright(dmpi->planes, smpi.planes, dmpi->stride,
+		smpi.stride, smpi.w, smpi.h, vf->priv,finalize);
 
-	return vf_next_put_slice(vf,dmpi);
+	return vf_next_put_slice(vf,*dmpi);
 }
 
 static int __FASTCALL__ vf_config(vf_instance_t* vf,

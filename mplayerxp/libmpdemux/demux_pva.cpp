@@ -96,7 +96,7 @@ static int pva_sync(Demuxer * demuxer)
 		buffer[1]=buffer[2];
 		buffer[2]=buffer[3];
 		buffer[3]=buffer[4];
-		buffer[4]=demuxer->stream->read_char();
+		buffer[4]=demuxer->stream->read(type_byte);
 		/*
 		 * Check for a PVA packet beginning sequence: we check both the "AV" word at the
 		 * very beginning and the "0x55" reserved byte (which is unused and set to 0x55 by spec)
@@ -326,7 +326,7 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 #endif
 	if(!priv->just_synced)
 	{
-		if(d->stream->read_word() != (('A'<<8)|'V'))
+		if(d->stream->read(type_word) != (('A'<<8)|'V'))
 		{
 			MSG_V("demux_pva: pva_get_payload() missed a SyncWord at %ld!! Trying to sync...\n",d->stream->tell());
 			if(!pva_sync(d))
@@ -346,12 +346,12 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 	}
 	else
 	{
-		payload->type=d->stream->read_char();
+		payload->type=d->stream->read(type_byte);
 		d->stream->skip(2); //counter and reserved
 	}
-	flags=d->stream->read_char();
+	flags=d->stream->read(type_byte);
 	payload->is_packet_start=flags & 0x10;
-	pack_size=le2me_16(d->stream->read_word());
+	pack_size=le2me_16(d->stream->read(type_word));
 	MSG_DBG2("demux_pva::pva_get_payload(): pack_size=%u field read at offset %lu\n",pack_size,d->stream->tell()-2);
 	pva_payload_start=d->stream->tell();
 	next_offset=pva_payload_start+pack_size;
@@ -390,7 +390,7 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 		switch(payload->type)
 		{
 			case VIDEOSTREAM:
-				payload->pts=(float)(le2me_32(d->stream->read_dword()))/90000;
+				payload->pts=(float)(le2me_32(d->stream->read(type_dword)))/90000;
 				//printf("Video PTS: %f\n",payload->pts);
 				if((flags&0x03)
 #ifdef PVA_NEW_PREBYTES_CODE
@@ -423,11 +423,11 @@ static int pva_get_payload(Demuxer * d,pva_payload_t * payload)
 				break;
 			case MAINAUDIOSTREAM:
 				d->stream->skip(3); //FIXME properly parse PES header.
-				//printf("StreamID in audio PES header: 0x%2X\n",d->stream->read_char());
+				//printf("StreamID in audio PES header: 0x%2X\n",d->stream->read(type_byte));
 				d->stream->skip(4);
 
-				buffer[255]=d->stream->read_char();
-				pes_head_len=d->stream->read_char();
+				buffer[255]=d->stream->read(type_byte);
+				pes_head_len=d->stream->read(type_byte);
 				bp=d->stream->read(pes_head_len); memcpy(buffer,bp.data(),bp.size());
 				if(!(buffer[255]&0x80)) //PES header does not contain PTS.
 				{

@@ -107,23 +107,23 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 }
 
 // Filter data through filter
-static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
+static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& in)
 {
-    mp_aframe_t* c=new_mp_aframe_genome(in);
-    mp_alloc_aframe(c);
-    memcpy(c->audio,in->audio,c->len);
+    mp_aframe_t c=in.genome();
+    c.alloc();
+    memcpy(c.audio,in.audio,c.len);
 
     af_delay_t*	s   = reinterpret_cast<af_delay_t*>(af->setup); // Setup for this instance
-    int 	nch = c->nch;	 // Number of channels
-    int		len = c->len/(c->format&MPAF_BPS_MASK); // Number of sample in data chunk
+    int 	nch = c.nch;	 // Number of channels
+    int		len = c.len/(c.format&MPAF_BPS_MASK); // Number of sample in data chunk
     int		ri  = 0;
     int 	ch,i;
 
     for(ch=0;ch<nch;ch++){
-	unsigned bps=c->format&MPAF_BPS_MASK;
+	unsigned bps=c.format&MPAF_BPS_MASK;
 	switch(bps){
 	case 1:{
-	    int8_t* a = reinterpret_cast<int8_t*>(c->audio);
+	    int8_t* a = reinterpret_cast<int8_t*>(c.audio);
 	    int8_t* q = reinterpret_cast<int8_t*>(s->q[ch]);
 	    int wi = s->wi[ch];
 	    ri = s->ri;
@@ -137,7 +137,7 @@ static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
 	    break;
 	}
 	case 2:{
-	    int16_t* a = reinterpret_cast<int16_t*>(c->audio);
+	    int16_t* a = reinterpret_cast<int16_t*>(c.audio);
 	    int16_t* q = reinterpret_cast<int16_t*>(s->q[ch]);
 	    int wi = s->wi[ch];
 	    ri = s->ri;
@@ -151,7 +151,7 @@ static mp_aframe_t* __FASTCALL__ play(af_instance_t* af,const mp_aframe_t* in)
 	    break;
 	}
 	case 4:{
-	    int32_t* a = reinterpret_cast<int32_t*>(c->audio);
+	    int32_t* a = reinterpret_cast<int32_t*>(c.audio);
 	    int32_t* q = reinterpret_cast<int32_t*>(s->q[ch]);
 	    int wi = s->wi[ch];
 	    ri = s->ri;

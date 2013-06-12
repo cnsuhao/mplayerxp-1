@@ -45,9 +45,9 @@ extern void store24bit(any_t* data, int pos, uint32_t expanded_value);
    w filter taps
    x input signal must be a circular buffer which is indexed backwards
 */
-_ftype_t __FASTCALL__ fir(register unsigned int n, _ftype_t* w, _ftype_t* x)
+_ftype_t __FASTCALL__ fir(unsigned int n,const _ftype_t* w,const _ftype_t* x)
 {
-  register _ftype_t y; // Output
+  _ftype_t y; // Output
   y = 0.0;
   do{
     n--;
@@ -66,11 +66,11 @@ _ftype_t __FASTCALL__ fir(register unsigned int n, _ftype_t* w, _ftype_t* x)
    y  output buffer
    s  output buffer stride
 */
-_ftype_t* __FASTCALL__ pfir(unsigned int n, unsigned int d, unsigned int xi, _ftype_t** w, _ftype_t** x, _ftype_t* y, unsigned int s)
+_ftype_t* __FASTCALL__ pfir(unsigned int n, unsigned int d, unsigned int xi,const _ftype_t** w,const _ftype_t** x, _ftype_t* y, unsigned int s)
 {
-  register _ftype_t* xt = *x + xi;
-  register _ftype_t* wt = *w;
-  register int    nt = 2*n;
+  const _ftype_t* xt = *x + xi;
+  const _ftype_t* wt = *w;
+  int    nt = 2*n;
   while(d-- > 0){
     *y = fir(n,wt,xt);
     wt+=n;
@@ -85,17 +85,17 @@ _ftype_t* __FASTCALL__ pfir(unsigned int n, unsigned int d, unsigned int xi, _ft
    at the new samples, xi current index in xq and n the length of the
    filter. xq must be n*2 by k big, s is the index for in.
 */
-int __FASTCALL__ updatepq(unsigned int n, unsigned int d, unsigned int xi, _ftype_t** xq, _ftype_t* in, unsigned int s)
+int __FASTCALL__ updatepq(unsigned int n, unsigned int d, unsigned int xi, _ftype_t** xq,const _ftype_t* in, unsigned int s)
 {
-  register _ftype_t* txq = *xq + xi;
-  register int nt = n*2;
+    _ftype_t* txq = *xq + xi;
+    int nt = n*2;
 
-  while(d-- >0){
-    *txq= *(txq+n) = *in;
-    txq+=nt;
-    in+=s;
-  }
-  return (++xi)&(n-1);
+    while(d-- >0){
+	*txq= *(txq+n) = *in;
+	txq+=nt;
+	in+=s;
+    }
+    return (++xi)&(n-1);
 }
 
 /******************************************************************************
@@ -668,7 +668,7 @@ void __FASTCALL__ bandp_init(bandp_t *bp, unsigned center, unsigned width, unsig
 	bp->prev = bp->pprev = 0.0;
 }
 
-static void __FASTCALL__ init_change_bps(const mp_aframe_t* in, mp_aframe_t* out)
+static void __FASTCALL__ init_change_bps(const mp_aframe_t& in, mp_aframe_t* out)
 {
 #ifdef __AVX__
 	if(gCpuCaps.hasAVX) change_bps = change_bps_AVX;
@@ -695,9 +695,9 @@ static void __FASTCALL__ init_change_bps(const mp_aframe_t* in, mp_aframe_t* out
 	change_bps = change_bps_c;
 	(*change_bps)(in,out);
 }
-void (* __FASTCALL__ change_bps)(const mp_aframe_t* in, mp_aframe_t* out)=init_change_bps;
+void (* __FASTCALL__ change_bps)(const mp_aframe_t& in, mp_aframe_t* out)=init_change_bps;
 
-static void __FASTCALL__ init_float2int(const mp_aframe_t* in, mp_aframe_t* out)
+static void __FASTCALL__ init_float2int(const mp_aframe_t& in, mp_aframe_t* out)
 {
 #ifdef __AVX__
 	if(gCpuCaps.hasAVX) float2int = float2int_AVX;
@@ -732,9 +732,9 @@ static void __FASTCALL__ init_float2int(const mp_aframe_t* in, mp_aframe_t* out)
 	float2int = float2int_c;
 	(*float2int)(in,out);
 }
-void (* __FASTCALL__ float2int)(const mp_aframe_t* in, mp_aframe_t* out)=init_float2int;
+void (* __FASTCALL__ float2int)(const mp_aframe_t& in, mp_aframe_t* out)=init_float2int;
 
-static void __FASTCALL__ init_int2float(const mp_aframe_t* in, mp_aframe_t* out)
+static void __FASTCALL__ init_int2float(const mp_aframe_t& in, mp_aframe_t* out)
 {
 #ifdef __AVX__
 	if(gCpuCaps.hasAVX) int2float = int2float_AVX;
@@ -769,7 +769,7 @@ static void __FASTCALL__ init_int2float(const mp_aframe_t* in, mp_aframe_t* out)
 	int2float = int2float_c;
 	(*int2float)(in,out);
 }
-void (* __FASTCALL__ int2float)(const mp_aframe_t* in, mp_aframe_t* out)=init_int2float;
+void (* __FASTCALL__ int2float)(const mp_aframe_t& in, mp_aframe_t* out)=init_int2float;
 
 
 static int32_t __FASTCALL__ FIR_i16_init(const int16_t *x,const int16_t *w)

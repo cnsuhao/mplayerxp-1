@@ -35,15 +35,15 @@ static unsigned short fast_osd_16bpp_table[256];
 static void __FASTCALL__ vo_draw_alpha_rgb15_c(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
     for(y=0;y<h;y++){
-	register unsigned short *dst = (unsigned short*) dstbase;
-	register int x;
+	unsigned short *dst = (unsigned short*) dstbase;
+	int x;
 	for(x=0;x<w;x++){
 	    if(srca[x]){
 #ifdef FAST_OSD
 #ifdef FAST_OSD_TABLE
 		dst[x]=fast_osd_15bpp_table[src[x]];
 #else
-		register unsigned int a=src[x]>>3;
+		unsigned int a=src[x]>>3;
 		dst[x]=(a<<10)|(a<<5)|a;
 #endif
 #else
@@ -67,8 +67,8 @@ static void __FASTCALL__ vo_draw_alpha_rgb15_c(int w,int h, const unsigned char*
 static void __FASTCALL__ vo_draw_alpha_rgb16_c(int w,int h, const unsigned char* src, const unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride,int finalize){
     int y;
     for(y=0;y<h;y++){
-	register unsigned short *dst = (unsigned short*) dstbase;
-	register int x;
+	unsigned short *dst = (unsigned short*) dstbase;
+	int x;
 	for(x=0;x<w;x++){
 	    if(srca[x]){
 #ifdef FAST_OSD

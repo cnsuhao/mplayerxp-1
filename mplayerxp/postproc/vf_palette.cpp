@@ -74,86 +74,87 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     return vf_next_config(vf,width,height,d_width,d_height,flags,vf->priv->fmt);
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& mpi){
     mp_image_t *dmpi;
+    mp_image_t smpi = mpi;
 
     // hope we'll get DR buffer:
     dmpi=vf_get_new_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	mpi->w, mpi->h, mpi->xp_idx);
+	smpi.w, smpi.h, smpi.xp_idx);
 
-    if (!mpi->planes[1])
+    if (!smpi.planes[1])
     {
 	if(!vf->priv->pal_msg){
 	    MSG_V("[%s] no palette given, assuming builtin grayscale one\n",vf->info->name);
 	    vf->priv->pal_msg=1;
 	}
-	mpi->planes[1] = (unsigned char*)gray_pal;
+	smpi.planes[1] = (unsigned char*)gray_pal;
     }
 
-    if(mpi->w==mpi->stride[0] && dmpi->w*(dmpi->bpp>>3)==dmpi->stride[0]){
+    if(smpi.w==smpi.stride[0] && dmpi->w*(dmpi->bpp>>3)==dmpi->stride[0]){
 	// no stride conversion needed
 	switch(dmpi->imgfmt&255){
 	case 15:
 	    if (dmpi->flags & MP_IMGFLAG_SWAPPED)
-		palette8tobgr15(mpi->planes[0],dmpi->planes[0],mpi->h*mpi->w,mpi->planes[1]);
+		palette8tobgr15(smpi.planes[0],dmpi->planes[0],smpi.h*smpi.w,smpi.planes[1]);
 	    else
-		palette8torgb15(mpi->planes[0],dmpi->planes[0],mpi->h*mpi->w,mpi->planes[1]);
+		palette8torgb15(smpi.planes[0],dmpi->planes[0],smpi.h*smpi.w,smpi.planes[1]);
 	    break;
 	case 16:
 	    if (dmpi->flags & MP_IMGFLAG_SWAPPED)
-		palette8tobgr16(mpi->planes[0],dmpi->planes[0],mpi->h*mpi->w,mpi->planes[1]);
+		palette8tobgr16(smpi.planes[0],dmpi->planes[0],smpi.h*smpi.w,smpi.planes[1]);
 	    else
-		palette8torgb16(mpi->planes[0],dmpi->planes[0],mpi->h*mpi->w,mpi->planes[1]);
+		palette8torgb16(smpi.planes[0],dmpi->planes[0],smpi.h*smpi.w,smpi.planes[1]);
 	    break;
 	case 24:
 	    if (dmpi->flags & MP_IMGFLAG_SWAPPED)
-		palette8tobgr24(mpi->planes[0],dmpi->planes[0],mpi->h*mpi->w,mpi->planes[1]);
+		palette8tobgr24(smpi.planes[0],dmpi->planes[0],smpi.h*smpi.w,smpi.planes[1]);
 	    else
-		palette8torgb24(mpi->planes[0],dmpi->planes[0],mpi->h*mpi->w,mpi->planes[1]);
+		palette8torgb24(smpi.planes[0],dmpi->planes[0],smpi.h*smpi.w,smpi.planes[1]);
 	    break;
 	case 32:
 	    if (dmpi->flags & MP_IMGFLAG_SWAPPED)
-		palette8tobgr32(mpi->planes[0],dmpi->planes[0],mpi->h*mpi->w,mpi->planes[1]);
+		palette8tobgr32(smpi.planes[0],dmpi->planes[0],smpi.h*smpi.w,smpi.planes[1]);
 	    else
-		palette8torgb32(mpi->planes[0],dmpi->planes[0],mpi->h*mpi->w,mpi->planes[1]);
+		palette8torgb32(smpi.planes[0],dmpi->planes[0],smpi.h*smpi.w,smpi.planes[1]);
 	    break;
 	}
     } else {
 	int y;
-	for(y=0;y<mpi->h;y++){
-	    unsigned char* src=mpi->planes[0]+y*mpi->stride[0];
+	for(y=0;y<smpi.h;y++){
+	    unsigned char* src=smpi.planes[0]+y*smpi.stride[0];
 	    unsigned char* dst=dmpi->planes[0]+y*dmpi->stride[0];
 	    switch(dmpi->imgfmt&255){
 	    case 15:
 		if (dmpi->flags & MP_IMGFLAG_SWAPPED)
-		    palette8tobgr15(src,dst,mpi->w,mpi->planes[1]);
+		    palette8tobgr15(src,dst,smpi.w,smpi.planes[1]);
 		else
-		    palette8torgb15(src,dst,mpi->w,mpi->planes[1]);
+		    palette8torgb15(src,dst,smpi.w,smpi.planes[1]);
 		break;
 	    case 16:
 		if (dmpi->flags & MP_IMGFLAG_SWAPPED)
-		    palette8tobgr16(src,dst,mpi->w,mpi->planes[1]);
+		    palette8tobgr16(src,dst,smpi.w,smpi.planes[1]);
 		else
-		    palette8torgb16(src,dst,mpi->w,mpi->planes[1]);
+		    palette8torgb16(src,dst,smpi.w,smpi.planes[1]);
 		break;
 	    case 24:
 		if (dmpi->flags & MP_IMGFLAG_SWAPPED)
-		    palette8tobgr24(src,dst,mpi->w,mpi->planes[1]);
+		    palette8tobgr24(src,dst,smpi.w,smpi.planes[1]);
 		else
-		    palette8torgb24(src,dst,mpi->w,mpi->planes[1]);
+		    palette8torgb24(src,dst,smpi.w,smpi.planes[1]);
 		break;
 	    case 32:
 		if (dmpi->flags & MP_IMGFLAG_SWAPPED)
-		    palette8tobgr32(src,dst,mpi->w,mpi->planes[1]);
+		    palette8tobgr32(src,dst,smpi.w,smpi.planes[1]);
 		else
-		    palette8torgb32(src,dst,mpi->w,mpi->planes[1]);
+		    palette8torgb32(src,dst,smpi.w,smpi.planes[1]);
 		break;
 	    }
 	}
     }
 
-    return vf_next_put_slice(vf,dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//

@@ -174,7 +174,6 @@ MPXP_Rc AD_Interface::preinit_filters(unsigned in_samplerate, unsigned in_channe
 	unsigned& out_samplerate, unsigned& out_channels, unsigned& out_format) const {
     decaudio_priv_t& priv = reinterpret_cast<decaudio_priv_t&>(ad_private);
     sh_audio_t& sh = priv.parent;
-    char strbuf[200];
     af_stream_t* afs=af_new(&sh);
 
     // input format: same as codec's output format:
@@ -206,7 +205,7 @@ MPXP_Rc AD_Interface::preinit_filters(unsigned in_samplerate, unsigned in_channe
 
     sh.af_bps = afs->output.rate*afs->output.nch*(afs->output.format&MPAF_BPS_MASK);
 
-    mpxp_v<<"AF_pre: af format: "<<afs->output.nch<<" ch, "<<afs->output.rate<<" hz, "<<mpaf_fmt2str(afs->output.format,strbuf,200)
+    mpxp_v<<"AF_pre: af format: "<<afs->output.nch<<" ch, "<<afs->output.rate<<" hz, "<<mpaf_fmt2str(afs->output.format)
 	<<" af_bps="<<sh.af_bps<<std::endl;
 
     priv.afi.afilter=afs;
@@ -219,7 +218,6 @@ MPXP_Rc AD_Interface::init_filters(unsigned in_samplerate, unsigned in_channels,
 	unsigned out_minsize, unsigned out_maxsize) const {
     decaudio_priv_t& priv = reinterpret_cast<decaudio_priv_t&>(ad_private);
     sh_audio_t& sh = priv.parent;
-    char strbuf[200];
     af_stream_t* afs=priv.afi.afilter;
     if(!afs) afs = af_new(&sh);
 
@@ -254,7 +252,7 @@ MPXP_Rc AD_Interface::init_filters(unsigned in_samplerate, unsigned in_channels,
     sh.af_bps = afs->output.rate*afs->output.nch*(afs->output.format&MPAF_BPS_MASK);
 
     mpxp_v<<"AF_init: af format: "<<afs->output.nch<<" ch, "<<afs->output.rate
-	<<" hz, "<<mpaf_fmt2str(afs->output.format,strbuf,200)<<" af_bps="<<sh.af_bps<<std::endl;
+	<<" hz, "<<mpaf_fmt2str(afs->output.format)<<" af_bps="<<sh.af_bps<<std::endl;
 
     sh.a_buffer_size=out_maxsize;
     sh.a_buffer=new char [sh.a_buffer_size];
@@ -315,36 +313,25 @@ unsigned AD_Interface::run(unsigned char *buf,unsigned minlen,unsigned maxlen,un
     mpxp_dbg2<<"decaudio: "<<len<<" bytes "<<pts<<" pts min "<<minlen<<" max "<<maxlen<<" buflen "<<buflen<<" o_bps="<<sh.o_bps<<" f_bps="<<sh.af_bps<<std::endl;
     if(len==0 || !priv.afi.afilter) return 0; // EOF?
     // run the filters:
-    mp_aframe_t*  afd;  // filter input
-    mp_aframe_t* pafd; // filter output
-    afd=new_mp_aframe(	sh.rate,
-			sh.nch,
-			afmt2mpaf(sh.afmt)
-			,0); // xp_idx
+    mp_aframe_t*  afd=new(zeromem) mp_aframe_t(sh.rate,sh.nch,afmt2mpaf(sh.afmt),0); // xp_idx
     afd->audio=buf;
     afd->len=len;
-    pafd=af_play(priv.afi.afilter,afd);
+    mp_aframe_t pafd=af_play(priv.afi.afilter,*afd);
     afd->audio=NULL; // fake no buffer
 
-    if(!pafd) {
-	mpxp_v<<"decaudio: filter error"<<std::endl;
-	return 0; // error
-    }
+    mpxp_dbg2<<"decaudio: "<<std::hex<<pafd.format<<" in="<<len<<" out="<<pafd.len<<" (min "<<minlen<<" max "<<maxlen<<" buf "<<buflen<<")"<<std::endl;
 
-    mpxp_dbg2<<"decaudio: "<<std::hex<<pafd->format<<" in="<<len<<" out="<<pafd->len<<" (min "<<minlen<<" max "<<maxlen<<" buf "<<buflen<<")"<<std::endl;
-
-    cp_size=pafd->len;
-    cp_size=std::min(buflen,pafd->len);
-    memcpy(buf,pafd->audio,cp_size);
-    cp_tile=pafd->len-cp_size;
+    cp_size=pafd.len;
+    cp_size=std::min(buflen,pafd.len);
+    memcpy(buf,pafd.audio,cp_size);
+    cp_tile=pafd.len-cp_size;
     if(cp_tile) {
-	sh.af_buffer=&((char *)pafd->audio)[cp_size];
+	sh.af_buffer=&((char *)pafd.audio)[cp_size];
 	sh.af_buffer_len=cp_tile;
 	sh.af_pts = pts+(float)cp_size/(float)sh.af_bps;
 	mpxp_dbg2<<"decaudio: afilter->cache "<<cp_tile<<" bytes "<<pts<<" pts"<<std::endl;
     } else sh.af_buffer_len=0;
-    if(pafd!=afd) free_mp_aframe(pafd);
-    free_mp_aframe(afd);
+    delete afd;
     return cp_size;
 }
 

@@ -40,31 +40,31 @@ static int __FASTCALL__ vf_config(vf_instance_t *vf,
     return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t *vf, mp_image_t *mpi){
-    if(mpi->flags&MP_IMGFLAG_DIRECT){
+static int __FASTCALL__ put_slice(vf_instance_t *vf,const mp_image_t& smpi){
+    if(smpi.flags&MP_IMGFLAG_DIRECT){
 	// we've used DR, so we're ready...
-	if(!(mpi->flags&MP_IMGFLAG_PLANAR))
-	    ((mp_image_t*)mpi->priv)->planes[1] = mpi->planes[1]; // passthrough rgb8 palette
-	return vf_next_put_slice(vf,(mp_image_t*)mpi->priv);
+	if(!(smpi.flags&MP_IMGFLAG_PLANAR))
+	    ((mp_image_t*)smpi.priv)->planes[1] = smpi.planes[1]; // passthrough rgb8 palette
+	return vf_next_put_slice(vf,*reinterpret_cast<const mp_image_t*>(smpi.priv));
     }
 
-    vf->dmpi=vf_get_new_exportable_genome(vf->next,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,mpi);
+    vf->dmpi=vf_get_new_exportable_genome(vf->next,MP_IMGTYPE_EXPORT, MP_IMGFLAG_ACCEPT_STRIDE,smpi);
 
-    // set up mpi as a upside-down image of dmpi:
-    vf->dmpi->planes[0]=mpi->planes[0]+
-		    mpi->stride[0]*(mpi->height-1);
-    vf->dmpi->stride[0]=-mpi->stride[0];
+    // set up smpi as a upside-down image of dmpi:
+    vf->dmpi->planes[0]=smpi.planes[0]+
+		    smpi.stride[0]*(smpi.height-1);
+    vf->dmpi->stride[0]=-smpi.stride[0];
     if(vf->dmpi->flags&MP_IMGFLAG_PLANAR){
-	vf->dmpi->planes[1]=mpi->planes[1]+
-	    mpi->stride[1]*((mpi->height>>mpi->chroma_y_shift)-1);
-	vf->dmpi->stride[1]=-mpi->stride[1];
-	vf->dmpi->planes[2]=mpi->planes[2]+
-	    mpi->stride[2]*((mpi->height>>mpi->chroma_y_shift)-1);
-	vf->dmpi->stride[2]=-mpi->stride[2];
+	vf->dmpi->planes[1]=smpi.planes[1]+
+	    smpi.stride[1]*((smpi.height>>smpi.chroma_y_shift)-1);
+	vf->dmpi->stride[1]=-smpi.stride[1];
+	vf->dmpi->planes[2]=smpi.planes[2]+
+	    smpi.stride[2]*((smpi.height>>smpi.chroma_y_shift)-1);
+	vf->dmpi->stride[2]=-smpi.stride[2];
     } else
-	vf->dmpi->planes[1]=mpi->planes[1]; // passthru bgr8 palette!!!
+	vf->dmpi->planes[1]=smpi.planes[1]; // passthru bgr8 palette!!!
 
-    return vf_next_put_slice(vf,vf->dmpi);
+    return vf_next_put_slice(vf,*vf->dmpi);
 }
 
 static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){

@@ -68,9 +68,9 @@ namespace	usr {
 				int width, int height, int d_width, int d_height,
 				vo_flags_e flags, unsigned int outfmt);
     int			__FASTCALL__ vf_query_format(vf_stream_t* s,unsigned int fmt,unsigned w,unsigned h);
-    void		__FASTCALL__ vf_get_image(vf_stream_t* s,mp_image_t *mpi);
-    int			__FASTCALL__ vf_put_slice(vf_stream_t* s,mp_image_t *mpi);
-    void		__FASTCALL__ vf_start_slice(vf_stream_t* s,mp_image_t *mpi);
+    void		__FASTCALL__ vf_get_image(vf_stream_t* s,mp_image_t* mpi);
+    int			__FASTCALL__ vf_put_slice(vf_stream_t* s,const mp_image_t& mpi);
+    void		__FASTCALL__ vf_start_slice(vf_stream_t* s,const mp_image_t& mpi);
     MPXP_Rc		__FASTCALL__ vf_control(vf_stream_t* s,int request, any_t* data);
     mp_image_t*		__FASTCALL__ vf_get_new_image(vf_stream_t* s, unsigned int outfmt, int mp_imgtype, int mp_imgflag, int w, int h,unsigned idx);
     void		__FASTCALL__ vf_prepend_filter(vf_stream_t* s,const char *name,const vf_conf_t* conf,const char *args=NULL);

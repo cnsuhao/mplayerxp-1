@@ -20,7 +20,7 @@ struct vf_priv_t {
     int direction;
 };
 
-static void __FASTCALL__ rotate_90(unsigned char* dst,unsigned char* src,int dststride,int srcstride,unsigned w,unsigned h,unsigned bpp){
+static void __FASTCALL__ rotate_90(unsigned char* dst,const unsigned char* src,int dststride,int srcstride,unsigned w,unsigned h,unsigned bpp){
     int y;
     dst+=dststride*(h-1);
     dststride*=-1;
@@ -48,7 +48,7 @@ static void __FASTCALL__ rotate_90(unsigned char* dst,unsigned char* src,int dst
     }
 }
 
-static void __FASTCALL__ rotate_270(unsigned char* dst,unsigned char* src,int dststride,int srcstride,unsigned w,unsigned h,unsigned bpp){
+static void __FASTCALL__ rotate_270(unsigned char* dst,const unsigned char* src,int dststride,int srcstride,unsigned w,unsigned h,unsigned bpp){
     int y;
     dst+=dststride*(h-1);
     dststride*=-1;
@@ -76,7 +76,7 @@ static void __FASTCALL__ rotate_270(unsigned char* dst,unsigned char* src,int ds
     }
 }
 
-static void __FASTCALL__ rotate_180(unsigned char* dst,unsigned char* src,int dststride,int srcstride,unsigned w,unsigned h,unsigned bpp){
+static void __FASTCALL__ rotate_180(unsigned char* dst,const unsigned char* src,int dststride,int srcstride,unsigned w,unsigned h,unsigned bpp){
     unsigned y;
     src+=srcstride*(h-1);
     for(y=0;y<h;y++){
@@ -103,7 +103,7 @@ static void __FASTCALL__ rotate_180(unsigned char* dst,unsigned char* src,int ds
     }
 }
 
-static void __FASTCALL__ rotate(unsigned char* dst,unsigned char* src,int dststride,int srcstride,int w,int h,int bpp,int dir)
+static void __FASTCALL__ rotate(unsigned char* dst,const unsigned char* src,int dststride,int srcstride,int w,int h,int bpp,int dir)
 {
     if(dir==90) rotate_90(dst,src,dststride,srcstride,w,h,bpp);
     else
@@ -125,28 +125,28 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	return vf_next_config(vf,height,width,d_height,d_width,flags,outfmt);
 }
 
-static int __FASTCALL__ put_slice(vf_instance_t* vf, mp_image_t *mpi){
+static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     mp_image_t *dmpi;
 
     // hope we'll get DR buffer:
-    dmpi=vf_get_new_temp_genome(vf->next,mpi);
-    if(mpi->flags&MP_IMGFLAG_PLANAR){
-	rotate(dmpi->planes[0],mpi->planes[0],
-	       dmpi->stride[0],mpi->stride[0],
+    dmpi=vf_get_new_temp_genome(vf->next,smpi);
+    if(smpi.flags&MP_IMGFLAG_PLANAR){
+	rotate(dmpi->planes[0],smpi.planes[0],
+	       dmpi->stride[0],smpi.stride[0],
 	       dmpi->w,dmpi->h,1,vf->priv->direction);
-	rotate(dmpi->planes[1],mpi->planes[1],
-	       dmpi->stride[1],mpi->stride[1],
-	       dmpi->w>>mpi->chroma_x_shift,dmpi->h>>mpi->chroma_y_shift,1,vf->priv->direction);
-	rotate(dmpi->planes[2],mpi->planes[2],
-	       dmpi->stride[2],mpi->stride[2],
-	       dmpi->w>>mpi->chroma_x_shift,dmpi->h>>mpi->chroma_y_shift,1,vf->priv->direction);
+	rotate(dmpi->planes[1],smpi.planes[1],
+	       dmpi->stride[1],smpi.stride[1],
+	       dmpi->w>>smpi.chroma_x_shift,dmpi->h>>smpi.chroma_y_shift,1,vf->priv->direction);
+	rotate(dmpi->planes[2],smpi.planes[2],
+	       dmpi->stride[2],smpi.stride[2],
+	       dmpi->w>>smpi.chroma_x_shift,dmpi->h>>smpi.chroma_y_shift,1,vf->priv->direction);
     } else {
-	rotate(dmpi->planes[0],mpi->planes[0],
-	       dmpi->stride[0],mpi->stride[0],
+	rotate(dmpi->planes[0],smpi.planes[0],
+	       dmpi->stride[0],smpi.stride[0],
 	       dmpi->w,dmpi->h,dmpi->bpp>>3,vf->priv->direction);
-	dmpi->planes[1] = mpi->planes[1]; // passthrough rgb8 palette
+	dmpi->planes[1] = smpi.planes[1]; // passthrough rgb8 palette
     }
-    return vf_next_put_slice(vf,dmpi);
+    return vf_next_put_slice(vf,*dmpi);
 }
 
 //===========================================================================//
