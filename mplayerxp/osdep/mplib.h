@@ -65,5 +65,15 @@ namespace	usr {
 
 	    virtual const char*	what() const throw();
     };
+
+    class soft_exit_exception : public std::exception {
+	public:
+	    soft_exit_exception(const std::string& why) throw();
+	    virtual ~soft_exit_exception() throw();
+
+	    virtual const char*	what() const throw();
+	private:
+	    std::string why;
+    };
 } // namespace	usr
 #endif

@@ -12,6 +12,7 @@ using namespace	usr;
 #include <limits>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <stdexcept>
 
 #include <stdlib.h>
@@ -268,7 +269,7 @@ int M_Config::read_option(const std::vector<const mpxp_option_t*>& conf_list,con
 			break;
 		case CONF_TYPE_PRINT:
 			mpxp_info<<(char *)conf[i].p;
-			exit_player(MSGTR_Exit_quit);
+			throw soft_exit_exception(MSGTR_Exit_quit);
 		default:
 			mpxp_err<<"read_option: Unknown config type specified in conf-mplayerxp.h!"<<std::endl;
 			break;
@@ -531,11 +532,11 @@ MPXP_Rc M_Config::parse_command_line(const std::vector<std::string>& argv,const 
 	opt = argv[i];
 	if(opt=="--help") {
 	    show_help();
-	    exit_player(MSGTR_Exit_quit);
+	    throw soft_exit_exception(MSGTR_Exit_quit);
 	}
 	if(opt=="--long-help") {
 	    show_long_help(*this,envm);
-	    exit_player(MSGTR_Exit_quit);
+	    throw soft_exit_exception(MSGTR_Exit_quit);
 	}
 	/* check for -- (no more options id.) except --help! */
 	if (opt[0] == '-' && opt[1] == '-') {
@@ -774,19 +775,18 @@ void M_Config::__show_options(unsigned ntabs,const std::string& pfx,const mpxp_o
 	    for(n=0;n<ntabs;n++) mpxp_info<<" ";
 	    mpxp_info<<opts[i].help<<":"<<std::endl;
 	    pfxlen=strlen(opts[i].name)+1;
-	    if(!pfx.empty())	pfxlen+=pfx.length();
-	    if(!pfx.empty())	newpfx=pfx;
+	    if(!pfx.empty())	{ pfxlen+=pfx.length(); newpfx=pfx; }
 	    else		newpfx="";
 	    newpfx+=opts[i].name;
 	    newpfx+=".";
 	    __show_options(ntabs+2,newpfx,(const mpxp_option_t *)opts[i].p);
-	}
-	else
-	if(opts[i].type<=CONF_TYPE_PRINT) {
+	} else if(opts[i].type<=CONF_TYPE_PRINT) {
+	    std::ostringstream os;
 	    for(n=0;n<ntabs;n++) mpxp_info<<" ";
-	    if(!pfx.empty())	mpxp_info<<std::left<<pfx<<std::endl;
-	    else		mpxp_info<<" "<<std::endl;
-	    mpxp_info<<std::left<<opts[i].name<<" "<<opts[i].help<<std::endl;
+	    if(!pfx.empty())	os<<std::left<<pfx;
+	    else		os<<" ";
+	    os<<opts[i].name;
+	    mpxp_info<<std::left<<std::setw(25)<<os.str()<<" "<<opts[i].help;
 	    if((opts[i].flags&CONF_NOCFG)==0) {
 	    mpxp_info<<" {"<<
 		    (opts[i].type==CONF_TYPE_FLAG?"flg":
@@ -803,7 +803,7 @@ void M_Config::__show_options(unsigned ntabs,const std::string& pfx,const mpxp_o
 	    break;
 	    case CONF_TYPE_STRING: {
 		const char **defv = (const char**)(opts[i].p);
-		if(defv) mpxp_info<<"\""<<*defv<<"\"";
+		if(defv && *defv) mpxp_info<<"\""<<*defv<<"\"";
 	    }
 	    break;
 	    case CONF_TYPE_INT: {

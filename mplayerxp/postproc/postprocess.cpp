@@ -30,7 +30,7 @@ int	pp2_init()
 {
     if(strcmp(mp_conf.npp_options,"help")==0) {
 	mpxp_info<<pp_help<<std::endl;
-	exit_player(MSGTR_Exit_quit);
+	throw soft_exit_exception(MSGTR_Exit_quit);
     }
     return 1;
 }

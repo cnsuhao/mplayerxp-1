@@ -192,7 +192,10 @@ pt_sleep:
 	if(cur_time - mpxp_context().seek_time > (mpxp_context().engine().xp_core->num_v_buffs/sh_video->fps)*100) xp_n_frame_to_drop=compute_frame_dropping(sh_video,frame->pts,drop_barrier);
     } /* if( mp_conf.frame_dropping ) */
     if(!finite(frame->pts)) mpxp_warn<<"Bug of demuxer! Value of video pts="<<frame->pts<<std::endl;
-    if(frame->type!=VideoFrame) escape_player("VideoDecoder doesn't parse non video frames",mp_conf.max_trace);
+    if(frame->type!=VideoFrame) {
+	show_backtrace("VideoDecoder doesn't parse non video frames",mp_conf.max_trace);
+	throw std::runtime_error("VideoDecoder doesn't parse non video frames");
+    }
 #if 0
 /*
     We can't seriously examine question of too slow machines

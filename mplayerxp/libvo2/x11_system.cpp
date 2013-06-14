@@ -41,7 +41,8 @@ static int x11_errorhandler(::Display *display,::XErrorEvent *event)
     mpxp_err<<"X11_System: "<<msg<<std::endl;
     mpxp_v<<"Type: "<<std::hex<<event->type<<", display: "<<std::hex<<event->display<<", resourceid: "<<std::hex<<event->resourceid<<", serial: "<<event->serial<<std::endl;
     mpxp_v<<"Error code: "<<std::hex<<event->error_code<<", request code: "<<std::hex<<event->request_code<<", minor code: "<<event->minor_code<<std::endl;
-    escape_player("X11_System error",mp_conf.max_trace);
+    show_backtrace("X11_System error",mp_conf.max_trace);
+    throw std::runtime_error("X11_System error");
     return 0;
 }
 

@@ -74,4 +74,8 @@ const char* bad_format_exception::what() const throw() { return "unknown format"
 missing_driver_exception::missing_driver_exception() throw() {}
 missing_driver_exception::~missing_driver_exception() throw() {}
 const char* missing_driver_exception::what() const throw() { return "missing driver"; }
+
+soft_exit_exception::soft_exit_exception(const std::string& _why) throw() { why=_why; }
+soft_exit_exception::~soft_exit_exception() throw() {}
+const char* soft_exit_exception::what() const throw() { return why.c_str(); }
 } // namespace	usr

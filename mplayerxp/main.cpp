@@ -362,26 +362,6 @@ void MPXPSystem::uninit_player(unsigned int mask){
     MP_UNIT(NULL);
 }
 
-class soft_exit_exception : public std::exception {
-	public:
-	    soft_exit_exception(const std::string& why) throw();
-	    virtual ~soft_exit_exception() throw();
-
-	    virtual const char*	what() const throw();
-	private:
-	    std::string why;
-};
-
-soft_exit_exception::soft_exit_exception(const std::string& _why) throw() { why=_why; }
-soft_exit_exception::~soft_exit_exception() throw() {}
-const char* soft_exit_exception::what() const throw() { return why.c_str(); }
-
-void exit_player(const std::string& why)
-{
-    if(!why.empty()) throw soft_exit_exception(why);
-    throw std::exception();
-}
-
 void __exit_sighandler()
 {
   static int sig_count=0;
@@ -393,14 +373,14 @@ void __exit_sighandler()
     kill(getpid(),SIGKILL);
     return;
   }
-  exit_player("");
+  throw std::exception();
 }
 
 
 void exit_sighandler(void)
 {
-  xmp_killall_threads(pthread_self());
-  __exit_sighandler();
+    xmp_killall_threads(pthread_self());
+    __exit_sighandler();
 }
 
 // When libmpdemux perform a blocking operation (network connection or cache filling)
@@ -413,7 +393,7 @@ int MPXPSystem::libmpdemux_was_interrupted(int eof) const
 	switch(cmd->id) {
 	    case MP_CMD_QUIT:
 	    case MP_CMD_SOFT_QUIT: // should never happen
-		exit_player(MSGTR_Exit_quit);
+		throw soft_exit_exception(MSGTR_Exit_quit);
 	    case MP_CMD_PLAY_TREE_STEP: {
 		eof = (cmd->args[0].v.i > 0) ? PT_NEXT_ENTRY : PT_PREV_ENTRY;
 	    } break;
@@ -1310,9 +1290,9 @@ For future:
 		osd_function=OSD_PAUSE;
 		break;
 	    case MP_CMD_SOFT_QUIT :
-		exit_player(MSGTR_Exit_quit);
+		throw soft_exit_exception(MSGTR_Exit_quit);
 	    case MP_CMD_QUIT :
-		 exit_player(MSGTR_Exit_quit);
+		 throw soft_exit_exception(MSGTR_Exit_quit);
 	    case MP_CMD_PLAY_TREE_STEP : {
 		int n = cmd->args[0].v.i > 0 ? 1 : -1;
 		PlayTree_Iter* it = new PlayTree_Iter(*playtree_iter);
@@ -1568,7 +1548,7 @@ int MPlayerXP(const std::vector<std::string>& argv, const std::map<std::string,s
 
     if(filename.empty()){
 	show_help();
-	exit_player(MSGTR_Exit_quit);
+	throw soft_exit_exception(MSGTR_Exit_quit);
     }
 
     // Many users forget to include command line in bugreports...
