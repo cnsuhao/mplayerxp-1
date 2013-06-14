@@ -96,7 +96,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 
   switch(cmd){
   case AF_CONTROL_SHOWCONF:
-    MSG_INFO("[af_volnorm] using method %d\n",s->method);
+    mpxp_info<<"[af_volnorm] using method "<<s->method<<std::endl;
     return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     int   i;
@@ -315,8 +315,7 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->setup=mp_calloc(1,sizeof(af_volnorm_t));
-  if(af->setup == NULL) return MPXP_Error;
+  af->setup=new(zeromem) af_volnorm_t;
 
   ((af_volnorm_t*)af->setup)->mul = MUL_INIT;
   ((af_volnorm_t*)af->setup)->lastavg = MID_S16;

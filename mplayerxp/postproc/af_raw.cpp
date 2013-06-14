@@ -69,7 +69,7 @@ static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
     if(s->fd.is_open()) { /* reenterability */
 	s->fd.open(s->filename,std::ios_base::out|std::ios_base::binary);
 	if(!(s->fd.is_open()))
-	    MSG_ERR("Can't open %s\n",s->filename);
+	    mpxp_err<<"Can't open "<<s->filename<<std::endl;
 	pt=strchr(s->filename,'.');
 	s->wav_mode=0;
 	if(pt) if(strcmp(pt+1,"wav")==0) s->wav_mode=1;
@@ -94,8 +94,7 @@ static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 	    s->wavhdr.file_length=s->wavhdr.data_length=0;
 	}
     }
-    MSG_V("[af_raw] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X\n"
-	,af->conf.rate,af->conf.nch,af->conf.format);
+    mpxp_v<<"[af_raw] Was reinitialized, rate="<<af->conf.rate<<"Hz, nch = "<<af->conf.nch<<", format = 0x"<<std::hex<<af->conf.format<<std::endl;
     af->conf.format=MPAF_SI|MPAF_NE|MPAF_BPS_2; // fake! fixme !!!
     return MPXP_Ok;
 }
@@ -106,7 +105,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 
   switch (cmd){
   case AF_CONTROL_SHOWCONF:
-    MSG_INFO("[af_raw] in use %s\n",s->filename);
+    mpxp_info<<"[af_raw] in use "<<s->filename<<std::endl;
     return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:
     s->filename=mp_strdup(reinterpret_cast<char*>(arg));
@@ -165,8 +164,8 @@ static MPXP_Rc __FASTCALL__ af_open( af_instance_t* af )
   af->play    = play;
   af->mul.n   = 1;
   af->mul.d   = 1;
-  af->setup   = mp_calloc(1, sizeof(af_raw_t));
-  if(af->setup == NULL) return MPXP_Error;
+  af->setup   = new(zeromem) af_raw_t;
+
   af_raw_t* s = reinterpret_cast<af_raw_t*>(af->setup);
   s->filename = mp_strdup("1.wav");
     check_pin("afilter",af->pin,AF_PIN);

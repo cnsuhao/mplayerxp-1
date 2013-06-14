@@ -1075,11 +1075,7 @@ MPXP_Rc FBDev_VO_Interface::configure(uint32_t width, uint32_t height, uint32_t 
 	mpxp_v<<FBDEV<< "pixel per line: "<<(line_len/pixel_size)<<std::endl;
 
 	total_fr=vo_conf.xp_buffs;
-	for(i=0;i<total_fr;i++)
-	    if (!(next_frame[i] = (uint8_t *) mp_malloc(out_width * out_height * pixel_size))) {
-		mpxp_err<<FBDEV<< "Can't mp_malloc next_frame: "<<strerror(errno)<<std::endl;
-		return MPXP_False;
-	    }
+	for(i=0;i<total_fr;i++) next_frame[i] = new uint8_t[out_width * out_height * pixel_size];
     }
     vt_fp.open("/dev/tty", std::ios_base::out);
     if (vt_doit && !vt_fp.is_open()) {

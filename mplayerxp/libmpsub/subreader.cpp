@@ -191,7 +191,7 @@ static subtitle * __FASTCALL__ sub_read_line_microdvd(std::ifstream& fd,subtitle
     while ((next =sub_readtext (next, &(current->text[i])))) {
 	if (current->text[i]==(char*)ERR) {return (subtitle*)ERR;}
 	i++;
-	if (i>=SUB_MAX_TEXT) { MSG_ERR ("Too many lines in a subtitle\n");current->lines=i;return current;}
+	if (i>=SUB_MAX_TEXT) { mpxp_err<<"Too many lines in a subtitle"<<std::endl; current->lines=i;return current;}
     }
     current->lines= ++i;
 
@@ -217,7 +217,7 @@ static subtitle * __FASTCALL__ sub_read_line_subrip(std::ifstream& fd, subtitle 
 	p=q=line;
 	for (current->lines=1; current->lines < SUB_MAX_TEXT; current->lines++) {
 	    for (q=p,len=0; *p && *p!='\r' && *p!='\n' && strncmp(p,"[br]",4); p++,len++);
-	    current->text[current->lines-1]=(char *)mp_malloc (len+1);
+	    current->text[current->lines-1]=new char[len+1];
 	    if (!current->text[current->lines-1]) return (subtitle*)ERR;
 	    strncpy (current->text[current->lines-1], q, len);
 	    current->text[current->lines-1][len]='\0';
@@ -248,7 +248,7 @@ static subtitle * __FASTCALL__ sub_read_line_subviewer(std::ifstream& fd,subtitl
 	    len=0;
 	    for (p=line; *p!='\n' && *p!='\r' && *p; p++,len++);
 	    if (len) {
-		current->text[i]=(char *)mp_malloc (len+1);
+		current->text[i]=new char [len+1];
 		if (!current->text[i]) return (subtitle*)ERR;
 		strncpy (current->text[i], line, len); current->text[i][len]='\0';
 		i++;
@@ -288,7 +288,7 @@ static subtitle * __FASTCALL__ sub_read_line_vplayer(std::ifstream& fd,subtitle 
 			while ((next =sub_readtext (next, &(current->text[i])))) {
 				if (current->text[i]==(char*)ERR) {return (subtitle*)ERR;}
 				i++;
-				if (i>=SUB_MAX_TEXT) { MSG_ERR ("Too many lines in a subtitle\n");current->lines=i;return current;}
+				if (i>=SUB_MAX_TEXT) { mpxp_err<<"Too many lines in a subtitle"<<std::endl; current->lines=i;return current;}
 			}
 			current->lines=i+1;
 		}
@@ -329,7 +329,7 @@ static subtitle * __FASTCALL__ sub_read_line_rt(std::ifstream& fd,subtitle *curr
 	while ((next =sub_readtext (next, &(current->text[i])))) {
 		if (current->text[i]==(char*)ERR) {return (subtitle*)ERR;}
 		i++;
-		if (i>=SUB_MAX_TEXT) { MSG_ERR ("Too many lines in a subtitle\n");current->lines=i;return current;}
+		if (i>=SUB_MAX_TEXT) { mpxp_err<<"Too many lines in a subtitle"<<std::endl; current->lines=i;return current;}
 	}
 			current->lines=i+1;
     }
@@ -364,7 +364,7 @@ static subtitle * __FASTCALL__ sub_read_line_ssa(std::ifstream& fd,subtitle *cur
 	current->end   = 360000*hour2 + 6000*min2 + 100*sec2 + hunsec2;
 
 	while ((tmp=strstr(line2, "\\n")) != NULL) {
-		current->text[num]=(char *)mp_malloc(tmp-line2+1);
+		current->text[num]=new char[tmp-line2+1];
 		strncpy (current->text[num], line2, tmp-line2);
 		current->text[num][tmp-line2]='\0';
 		line2=tmp+2;
@@ -531,10 +531,10 @@ void	subcp_open (void)
 	icdsc = (iconv_t)(-1);
 	if (sub_data.cp){
 		if ((icdsc = iconv_open (tocp, sub_data.cp)) != (iconv_t)(-1)){
-			MSG_DBG2 ("SUB: opened iconv descriptor.\n");
-			sub_data.utf8 = 2;
+		    mpxp_dbg2<<"SUB: opened iconv descriptor"<<std::endl;
+		    sub_data.utf8 = 2;
 		} else
-			MSG_DBG2 ("SUB: error opening iconv descriptor.\n");
+		    mpxp_dbg2<<"SUB: error opening iconv descriptor"<<std::endl;
 	}
 }
 
@@ -542,7 +542,7 @@ void	subcp_close (void)
 {
 	if (icdsc != (iconv_t)(-1)){
 		(void) iconv_close (icdsc);
-		MSG_DBG2 ("SUB: closed iconv descriptor.\n");
+		mpxp_dbg2<<"SUB: closed iconv descriptor"<<std::endl;
 	}
 }
 
@@ -563,15 +563,11 @@ subtitle* subcp_recode (subtitle *sub)
 
 		if (iconv(icdsc, &ip, &ileft,
 			  &op, &oleft) == (size_t)(-1)) {
-			MSG_ERR ("SUB: error recoding line.\n");
+			mpxp_err<<"SUB: error recoding line"<<std::endl;
 			l++;
 			break;
 		}
-		if (!(ot = (char *)mp_malloc(op - icbuffer + 1))){
-			MSG_FATAL ("SUB: error allocating mem.\n");
-			l++;
-			break;
-		}
+		ot = new char[op - icbuffer + 1];
 		*op='\0' ;
 		strcpy (ot, icbuffer);
 		delete sub->text[l];
@@ -601,7 +597,7 @@ subtitle* subcp_recode1 (subtitle *sub)
 
      if (iconv(icdsc, &ip, &ileft,
 	      &op, &oleft) == (size_t)(-1)) {
-	MSG_V("SUB: error recoding line (2).\n");
+	mpxp_v<<"SUB: error recoding line (2)"<<std::endl;
 	return sub;
      }
      *op='\0' ;
@@ -636,7 +632,7 @@ static void adjust_subs_time(subtitle* sub, float subtime, float fps){
 		sub = nextsub;
 		m = 0;
 	}
-	if (n) MSG_DBG2 ("SUB: Adjusted %d subtitle(s).\n", n);
+	if (n) mpxp_dbg2<<"SUB: Adjusted "<<n<<" subtitle(s)"<<std::endl;
 }
 
 static const char *fmtname[] = { "microdvd", "subrip", "subviewer", "sami", "vplayer",
@@ -663,8 +659,8 @@ subtitle* sub_read_file (const std::string& filename, float fps) {
     fd.open (filename.c_str(),std::ios_base::in); if (!fd.is_open()) return NULL;
 
     sub_format=sub_autodetect (fd);
-    if (sub_format==SUB_INVALID) { MSG_ERR ("SUB: Could not determine file format\n"); fd.close(); return NULL;}
-    MSG_INFO ("SUB: Detected subtitle file format: %s\n", fmtname[sub_format]);
+    if (sub_format==SUB_INVALID) { mpxp_err<<"SUB: Could not determine file format"<<std::endl; fd.close(); return NULL;}
+    mpxp_info<<"SUB: Detected subtitle file format: "<<fmtname[sub_format]<<std::endl;
 
     fd.seekg(0,std::ios_base::beg);
 
@@ -673,8 +669,7 @@ subtitle* sub_read_file (const std::string& filename, float fps) {
 #endif
 
     sub_num=0;n_max=32;
-    first=(subtitle *)mp_malloc(n_max*sizeof(subtitle));
-    if(!first) { fd.close(); return NULL; }
+    first=new subtitle[n_max];
 
     while(1){
 	subtitle *sub;
@@ -698,9 +693,10 @@ subtitle* sub_read_file (const std::string& filename, float fps) {
     subcp_close();
 #endif
 
-    MSG_DBG2 ("SUB: Read %i subtitles", sub_num);
-    if (sub_errs) MSG_DBG2 (", %i bad line(s).\n", sub_errs);
-    else 	  MSG_DBG2 (".\n");
+    mpxp_dbg2<<"SUB: Read "<<sub_num<<" subtitles";
+    if (sub_errs) mpxp_dbg2<<", "<<sub_errs<<" bad line(s).";
+    else 	  mpxp_dbg2<<".";
+    mpxp_dbg2<<std::endl;
 
     if(sub_num<=0){
 	delete first;
@@ -779,7 +775,7 @@ std::string sub_filename(const std::string& path,const std::string& fname )
    f.open(sub_name);
    if(f.is_open()) {
      f.close();
-     MSG_INFO( "SUB: Detected sub file: %s\n",sub_name );
+     mpxp_info<<"SUB: Detected sub file: "<<sub_name<<std::endl;
      if (i<2) sub_data.utf8=1;
      return sub_name;
    }
@@ -795,20 +791,14 @@ void list_sub_file(subtitle* subs){
 
     for(j=0;j<sub_num;j++){
 	subtitle* egysub=&subs[j];
-	MSG_INFO ("%i line%c (%li-%li) ",
-		    egysub->lines,
-		    (1==egysub->lines)?' ':'s',
-		    egysub->start,
-		    egysub->end);
+	mpxp_info<<""<<egysub->lines<<" line"<<((1==egysub->lines)?' ':'s')<<" ("<<egysub->start<<"-"<<egysub->end<<")"<<std::endl;
 	for (i=0; i<egysub->lines; i++) {
-	    MSG_INFO ("%s%s",egysub->text[i], i==egysub->lines-1?"":" <BREAK> ");
+	    mpxp_info<<egysub->text[i]<<(i==egysub->lines-1?"":" <BREAK> ");
 	}
-	MSG_INFO ("\n");
+	mpxp_info<<std::endl;
     }
-
-    MSG_INFO ("Subtitle format %s time.\n", sub_uses_time?"uses":"doesn't use");
-    MSG_INFO ("Read %i subtitles, %i errors.\n", sub_num, sub_errs);
-
+    mpxp_info<<"Subtitle format "<<(sub_uses_time?"uses":"doesn't use")<<" time."<<std::endl;
+    mpxp_info<<"Read "<<sub_num<<" subtitles, "<<sub_errs<<" errors"<<std::endl;
 }
 
 void dump_mpsub(subtitle* subs, float fps){
@@ -851,7 +841,7 @@ void dump_mpsub(subtitle* subs, float fps){
 		fd<<std::endl;
 	}
 	fd.close ();
-	MSG_DBG2 ("SUB: Subtitles dumped in \'dump.mpsub\'.\n");
+	mpxp_dbg2<<"SUB: Subtitles dumped in \'dump.mpsub\'"<<std::endl;
 }
 
 void sub_free( subtitle * subs )

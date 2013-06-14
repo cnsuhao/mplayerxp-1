@@ -124,8 +124,6 @@ static void __FASTCALL__ affine_1d_MMX (eq2_param_t *par, unsigned char *dst, un
   short    brvec[4];
   short    contvec[4];
 
-//  printf("\nmmx: src=%p dst=%p w=%d h=%d ds=%d ss=%d\n",src,dst,w,h,dstride,sstride);
-
   contrast = (int) (par->c * 256 * 16);
   brightness = ((int) (100.0 * par->b + 100.0) * 511) / 200 - 128 - contrast / 32;
 
@@ -306,9 +304,7 @@ static void __FASTCALL__ check_values (eq2_param_t *par)
 
 static void __FASTCALL__ print_values (vf_eq2_t *eq2)
 {
-  MSG_V("vf_eq2: c=%.2f b=%.2f g=%.4f s=%.2f \n",
-    eq2->contrast, eq2->brightness, eq2->gamma, eq2->saturation
-  );
+    mpxp_v<<"vf_eq2: c="<<eq2->contrast<<" b="<<eq2->brightness<<" g="<<eq2->gamma<<" s="<<eq2->saturation<<std::endl;
 }
 
 static void __FASTCALL__ set_contrast (vf_eq2_t *eq2, double c)
@@ -453,7 +449,7 @@ static MPXP_Rc __FASTCALL__ vf_open (vf_instance_t *vf,const char *args)
   vf->put_slice = put_slice;
   vf->uninit = uninit;
 
-  vf->priv = (vf_eq2_t *) mp_malloc (sizeof (vf_eq2_t));
+  vf->priv = new vf_eq2_t;
   eq2 = vf->priv;
 
   for (i = 0; i < 3; i++) {

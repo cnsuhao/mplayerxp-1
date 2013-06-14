@@ -82,9 +82,9 @@ void find_sub(subtitle* subtitles,unsigned long key,Video_Output*vo){
 	  vo->sub=NULL;
 	  return;
       }
-      MSG_V("HEH????  ");
+      mpxp_v<<"HEH????  "<<std::endl;
     } else {
-      if(key<=vo->sub->end) MSG_V("JAJJ!  "); else
+      if(key<=vo->sub->end) mpxp_v<<"JAJJ!  "<<std::endl; else
       if(current_sub+1>=sub_num){
 	  // at the end?
 	  nosub_range_start=vo->sub->end;
@@ -101,7 +101,7 @@ void find_sub(subtitle* subtitles,unsigned long key,Video_Output*vo){
       }
     }
 
-    MSG_ERR("SUB ERROR:  %d  ?  %d --- %d  [%d]  \n",key,(int)vo->sub->start,(int)vo->sub->end,current_sub);
+    mpxp_err<<"SUB ERROR: "<<key<<" ? "<<(int)vo->sub->start<<" --- "<<(int)vo->sub->end<<" ["<<current_sub<<"]"<<std::endl;
 
     vo->sub=NULL; // no sub here
 }

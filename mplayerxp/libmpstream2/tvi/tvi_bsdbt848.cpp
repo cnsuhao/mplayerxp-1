@@ -484,17 +484,9 @@ if(priv->videoready == TRUE)
     }
 
     for(count=0;count<RINGSIZE;count++) {
-	priv->framebuf[count].buf = mp_malloc(priv->framebufsize);
-
-	if(priv->framebuf[count].buf == NULL)
-	    mpxp_err<<"framebufmalloc"<<std::endl;
-	    priv->videoready = FALSE;
-	    break;
-	}
-
+	priv->framebuf[count].buf = new char[priv->framebufsize];
 	priv->framebuf[count].dirty = TRUE;
 	priv->framebuf[count].timestamp = 0;
-	}
     }
 
 /* Tuner Configuration */

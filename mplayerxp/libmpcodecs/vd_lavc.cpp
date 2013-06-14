@@ -234,14 +234,14 @@ vlavc_decoder::vlavc_decoder(VD_Interface& _parent,sh_video_t& _sh,put_slice_inf
     }
     lavc_codec = (AVCodec *)avcodec_find_decoder_by_name(sh.codec->dll_name);
     if(!lavc_codec){
-	MSG_V(MSGTR_MissingLAVCcodec,sh.codec->dll_name);
+	mpxp_v<<MSGTR_MissingLAVCcodec<<sh.codec->dll_name<<std::endl;
 	throw bad_format_exception();
     }
 
     ctx = avcodec_alloc_context3(lavc_codec);
     lavc_picture = avcodec_alloc_frame();
     if(!(ctx && lavc_picture)) {
-	MSG_ERR(MSGTR_OutOfMemory);
+	mpxp_err<<MSGTR_OutOfMemory<<std::endl;
 	throw std::bad_alloc();
     }
 
@@ -336,7 +336,7 @@ vlavc_decoder::vlavc_decoder(VD_Interface& _parent,sh_video_t& _sh,put_slice_inf
     /* Pass palette to codec */
 #if 0
     if (sh.bih && (sh.bih->biBitCount <= 8)) {
-	ctx->palctrl = (AVPaletteControl*)mp_calloc(1,sizeof(AVPaletteControl));
+	ctx->palctrl = new(zeromem) AVPaletteControl;
 	ctx->palctrl->palette_changed = 1;
 	if (sh.bih->biSize-sizeof(BITMAPINFOHEADER))
 	    /* Palette size in biSize */
@@ -367,7 +367,7 @@ vlavc_decoder::vlavc_decoder(VD_Interface& _parent,sh_video_t& _sh,put_slice_inf
     }
     /* open it */
     if (avcodec_open2(ctx, lavc_codec, NULL) < 0) {
-	MSG_ERR(MSGTR_CantOpenCodec);
+	mpxp_err<<MSGTR_CantOpenCodec<<std::endl;
 	throw bad_format_exception();
     }
     mpxp_v<<"INFO: libavcodec.so ("<<std::hex<<avc_version<<") video codec[";
@@ -404,7 +404,7 @@ vlavc_decoder::~vlavc_decoder(){
     pp2_uninit();
     if(ctx) {
 	if (avcodec_close(ctx) < 0)
-	    MSG_ERR( MSGTR_CantCloseCodec);
+	    mpxp_err<<MSGTR_CantCloseCodec<<std::endl;
 	if (ctx->extradata_size)
 	    delete ctx->extradata;
 	delete ctx;

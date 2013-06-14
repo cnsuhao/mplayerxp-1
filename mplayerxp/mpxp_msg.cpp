@@ -1,6 +1,8 @@
 #include "mpxp_config.h"
 #include "osdep/mplib.h"
+#include "osdep/mp_malloc.h"
 using namespace	usr;
+#include <sstream>
 #include <algorithm>
 
 #include <stdio.h>
@@ -31,7 +33,8 @@ int mpxp_streambuf::overflow(int c) {
 	char c2 = c;
 	// Handle the one character that didn't fit to buffer
 	put_chars(&c2, &c2 + 1);
-    }
+    };
+    if(c=='\n') parent.newline=1;
     // This tells that buffer is empty again
     setp(buf, buf + BUF_SIZE);
     // I'm not sure about this return value!
@@ -77,6 +80,7 @@ static const char* msg_prefix[] = {
 
 mpxp_ostream::mpxp_ostream(const std::string& data,mpxp_msgt_e type)
 	    :std::basic_ostream< char, std::char_traits< char > >(&buf)
+	    ,newline(1)
 	    ,_type(type)
 	    ,idx(compute_idx(type))
 	    ,buf(*this,mp_conf.verbose>1?data+msg_prefix[idx]+": ":data) {}
@@ -91,6 +95,41 @@ unsigned mpxp_ostream::compute_idx(mpxp_msgt_e type) const {
 MPXP_Rc mpxp_ostream::test_conditions() {
     if(!(_type&mp_conf.msg_filter)) return MPXP_False;
     return MPXP_Ok;
+}
+
+MPXP_Rc	mpxp_ostream::make_prefix(const any_t* caller) {
+    if(newline) {
+	std::string smod;
+	if(mp_conf.verbose>1) {
+	    unsigned mod_name;
+	    unsigned mod=_type;
+	    mod_name = 0;
+	    while((mod&0x1)==0) { mod_name++; mod>>=1; }
+	    if(mod_name < sizeof(msg_prefix)/sizeof(msg_prefix[0])) smod = msg_prefix[mod_name];
+	    if(smod.empty()) smod="UNKNOWN";
+	    smod=std::string("[")+smod;
+	    if(mp_conf.verbose>2) {
+		std::ostringstream oss;
+		oss<<"."<<caller;
+		smod+=oss.str();
+	    }
+	    smod+="]:";
+	    if(!smod.empty()) write(smod.c_str(),smod.length());
+	}
+	newline=0;
+    }
+    return MPXP_Ok;
+}
+
+mpxp_ostream& operator<<(mpxp_ostream& os,const char* s) {
+    os.make_prefix(get_caller_address());
+    os.write(s,::strlen(s));
+    return os;
+}
+mpxp_ostream& operator<<(mpxp_ostream& os,const std::string& s) {
+    os.make_prefix(get_caller_address());
+    os.write(s.c_str(),s.length());
+    return os;
 }
 
 /* TODO: replace this block with std::string */
@@ -223,15 +262,22 @@ int mpxp_printf( unsigned x, const std::string& format, ... ){
 	if(::isatty(::fileno(::stderr)))
 	    ::fprintf(::stderr,priv->scol[level<9?level:8]);
     }
-    if(mp_conf.verbose>1 && was_eol)
-    {
-	unsigned mod_name;
-	const char *smod=NULL;
-	mod_name = 0;
-	while((mod&0x1)==0) { mod_name++; mod>>=1; }
-	if(mod_name < sizeof(msg_prefix)/sizeof(msg_prefix[0]))
-		smod = msg_prefix[mod_name];
-	fprintf(stderr,"%s: ",smod?smod:"UNKNOWN");
+    if(was_eol) {
+	std::string smod;
+	if(mp_conf.verbose>1) {
+	    unsigned mod_name;
+	    mod_name = 0;
+	    while((mod&0x1)==0) { mod_name++; mod>>=1; }
+	    if(mod_name < sizeof(msg_prefix)/sizeof(msg_prefix[0])) smod = msg_prefix[mod_name];
+	    if(smod.empty()) smod="UNKNOWN";
+	    if(mp_conf.verbose>2) {
+		std::ostringstream oss;
+		oss<<"."<<get_caller_address();
+		smod+=oss.str();
+	    }
+	    smod+=":";
+	    if(!smod.empty()) fputs(smod.c_str(),stderr);
+	}
     }
     va_list va;
     va_start(va, format);

@@ -10,6 +10,7 @@ using namespace	usr;
 //
 //=============================================================================
 */
+#include <sstream>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,11 +52,12 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 
   switch(cmd){
   case AF_CONTROL_SHOWCONF:
-    MSG_INFO("[af_extrastereo] %f\n",s->mul);
+    mpxp_info<<"[af_extrastereo] "<<s->mul<<std::endl;
     return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     float f;
-    sscanf((char*)arg,"%f", &f);
+    std::istringstream iss((char*)arg);
+    iss>>f;
     s->mul = f;
     return MPXP_Ok;
   }
@@ -108,8 +110,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->setup=mp_calloc(1,sizeof(af_extrastereo_t));
-  if(af->setup == NULL) return MPXP_Error;
+  af->setup=new(zeromem) af_extrastereo_t;
+
   ((af_extrastereo_t*)af->setup)->mul = 2.5;
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;

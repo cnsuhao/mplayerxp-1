@@ -130,13 +130,12 @@ static int get_audio_framesize(priv_t *priv)
 
 tvi_handle_t *new_handle()
 {
-    tvi_handle_t *h = (tvi_handle_t *)mp_malloc(sizeof(tvi_handle_t));
+    tvi_handle_t *h = new tvi_handle_t;
 
     if (!h)
 	return NULL;
-    h->priv = (priv_t *)mp_mallocz(sizeof(priv_t));
-    if (!h->priv)
-    {
+    h->priv = new(zeromem) priv_t;
+    if (!h->priv) {
 	delete h;
 	return NULL;
     }

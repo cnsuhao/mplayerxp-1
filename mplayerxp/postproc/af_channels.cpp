@@ -99,8 +99,7 @@ static void __FASTCALL__ af_copy(const any_t* in, any_t* out, int ins, int inos,
     break;
   }
   default:
-    MSG_ERR("[channels] Unsupported number of bytes/sample: %i"
-	   " please report this error on the MPlayer mailing list. \n",bps);
+    mpxp_err<<"[channels] Unsupported number of bytes/sample: "<<bps<<" please report this error on the MPlayer mailing list"<<std::endl;
   }
 }
 
@@ -109,14 +108,13 @@ static MPXP_Rc __FASTCALL__ check_routes(af_channels_t* s, int nin, int nout)
 {
   int i;
   if((s->nr < 1) || (s->nr > AF_NCH)){
-    MSG_ERR("[channels] The number of routing pairs must be"
-	   " between 1 and %i. Current value is %i\n",AF_NCH,s->nr);
+    mpxp_err<<"[channels] The number of routing pairs must be between 1 and "<<AF_NCH<<". Current value is "<<s->nr<<std::endl;
     return MPXP_Error;
   }
 
   for(i=0;i<s->nr;i++){
     if((s->route[i][FR] >= nin) || (s->route[i][TO] >= nout)){
-      MSG_ERR("[channels] Invalid routing in pair nr. %i.\n", i);
+      mpxp_err<<"[channels] Invalid routing in pair nr. "<<i<<std::endl;
       return MPXP_Error;
     }
   }
@@ -162,7 +160,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
   af_channels_t* s = reinterpret_cast<af_channels_t*>(af->setup);
   switch(cmd){
   case AF_CONTROL_SHOWCONF:
-    MSG_INFO("[af_channels] Changing channels %d -> %d\n",s->ich,af->conf.nch);
+    mpxp_info<<"[af_channels] Changing channels "<<s->ich<<" -> "<<af->conf.nch<<std::endl;
     return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     int nch = 0;
@@ -176,15 +174,13 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
       int ch = 0;
       // Sanity check
       if((s->nr < 1) || (s->nr > AF_NCH)){
-	MSG_ERR("[channels] The number of routing pairs must be"
-	     " between 1 and %i. Current value is %i\n",AF_NCH,s->nr);
+	mpxp_err<<"[channels] The number of routing pairs must be between 1 and "<<AF_NCH<<". Current value is "<<s->nr<<std::endl;
       }
       s->router = 1;
       // Scan for pairs on commandline
       while((*cp == ':') && (ch < s->nr)){
 	sscanf(cp, ":%i:%i%n" ,&s->route[ch][FR], &s->route[ch][TO], &n);
-	MSG_V("[channels] Routing from channel %i to"
-	       " channel %i\n",s->route[ch][FR],s->route[ch][TO]);
+	mpxp_v<<"[channels] Routing from channel "<<s->route[ch][FR]<<" to channel "<<s->route[ch][TO]<<std::endl;
 	cp = &cp[n];
 	ch++;
       }
@@ -199,15 +195,13 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 
     // Sanity check
     if(((int*)arg)[0] <= 0 || ((int*)arg)[0] > AF_NCH){
-      MSG_ERR("[channels] The number of output channels must be"
-	     " between 1 and %i. Current value is %i\n",AF_NCH,((int*)arg)[0]);
+      mpxp_err<<"[channels] The number of output channels must be between 1 and "<<AF_NCH<<". Current value is "<<((int*)arg)[0]<<std::endl;
       return MPXP_Error;
     }
 
     af->conf.nch=((int*)arg)[0];
     if(!s->router)
-      MSG_V("[channels] Changing number of channels"
-	     " to %i\n",af->conf.nch);
+      mpxp_v<<"[channels] Changing number of channels to "<<af->conf.nch<<std::endl;
     return MPXP_Ok;
   case AF_CONTROL_CHANNELS | AF_CONTROL_GET:
     *(int*)arg = af->conf.nch;
@@ -283,8 +277,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->setup=mp_calloc(1,sizeof(af_channels_t));
-  if(af->setup == NULL) return MPXP_Error;
+  af->setup=new(zeromem) af_channels_t;
+
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }

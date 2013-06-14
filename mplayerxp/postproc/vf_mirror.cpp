@@ -131,7 +131,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     dir=1;
     if(args)  dir=args[0]=='x'?1:args[0]=='y'?0:-1;
     if(dir==-1) {
-	MSG_ERR("[vf_mirror] unknown directoin: %c\n",args[0]);
+	mpxp_err<<"[vf_mirror] unknown direction: "<<args[0]<<std::endl;
 	return MPXP_False;
     }
     if(dir==0)	vf->priv->method=mirror_x;

@@ -101,8 +101,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->setup=mp_calloc(1,sizeof(af_dyn_t));
-  if(af->setup==NULL) return MPXP_Error;
+  af->setup=new(zeromem) af_dyn_t;
+
   ((af_dyn_t *)(af->setup))->gain=8.;
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;

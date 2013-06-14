@@ -5,6 +5,7 @@ using namespace	usr;
     dump.c - stream dumper
 */
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <stdexcept>
 
@@ -59,10 +60,10 @@ void dump_stream(Stream *stream)
   name=buf;
   f.open(name,std::ios_base::out|std::ios_base::binary);
   if(!f.is_open()){
-    MSG_FATAL(MSGTR_CantOpenDumpfile);
+    mpxp_fatal<<MSGTR_CantOpenDumpfile<<"!!!"<<std::endl;
     throw std::runtime_error(MSGTR_Fatal_error);
   }
-  MSG_INFO("Dumping stream to %s\n",name);
+  mpxp_info<<"Dumping stream to "<<name<<std::endl;
   while(!stream->eof()){
     binary_packet bp=stream->read(4096);
     if(bp.size()>0) f.write(bp.cdata(),bp.size());
@@ -139,17 +140,17 @@ void dump_mux_init(Demuxer *demuxer,libinput_t& libinput)
     else if(strcmp(media,"mpxp") == 0) strcat(stream_dump_name,"dump.mpxp");
     else if(strcmp(media,"raw") == 0) strcat(stream_dump_name,"dump.raw");
     else {
-	MSG_FATAL("Unsupported muxer format %s found\n",media);
+	mpxp_fatal<<"Unsupported muxer format "<<media<<" found"<<std::endl;
 	throw std::runtime_error(MSGTR_Fatal_error);
     }
     priv->mux_file.open(stream_dump_name,std::ios_base::out|std::ios_base::binary);
-    MSG_DBG2("Preparing stream dumping: %s\n",stream_dump_name);
+    mpxp_dbg2<<"Preparing stream dumping: "<<stream_dump_name<<std::endl;
     if(!priv->mux_file.is_open()){
-	MSG_FATAL(MSGTR_CantOpenDumpfile);
+	mpxp_fatal<<MSGTR_CantOpenDumpfile<<"!!!"<<std::endl;
 	throw std::runtime_error(MSGTR_Fatal_error);
     }
     if(!(priv->muxer=muxer_new_muxer(media,port,priv->mux_file))) {
-	MSG_FATAL("Can't initialize muxer\n");
+	mpxp_fatal<<"Can't initialize muxer"<<std::endl;
 	throw std::runtime_error(MSGTR_Fatal_error);
     }
     if(sha && (priv->mux_type&MUX_HAVE_AUDIO)) {
@@ -158,7 +159,7 @@ void dump_mux_init(Demuxer *demuxer,libinput_t& libinput)
 	priv->m_audio->source=sha;
 	priv->m_audio->codec=0;
 	if(!sha->wf) {
-	    sha->wf=(WAVEFORMATEX*)mp_malloc(sizeof(WAVEFORMATEX));
+	    sha->wf=new(zeromem) WAVEFORMATEX;
 	    sha->wf->nBlockAlign = 1; //mux_a->h.dwSampleSize;
 	    sha->wf->wFormatTag = sha->wtag;
 	    sha->wf->nChannels = sha->nch;
@@ -194,7 +195,7 @@ void dump_mux_init(Demuxer *demuxer,libinput_t& libinput)
 	priv->m_video->h.dwRate=priv->m_video->h.dwScale*shv->fps;
 	priv->m_video->h.dwSuggestedBufferSize=shv->video.dwSuggestedBufferSize;
 	if(!shv->bih) {
-	    shv->bih=(BITMAPINFOHEADER*)mp_malloc(sizeof(BITMAPINFOHEADER));
+	    shv->bih=new(zeromem) BITMAPINFOHEADER;
 	    shv->bih->biSize=sizeof(BITMAPINFOHEADER);
 	    shv->bih->biWidth=shv->src_w;
 	    shv->bih->biHeight=shv->src_h;
@@ -215,8 +216,8 @@ void dump_mux_init(Demuxer *demuxer,libinput_t& libinput)
 	priv->m_subs->source=NULL;
 	priv->m_subs->codec=0;
     } else priv->m_subs=NULL;
-    MSG_DBG2("Opening dump: %X\n",demuxer);
-    MSG_INFO("Dumping stream to %s\n",stream_dump_name);
+    mpxp_dbg2<<"Opening dump: "<<std::hex<<demuxer<<std::endl;
+    mpxp_info<<"Dumping stream to "<<stream_dump_name<<std::endl;
     muxer_fix_parameters(priv->muxer);
     muxer_write_header(priv->muxer,demuxer);
 }
@@ -229,16 +230,13 @@ void dump_mux_close(Demuxer *demuxer)
     sh_audio_t* sha=reinterpret_cast<sh_audio_t*>(d_audio->sh);
     sh_video_t* shv=reinterpret_cast<sh_video_t*>(d_video->sh);
     if(priv) {
-	MSG_DBG2("Closing dump: %X %f secs\n"
-	     "As video %X-%ix%i audio %X-%ix%ix%i\n"
-	,demuxer,shv?priv->vtimer:sha->timer
-	,priv->m_video?priv->m_video->bih->biCompression:-1
-	,priv->m_video?priv->m_video->bih->biWidth:-1
-	,priv->m_video?priv->m_video->bih->biHeight:-1
-	,priv->m_audio?priv->m_audio->wf->wFormatTag:-1
-	,priv->m_audio?priv->m_audio->wf->nSamplesPerSec:-1
-	,priv->m_audio?priv->m_audio->wf->wBitsPerSample:-1
-	,priv->m_audio?priv->m_audio->wf->nChannels:-1);
+	mpxp_dbg2<<"Closing dump: "<<(shv?priv->vtimer:sha->timer)<<" secs"<<std::endl;
+	mpxp_dbg2<<"As video "<<std::hex<<(priv->m_video?priv->m_video->bih->biCompression:-1)
+	    <<"-"<<(priv->m_video?priv->m_video->bih->biWidth:-1)<<"x"
+	    <<(priv->m_video?priv->m_video->bih->biHeight:-1)<<" audio "
+	    <<(priv->m_audio?priv->m_audio->wf->wFormatTag:-1)<<"-"
+	    <<(priv->m_audio?priv->m_audio->wf->nSamplesPerSec:-1)
+	    <<"x"<<(priv->m_audio?priv->m_audio->wf->wBitsPerSample:-1)<<"x"<<(priv->m_audio?priv->m_audio->wf->nChannels:-1)<<std::endl;
 	if(shv && (priv->mux_type&MUX_HAVE_VIDEO)) priv->m_video->source=shv;
 	if(sha && (priv->mux_type&MUX_HAVE_AUDIO)) priv->m_audio->source=sha;
 	muxer_write_index(priv->muxer);
@@ -248,28 +246,20 @@ void dump_mux_close(Demuxer *demuxer)
 	    if(priv->m_video) {
 		priv->m_video->h.dwRate=priv->m_video->h.dwScale*shv->fps;
 		priv->m_video->h.dwSuggestedBufferSize=priv->vsize/priv->decoded_frameno;
-		MSG_V("Finishing vstream as: scale %u rate %u fps %f (frames=%u timer=%f)\n"
-		,priv->m_video->h.dwScale
-		,priv->m_video->h.dwRate
-		,shv->fps
-		,priv->decoded_frameno
-		,priv->vtimer+priv->timer_corr);
+		mpxp_v<<"Finishing vstream as: scale "<<priv->m_video->h.dwScale<<" rate "<<priv->m_video->h.dwRate
+		    <<" fps "<<shv->fps<<" (frames="<<priv->decoded_frameno<<" timer="<<priv->vtimer+priv->timer_corr<<")"<<std::endl;
 	    }
 	}
 	if(sha) {
 	    if(priv->m_audio) {
 		priv->m_audio->h.dwSuggestedBufferSize=priv->asize/priv->a_frameno;
-		MSG_V("Finishing astream as: scale %u rate %u (frames=%u timer=%f) avg=%i size=%u\n"
-		,priv->m_audio->h.dwScale
-		,priv->m_audio->h.dwRate
-		,priv->a_frameno
-		,sha->timer+priv->timer_corr
-		,priv->m_audio->wf->nAvgBytesPerSec
-		,priv->asize);
+		mpxp_v<<"Finishing astream as: scale "<<priv->m_audio->h.dwScale<<" rate "<<priv->m_audio->h.dwRate
+		    <<" (frames="<<priv->a_frameno<<" timer="<<sha->timer+priv->timer_corr
+		    <<") avg="<<priv->m_audio->wf->nAvgBytesPerSec<<" size="<<priv->asize<<std::endl;
 	    }
 	}
 	if(demuxer->sub->sh) {
-	    if(priv->m_subs) MSG_V("Finishing sstream as\n");
+	    if(priv->m_subs) mpxp_v<<"Finishing sstream as"<<std::endl;
 	}
 	priv->mux_file.seekp(0,std::ios_base::beg);
 	muxer_write_header(priv->muxer,demuxer);
@@ -297,47 +287,67 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
   MP_UNIT("dump");
   priv->my_use_pts=use_pts;
   /* test stream property */
-  MSG_INFO("%s using PTS method\n",use_pts?"":"not");
+  mpxp_info<<(use_pts?"":"not")<<" using PTS method"<<std::endl;
   if(priv->m_video) {
-    if(!shv) { MSG_ERR("Video not found!!!Skip this stream\n"); return; }
-    if(!shv->bih) { MSG_ERR("Video property not found!!!Skip this stream\n"); return; }
+    if(!shv) { mpxp_err<<"Video not found!!!Skip this stream"<<std::endl; return; }
+    if(!shv->bih) { mpxp_err<<"Video property not found!!!Skip this stream"<<std::endl; return; }
     if(memcmp(shv->bih,priv->m_video->bih,sizeof(BITMAPINFOHEADER))!=0) {
-       MSG_ERR("Found different video properties(%X-%ix%i)!=(%X-%ix%i)!!!\nSkip this stream\n",
-       shv->bih->biCompression,shv->bih->biWidth,shv->bih->biHeight,
-       priv->m_video->bih->biCompression,priv->m_video->bih->biWidth,
-       priv->m_video->bih->biHeight);
+       mpxp_err<<"Found different video properties("<<std::hex<<shv->bih->biCompression
+        <<"-"<<shv->bih->biWidth<<"x"<<shv->bih->biHeight<<")!=("<<std::hex<<priv->m_video->bih->biCompression
+        <<"-"<<priv->m_video->bih->biWidth<<"x"<<priv->m_video->bih->biHeight<<")!!!"<<std::endl;
+        mpxp_err<<"Skip this stream"<<std::endl;
        return;
     }
     priv->m_video->source=shv;
   }
   if(priv->m_audio) {
-    if(!sha) { MSG_ERR("Audio not found!!!Skip this stream\n"); return; }
-    if(!sha->wf) { MSG_ERR("Audio property not found!!!Skip this stream\n"); return; }
+    if(!sha) { mpxp_err<<"Audio not found!!! Skip this stream"<<std::endl; return; }
+    if(!sha->wf) { mpxp_err<<"Audio property not found!!! Skip this stream"<<std::endl; return; }
     if(memcmp(sha->wf,priv->m_audio->wf,sizeof(WAVEFORMATEX))!=0) {
-       MSG_ERR("Found different audio properties(%X-%ix%ix%i)!=(%X-%ix%ix%i)X!!!\nSkip this stream\n",
-       sha->wf->wFormatTag,sha->wf->nSamplesPerSec,sha->wf->wBitsPerSample,sha->wf->nChannels,
-       priv->m_audio->wf->wFormatTag,priv->m_audio->wf->nSamplesPerSec,
-       priv->m_audio->wf->wBitsPerSample,priv->m_audio->wf->nChannels);
+       mpxp_err<<"Found different audio properties("<<std::hex<<sha->wf->wFormatTag
+        <<"-"<<sha->wf->nSamplesPerSec<<"x"<<sha->wf->wBitsPerSample<<"x"<<sha->wf->nChannels
+        <<")!=("<<std::hex<<priv->m_audio->wf->wFormatTag<<"-"<<priv->m_audio->wf->nSamplesPerSec
+        <<"x"<<priv->m_audio->wf->wBitsPerSample<<"x"<<priv->m_audio->wf->nChannels
+        <<")X!!!"<<std::endl;
+        mpxp_err<<"Skip this stream"<<std::endl;
        return;
     }
     priv->m_audio->source=sha;
   }
   if (seek_to_sec) {
-    float d;
-    float rel_seek_secs=0;
-    seek_args_t seek_p = { 0, 1};
-    int a,b;
-    if (sscanf(seek_to_sec, "%d:%d:%f", &a,&b,&d)==3)
-	rel_seek_secs += 3600*a +60*b +d ;
-    else if (sscanf(seek_to_sec, "%d:%f", &a, &d)==2)
-	rel_seek_secs += 60*a +d;
-    else if (sscanf(seek_to_sec, "%f", &d)==1)
-	rel_seek_secs += d;
+	    int a,b;
+	    float d;
+	    char c;
+	    int ok=1;
+	    float rel_seek_secs=0;
+	    seek_args_t seek_p = { 0, 1};
+	    std::istringstream iss(seek_to_sec);
 
-    seek_to_sec = NULL;
-    MSG_INFO("seeking to %u seconds\n");
-    seek_p.secs=rel_seek_secs;
-    demux_seek_r(*demuxer,&seek_p);
+	    iss>>a; iss>>c;
+	    if(!iss.good() || c!=':') ok=0;
+	    iss>>b; iss>>c;
+	    if(!iss.good() || c!=':') ok=0;
+	    iss>>d;
+	    if(!iss.good()) ok=0;
+	    if (ok) rel_seek_secs += 3600*a +60*b +d ;
+	    else {
+		ok=1;
+		iss.str(seek_to_sec);
+		iss>>a; iss>>c;
+		if(!iss.good() || c!=':') ok=0;
+		iss>>b;
+		if(!iss.good()) ok=0;
+		if (ok)	rel_seek_secs += 60*a +d;
+		else {
+		    iss.str(mp_conf.seek_to_sec);
+		    iss>>d;
+		    if (iss.good()) rel_seek_secs += d;
+		}
+	    }
+	    seek_to_sec = NULL;
+	    mpxp_info<<"seeking to "<<rel_seek_secs<<" seconds"<<std::endl;
+	    seek_p.secs=rel_seek_secs;
+	    demux_seek_r(*demuxer,&seek_p);
   }
   aeof=sha?0:1;
   veof=shv?0:1;
@@ -364,14 +374,14 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
 	}
 	if(use_pts) sha->timer=a_pts;
 	else	    sha->timer=mpeg_atimer;
-	MSG_V("Got audio frame: %f %u\n",a_pts,(!aeof)?priv->a_frameno:-1);
+	mpxp_v<<"Got audio frame: "<<a_pts<<" "<<((!aeof)?priv->a_frameno:-1)<<std::endl;
 	aeof=sha->ds->eof;
 	priv->a_frameno++;
 	if(aeof) break;
 	if(priv->m_audio) {
 	    priv->m_audio->buffer=start;
 	    if(in_size>0) {
-		MSG_V("put audio: %f %f %u\n",a_pts,sha->timer+priv->timer_corr,in_size);
+		mpxp_v<<"put audio: "<<a_pts<<" "<<(sha->timer+priv->timer_corr)<<" "<<in_size<<std::endl;
 		if(priv->m_audio)
 		    muxer_write_chunk(priv->m_audio,in_size,priv->m_video?0:AVIIF_KEYFRAME,sha->timer+priv->timer_corr);
 	    }
@@ -396,15 +406,15 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
 	else	    priv->vtimer=mpeg_vtimer;
 	++priv->decoded_frameno;
 	veof=shv->ds->eof;
-	MSG_V("Got video frame %f %i\n",v_pts,(!veof)?priv->decoded_frameno:-1);
+	mpxp_v<<"Got video frame "<<v_pts<<" "<<((!veof)?priv->decoded_frameno:-1)<<std::endl;
 	if(priv->m_video) priv->m_video->buffer=start;
 	if(in_size>0) {
-	    MSG_V("put video: %f %f %u flg=%u\n",v_pts,priv->vtimer+priv->timer_corr,in_size,shv->ds->flags);
+	    mpxp_v<<"put video: "<<v_pts<<" "<<(priv->vtimer+priv->timer_corr)<<" "<<in_size<<" flg="<<shv->ds->flags<<std::endl;
 	    if(priv->m_video) muxer_write_chunk(priv->m_video,in_size,(shv->ds->flags&1)?AVIIF_KEYFRAME:0,priv->vtimer+priv->timer_corr);
 	    priv->vsize += in_size;
 	}
 	if(!(priv->decoded_frameno%100))
-	    MSG_STATUS("Done %u frames\r",priv->decoded_frameno);
+	    mpxp_status<<"Done "<<priv->decoded_frameno<<" frames\r";
     }
     if(demuxer->sub->sh) {
 	float s_pts=0;
@@ -415,11 +425,11 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
 	    cmd = check_cmd(priv);
 	    if(cmd == -1) goto done;
 	    else
-	    MSG_V("Got sub frame: %f\n",s_pts);
+	    mpxp_v<<"Got sub frame: "<<s_pts<<std::endl;
 	    if(priv->m_subs) {
 		priv->m_subs->buffer=start;
 		if(in_size>0) {
-		    MSG_V("put subs: %f %u\n",s_pts,in_size);
+		    mpxp_v<<"put subs: "<<s_pts<<" "<<in_size<<std::endl;
 		    if(priv->m_subs)
 			muxer_write_chunk(priv->m_subs,in_size,priv->m_video?0:AVIIF_KEYFRAME,s_pts);
 		}
@@ -435,17 +445,11 @@ void dump_mux(Demuxer *demuxer,int use_pts,const char *seek_to_sec,unsigned play
     if(priv->m_audio->wf->nAvgBytesPerSec)
 	    priv->timer_corr+=((float)d_audio->tell_pts())/((float)priv->m_audio->wf->nAvgBytesPerSec);
   }
-  MSG_STATUS("Done %u frames (video(%X-%ix%i): %llu bytes audio(%X-%ix%ix%i): %llu bytes)\n"
-  ,priv->decoded_frameno
-  ,priv->m_video?priv->m_video->bih->biCompression:-1
-  ,priv->m_video?priv->m_video->bih->biWidth:-1
-  ,priv->m_video?priv->m_video->bih->biHeight:-1
-  ,priv->vsize
-  ,priv->m_audio?priv->m_audio->wf->wFormatTag:-1
-  ,priv->m_audio?priv->m_audio->wf->nSamplesPerSec:-1
-  ,priv->m_audio?priv->m_audio->wf->wBitsPerSample:-1
-  ,priv->m_audio?priv->m_audio->wf->nChannels:-1
-  ,priv->asize);
+    mpxp_status<<"Done "<<priv->decoded_frameno<<" frames (video("<<std::hex<<(priv->m_video?priv->m_video->bih->biCompression:-1)
+	<<"-"<<(priv->m_video?priv->m_video->bih->biWidth:-1)<<"x"<<(priv->m_video?priv->m_video->bih->biHeight:-1)
+	<<"): "<<priv->vsize<<" bytes audio("<<std::hex<<(priv->m_audio?priv->m_audio->wf->wFormatTag:-1)
+	<<"-"<<(priv->m_audio?priv->m_audio->wf->nSamplesPerSec:-1)<<"x"<<(priv->m_audio?priv->m_audio->wf->wBitsPerSample:-1)
+	<<"x"<<(priv->m_audio?priv->m_audio->wf->nChannels:-1)<<"): "<<priv->asize<<" bytes)"<<std::endl;
 }
 
 } // namespace	usr

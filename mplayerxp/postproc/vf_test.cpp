@@ -110,7 +110,7 @@ static int __FASTCALL__ rgb_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt){
     vf->priv->fmt=rgb_getfmt(outfmt);
-    MSG_V("rgb test format:%s\n", vo_format_name(outfmt));
+    mpxp_v<<"rgb test format:"<<vo_format_name(outfmt)<<std::endl;
     return vf_next_config(vf,width,height,d_width,d_height,flags,vf->priv->fmt);
 }
 

@@ -219,11 +219,8 @@ static int init(struct priv_s *priv)
     priv->height = priv->capability.minheight;
     mpxp_v<<" Inputs: "<<priv->capability.channels<<std::endl;
 
-    priv->channels = (struct video_channel *)mp_mallocz(sizeof(struct video_channel)*priv->capability.channels);
-    if (!priv->channels)
-	goto malloc_failed;
-    for (i = 0; i < priv->capability.channels; i++)
-    {
+    priv->channels = new(zeromem) video_channel[priv->capability.channels];
+    for (i = 0; i < priv->capability.channels; i++) {
 	priv->channels[i].channel = i;
 	if (ioctl(priv->video_fd, VIDIOCGCHAN, &priv->channels[i]) == -1)
 	{
@@ -311,9 +308,7 @@ static int init(struct priv_s *priv)
     priv->nbuf = priv->mbuf.frames;
 
     /* video buffers */
-    priv->buf = (struct video_mmap *)mp_mallocz(priv->nbuf * sizeof(struct video_mmap));
-    if (!priv->buf)
-	goto malloc_failed;
+    priv->buf = new(zeromem) video_mmap[priv->nbuf];
     /* audio init */
 #if 1
     priv->audio_fd = open(priv->audio_device, O_RDONLY);
@@ -355,12 +350,6 @@ static int init(struct priv_s *priv)
 #endif
     return 1;
 
-
-malloc_failed:
-    if (priv->channels)
-	delete priv->channels;
-    if (priv->buf)
-	delete priv->buf;
 err:
     if (priv->video_fd != -1)
 	close(priv->video_fd);

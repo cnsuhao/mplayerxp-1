@@ -262,12 +262,6 @@ static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
     MPXP_Rc test_output_res;
     af->conf.rate   = arg->rate;
     if(af->conf.rate != 48000) {
-	// automatic samplerate adjustment in the filter chain
-	// is not yet supported.
-	//MSG_ERR("[hrtf] ERROR: Sampling rate is not 48000 Hz (%d)!\n",
-	//	   af->data->rate);
-	//return MPXP_Error;
-
 	/* NK: Let use af_resample here */
 	af->conf.rate = 48000;
     }
@@ -310,8 +304,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t *af, int cmd, any_t* arg)
 	    s->matrix_mode = 0;
 	    break;
 	default:
-	    MSG_ERR("[hrtf] Mode is neither 'm', 's', nor '0' (%c).\n",
-		   mode);
+	    mpxp_err<<"[hrtf] Mode is neither 'm', 's', nor '0' ("<<mode<<")."<<std::endl;
 	    return MPXP_Error;
 	}
 	return MPXP_Ok;
@@ -319,23 +312,20 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t *af, int cmd, any_t* arg)
   {
 	switch (s->decode_mode) {
 	case HRTF_MIX_51:
-	  MSG_INFO("[af_hrtf] Using HRTF to mix %s discrete surround into L, R channels\n", s->matrix_mode ? "5+1" : "5");
+	  mpxp_info<<"[af_hrtf] Using HRTF to mix "<<(s->matrix_mode ? "5+1" : "5")<<" discrete surround into L, R channels"<<std::endl;
 	  break;
 	case HRTF_MIX_STEREO:
-	  MSG_INFO("[af_hrtf] Using HRTF to mix stereo into L, R channels\n");
+	 mpxp_info<<"[af_hrtf] Using HRTF to mix stereo into L, R channels"<<std::endl;
 	  break;
 	case HRTF_MIX_MATRIX2CH:
-	  MSG_INFO("[af_hrtf] Using active matrix to decode 2 channel "
-		   "input, HRTF to mix %s matrix surround into "
-		   "L, R channels\n", "3/2");
+	  mpxp_info<<"[af_hrtf] Using active matrix to decode 2 channel input, HRTF to mix 3/2 matrix surround into L, R channels"<<std::endl;
 	  break;
 	default:
-	  MSG_WARN("[af_hrtf] bogus decode_mode: %d\n", s->decode_mode);
+	  mpxp_warn<<"[af_hrtf] bogus decode_mode: "<<s->decode_mode<<std::endl;
 	  break;
 	}
 
-	if(s->matrix_mode)
-	  MSG_INFO("[af_hrtf] Using active matrix to decode rear center channel\n");
+	if(s->matrix_mode) mpxp_info<<"[af_hrtf] Using active matrix to decode rear center channel"<<std::endl;
 	return MPXP_Ok;
   }
   default: break;
@@ -560,7 +550,7 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af)
     af->play = play;
     af->mul.n = 1;
     af->mul.d = 1;
-    af->setup = mp_calloc(1, sizeof(af_hrtf_t));
+    af->setup = new(zeromem) af_hrtf_t;
     if(af->setup == NULL) return MPXP_Error;
 
     s = reinterpret_cast<af_hrtf_t*>(af->setup);
@@ -576,7 +566,7 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af)
     s->decode_mode = HRTF_MIX_51;
 
     if (allocate(s) != 0) {
-	MSG_ERR("[hrtf] Memory allocation error.\n");
+	mpxp_err<<"[hrtf] Memory allocation error"<<std::endl;
 	return MPXP_Error;
     }
 
@@ -595,13 +585,12 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af)
     s->cr_ir = cr_filt + (s->cr_o = pulse_detect(cr_filt));
 
     if((s->ba_ir = new float [s->basslen]) == NULL) {
-	MSG_ERR("[hrtf] Memory allocation error.\n");
+	mpxp_err<<"[hrtf] Memory allocation error"<<std::endl;
 	return MPXP_Error;
     }
     fc = 2.0 * BASSFILTFREQ / (float)af->conf.rate;
     if(design_fir(s->basslen, s->ba_ir, &fc, LP | KAISER, 4 * M_PI) == -1) {
-	MSG_ERR("[hrtf] Unable to design low-pass "
-	       "filter.\n");
+	mpxp_err<<"[hrtf] Unable to design low-pass filter"<<std::endl;
 	return MPXP_Error;
     }
     for(i = 0; i < s->basslen; i++)

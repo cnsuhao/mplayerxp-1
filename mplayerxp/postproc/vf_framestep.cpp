@@ -90,7 +90,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi)
      */
     if (priv->dump_iframe) {
 	if (smpi.pict_type == 1) {
-		MSG_INFO("I!\n");
+		mpxp_info<<"I!"<<std::endl;
 	}
     }
 
@@ -168,7 +168,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)
 	    if (*args != '\0') {
 		p->frame_step = atoi(args);
 		if (p->frame_step <= 0) {
-		    MSG_WARN("[vf_framestep] Error parsing of arguments\n");
+		    mpxp_warn<<"[vf_framestep] Error parsing of arguments"<<std::endl;
 		    return MPXP_False;
 		}
 	    }

@@ -105,7 +105,7 @@ static unsigned int __FASTCALL__ find_best_out(vf_instance_t *vf,unsigned w,unsi
 	    vf->priv->query_format_cache[i]= ret+1;
 	}
 
-	MSG_DBG2("scale: query(%s) -> %d\n",vo_format_name(format),ret&3);
+	mpxp_dbg2<<"scale: query("<<vo_format_name(format)<<") -> "<<(ret&3)<<std::endl;
 	if(ret&VFCAP_CSP_SUPPORTED_BY_HW){
 	    best=format; // no conversion -> bingo!
 	    break;
@@ -118,16 +118,14 @@ static unsigned int __FASTCALL__ find_best_out(vf_instance_t *vf,unsigned w,unsi
 
 static void __FASTCALL__ print_conf(vf_instance_t* vf)
 {
-    MSG_INFO("[vf_scale]: in[%dx%d,%s] -> out[%dx%d,%s]\n",
-	vf->priv->sw,vf->priv->sh,vo_format_name(vf->priv->sfmt),
-	vf->priv->w,vf->priv->h,vo_format_name(vf->priv->ofmt));
+    mpxp_info<<"[vf_scale]: in["<<vf->priv->sw<<"x"<<vf->priv->sh<<","<<vo_format_name(vf->priv->sfmt)
+	<<"] -> out["<<vf->priv->w<<"x"<<vf->priv->h<<","<<vo_format_name(vf->priv->ofmt)<<"]"<<std::endl;
 }
 
 static void __FASTCALL__ print_conf_fmtcvt(vf_instance_t* vf)
 {
-    MSG_INFO("[vf_fmtcvt]: video[%dx%d] in[%s] -> out[%s]\n",
-	vf->priv->sw,vf->priv->sh,vo_format_name(vf->priv->sfmt),
-	vo_format_name(vf->priv->ofmt));
+    mpxp_info<<"[vf_fmtcvt]: video["<<vf->priv->sw<<"x"<<vf->priv->sh<<"] in["<<vo_format_name(vf->priv->sfmt)
+	<<"] -> out["<<vo_format_name(vf->priv->ofmt)<<"]"<<std::endl;
 }
 
 static int __FASTCALL__ vf_config(vf_instance_t* vf,
@@ -139,13 +137,13 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     SwsFilter *srcFilter, *dstFilter;
 
     if(!best){
-	MSG_WARN("SwScale: no supported outfmt found :(\n");
+	mpxp_warn<<"SwScale: no supported outfmt found :("<<std::endl;
 	return 0;
     }
 
     vo_flags=vf_next_query_format(vf,best,d_width,d_height);
-    MSG_DBG2("vf_scale: %i=vf_next_query_format(%p,%X,%u,%u);\n"
-	    ,vo_flags,vf,best,d_width,d_height);
+    mpxp_dbg2<<"vf_scale: "<<vo_flags<<"=vf_next_query_format("<<std::hex<<best
+	<<","<<d_width<<","<<d_height<<");"<<std::endl;
     // scaling to dwidth*d_height, if all these TRUE:
     // - option -zoom
     // - no other sw/hw up/down scaling avail.
@@ -211,21 +209,18 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
 
     // new swscaler:
     sws_getFlagsAndFilterFromCmdLine(&int_sws_flags, &srcFilter, &dstFilter);
-    MSG_DBG2("vf_scale: sws_getFlagsAndFilterFromCmdLine(...);\n");
+    mpxp_dbg2<<"vf_scale: sws_getFlagsAndFilterFromCmdLine(...);"<<std::endl;
     int_sws_flags|= vf->priv->v_chr_drop << SWS_SRC_V_CHR_DROP_SHIFT;
 
-    MSG_DBG2("vf_scale: sws_getContext(%u, %u, %s, %u, %u, %s, %X);\n"
-	    ,width,height >> vf->priv->interlaced
-	    ,vo_format_name(outfmt),vf->priv->w
-	    ,vf->priv->h >> vf->priv->interlaced
-	    ,vo_format_name(best),int_sws_flags | get_sws_cpuflags() | SWS_PRINT_INFO);
+    mpxp_dbg2<<"vf_scale: sws_getContext("<<width<<", "<<(height>>vf->priv->interlaced)
+	<<", "<<vo_format_name(outfmt)<<", "<<vf->priv->w<<", "
+	<<(vf->priv->h >> vf->priv->interlaced)<<", "<<vo_format_name(best)<<", "<<std::hex<<(int_sws_flags | get_sws_cpuflags() | SWS_PRINT_INFO)<<");"<<std::endl;
     vf->priv->ctx=sws_getContext(width, height >> vf->priv->interlaced,
 	    pixfmt_from_fourcc(outfmt),
 		  vf->priv->w, vf->priv->h >> vf->priv->interlaced,
 	    pixfmt_from_fourcc(best),
 	    int_sws_flags | get_sws_cpuflags() | SWS_PRINT_INFO,
 	    srcFilter, dstFilter, vf->priv->param);
-    MSG_DBG2("vf_scale: %p=sws_getContext\n",vf->priv->ctx);
     if(vf->priv->interlaced){
 	vf->priv->ctx2=sws_getContext(width, height >> 1,
 	    pixfmt_from_fourcc(outfmt),
@@ -235,10 +230,10 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     }
     if(!vf->priv->ctx){
 	// error...
-	MSG_WARN("Couldn't init SwScaler for this setup %p\n",vf->priv->ctx);
+	mpxp_warn<<"Couldn't init SwScaler for this setup"<<std::endl;
 	return 0;
     }
-    MSG_DBG2("vf_scale: SwScaler for was inited\n");
+    mpxp_dbg2<<"vf_scale: SwScaler for was inited"<<std::endl;
     vf->priv->fmt=best;
 
     if(vf->priv->palette){
@@ -342,7 +337,7 @@ static int __FASTCALL__ put_frame(vf_instance_t* vf,const mp_image_t& smpi){
 	  stride[2]=smpi.stride[2];
 	  stride[3]=smpi.stride[3];
     }
-    MSG_DBG2("vf_scale.put_frame was called\n");
+    mpxp_dbg2<<"vf_scale.put_frame was called"<<std::endl;
     dmpi=vf_get_new_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
 	vf->priv->w, vf->priv->h,smpi.xp_idx);
@@ -365,7 +360,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
 	  stride[2]=smpi.stride[2];
 	  stride[3]=smpi.stride[3];
     }
-    MSG_DBG2("vf_scale.put_slice was called[%i %i]\n",smpi.y, smpi.h);
+    mpxp_dbg2<<"vf_scale.put_slice was called["<<smpi.y<<" "<<smpi.h<<"]"<<std::endl;
     dmpi=vf_get_new_image(vf->next,vf->priv->fmt,
 	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
 	vf->priv->w, vf->priv->h,smpi.xp_idx);
@@ -456,7 +451,7 @@ static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request, any_t* da
 //  supported Input formats: YV12, I420, IYUV, YUY2, UYVY, BGR32, BGR24, BGR16, BGR15, RGB32, RGB24, Y8, Y800
 
 static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
-    MSG_DBG3("vf_scale: query_format(%p, %X(%s), %u, %u\n",vf,fmt,vo_format_name(fmt),w,h);
+    mpxp_dbg3<<"vf_scale: query_format("<<std::hex<<fmt<<"("<<vo_format_name(fmt)<<"), "<<w<<", "<<h<<std::endl;
     switch(fmt){
     case IMGFMT_YV12:
     case IMGFMT_I420:
@@ -480,23 +475,23 @@ static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigne
 	unsigned int best=find_best_out(vf,w,h);
 	int flags;
 	if(!best) {
-	    MSG_DBG2("[sw_scale] Can't find best out for %s\n",vo_format_name(fmt));
+	    mpxp_dbg2<<"[sw_scale] Can't find best out for "<<vo_format_name(fmt)<<std::endl;
 	    return 0;	 // no matching out-fmt
 	}
 	flags=vf_next_query_format(vf,best,w,h);
 	if(!(flags&3)) {
-	    MSG_DBG2("[sw_scale] Can't find HW support for %s on %s\n",vo_format_name(best),vf->next->info->name);
+	    mpxp_dbg2<<"[sw_scale] Can't find HW support for "<<vo_format_name(best)<<" on "<<vf->next->info->name<<std::endl;
 	    return 0; // huh?
 	}
-	MSG_DBG3("[sw_scale] %s supported on %s like %u\n",vo_format_name(best),vf->next->info->name,flags);
+	mpxp_dbg3<<"[sw_scale] "<<vo_format_name(best)<<" supported on "<<vf->next->info->name<<" like "<<flags<<std::endl;
 	if(fmt!=best) flags&=~VFCAP_CSP_SUPPORTED_BY_HW;
 	// do not allow scaling, if we are before the PP fliter!
 	if(!(flags&VFCAP_POSTPROC)) flags|=VFCAP_SWSCALE;
-	MSG_DBG3("[sw_scale] returning: %u\n",flags);
+	mpxp_dbg3<<"[sw_scale] returning: "<<flags<<std::endl;
 	return flags;
       }
     }
-    MSG_DBG2("format %s is not supported by sw_scaler\n",vo_format_name(fmt));
+    mpxp_dbg2<<"format "<<vo_format_name(fmt)<<" is not supported by sw_scaler"<<std::endl;
     return 0;	// nomatching in-fmt
 }
 
@@ -529,9 +524,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     &vf->priv->v_chr_drop,
     &vf->priv->param[0],
     &vf->priv->param[1]);
-    MSG_V("SwScale params: %d x %d (-1=no scaling)\n",
-    vf->priv->w,
-    vf->priv->h);
+    mpxp_v<<"SwScale params: "<<vf->priv->w<<" x "<<vf->priv->h<<" (-1=no scaling)"<<std::endl;
     if(!mp_conf.verbose) av_log_set_level(AV_LOG_FATAL); /* suppress: slices start in the middle */
     check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;

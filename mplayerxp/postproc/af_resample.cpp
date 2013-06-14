@@ -82,25 +82,20 @@ static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
     if(s->ctx) { swr_free(&s->ctx); s->ctx=NULL; }
     // Make sure this filter isn't redundant
     if((af->conf.rate == arg->rate) || (af->conf.rate == 0)) {
-	MSG_V("[af_resample] detach due: %i -> %i Hz\n",
-		af->conf.rate,arg->rate);
+	mpxp_v<<"[af_resample] detach due: "<<af->conf.rate<<" -> "<<arg->rate<<" Hz"<<std::endl;
 	return MPXP_Detach;
     }
     avfmt=get_sample_format(arg->format);
     nch=get_ch_layout(arg->nch);
     if(avfmt==AV_SAMPLE_FMT_NONE) rv=MPXP_Error;
     if(nch==0) rv=MPXP_Error;
-    if(rv!=MPXP_Ok) {
-	MSG_V("[af_resample] doesn't work with '%s' x %i\n"
-	,mpaf_fmt2str(arg->format).c_str()
-	,arg->nch);
-    }
+    if(rv!=MPXP_Ok) mpxp_v<<"[af_resample] doesn't work with '"<<mpaf_fmt2str(arg->format)<<"' x "<<arg->nch<<std::endl;
     s->ctx = swr_alloc_set_opts(NULL,
 			      nch, avfmt,af->conf.rate,
 			      nch, avfmt,arg->rate,
 			      0, NULL);
     if(swr_init(s->ctx)<0) {
-	MSG_ERR("[af_resample] Cannot init swr_init\n");
+	mpxp_err<<"[af_resample] Cannot init swr_init"<<std::endl;
 	rv=MPXP_Error;
     }
 
@@ -122,7 +117,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
     af_resample_t* s   = (af_resample_t*)af->setup;
     switch(cmd){
 	case AF_CONTROL_SHOWCONF:
-	    MSG_INFO("[af_resample] New filter designed (%i -> %i Hz)\n", s->irate,af->conf.rate);
+	    mpxp_info<<"[af_resample] New filter designed ("<<s->irate<<" -> "<<af->conf.rate<<" Hz)"<<std::endl;
 	    return MPXP_Ok;
 	case AF_CONTROL_COMMAND_LINE:{
 	    int rate=0;
@@ -165,7 +160,7 @@ static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& in)
     ain[0]=reinterpret_cast<uint8_t*>(in.audio);
 
     rc=swr_convert(s->ctx,aout,out.len/(out.nch*(out.format&MPAF_BPS_MASK)),ain,in.len/(in.nch*(in.format&MPAF_BPS_MASK)));
-    if(rc<0)	MSG_ERR("%i=swr_convert\n",rc);
+    if(rc<0)	mpxp_err<<rc<<"=swr_convert"<<std::endl;
     else	out.len=rc*out.nch*(out.format&MPAF_BPS_MASK);
 
     out.rate = af->conf.rate;
@@ -180,8 +175,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
     af->play=play;
     af->mul.n=1;
     af->mul.d=1;
-    af->setup=mp_calloc(1,sizeof(af_resample_t));
-    if(af->setup == NULL) return MPXP_Error;
+    af->setup=new(zeromem) af_resample_t;
+
     check_pin("afilter",af->pin,AF_PIN);
     return MPXP_Ok;
 }

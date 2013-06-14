@@ -144,9 +144,8 @@ static void __FASTCALL__ print_conf(vf_instance_t* vf)
     fpl = &vf->priv->chromaParam;
     effectc = fpc->amount == 0 ? "don't touch" : fpc->amount < 0 ? "blur" : "sharpen";
     effectl = fpl->amount == 0 ? "don't touch" : fpl->amount < 0 ? "blur" : "sharpen";
-    MSG_INFO("[vf_unsharp] %dx%d:%0.2f (%s luma) %dx%d:%0.2f (%s chroma)\n"
-		,fpc->msizeX, fpc->msizeY, fpc->amount, effectc
-		,fpl->msizeX, fpl->msizeY, fpl->amount, effectl);
+    mpxp_info<<"[vf_unsharp] "<<fpc->msizeX<<"x"<<fpc->msizeY<<":"<<fpc->amount<<" ("<<effectc
+	<<" luma) "<<fpl->msizeX<<"x"<<fpl->msizeY<<":"<<fpl->amount<<" ("<<effectl<<" chroma)"<<std::endl;
 }
 
 static int __FASTCALL__ vf_config( vf_instance_t* vf,

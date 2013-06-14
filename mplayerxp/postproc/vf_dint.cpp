@@ -290,9 +290,8 @@ static int __FASTCALL__ kd_query_format(vf_instance_t* vf, unsigned int fmt,unsi
 
 static void __FASTCALL__ print_conf(vf_instance_t* vf)
 {
-    MSG_INFO("Drop-interlaced: %dx%d diff %d / level %u\n",
-	   vf->priv->pmpi->width, vf->priv->pmpi->height,
-	   (int)vf->priv->diff, (unsigned int)vf->priv->max);
+    mpxp_info<<"Drop-interlaced: "<<vf->priv->pmpi->width<<"x"<<vf->priv->pmpi->height
+	<<" diff "<<(int)vf->priv->diff<<" / level "<<(unsigned int)vf->priv->max<<std::endl;
 }
 #define MAXROWSIZE 1200
 
@@ -309,7 +308,7 @@ static int __FASTCALL__ vf_config (vf_instance_t* vf,
 	outfmt != IMGFMT_RGB24 && outfmt != IMGFMT_BGR24 &&
 	outfmt != IMGFMT_RGB16 && outfmt != IMGFMT_BGR16)
     {
-      MSG_WARN("Drop-interlaced filter doesn't support this outfmt :(\n");
+      mpxp_warn<<"Drop-interlaced filter doesn't support this outfmt :("<<std::endl;
       return 0;
     }
     vf->priv->imgfmt = outfmt;

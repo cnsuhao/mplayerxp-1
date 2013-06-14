@@ -10,6 +10,7 @@ using namespace	usr;
  *
  */
 #include <iostream>
+#include <sstream>
 #include <fstream>
 
 #include <stdio.h>
@@ -123,14 +124,14 @@ static uint8_t destroy_png(struct pngdata png) {
 #else
 
 /* Note: this is LE version */
-static void write_bmp(const char *fname,unsigned w,unsigned h,uint8_t *data)
+static void write_bmp(const std::string& fname,unsigned w,unsigned h,uint8_t *data)
 {
     std::ofstream f;
     char c[4];
     uint32_t udata;
     unsigned i;
     unsigned long fsize_off,data_off,fsize_val,data_val;
-    f.open(fname,std::ios_base::out|std::ios_base::binary);
+    f.open(fname.c_str(),std::ios_base::out|std::ios_base::binary);
     if(!f.is_open()) return;
     c[0]='B';
     c[1]='M';
@@ -178,9 +179,8 @@ static void write_bmp(const char *fname,unsigned w,unsigned h,uint8_t *data)
 }
 #endif
 
-MPXP_Rc gr_screenshot(const char *fname,const uint8_t *planes[],const unsigned *strides,uint32_t fourcc,unsigned w,unsigned h)
+MPXP_Rc gr_screenshot(const std::string& fname,const uint8_t *planes[],const unsigned *strides,uint32_t fourcc,unsigned w,unsigned h)
 {
-    char buf[256];
 #ifdef HAVE_PNG
     struct pngdata png;
 #endif
@@ -231,14 +231,16 @@ MPXP_Rc gr_screenshot(const char *fname,const uint8_t *planes[],const unsigned *
     dst[1]=
     dst[2]=0;
     sws_scale(sws,planes,reinterpret_cast<const int*>(strides),0,h,dst,dstStride);
+    std::ostringstream oss;
+    oss<<fname;
 #ifdef HAVE_PNG
-    snprintf (buf, 100, "%s.png", fname);
+    oss<<".png";
 #else
-    snprintf (buf, 100, "%s.bmp", fname);
+    oss<<".bmp";
 #endif
 
 #ifdef HAVE_PNG
-    png = create_png(buf);
+    png = create_png(oss.str().c_str());
 
     if(png.status) mpxp_err<<"PNG Error in create_png"<<std::endl;
 
@@ -249,7 +251,7 @@ MPXP_Rc gr_screenshot(const char *fname,const uint8_t *planes[],const unsigned *
 
     destroy_png(png);
 #else
-    write_bmp(buf,w,h,image_data);
+    write_bmp(oss.str(),w,h,image_data);
 #endif
     if(image_data){ delete image_data;image_data=NULL;}
     if(sws) sws_freeContext(sws);

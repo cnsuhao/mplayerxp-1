@@ -50,7 +50,7 @@ static unsigned int __FASTCALL__ find_best(vf_instance_t* vf,unsigned w,unsigned
     unsigned int* p=bgr_list;
     while(*p){
 	ret=vf_next_query_format(vf->next,*p,w,h);
-	MSG_V("[%s] query(%s) -> %d\n",vf->info->name,vo_format_name(*p),ret&3);
+	mpxp_v<<"["<<vf->info->name<<"] query("<<vo_format_name(*p)<<") -> "<<(ret&3)<<std::endl;
 	if(ret&VFCAP_CSP_SUPPORTED_BY_HW){ best=*p; break;} // no conversion -> bingo!
 	if(ret&VFCAP_CSP_SUPPORTED && !best) best=*p; // best with conversion
 	++p;
@@ -149,7 +149,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
 	convert(smpi,dmpi,0,0x00ffffff,4);
 	break;
     default:
-	MSG_ERR("Unhandled format: 0x%X\n",dmpi->imgfmt);
+	mpxp_err<<"Unhandled format: 0x"<<std::hex<<dmpi->imgfmt<<std::endl;
 	return 0;
     }
 

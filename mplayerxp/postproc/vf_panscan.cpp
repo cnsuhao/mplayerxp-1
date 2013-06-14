@@ -80,7 +80,7 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	vf->priv->ps_y=(vf->priv->org_h-vf->priv->ps_h)>>1;
     }
     vf->priv->fmt=outfmt;
-    MSG_DBG2("w,h=%i %i org_w,h=%i %i\n",w,h,vf->priv->org_w,vf->priv->org_h);
+    mpxp_dbg2<<"w,h="<<w<<" "<<h<<" org_w,h="<<vf->priv->org_w<<" "<<vf->priv->org_h<<std::endl;
     return vf_next_config(vf,w,h,d_w,d_h,flags,outfmt);
 }
 
@@ -94,7 +94,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
     int finalize;
     dx=smpi.x; dy=smpi.y; dw=smpi.w; dh=smpi.h;
     sx=vf->priv->ps_x; sy=vf->priv->ps_y; sw=vf->priv->ps_w; sh=vf->priv->ps_h;
-    MSG_DBG2("[vf_panscan] src: %i %i %i %i dst: %i %i %i %i\n",sx,sy,sw,sh,dx,dy,dw,dh);
+    mpxp_dbg2<<"[vf_panscan] src: "<<sx<<" "<<sy<<" "<<sw<<" "<<sh<<" dst: "<<dx<<" "<<dy<<" "<<dw<<" "<<dh<<std::endl;
     if(	(sy+sh < dy) || (sy>dy+dh) ||
 	(sx+sw < dx) || (sx>dx+dw)) return 1; /* nothing todo */
     /* In hope that smpi.x === 0 */
@@ -178,10 +178,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
 
 static void __FASTCALL__ print_conf(vf_instance_t* vf)
 {
-    MSG_INFO("[vf_panscan]: cropping [%dx%d] -> [%dx%d] [%s]\n",
-	vf->priv->org_w,vf->priv->org_h,
-	vf->priv->ps_w,vf->priv->ps_h,
-	vo_format_name(vf->priv->fmt));
+    mpxp_info<<"[vf_panscan]: cropping ["<<vf->priv->org_w<<"x"<<vf->priv->org_h<<"] -> ["<<vf->priv->ps_w<<"x"<<vf->priv->ps_h<<"] ["<<vo_format_name(vf->priv->fmt)<<"]"<<std::endl;
 }
 
 
@@ -243,7 +240,7 @@ static int __FASTCALL__ crop_config(vf_instance_t* vf,
     // check:
     if(vf->priv->ps_w+vf->priv->ps_x>width ||
        vf->priv->ps_h+vf->priv->ps_y>height){
-	MSG_WARN("Cropping position exceed image size\n");
+	mpxp_warn<<"Cropping position exceed image size"<<std::endl;
 	return 0;
     }
     d_w=(float)d_width*vf->priv->ps_w/width;

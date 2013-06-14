@@ -24,7 +24,7 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
     sws_rgb2rgb_init();
 
     if(vf_next_query_format(vf,IMGFMT_YUY2,d_width,d_height)<=0){
-	MSG_ERR("yuy2 isn't supported by next filter/vo :(\n");
+	mpxp_err<<"yuy2 isn't supported by next filter/vo :("<<std::endl;
 	return 0;
     }
 

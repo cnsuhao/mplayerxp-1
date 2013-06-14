@@ -22,6 +22,7 @@ using namespace	usr;
  *
  */
 #include <algorithm>
+#include <sstream>
 #include <iomanip>
 #include <vector>
 
@@ -409,13 +410,13 @@ MPXP_Rc Video_Output::reset() const
 MPXP_Rc Video_Output::screenshot(unsigned idx) const
 {
     vo_priv_t& priv=static_cast<vo_priv_t&>(vo_priv);
-    char buf[256];
     mpxp_dbg3<<"dri_vo_dbg: vo_screenshot"<<std::endl;
-    sprintf(buf,"%llu",priv.frame_counter);
+    std::ostringstream oss;
+    oss<<priv.frame_counter;
     dri_surface_t surf;
     surf.idx=idx;
     priv.vo_iface->get_surface(&surf);
-    return gr_screenshot(buf,const_cast<const uint8_t**>(surf.planes),priv.dri.cap.strides,priv.dri.cap.fourcc,priv.dri.cap.width,priv.dri.cap.height);
+    return gr_screenshot(oss.str(),const_cast<const uint8_t**>(surf.planes),priv.dri.cap.strides,priv.dri.cap.fourcc,priv.dri.cap.width,priv.dri.cap.height);
 }
 
 MPXP_Rc Video_Output::pause() const

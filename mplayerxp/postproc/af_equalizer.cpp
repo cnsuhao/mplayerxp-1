@@ -94,10 +94,7 @@ static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
     s->K=KM;
     while(F[s->K-1] > (float)af->conf.rate/2.2) s->K--;
 
-    if(s->K != KM)
-      MSG_INFO("[equalizer] Limiting the number of filters to"
-	     " %i due to low sample rate.\n",s->K);
-
+    if(s->K != KM) mpxp_info<<"[equalizer] Limiting the number of filters to"<<s->K<<" due to low sample rate"<<std::endl;
     // Generate filter taps
     for(k=0;k<s->K;k++)
       bp2(s->a[k],s->b[k],F[k]/((float)af->conf.rate),Q);
@@ -116,10 +113,10 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
   case AF_CONTROL_SHOWCONF:
     {
 	unsigned k;
-	MSG_INFO("[af_equalizer] ");
+	mpxp_info<<"[af_equalizer] ";
 	for(k = 0 ; k<KM ; k++)
-	    MSG_INFO("%f:",log10(s->g[0][k]+1.0) * 20.0);
-	MSG_INFO("\n");
+	    mpxp_info<<log10(s->g[0][k]+1.0) * 20.0<<":";
+	mpxp_info<<std::endl;
     }
     return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
@@ -219,8 +216,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->setup=mp_calloc(1,sizeof(af_equalizer_t));
-  if(af->setup == NULL) return MPXP_Error;
+  af->setup=new(zeromem) af_equalizer_t;
+
   check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }

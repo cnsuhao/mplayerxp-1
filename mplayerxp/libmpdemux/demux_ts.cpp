@@ -954,7 +954,7 @@ static Opaque* ts_open(Demuxer* demuxer)
 	priv = new(zeromem) ts_priv_t;
 	if(priv == NULL)
 	{
-		MSG_FATAL(MSGTR_OutOfMemory);
+		mpxp_fatal<<MSGTR_OutOfMemory<<std::endl;
 		return NULL;
 	}
 

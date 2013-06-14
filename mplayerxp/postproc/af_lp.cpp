@@ -32,15 +32,13 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
   af_lp_t* s   = (af_lp_t*)af->setup;
   switch(cmd){
   case AF_CONTROL_SHOWCONF:
-    MSG_INFO("[af_lp] in %u faked out %u\n",((af_lp_t*)af->setup)->fin,((af_lp_t*)af->setup)->fake_out);
+    mpxp_info<<"[af_lp] in "<<((af_lp_t*)af->setup)->fin<<" faked out "<<((af_lp_t*)af->setup)->fake_out<<std::endl;
     return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     sscanf((char*)arg,"%i", &s->fake_out);
     // Sanity check
     if(s->fake_out < 8000 || s->fake_out > 192000){
-      MSG_ERR("[af_lp] The output sample frequency "
-	     "must be between 8kHz and 192kHz. Current value is %i \n",
-	     s->fake_out);
+      mpxp_err<<"[af_lp] The output sample frequency must be between 8kHz and 192kHz. Current value is "<<s->fake_out<<std::endl;
       return MPXP_Error;
     }
     s->fin=af->conf.rate;
@@ -66,7 +64,7 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& data)
 {
     // Do something necessary to get rid of annoying warning during compile
-    if(!af) MSG_ERR("EEEK: Argument af == NULL in af_lp.c play().");
+    if(!af) mpxp_err<<"EEEK: Argument af == NULL in af_lp.cpp:play()"<<std::endl;
     return data;
 }
 
@@ -78,8 +76,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.d=1;
   af->mul.n=1;
-  af->setup=mp_malloc(sizeof(af_lp_t));
-  if(af->setup == NULL) return MPXP_Error;
+  af->setup=new(zeromem) af_lp_t;
+
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }

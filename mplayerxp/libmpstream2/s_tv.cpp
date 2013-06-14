@@ -375,7 +375,7 @@ int __FASTCALL__ demux_open_tv(Demuxer *demuxer, tvi_handle_t *tvh)
 	    sh_audio->rate * afmt2bps(sh_audio->afmt) * sh_audio->nch;
 
 	// emulate WF for win32 codecs:
-	sh_audio->wf = (WAVEFORMATEX *)mp_malloc(sizeof(WAVEFORMATEX));
+	sh_audio->wf = new WAVEFORMATEX;
 	sh_audio->wf->wFormatTag = sh_audio->wtag;
 	sh_audio->wf->nChannels = sh_audio->nch;
 	sh_audio->wf->wBitsPerSample = afmt2bps(sh_audio->afmt) * 8;

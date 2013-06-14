@@ -53,10 +53,8 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
       return MPXP_Error;
     s->ri = 0;
     for(i=0;i<AF_NCH;i++){
-      MSG_DBG2("[delay] Channel %i delayed by %0.3fms\n",
-	     i,clamp(s->d[i],0.0f,1000.0f));
-      MSG_DBG2("[delay] Channel %i delayed by %i samples\n",
-	     i,s->wi[i]);
+      mpxp_dbg2<<"[delay] Channel "<<i<<" delayed by "<<clamp(s->d[i],0.0f,1000.0f)<<"ms"<<std::endl;
+      mpxp_dbg2<<"[delay] Channel "<<i<<" delayed by "<<s->wi[i]<<" samples"<<std::endl;
     }
     return MPXP_Ok;
   }
@@ -90,7 +88,7 @@ static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
     // Allocate new delay queues
     for(i=0;i<af->conf.nch;i++){
 	s->q[i] = mp_calloc(L,af->conf.format&MPAF_BPS_MASK);
-	if(NULL == s->q[i]) MSG_FATAL(MSGTR_OutOfMemory);
+	if(NULL == s->q[i]) mpxp_fatal<<MSGTR_OutOfMemory<<std::endl;
     }
     return control_af(af,AF_CONTROL_DELAY_LEN | AF_CONTROL_SET,s->d);
 }
@@ -178,8 +176,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
     af->play=play;
     af->mul.n=1;
     af->mul.d=1;
-    af->setup=mp_calloc(1,sizeof(af_delay_t));
-    if(af->setup == NULL) return MPXP_Error;
+    af->setup=new(zeromem) af_delay_t;
+
     check_pin("afilter",af->pin,AF_PIN);
     return MPXP_Ok;
 }

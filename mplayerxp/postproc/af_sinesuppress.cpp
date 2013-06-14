@@ -76,7 +76,7 @@ static MPXP_Rc control_af(af_instance_t* af, int cmd, any_t* arg)
   }
   case AF_CONTROL_SHOWCONF:
   {
-    MSG_INFO("[af_sinesuppress] %f:%f\n",s->freq,s->decay);
+    mpxp_info<<"[af_sinesuppress] "<<s->freq<<":"<<s->decay<<std::endl;
     return MPXP_Ok;
   }
   }
@@ -117,7 +117,7 @@ static mp_aframe_t play_s16(af_instance_t* af,const mp_aframe_t& ind)
 	s->pos += 2 * M_PI * s->freq / ind.rate;
     }
 
-    MSG_V("[sinesuppress] f:%8.2f: amp:%8.2f\n", s->freq, sqrt(s->real*s->real + s->imag*s->imag) / s->ref);
+    mpxp_v<<"[sinesuppress] f:"<<s->freq<<": amp:"<<(sqrt(s->real*s->real + s->imag*s->imag) / s->ref)<<std::endl;
 
     return outd;
 }
@@ -151,8 +151,7 @@ static MPXP_Rc af_open(af_instance_t* af){
   af->play=play_s16;
   af->mul.n=1;
   af->mul.d=1;
-  af->setup=mp_calloc(1,sizeof(af_sinesuppress_t));
-  if(af->setup == NULL) return MPXP_Error;
+  af->setup=new(zeromem) af_sinesuppress_t;
 
   ((af_sinesuppress_t*)af->setup)->freq = 50.0;
   ((af_sinesuppress_t*)af->setup)->decay = 0.0001;

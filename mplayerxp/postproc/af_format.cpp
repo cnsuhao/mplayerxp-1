@@ -133,12 +133,7 @@ static void us2si(const mp_aframe_t& in, mp_aframe_t* out)
 }
 
 static void print_fmts(const char *pfx,const mp_aframe_t& in,const mp_aframe_t& out) {
-    MSG_V("%s in_fmt=%s[len=%i] -> out_fmt=%s[len=%i]\n"
-    ,pfx
-    ,mpaf_fmt2str(in.format).c_str()
-    ,in.len
-    ,mpaf_fmt2str(out.format).c_str()
-    ,out.len);
+    mpxp_v<<pfx<<" in_fmt="<<mpaf_fmt2str(in.format)<<"[len="<<in.len<<"] -> out_fmt="<<mpaf_fmt2str(out.format)<<"[len="<<out.len<<"]"<<std::endl;
 }
 
 static mp_aframe_t change_endian(const af_instance_t* af,const mp_aframe_t& in) {
@@ -211,13 +206,11 @@ static MPXP_Rc build_cvt_chain(af_instance_t* af,const af_conf_t* in) {
 static MPXP_Rc __FASTCALL__ check_format(mpaf_format_e format)
 {
     if((format&MPAF_SPECIAL_MASK)!=MPAF_PCM){
-	    MSG_ERR("[format] Sample format %s not yet supported \n",
-	    mpaf_fmt2str(format).c_str());
+	    mpxp_err<<"[format] Sample format "<<mpaf_fmt2str(format)<<" not yet supported"<<std::endl;
 	    return MPXP_Error;
     }
     if((format&MPAF_BPS_MASK) < 1 || (format&MPAF_BPS_MASK) > 4) {
-	MSG_ERR("[format] The number of bytes per sample"
-		" must be 1, 2, 3 or 4. Current value is %i \n",format&MPAF_BPS_MASK);
+	mpxp_err<<"[format] The number of bytes per sample must be 1, 2, 3 or 4. Current value is "<<(format&MPAF_BPS_MASK)<<std::endl;
 	return MPXP_Error;
     }
     return MPXP_Ok;
@@ -245,9 +238,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
     af_format_t* s = reinterpret_cast<af_format_t*>(af->setup);
     switch(cmd){
 	case AF_CONTROL_SHOWCONF:
-	    MSG_INFO("[af_format] Changing sample format %s -> %s\n",
-		mpaf_fmt2str(s->fmt).c_str(),
-		mpaf_fmt2str(af->conf.format).c_str());
+	    mpxp_info<<"[af_format] Changing sample format "<<mpaf_fmt2str(s->fmt)<<" -> "<<mpaf_fmt2str(af->conf.format)<<std::endl;
 	    return MPXP_Ok;
 	case AF_CONTROL_COMMAND_LINE:{
 	    int format = MPAF_NE;
@@ -304,8 +295,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
     af->play=play;
     af->mul.n=1;
     af->mul.d=1;
-    af->setup=mp_calloc(1,sizeof(af_format_t));
-    if(af->setup == NULL) return MPXP_Error;
+    af->setup=new(zeromem) af_format_t;
+
     check_pin("afilter",af->pin,AF_PIN);
     return MPXP_Ok;
 }

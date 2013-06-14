@@ -81,7 +81,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 
   switch(cmd){
   case AF_CONTROL_SHOWCONF:
-    MSG_INFO("[af_sub] assigned channel %i\n",s->ch);
+    mpxp_info<<"[af_sub] assigned channel "<<s->ch<<std::endl;
     return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     int   ch=5;
@@ -94,8 +94,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
   case AF_CONTROL_SUB_CH | AF_CONTROL_SET: // Requires reinit
     // Sanity check
     if((*(int*)arg >= AF_NCH) || (*(int*)arg < 0)){
-      MSG_ERR("[sub] Subwoofer channel number must be between "
-	     " 0 and %i current value is %i\n", AF_NCH-1, *(int*)arg);
+      mpxp_err<<"[sub] Subwoofer channel number must be between  0 and "<<(AF_NCH-1)<<" current value is "<<(*(int*)arg)<<std::endl;
       return MPXP_Error;
     }
     s->ch = *(int*)arg;
@@ -106,8 +105,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
   case AF_CONTROL_SUB_FC | AF_CONTROL_SET: // Requires reinit
     // Sanity check
     if((*(float*)arg > 300) || (*(float*)arg < 20)){
-      MSG_ERR("[sub] Cutoff frequency must be between 20Hz and"
-	     " 300Hz current value is %0.2f",*(float*)arg);
+      mpxp_err<<"[sub] Cutoff frequency must be between 20Hz and 300Hz current value is "<<(*(float*)arg)<<std::endl;
       return MPXP_Error;
     }
     // Set cutoff frequency

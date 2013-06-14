@@ -18,14 +18,14 @@ struct vf_priv_t {
 //===========================================================================//
 
 static int __FASTCALL__ query_format(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
-    MSG_DBG2("[vf_format] request for %s limited by %s\n",vo_format_name(fmt),vo_format_name(vf->priv->fmt));
+    mpxp_dbg2<<"[vf_format] request for "<<vo_format_name(fmt)<<" limited by "<<vo_format_name(vf->priv->fmt)<<std::endl;
     if(fmt==vf->priv->fmt)
 	return vf_next_query_format(vf,fmt,w,h);
     return 0;
 }
 
 static int __FASTCALL__ query_noformat(vf_instance_t* vf, unsigned int fmt,unsigned w,unsigned h){
-    MSG_DBG2("[vf_noformat] request for %s limited by %s\n",vo_format_name(fmt),vo_format_name(vf->priv->fmt));
+    mpxp_dbg2<<"[vf_noformat] request for "<<vo_format_name(fmt)<<" limited by "<<vo_format_name(vf->priv->fmt)<<std::endl;
     if(fmt!=vf->priv->fmt)
 	return vf_next_query_format(vf,fmt,w,h);
     return 0;

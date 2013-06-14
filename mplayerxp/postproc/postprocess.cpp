@@ -26,10 +26,10 @@ pp_context *pp2_get_context(int width, int height, int flags)
   return pp_get_context(width,height,flags);
 }
 
-int	pp2_init(void)
+int	pp2_init()
 {
     if(strcmp(mp_conf.npp_options,"help")==0) {
-	MSG_INFO(pp_help);
+	mpxp_info<<pp_help<<std::endl;
 	exit_player(MSGTR_Exit_quit);
     }
     return 1;

@@ -124,12 +124,7 @@ static char *load_file(const std::string& filename, off_t * length)
 
     ::lseek(fd, SEEK_SET, 0);
 
-    if (!(buffer = new char [*length + 1])) {
-	mpxp_v<<"Could not mp_malloc"<<std::endl;
-	::close(fd);
-	return NULL;
-    }
-
+    buffer = new char [*length + 1];
     if (::read(fd, buffer, *length) != *length) {
 	delete buffer;
 	mpxp_v<<"Read is behaving funny"<<std::endl;

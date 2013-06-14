@@ -112,7 +112,7 @@ int __FASTCALL__ get_osd_height(const Video_Output*vo,int c,int h)
 }
 
 static void __FASTCALL__ vo_update_text_osd(const Video_Output*vo,mp_osd_obj_t* obj,int dxs,int dys){
-    const unsigned char *cp=(const unsigned char *)vo->osd_text;
+    const unsigned char *cp=(const unsigned char *)vo->osd_text.c_str();
     int x=20;
     int h=0;
 
@@ -134,7 +134,7 @@ static void __FASTCALL__ vo_update_text_osd(const Video_Output*vo,mp_osd_obj_t* 
 }
 
 static void __FASTCALL__ vo_draw_text_osd(const Video_Output*vo,unsigned idx,mp_osd_obj_t* obj,draw_osd_f draw_alpha){
-    const unsigned char *cp=(const unsigned char *)vo->osd_text;
+    const unsigned char *cp=(const unsigned char *)vo->osd_text.c_str();
     int font;
     int x=obj->x;
 
@@ -451,7 +451,7 @@ int __FASTCALL__ vo_update_osd(const Video_Output*vo,int dxs,int dys){
 		obj->flags&=~OSDFLAG_VISIBLE;
 	    break;
 	case OSDTYPE_OSD:
-	    if(vo->font && vo->osd_text && vo->osd_text[0]){
+	    if(vo->font && !vo->osd_text.empty() && vo->osd_text[0]){
 		vo_update_text_osd(vo,obj,dxs,dys); // update bbox
 		obj->flags|=OSDFLAG_VISIBLE|OSDFLAG_CHANGED;
 	    } else

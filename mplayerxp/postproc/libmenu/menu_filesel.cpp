@@ -165,7 +165,7 @@ static char **get_extensions(menu_t *menu){
       ext[s-1] = '\0';
       s--;
     }
-    e = (char *) mp_malloc(s+1);
+    e = new char[s+1];
     extensions = (char **) mp_realloc(extensions, ++n * sizeof(*extensions));
     extensions = (char **) mp_realloc(extensions, ++n * sizeof(*extensions));
     strcpy (e, ext);
@@ -221,7 +221,7 @@ static int open_dir(menu_t* menu,const char* args) {
     }
   }
 
-  namelist = (char **) mp_malloc(sizeof(char *));
+  namelist = new char*;
   extensions = get_extensions(menu);
 
   n=0;
@@ -257,12 +257,7 @@ static int open_dir(menu_t* menu,const char* args) {
       namelist=tp;
     }
 
-    namelist[n] = (char *) mp_malloc(strlen(dp->d_name) + 2);
-    if(namelist[n] == NULL){
-      mpxp_err<<"[libmenu] Malloc error: "<<strerror(errno)<<std::endl;
-      n--;
-      goto bailout;
-    }
+    namelist[n] = new char[strlen(dp->d_name) + 2];
 
     strcpy(namelist[n], dp->d_name);
     if(S_ISDIR(st.st_mode))

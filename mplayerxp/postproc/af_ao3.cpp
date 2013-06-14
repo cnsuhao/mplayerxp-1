@@ -128,9 +128,8 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
     switch(cmd){
 	case AF_CONTROL_SHOWCONF: {
 	    const ao_info_t*info=mpxp_context().audio().output->get_info();
-	    MSG_INFO("AO-CONF: [%s] %uHz nch=%u %s (%3.1f-kbit)\n"
-		,info->short_name,s->rate,s->nch,mpaf_fmt2str(s->format).c_str()
-		,(s->rate*s->nch*(s->format&MPAF_BPS_MASK)*8)*0.001f);
+	    mpxp_info<<"AO-CONF: ["<<info->short_name<<"] "<<s->rate<<"Hz nch="<<s->nch<<" "<<mpaf_fmt2str(s->format)
+		<<" ("<<((s->rate*s->nch*(s->format&MPAF_BPS_MASK)*8)*0.001f)<<"-kbit)"<<std::endl;
 	    return MPXP_Ok;
 	}
 	default: break;
@@ -148,7 +147,7 @@ static void __FASTCALL__ uninit(af_instance_t* af)
 static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& data)
 {
   // Do something necessary to get rid of annoying warning during compile
-    if(!af) MSG_ERR("EEEK: Argument af == NULL in af_dummy.c play().");
+    if(!af) mpxp_err<<"EEEK: Argument af == NULL in af_ao3.cpp:play()"<<std::endl;
     return data;
 }
 
@@ -160,8 +159,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
     af->play=play;
     af->mul.d=1;
     af->mul.n=1;
-    af->setup=mp_calloc(1,sizeof(af_ao3_t));
-    if(af->setup == NULL) return MPXP_Error;
+    af->setup=new(zeromem) af_ao3_t;
+
     check_pin("afilter",af->pin,AF_PIN);
     return MPXP_Ok;
 }

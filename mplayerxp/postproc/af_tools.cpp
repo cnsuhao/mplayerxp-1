@@ -76,12 +76,6 @@ MPXP_Rc __FASTCALL__ af_test_output(af_instance_t* af,const af_conf_t* out)
   if((af->conf.format != out->format) ||
      (af->conf.rate   != out->rate)   ||
      (af->conf.nch    != out->nch)){
-#if 0
-    MSG_DBG2("af_test_out %i!=%i || %i!=%i || %i!=%i\n",
-    af->conf.format,out->format,
-    af->conf.rate,out->rate,
-    af->conf.nch,out->nch);
-#endif
     return MPXP_False;
   }
   return MPXP_Ok;

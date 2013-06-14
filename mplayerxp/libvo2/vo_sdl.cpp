@@ -147,14 +147,12 @@ int sdl_forcegl;
 static void setenv(const char *name, const char *val, int _xx)
 {
     int len  = strlen(name) + strlen(val) + 2;
-    char *env = mp_malloc(len);
+    char *env = new char [len];
 
-    if (env != NULL) {
-	strcpy(env, name);
-	strcat(env, "=");
-	strcat(env, val);
-	putenv(env);
-    }
+    strcpy(env, name);
+    strcat(env, "=");
+    strcat(env, val);
+    putenv(env);
 }
 #endif
 

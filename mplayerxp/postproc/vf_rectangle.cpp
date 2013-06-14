@@ -29,7 +29,7 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	vf->priv->y = (height - vf->priv->h) / 2;
     if (vf->priv->w + vf->priv->x > width
 	|| vf->priv->h + vf->priv->y > height) {
-	MSG_WARN("rectangle: bad position/width/height - rectangle area is out of the original!\n");
+	mpxp_warn<<"rectangle: bad position/width/height - rectangle area is out of the original!"<<std::endl;
 	return 0;
     }
     return vf_next_config(vf, width, height, d_width, d_height, flags, outfmt);
@@ -58,7 +58,7 @@ static MPXP_Rc __FASTCALL__ control_vf(vf_instance_t* vf, int request, any_t*dat
 	    return MPXP_Ok;
 	    break;
 	default:
-	    MSG_FATAL("Unknown param %d \n", tmp[0]);
+	    mpxp_fatal<<"Unknown param "<<tmp[0]<<std::endl;
 	    return MPXP_False;
 	}
     }
@@ -99,7 +99,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
 
     /* Draw the rectangle */
 
-    MSG_DBG2( "rectangle: -vf rectangle=%d:%d:%d:%d \n", vf->priv->w, vf->priv->h, vf->priv->x, vf->priv->y);
+    mpxp_dbg2<<"rectangle: -vf rectangle="<<vf->priv->w<<":"<<vf->priv->h<<":"<<vf->priv->x<<":"<<vf->priv->y<<std::endl;
 
     if (vf->priv->x < 0)
 	x = 0;

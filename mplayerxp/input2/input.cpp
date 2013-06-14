@@ -548,7 +548,7 @@ mp_cmd_t* mp_input_parse_cmd(const std::string& _str) {
 
     cmd_def = &mp_cmds[i];
 
-    cmd = (mp_cmd_t*)mp_malloc(sizeof(mp_cmd_t));
+    cmd = new mp_cmd_t;
     cmd->id = cmd_def->id;
     cmd->name = mp_strdup(cmd_def->name);
 
@@ -605,7 +605,7 @@ mp_cmd_t* mp_input_parse_cmd(const std::string& _str) {
 		    break;
 		} else if(!e) e = ptr+strlen(ptr);
 		l = e-start;
-		cmd->args[i].v.s = (char*)mp_malloc((l+1)*sizeof(char));
+		cmd->args[i].v.s = new char[l+1];
 		strncpy(cmd->args[i].v.s,start,l);
 		cmd->args[i].v.s[l] = '\0';
 		ptr2 = start;
@@ -662,7 +662,7 @@ static int mp_input_read_cmd(mp_input_fd_t* mp_fd, char** ret) {
 
     // Allocate the buffer if it dont exist
     if(!mp_fd->buffer) {
-	mp_fd->buffer = (char*)mp_malloc(MP_CMD_MAX_SIZE*sizeof(char));
+	mp_fd->buffer = new char[MP_CMD_MAX_SIZE];
 	mp_fd->pos = 0;
 	mp_fd->size = MP_CMD_MAX_SIZE;
     }
@@ -711,7 +711,7 @@ static int mp_input_read_cmd(mp_input_fd_t* mp_fd, char** ret) {
 	l = end - mp_fd->buffer;
 	// Not dropping : put the cmd in ret
 	if( ! (mp_fd->flags & MP_FD_DROP)) {
-	    (*ret) = (char*)mp_malloc((l+1)*sizeof(char));
+	    (*ret) = new char[l+1];
 	    strncpy((*ret),mp_fd->buffer,l);
 	    (*ret)[l] = '\0';
 	} else { // Remove the dropping flag

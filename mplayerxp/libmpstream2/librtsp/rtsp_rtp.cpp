@@ -354,7 +354,7 @@ Rtp_Rtsp_Session* Rtp_Rtsp_Session::setup_and_play (Rtsp& rtsp) {
     if (!answer || !strstr (answer, RTSP_APPLICATION_SDP)) return NULL;
 
     /* 2. read SDP message from server */
-    sdp = (char *) mp_malloc (content_length + 1);
+    sdp = new char[content_length + 1];
     if (rtsp.read_data (sdp, content_length) <= 0) {
 	delete sdp;
 	return NULL;

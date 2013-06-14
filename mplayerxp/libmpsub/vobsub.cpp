@@ -161,7 +161,7 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 	else if ((c & 0xf0) == 0x20)
 	    version = 2;
 	else {
-	    MSG_ERR( "Unsupported MPEG version: 0x%02x", c);
+	    mpxp_err<<"Unsupported MPEG version: 0x"<<std::hex<<(int)c<<std::endl;
 	    return -1;
 	}
 	if (version == 4) {
@@ -210,16 +210,14 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 	    hdrlen = c;
 	    dataidx = mpeg_tell(mpeg) + hdrlen;
 	    if (dataidx > idx + len) {
-		MSG_ERR( "Invalid header length: %d (total length: %d, idx: %d, dataidx: %d)\n",
-			hdrlen, len, idx, dataidx);
+		mpxp_err<<"Invalid header length: "<<hdrlen<<" (total length: "<<len<<", idx: "<<idx<<", dataidx: "<<dataidx<<")"<<std::endl;
 		return -1;
 	    }
 	    if ((pts_flags & 0xc0) == 0x80) {
 		bp=mpeg->stream->read(5); memcpy(buf,bp.data(),bp.size());
 		if (bp.size() != 5) return -1;
 		if (!(((buf[0] & 0xf0) == 0x20) && (buf[0] & 1) && (buf[2] & 1) &&  (buf[4] & 1))) {
-		    MSG_ERR( "vobsub PTS error: 0x%02x %02x%02x %02x%02x \n",
-			    buf[0], buf[1], buf[2], buf[3], buf[4]);
+		    mpxp_err<<"vobsub PTS error: 0x"<<std::hex<<buf[0]<<" "<<std::hex<<buf[1]<<" "<<std::hex<<buf[2]<<" "<<std::hex<<buf[3]<<" "<<std::hex<<buf[4]<<std::endl;
 		    mpeg->pts = 0;
 		}
 		else
@@ -233,7 +231,7 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 	    mpeg->stream->seek( dataidx);
 	    mpeg->aid = mpeg->stream->read(type_byte);
 	    if (mpeg->aid < 0) {
-		MSG_ERR( "Bogus aid %d\n", mpeg->aid);
+		mpxp_err<<"Bogus aid "<<mpeg->aid<<std::endl;
 		return -1;
 	    }
 	    mpeg->packet_size = len - ((unsigned int) mpeg_tell(mpeg) - idx);
@@ -241,18 +239,11 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 		if (mpeg->packet)
 		    delete mpeg->packet;
 		mpeg->packet = new unsigned char [mpeg->packet_size];
-		if (mpeg->packet)
-		    mpeg->packet_reserve = mpeg->packet_size;
-	    }
-	    if (mpeg->packet == NULL) {
-		MSG_ERR("mp_malloc failure");
-		mpeg->packet_reserve = 0;
-		mpeg->packet_size = 0;
-		return -1;
+		mpeg->packet_reserve = mpeg->packet_size;
 	    }
 	    bp=mpeg->stream->read(mpeg->packet_size); memcpy(mpeg->packet,bp.data(),bp.size());
 	    if (bp.size() != mpeg->packet_size) {
-		MSG_ERR("stream_read failure");
+		mpxp_err<<"stream_read failure"<<std::endl;
 		mpeg->packet_size = 0;
 		return -1;
 	    }
@@ -277,8 +268,7 @@ static int __FASTCALL__ mpeg_run(mpeg_t *mpeg)
 
 	}
 	else {
-	    MSG_ERR( "unknown header 0x%02X%02X%02X%02X\n",
-		    buf[0], buf[1], buf[2], buf[3]);
+	    mpxp_err<<"Unknown header: 0x"<<std::hex<<buf[0]<<" "<<std::hex<<buf[1]<<" "<<std::hex<<buf[2]<<" "<<std::hex<<buf[3]<<std::endl;
 	    return -1;
 	}
     }
@@ -345,7 +335,7 @@ static int __FASTCALL__ packet_queue_ensure(packet_queue_t *queue, unsigned int 
 	if (queue->packets) {
 	    packet_t *tmp = (packet_t*)mp_realloc(queue->packets, 2 * queue->packets_reserve * sizeof(packet_t));
 	    if (tmp == NULL) {
-		MSG_ERR("mp_realloc failure");
+		mpxp_err<<"mp_realloc failure"<<std::endl;
 		return -1;
 	    }
 	    queue->packets = tmp;
@@ -353,10 +343,6 @@ static int __FASTCALL__ packet_queue_ensure(packet_queue_t *queue, unsigned int 
 	}
 	else {
 	    queue->packets = new(zeromem) packet_t;
-	    if (queue->packets == NULL) {
-		MSG_ERR("mp_malloc failure");
-		return -1;
-	    }
 	    queue->packets_reserve = 1;
 	}
     }
@@ -419,17 +405,13 @@ static int __FASTCALL__ vobsub_ensure_spu_stream(vobsub_t *vob, unsigned int _in
 	if (vob->spu_streams) {
 	    packet_queue_t *tmp = (packet_queue_t*)mp_realloc(vob->spu_streams, (_index + 1) * sizeof(packet_queue_t));
 	    if (tmp == NULL) {
-		MSG_ERR("vobsub_ensure_spu_stream: mp_realloc failure");
+		mpxp_err<<"vobsub_ensure_spu_stream: mp_realloc failure"<<std::endl;
 		return -1;
 	    }
 	    vob->spu_streams = tmp;
 	}
 	else {
 	    vob->spu_streams = new packet_queue_t[_index + 1];
-	    if (vob->spu_streams == NULL) {
-		MSG_ERR("vobsub_ensure_spu_stream: mp_malloc failure");
-		return -1;
-	    }
 	}
 	while (vob->spu_streams_size <= _index) {
 	    packet_queue_construct(vob->spu_streams + vob->spu_streams_size);
@@ -457,7 +439,7 @@ static int __FASTCALL__ vobsub_add_timestamp(vobsub_t *vob, off_t filepos, unsig
     packet_queue_t *queue;
     packet_t *pkt;
     if (vob->spu_streams == 0) {
-	MSG_WARN( "[vobsub] warning, binning some index entries.  Check your index file\n");
+	mpxp_warn<<"[vobsub] warning, binning some index entries.  Check your index file"<<std::endl;
 	return -1;
     }
     queue = vob->spu_streams + vob->spu_streams_current;
@@ -704,15 +686,15 @@ static int __FASTCALL__ vobsub_parse_delay(vobsub_t *vob, const char *line)
 	forward = -1;
 	line++;
     }
-    MSG_V( "forward=%d", forward);
+    mpxp_v<<"forward="<<forward<<std::endl;
     h = atoi(line + 7);
-    MSG_V( "h=%d," ,h);
+    mpxp_v<<"h="<<h<<",";
     m = atoi(line + 10);
-    MSG_V( "m=%d,", m);
+    mpxp_v<<"m="<<m<<",";
     s = atoi(line + 13);
-    MSG_V( "s=%d,", s);
+    mpxp_v<<"s="<<s<<",";
     ms = atoi(line + 16);
-    MSG_V( "ms=%d", ms);
+    mpxp_v<<"ms="<<ms<<std::endl;
     vob->delay = ms + 1000 * (s + 60 * (m + 60 * h)) * forward;
     return 0;
 }
@@ -759,11 +741,11 @@ static int __FASTCALL__ vobsub_parse_one_line(vobsub_t *vob, std::ifstream& fd)
 	    res = vobsub_parse_cuspal(vob, line) + vobsub_parse_tridx(vob, line) + vobsub_parse_custom(vob, line);
 	else {
 	    if (mp_conf.verbose)
-		MSG_ERR( "vobsub: ignoring %s", line);
+		mpxp_err<<"vobsub: ignoring "<<line<<std::endl;
 	    continue;
 	}
 	if (res < 0)
-	    MSG_ERR( "ERROR in %s", line);
+	    mpxp_err<<"ERROR in "<<line<<std::endl;
 	break;
     } while (1);
     return res;

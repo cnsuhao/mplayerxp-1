@@ -546,8 +546,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->setup=mp_calloc(1,sizeof(af_crystality_t));
-  if(af->setup == NULL) return MPXP_Error;
+  af->setup=new(zeromem) af_crystality_t;
+
   set_defaults(reinterpret_cast<af_crystality_t*>(af->setup));
   init_crystality(reinterpret_cast<af_crystality_t*>(af->setup),44100);
   left0p = right0p = 0;

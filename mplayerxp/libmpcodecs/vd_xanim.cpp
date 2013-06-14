@@ -320,7 +320,7 @@ int xanim_decoder::xacodec_init_video(int out_format)
 	return 0;
 
     codec_hdr.xapi_rev = XAVID_API_REV;
-    codec_hdr.anim_hdr = mp_malloc(4096);
+    codec_hdr.anim_hdr = new char [4096];
     codec_hdr.description = sh.codec->s_info;
     codec_hdr.compression = bswap_32(sh.bih->biCompression);
     codec_hdr.decoder = NULL;

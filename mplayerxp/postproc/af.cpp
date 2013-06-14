@@ -82,7 +82,7 @@ static const af_info_t* __FASTCALL__ af_find(const char* name)
       return filter_list[i];
     i++;
   }
-  MSG_ERR("Couldn't find audio filter '%s'\n",name);
+  mpxp_err<<"Couldn't find audio filter '"<<name<<"'"<<std::endl;
   return NULL;
 }
 
@@ -109,7 +109,7 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,const char* name)
   // Allocate space for the new filter and reset all pointers
   af_instance_t* _new=new(zeromem) af_instance_t;
   if(!_new){
-    MSG_ERR(MSGTR_OutOfMemory);
+    mpxp_err<<MSGTR_OutOfMemory<<std::endl;
     return NULL;
   }
   _new->pin=AF_PIN;
@@ -127,15 +127,14 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,const char* name)
      non-reentrant */
   if(_new->info->flags & AF_FLAGS_NOT_REENTRANT){
     if(af_get(s,name)){
-      MSG_ERR("[libaf] There can only be one instance of"
-	     " the filter '%s' in each stream\n",name);
+      mpxp_err<<"[libaf] There can only be one instance of the filter '"<<name<<"' in each stream"<<std::endl;
 	delete _new;
 	delete cmdline;
 	return NULL;
     }
   }
 
-  MSG_V("[libaf] Adding filter %s \n",name);
+  mpxp_v<<"[libaf] Adding filter "<<name<<std::endl;
 
   // Initialize the new filter
   if(MPXP_Ok == _new->info->open(_new) &&
@@ -154,7 +153,7 @@ static af_instance_t* __FASTCALL__ af_create(af_stream_t* s,const char* name)
 
   delete cmdline;
   delete _new;
-  MSG_ERR("[libaf] Couldn't create or open audio filter '%s'\n", name);
+  mpxp_err<<"[libaf] Couldn't create or open audio filter '"<<name<<"'"<<std::endl;
   return NULL;
 }
 
@@ -165,7 +164,7 @@ static af_instance_t* __FASTCALL__ af_prepend(af_stream_t* s, af_instance_t* af,
 {
   // Create the _new filter and make sure it is OK
   af_instance_t* _new=af_create(s,name);
-  MSG_DBG2("af_prepend %s\n",name);
+  mpxp_dbg2<<"af_prepend "<<name<<std::endl;
   if(!_new)
     return NULL;
   // Update pointers
@@ -190,7 +189,7 @@ static af_instance_t* af_append(af_stream_t* s, af_instance_t* af,const char* na
 {
   // Create the _new filter and make sure it is OK
   af_instance_t* _new=af_create(s,name);
-  MSG_DBG2("af_append %s\n",name);
+  mpxp_dbg2<<"af_append "<<name<<std::endl;
   if(!_new)
     return NULL;
   // Update pointers
@@ -214,7 +213,7 @@ static void af_remove(af_stream_t* s, af_instance_t* af)
   if(!af) return;
 
   // Print friendly message
-  MSG_V("[libaf] Removing filter %s \n",af->info->name);
+  mpxp_v<<"[libaf] Removing filter "<<af->info->name<<std::endl;
 
   // Notify filter before changing anything
   af->control_af(af,AF_CONTROL_PRE_DESTROY,0);
@@ -241,7 +240,7 @@ static int af_reinit(af_stream_t* s, af_instance_t* af)
 {
     if(!af) return MPXP_Error;
 
-    MSG_DBG2("af_reinit()\n");
+    mpxp_dbg2<<"af_reinit()"<<std::endl;
     do {
 	af_conf_t in; // Format of the input to current filter
 	int rv=0; // Return value
@@ -295,8 +294,7 @@ static int af_reinit(af_stream_t* s, af_instance_t* af)
 			if(MPXP_Ok != (rv = _new->config_af(_new,&in))) return rv;
 		    }
 		    if(!_new){ // Should _never_ happen
-			MSG_ERR("[libaf] Unable to correct audio format. "
-			    "This error should never occur, please send bugreport.\n");
+			mpxp_err<<"[libaf] Unable to correct audio format. This error should never occur, please send bugreport"<<std::endl;
 			return MPXP_Error;
 		    }
 		    af=_new;
@@ -314,8 +312,8 @@ static int af_reinit(af_stream_t* s, af_instance_t* af)
 		break;
 	    }
 	    default:
-		MSG_ERR("[libaf] Reinitialization did not work, audio"
-			" filter '%s' returned error code %i for r=%i c=%i fmt=%x\n",af->info->name,rv,in.rate,in.nch,in.format);
+		mpxp_err<<"[libaf] Reinitialization did not work, audio filter '"<<af->info->name
+		    <<"' returned error code "<<rv<<" for r="<<in.rate<<" c="<<in.nch<<" fmt="<<std::hex<<in.format<<std::endl;
 		return MPXP_Error;
 	}
 	// Check if there are any filters left in the list
@@ -452,8 +450,7 @@ MPXP_Rc af_init(af_stream_t* s, int force_output)
        (s->last->conf.nch    != s->output.nch)    ||
        (s->last->conf.rate   != s->output.rate))  {
       // Something is stuffed audio out will not work
-      MSG_ERR("[libaf] Unable to setup filter system can not"
-	     " meet sound-card demands, please send bugreport. \n");
+      mpxp_err<<"[libaf] Unable to setup filter system can not meet sound-card demands, please send bugreport"<<std::endl;
       af_uninit(s);
       return MPXP_False;
     }
@@ -494,7 +491,7 @@ mp_aframe_t __FASTCALL__ af_play(af_stream_t* s,const mp_aframe_t& data)
     af_instance_t* af=s->first;
     // Iterate through all filters
     do{
-	MSG_DBG2("filtering %s\n",af->info->name);
+	mpxp_dbg2<<"filtering "<<af->info->name<<std::endl;
 	out=af->play(af,*in);
 	if(in!=&data) delete in;
 	in=&out;
@@ -600,15 +597,15 @@ MPXP_Rc __FASTCALL__ af_query_channels (const af_stream_t* s,unsigned nch)
 
 void af_help (void) {
     unsigned i = 0;
-    MSG_INFO( "Available audio filters:\n");
+    mpxp_info<<"Available audio filters:"<<std::endl;
     while (filter_list[i]) {
 	if (filter_list[i]->comment && filter_list[i]->comment[0])
-	    MSG_INFO( "\t%-10s: %s (%s)\n", filter_list[i]->name, filter_list[i]->info, filter_list[i]->comment);
+	    mpxp_info<<" "<<std::setw(10)<<filter_list[i]->name<<": "<<filter_list[i]->info<<" ("<<filter_list[i]->comment<<")"<<std::endl;
 	else
-	    MSG_INFO( "\t%-10s: %s\n", filter_list[i]->name, filter_list[i]->info);
+	    mpxp_info<<" "<<std::setw(10)<<filter_list[i]->name<<": "<<filter_list[i]->info<<std::endl;
 	i++;
     }
-    MSG_INFO("\n");
+    mpxp_info<<std::endl;
 }
 
 af_stream_t *af_new(any_t*_parent)
@@ -623,13 +620,13 @@ void af_showconf(af_instance_t *first)
 {
     af_instance_t* af=first;
     // ok!
-    MSG_INFO("[libaf] Using audio filters chain:\n");
+    mpxp_info<<"[libaf] Using audio filters chain:"<<std::endl;
     // Iterate through all filters
     check_pin("afilter",af->pin,AF_PIN);
     do{
-	MSG_INFO("  ");
+	mpxp_info<<"  ";
 	if(af->control_af(af,AF_CONTROL_SHOWCONF,NULL)!=MPXP_Ok)
-	    MSG_INFO("[af_%s %s]\n",af->info->name,af->info->info);
+	    mpxp_info<<"[af_"<<af->info->name<<" "<<af->info->info<<"]"<<std::endl;
 	af=af->next;
     }while(af);
 }

@@ -140,7 +140,7 @@ static inline unsigned char __FASTCALL__ get_nibble(packet_t *packet)
   unsigned char nib;
   unsigned int *nibblep = packet->current_nibble + packet->deinterlace_oddness;
   if (*nibblep / 2 >= packet->control_start) {
-    MSG_WARN( "SPUdec: ERROR: get_nibble past end of packet\n");
+    mpxp_warn<<"SPUdec: ERROR: get_nibble past end of packet"<<std::endl;
     return 0;
   }
   nib = packet->packet[*nibblep / 2];
@@ -206,7 +206,7 @@ static inline void __FASTCALL__ spudec_cut_image(spudec_handle_t *self)
     self->image = image;
     self->aimage = aimage;
   } else {
-    MSG_FATAL("Fatal: update_spu: mp_malloc requested %d bytes\n", 2 * self->stride * self->height);
+    mpxp_fatal<<"Fatal: update_spu: mp_malloc requested "<<(2*self->stride*self->height)<<" bytes"<<std::endl;
   }
 }
 
@@ -359,14 +359,14 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *self, unsigned 
     start_off = next_off;
     date = get_be16(self->packet + start_off) * 1024;
     next_off = get_be16(self->packet + start_off + 2);
-    MSG_DBG2( "date=%d\n", date);
+    mpxp_dbg2<<"date="<<date<<std::endl;
     off = start_off + 4;
     for (type = self->packet[off++]; type != 0xff; type = self->packet[off++]) {
-      MSG_DBG2( "cmd=%d  ",type);
+      mpxp_dbg2<<"cmd="<<type<<std::endl;
       switch(type) {
       case 0x00:
 	/* Menu ID, 1 byte */
-	MSG_DBG2("Menu ID\n");
+	mpxp_dbg2<<"Menu ID"<<std::endl;
 	/* shouldn't a Menu ID type force display start? */
 	start_pts = pts100 + date;
 	end_pts = UINT_MAX;
@@ -375,7 +375,7 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *self, unsigned 
 	break;
       case 0x01:
 	/* Start display */
-	MSG_DBG2("Start display!\n");
+	mpxp_dbg2<<"Start display!"<<std::endl;
 	start_pts = pts100 + date;
 	end_pts = UINT_MAX;
 	display = 1;
@@ -383,7 +383,7 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *self, unsigned 
 	break;
       case 0x02:
 	/* Stop display */
-	MSG_DBG2("Stop display!\n");
+	mpxp_dbg2<<"Stop display!"<<std::endl;
 	end_pts = pts100 + date;
 	break;
       case 0x03:
@@ -392,8 +392,7 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *self, unsigned 
 	self->palette[1] = self->packet[off] & 0xf;
 	self->palette[2] = self->packet[off + 1] >> 4;
 	self->palette[3] = self->packet[off + 1] & 0xf;
-	MSG_DBG2("Palette %d, %d, %d, %d\n",
-	       self->palette[0], self->palette[1], self->palette[2], self->palette[3]);
+	mpxp_dbg2<<"Palette "<<self->palette[0]<<", "<<self->palette[1]<<", "<<self->palette[2]<<", "<<self->palette[3]<<std::endl;
 	off+=2;
 	break;
       case 0x04:
@@ -402,8 +401,7 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *self, unsigned 
 	self->alpha[1] = self->packet[off] & 0xf;
 	self->alpha[2] = self->packet[off + 1] >> 4;
 	self->alpha[3] = self->packet[off + 1] & 0xf;
-	MSG_DBG2("Alpha %d, %d, %d, %d\n",
-	       self->alpha[0], self->alpha[1], self->alpha[2], self->alpha[3]);
+	mpxp_dbg2<<"Alpha "<<self->alpha[0]<<", "<<self->alpha[1]<<", "<<self->alpha[2]<<", "<<self->alpha[3]<<std::endl;
 	off+=2;
 	break;
       case 0x05:
@@ -417,27 +415,23 @@ static void __FASTCALL__ spudec_process_control(spudec_handle_t *self, unsigned 
 	start_row = b >> 12;
 	end_row = b & 0xfff;
 	height = (end_row < start_row) ? 0 : end_row - start_row /* + 1 */;
-	MSG_DBG2("Coords  col: %d - %d  row: %d - %d  (%dx%d)\n",
-	       start_col, end_col, start_row, end_row,
-	       width, height);
+	mpxp_dbg2<<"Coords  col: "<<start_col<<" - "<<end_col<<"  row: "<<start_row<<" - "<<end_row<<"  ("<<width<<"x"<<height<<")"<<std::endl;
 	off+=6;
 	break;
       case 0x06:
 	/* Graphic lines */
 	current_nibble[0] = 2 * get_be16(self->packet + off);
 	current_nibble[1] = 2 * get_be16(self->packet + off + 2);
-	MSG_DBG2("Graphic offset 1: %d  offset 2: %d\n",
-	       current_nibble[0] / 2, current_nibble[1] / 2);
+	mpxp_dbg2<<"Graphic offset 1: "<<(current_nibble[0] / 2)<<"  offset 2: "<<(current_nibble[1] / 2)<<std::endl;
 	off+=4;
 	break;
       case 0xff:
 	/* All done, bye-bye */
-	MSG_DBG2("Done!\n");
+	mpxp_dbg2<<"Done!"<<std::endl;
 	return;
 //	break;
       default:
-	MSG_WARN("spudec: Error determining control type 0x%02x.  Skipping %d bytes.\n",
-	       type, next_off - off);
+	mpxp_warn<<"spudec: Error determining control type 0x"<<std::hex<<type<<".  Skipping "<<(next_off - off)<<" bytes"<<std::endl;
 	goto next_control;
       }
     }
@@ -487,7 +481,7 @@ void __FASTCALL__ spudec_assemble(any_t*self, unsigned char *packet, unsigned in
   spudec_handle_t *spu = (spudec_handle_t*)self;
 //  spudec_heartbeat(self, pts100);
   if (len < 2) {
-      MSG_WARN("SPUasm: packet too short\n");
+      mpxp_warn<<"SPUasm: packet too short"<<std::endl;
       return;
   }
   spu->packet_pts = pts100;
@@ -502,7 +496,7 @@ void __FASTCALL__ spudec_assemble(any_t*self, unsigned char *packet, unsigned in
     if (spu->packet != NULL) {
       spu->packet_size = len2;
       if (len > len2) {
-	MSG_WARN("SPUasm: invalid frag len / len2: %d / %d \n", len, len2);
+	mpxp_warn<<"SPUasm: invalid frag len / len2: "<<len<<" / "<<len2<<std::endl;
 	return;
       }
       memcpy(spu->packet, packet, len);
@@ -512,7 +506,7 @@ void __FASTCALL__ spudec_assemble(any_t*self, unsigned char *packet, unsigned in
   } else {
     // Continue current fragment
     if (spu->packet_size < spu->packet_offset + len){
-      MSG_WARN("SPUasm: invalid fragment\n");
+      mpxp_warn<<"SPUasm: invalid fragment"<<std::endl;
       spu->packet_size = spu->packet_offset = 0;
       return;
     } else {
@@ -529,16 +523,16 @@ void __FASTCALL__ spudec_assemble(any_t*self, unsigned char *packet, unsigned in
     unsigned int x=0,y;
     while(x+4<=spu->packet_offset){
       y=get_be16(spu->packet+x+2); // next control pointer
-      MSG_DBG2("SPUtest: x=%d y=%d off=%d size=%d\n",x,y,spu->packet_offset,spu->packet_size);
+      mpxp_dbg2<<"SPUtest: x="<<x<<" y="<<y<<" off="<<spu->packet_offset<<" size="<<spu->packet_size<<std::endl;
       if(x>=4 && x==y){		// if it points to self - we're done!
 	// we got it!
-	MSG_DBG2("SPUgot: off=%d  size=%d \n",spu->packet_offset,spu->packet_size);
+	mpxp_dbg2<<"SPUgot: off="<<spu->packet_offset<<" size="<<spu->packet_size<<std::endl;
 	spudec_decode(spu, pts100);
 	spu->packet_offset = 0;
 	break;
       }
       if(y<=x || y>=spu->packet_size){ // invalid?
-	MSG_WARN("SPUtest: broken packet!!!!! y=%d < x=%d\n",y,x);
+	mpxp_warn<<"SPUtest: broken packet!!!!! y="<<y<<" < x="<<x<<std::endl;
 	spu->packet_size = spu->packet_offset = 0;
 	break;
       }
@@ -600,7 +594,7 @@ void __FASTCALL__ spudec_set_forced_subs_only(any_t* const self, const unsigned 
 {
   if(self){
       ((spudec_handle_t *)self)->forced_subs_only=flag;
-      MSG_DBG2("SPU: Display only forced subs now %s\n", flag ? "enabled": "disabled");
+      mpxp_dbg2<<"SPU: Display only forced subs now "<<(flag ? "enabled": "disabled")<<std::endl;
   }
 }
 
@@ -808,7 +802,7 @@ void __FASTCALL__ spudec_draw_scaled(any_t*me, unsigned int dxs, unsigned int dy
 	  table_x = new(zeromem) scale_pixel[spu->scaled_width];
 	  table_y = new(zeromem) scale_pixel[spu->scaled_height];
 	  if (!table_x || !table_y) {
-	    MSG_FATAL("Fatal: spudec_draw_scaled: mp_calloc failed\n");
+	    mpxp_fatal<<"Fatal: spudec_draw_scaled: mp_calloc failed"<<std::endl;
 	  }
 	  scale_table(0, 0, spu->width - 1, spu->scaled_width - 1, table_x);
 	  scale_table(0, 0, spu->height - 1, spu->scaled_height - 1, table_y);
@@ -1075,11 +1069,8 @@ nothing_to_do:
 	spu->spu_changed = 0;
       }
     }
-  }
-  else
-  {
-    MSG_DBG2("SPU not displayed: start_pts=%d  end_pts=%d  now_pts=%d\n",
-	spu->start_pts, spu->end_pts, spu->now_pts);
+  } else {
+    mpxp_dbg2<<"SPU not displayed: start_pts="<<spu->start_pts<<" end_pts="<<spu->end_pts<<" now_pts="<<spu->now_pts<<std::endl;
   }
 }
 
@@ -1105,8 +1096,7 @@ any_t* __FASTCALL__ spudec_new_scaled(unsigned int *palette, unsigned int frame_
 /* get palette custom color, width, height from .idx file */
 any_t* __FASTCALL__ spudec_new_scaled_vobsub(unsigned int *palette, unsigned int *cuspal, unsigned int custom, unsigned int frame_width, unsigned int frame_height)
 {
-  spudec_handle_t *self = new(zeromem) spudec_handle_t;
-  if (self){
+    spudec_handle_t *self = new(zeromem) spudec_handle_t;
     //(fprintf(stderr,"VobSub Custom Palette: %d,%d,%d,%d", self->cuspal[0], self->cuspal[1], self->cuspal[2],self->cuspal[3]);
     self->packet = NULL;
     self->image = NULL;
@@ -1130,10 +1120,7 @@ any_t* __FASTCALL__ spudec_new_scaled_vobsub(unsigned int *palette, unsigned int
     // forced subtitles default: show all subtitles
     self->forced_subs_only=0;
     self->is_forced_sub=0;
-  }
-  else
-    MSG_FATAL("FATAL: spudec_init: mp_calloc");
-  return self;
+    return self;
 }
 
 any_t* __FASTCALL__ spudec_new(unsigned int *palette)

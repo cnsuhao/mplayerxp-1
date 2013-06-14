@@ -128,15 +128,13 @@ int SDL_AO_Interface::read_buffer(uint8_t* data,int len){
 /* setenv is missing on solaris and HPUX */
 static void setenv(const char *name, const char *val, int _xx)
 {
-  int len  = strlen(name) + strlen(val) + 2;
-  char *env = mp_malloc(len);
+    int len  = strlen(name) + strlen(val) + 2;
+    char *env = new char [len];
 
-  if (env != NULL) {
     strcpy(env, name);
     strcat(env, "=");
     strcat(env, val);
     putenv(env);
-  }
 }
 #endif
 

@@ -224,10 +224,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	return MPXP_False; // bad syntax
     }
 
-    MSG_V( "delogo: %d x %d, %d x %d, band = %d\n",
-	   vf->priv->xoff, vf->priv->yoff,
-	   vf->priv->lw, vf->priv->lh,
-	   vf->priv->band);
+    mpxp_v<<"delogo: "<<vf->priv->xoff<<" x "<<vf->priv->yoff<<", "<<vf->priv->lw<<" x "<<vf->priv->lh<<", band = "<<vf->priv->band<<std::endl;
 
     vf->priv->show = 0;
 

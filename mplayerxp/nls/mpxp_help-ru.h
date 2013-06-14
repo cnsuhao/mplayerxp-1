@@ -87,7 +87,7 @@ NULL
 #define MSGTR_CmdlineDVDkey "Коммандная строка DVD требует записанный ключ для дешифрования.\n"
 #define MSGTR_DVDauthOk "Авторизация DVD выглядит OK.\n"
 #define MSGTR_DumpSelectedSteramMissing "dump: FATAL: выбранный поток потерян!\n"
-#define MSGTR_CantOpenDumpfile "Не могу открыть файл дампа!!!\n"
+#define MSGTR_CantOpenDumpfile "Не могу открыть файл дампа"
 #define MSGTR_StreamDumped "stream dumped :)"
 #define MSGTR_FPSnotspecified "Кадр/сек не указаны (или недопустимые) в заголовке! Используйте -fps опцию!\n"
 #define MSGTR_NoVideoStream "Видео поток не найден... это невоспроизводимо пока\n"
@@ -99,20 +99,20 @@ NULL
 #define MSGTR_TryForceVideoFmt "Попытка форсировать семейство видео кодеков"
 #define MSGTR_CantFindVfmtFallback "Не могу найти видео кодек для форсированного семейства, переход на другие драйвера.\n"
 #define MSGTR_CantFindVideoCodec "Не могу найти кодек для видео формата"
-#define MSGTR_VOincompCodec "Извините, выбранное video_out устройство не совместимо с этим кодеком.\n"
+#define MSGTR_VOincompCodec "Извините, выбранное video_out устройство не совместимо с этим кодеком."
 #define MSGTR_CouldntInitVideoCodec "FATAL: Не смог проинициализировать видео кодек :(\n"
 #define MSGTR_EncodeFileExists "Файл уже существует: %s (не переписывайте Ваш любимый AVI!)\n"
 #define MSGTR_CantCreateEncodeFile "Не могу создать файл для кодирования\n"
-#define MSGTR_CannotInitVO "FATAL: Не могу проинициализировать видео драйвер!\n"
+#define MSGTR_CannotInitVO "FATAL: Не могу проинициализировать видео драйвер!"
 #define MSGTR_CannotInitAO "не могу открыть/проинициализировать аудио устройство -> БЕЗ ЗВУКА\n"
 
-#define MSGTR_CODEC_INITAL_AV_RESYNC "i_bps==0!!! Возможна начальная A-V рассинхронизация\nИспользуйте '-' и '+' клавиши чтобы её подавить\n"
+#define MSGTR_CODEC_INITIAL_AV_RESYNC "i_bps==0!!! Возможна начальная A-V рассинхронизация\nИспользуйте '-' и '+' клавиши чтобы её подавить"
 #define MSGTR_CODEC_CANT_INITA "Не смог проинициализировать ADecoder :(\n"
-#define MSGTR_CODEC_CANT_INITV "Не смог проинициализировать VDecoder :(\n"
+#define MSGTR_CODEC_CANT_INITV "Не смог проинициализировать VDecoder :("
 #define MSGTR_CODEC_CANT_PREINITA "Не смог проинициализировать ADecoder :(\n"
-#define MSGTR_CODEC_BAD_AFAMILY "Требуемое семейство аудио кодеков [%s] (afm=%s) не доступно (разрешите его во время компиляции!)\n"
-#define MSGTR_CODEC_XP_INT_ERR "decaudio: внутренняя ошибка xp-ядра %i>%i. Подготовтесь к sig11...\n"
-#define MSGTR_CODEC_BUF_OVERFLOW "AC [%s] вызвал переполнение буфера %i>%i. Подготовтесь к sig11...\n"
+#define MSGTR_CODEC_BAD_AFAMILY "Требуемое семейство аудио кодеков не доступно"
+#define MSGTR_CODEC_XP_INT_ERR "decaudio: внутренняя ошибка xp-ядра. Подготовтесь к sig11"
+#define MSGTR_CODEC_BUF_OVERFLOW "AC вызвал переполнение буфера. Подготовтесь к sig11"
 #define MSGTR_CODEC_CANT_LOAD_DLL "Не могу загрузить библиотеку"
 #define MSGTR_CODEC_DLL_HINT "Попытайтесь получить этот кодек с"
 #define MSGTR_CODEC_DLL_OK "Библиотека загружена успешно"
@@ -174,12 +174,12 @@ NULL
 #define MSGTR_MOVnotyetsupp "\n****** Quicktime MOV формат пока не поддерживается!!!!!!! *******\n"
 
 // dec_video.c & dec_audio.c:
-#define MSGTR_CantOpenCodec "Не смог открыть кодек\n"
-#define MSGTR_CantCloseCodec "Не смог закрыть кодек\n"
+#define MSGTR_CantOpenCodec "Не смог открыть кодек"
+#define MSGTR_CantCloseCodec "Не смог закрыть кодек"
 
 #define MSGTR_MissingDLLcodec "ОШИБКА: Не смог открыть требующийся DirectShow кодек: %s\n"
 #define MSGTR_ACMiniterror "Не смог загрузить/проинициализировать Win32/ACM AUDIO кодек (потерян DLL файл?)\n"
-#define MSGTR_MissingLAVCcodec "Не могу найти кодек '%s' в libavcodec...\n"
+#define MSGTR_MissingLAVCcodec "[libavcodec] Не могу найти кодек "
 
 #define MSGTR_NoDShowSupport "MPlayerXP был скомпилён БЕЗ поддержки directshow!\n"
 #define MSGTR_NoWfvSupport "Поддержка для win32 кодеков запрещена или недоступна на не-x86 платформах!\n"
@@ -198,12 +198,12 @@ NULL
 
 #define MSGTR_ShMemAllocFail "Не могу захватить разделяемую память"
 #define MSGTR_OutOfMemory "Нехватает памяти"
-#define MSGTR_CantAllocAudioBuf "Не могу захватить выходной буффер аудио\n"
+#define MSGTR_CantAllocAudioBuf "Не могу захватить выходной буффер аудио"
 #define MSGTR_NoMemForDecodedImage "Не достаточно памяти для буффера декодирования картинки (%ld байт)\n"
 
 #define MSGTR_AC3notvalid "Не допустимый AC3 поток.\n"
 #define MSGTR_AC3only48k "Поддерживается только 48000 Hz потоки.\n"
-#define MSGTR_UnknownAudio "Неизвестный/потерянный аудио формат, отказ от звука\n"
+#define MSGTR_UnknownAudio "Неизвестный/потерянный аудио формат, отказ от звука"
 
 // LIRC:
 #define MSGTR_SettingUpLIRC "Установка поддержки lirc..."

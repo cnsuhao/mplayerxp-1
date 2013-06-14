@@ -21,7 +21,7 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	vo_flags_e flags, unsigned int outfmt){
 
     if(vf_next_query_format(vf,IMGFMT_YV12,d_width,d_height)<=0){
-	MSG_ERR("yv12 isn't supported by next filter/vo :(\n");
+	mpxp_err<<"yv12 isn't supported by next filter/vo :("<<std::endl;
 	return 0;
     }
 

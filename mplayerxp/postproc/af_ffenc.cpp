@@ -34,12 +34,12 @@ static void print_encoders(void)
     p = first_avcodec;
     while (p) {
 	if (p->encode != NULL && p->type == CODEC_TYPE_AUDIO)
-	    MSG_INFO("%s ",p->name);
+	    mpxp_info<<p->name<<" ";
 	p = p->next;
     }
-    MSG_INFO("\n");
+    mpxp_info<<<<std::endl;
 #endif
-    MSG_INFO("Not ready yet!!!\n");
+    mpxp_info<<"Not ready yet!!!"<<std::endl;
 }
 
 static uint32_t find_atag(const char *codec)
@@ -92,7 +92,7 @@ static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
 	return MPXP_Error;
     }
     if(!(s->lavc_codec=avcodec_find_encoder_by_name(s->cname))) {
-	MSG_ERR("Can't find encoder %s in libavcodec\n",s->cname);
+	mpxp_err<<"Can't find encoder "<<s->cname<<" in libavcodec"<<std::endl;
 	return MPXP_Error;
     }
     s->lavc_context=avcodec_alloc_context3(s->lavc_codec);
@@ -103,7 +103,7 @@ static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
     s->lavc_context->sample_fmt = AV_SAMPLE_FMT_S16;
     /* af_open it */
     if (avcodec_open(s->lavc_context, s->lavc_codec) < 0) {
-	MSG_ERR("could not af_open codec %s with libavcodec\n",s->cname);
+	mpxp_err<<"could not af_open codec "<<s->cname<<" with libavcodec"<<std::endl;
 	return MPXP_Error;
     }
     s->frame_size = s->lavc_context->frame_size*arg->nch*2/*bps*/;
@@ -112,8 +112,7 @@ static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
     af->conf.rate   = arg->rate;
     af->conf.nch    = arg->nch;
     af->conf.format = afmt2mpaf(find_atag(s->cname)<<16);
-    MSG_V("[af_ffenc] Was reinitialized, rate=%iHz, nch = %i, format = 0x%08X\n"
-	,af->conf.rate,af->conf.nch,af->conf.format);
+    mpxp_v<<"[af_ffenc] Was reinitialized, rate="<<af->conf.rate<<"Hz, nch = "<<af->conf.nch<<", format = 0x"<<std::hex<<af->conf.format<<std::endl;
     return MPXP_Ok;
 }
 // Initialization and runtime control_af
@@ -122,7 +121,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
   af_ffenc_t *s=reinterpret_cast<af_ffenc_t*>(af->setup);
   switch(cmd){
   case AF_CONTROL_SHOWCONF:
-    MSG_INFO("[af_ffenc] in use [%s %u]\n",s->cname,s->brate);
+    mpxp_info<<"[af_ffenc] in use ["<<s->cname<<" "<<s->brate<<"]"<<std::endl;
     return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     char *comma;
@@ -172,7 +171,7 @@ static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& in)
 	    memcpy(&s->tail[s->tail_size],inp,delta);
 	    ilen-=delta;
 	    olen = avcodec_encode_audio(s->lavc_context, outp, tlen, (const short *)s->tail);
-	    MSG_DBG2("encoding tail %u bytes + %u stream => %u compressed\n",s->tail_size,delta,olen);
+	    mpxp_dbg3<<"encoding tail "<<s->tail_size<<" bytes + "<<delta<<" stream => "<<olen<<" compressed"<<std::endl;
 	    inp+=delta;
 	    out.len += olen;
 	    outp+=olen;
@@ -181,7 +180,7 @@ static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& in)
 	}
 	while(ilen>=s->frame_size) {
 	    olen = avcodec_encode_audio(s->lavc_context, outp, tlen, (const short *)inp);
-	    MSG_DBG2("encoding [out %p %lu in %p %lu]=>%u compressed\n",outp,tlen,inp,ilen,olen);
+	    mpxp_dbg2<<"encoding [out "<<tlen<<" in "<<ilen<<"]=>"<<olen<<" compressed"<<std::endl;
 	    out.len += olen;
 	    inp+=s->frame_size;
 	    ilen-=s->frame_size;
@@ -190,7 +189,7 @@ static mp_aframe_t __FASTCALL__ play(af_instance_t* af,const mp_aframe_t& in)
 	}
 	delta=ilen;
 	if(delta) {
-	    MSG_DBG2("encoding append tail %lu bytes to %u existed\n",delta,s->tail_size);
+	    mpxp_dbg2<<"encoding append tail "<<delta<<" bytes to "<<s->tail_size<<" existed"<<std::endl;
 	    memcpy(&s->tail[s->tail_size],inp,delta);
 	    s->tail_size+=delta;
 	}
@@ -206,8 +205,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.d=1;
   af->mul.n=1;
-  af->setup=mp_calloc(1,sizeof(af_ffenc_t));
-  if(af->setup == NULL) return MPXP_Error;
+  af->setup=new(zeromem) af_ffenc_t;
+
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;
 }

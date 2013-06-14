@@ -56,11 +56,8 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi)
 	     !(flags & MP_IMGFIELD_TOP_FIRST)) ||
 	    (state == 1 &&
 	     flags & MP_IMGFIELD_TOP_FIRST)) {
-		MSG_WARN(
-		       "softpulldown: Unexpected field flags: state=%d top_field_first=%d repeat_first_field=%d\n",
-		       state,
-		       (flags & MP_IMGFIELD_TOP_FIRST) != 0,
-		       (flags & MP_IMGFIELD_REPEAT_FIRST) != 0);
+		mpxp_warn<<"softpulldown: Unexpected field flags: state="<<state<<" top_field_first="
+		    <<((flags & MP_IMGFIELD_TOP_FIRST) != 0)<<" repeat_first_field="<<((flags & MP_IMGFIELD_REPEAT_FIRST) != 0)<<std::endl;
 		state ^= 1;
 	}
 
@@ -137,13 +134,13 @@ static int __FASTCALL__ vf_config(vf_instance_t* vf,
 	int width, int height, int d_width, int d_height,
 	vo_flags_e flags, unsigned int outfmt)
 {
-	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
+    return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
 static void __FASTCALL__ uninit(vf_instance_t* vf)
 {
-	MSG_INFO( "softpulldown: %lld frames in, %lld frames out\n", vf->priv->in, vf->priv->out);
-	delete vf->priv;
+    mpxp_info<<"softpulldown: "<<vf->priv->in<<" frames in, "<<vf->priv->out<<" frames out"<<std::endl;
+    delete vf->priv;
 }
 
 static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args)

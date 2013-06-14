@@ -69,7 +69,7 @@ AD_Interface::AD_Interface(sh_audio_t& sh)
 	    sh.o_bps=0;
 	    priv.mpadec=ai->query_interface(sh,priv.afi,sh.wtag);
 	} catch(const bad_format_exception&) {
-	    MSG_ERR(MSGTR_CODEC_BAD_AFAMILY,ac, afm);
+	    mpxp_err<<MSGTR_CODEC_BAD_AFAMILY<<" "<<ac<<" ("<<afm<<")"<<std::endl;
 	    goto bye;
 	}
     }
@@ -119,7 +119,7 @@ bye:
 
     sh.a_buffer=new char [sh.a_buffer_size];
     if(!sh.a_buffer) {
-	MSG_ERR(MSGTR_CantAllocAudioBuf);
+	mpxp_err<<MSGTR_CantAllocAudioBuf<<std::endl;
 	goto bye;
     }
     sh.a_buffer_len=0;
@@ -127,7 +127,7 @@ bye:
 
     if(!sh.nch || !sh.rate) {
 	mpxp_v<<"audio format wrong: nch="<<sh.nch<<" rate="<<sh.rate<<std::endl;
-	MSG_WARN(MSGTR_UnknownAudio);
+	mpxp_warn<<MSGTR_UnknownAudio<<std::endl;
 	goto bye;
     }
 
@@ -137,7 +137,7 @@ bye:
 	static int warned=0;
 	if(!warned) {
 	    warned=1;
-	    MSG_WARN(MSGTR_CODEC_INITAL_AV_RESYNC);
+	    mpxp_warn<<MSGTR_CODEC_INITIAL_AV_RESYNC<<std::endl;
 	}
     } else if(mpxp_context().engine().xp_core->initial_apts_corr.need_correction==1) {
 	mpxp_context().engine().xp_core->initial_apts += ((float)(mpxp_context().engine().xp_core->initial_apts_corr.pts_bytes-mpxp_context().engine().xp_core->initial_apts_corr.nbytes))/(float)sh.i_bps;
@@ -291,7 +291,7 @@ unsigned AD_Interface::run(unsigned char *buf,unsigned minlen,unsigned maxlen,un
 
     if(!sh.inited) return 0; // no codec
 
-    if(minlen>maxlen) MSG_WARN(MSGTR_CODEC_XP_INT_ERR,minlen,maxlen);
+    if(minlen>maxlen) mpxp_warn<<MSGTR_CODEC_XP_INT_ERR<<": "<<minlen<<">"<<maxlen<<std::endl;
     if(sh.af_buffer_len) {
 	cp_size=std::min(buflen,sh.af_buffer_len);
 	memcpy(buf,sh.af_buffer,cp_size);
@@ -309,7 +309,7 @@ unsigned AD_Interface::run(unsigned char *buf,unsigned minlen,unsigned maxlen,un
     if(sh.af_bps>sh.o_bps)
 	maxlen=std::min(maxlen,buflen*sh.o_bps/sh.af_bps);
     len=priv.mpadec->run(buf, minlen, maxlen,pts);
-    if(len>buflen) MSG_WARN(MSGTR_CODEC_BUF_OVERFLOW,sh.codec->driver_name,len,buflen);
+    if(len>buflen) mpxp_warn<<"["<<sh.codec->driver_name<<"] "<<MSGTR_CODEC_BUF_OVERFLOW<<":"<<len<<">"<<buflen<<std::endl;
     mpxp_dbg2<<"decaudio: "<<len<<" bytes "<<pts<<" pts min "<<minlen<<" max "<<maxlen<<" buflen "<<buflen<<" o_bps="<<sh.o_bps<<" f_bps="<<sh.af_bps<<std::endl;
     if(len==0 || !priv.afi.afilter) return 0; // EOF?
     // run the filters:

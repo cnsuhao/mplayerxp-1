@@ -161,10 +161,11 @@ mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt
     int is_static=0;
     int w2=(mp_imgflag&MP_IMGFLAG_ACCEPT_ALIGNED_STRIDE)?((w+15)&(~15)):w;
     unsigned xp_idx=idx;
-    MSG_DBG2("vf_get_new_image(%s,0x%X,0x%X,0x%X,0x%X,0x%X) was called\n",vf->info->name,outfmt,mp_imgtype,mp_imgflag,w,h);
+    mpxp_dbg2<<"vf_get_new_image("<<vf->info->name<<",0x"<<std::hex<<outfmt<<",0x"<<std::hex<<mp_imgtype
+	<<",0x"<<std::hex<<mp_imgflag<<",0x"<<std::hex<<w<<",0x"<<std::hex<<h<<") was called"<<std::endl;
 
     if(vf->put_slice==vf_next_put_slice){
-	MSG_DBG2("passthru mode to %s\n",vf->next->info->name);
+	mpxp_dbg2<<"passthru mode to "<<vf->next->info->name<<std::endl;
 	return vf_get_new_image(vf->next,outfmt,mp_imgtype,mp_imgflag,w,h,xp_idx);
     }
     // Note: we should call libvo2 first to check if it supports direct rendering
@@ -187,25 +188,25 @@ mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt
 	smpi->flags&=MP_IMGFLAG_ALLOCATED|MP_IMGFLAG_TYPE_DISPLAYED|MP_IMGFLAGMASK_COLORS;
 	// accept restrictions & draw_slice flags only:
 	smpi->flags|=mp_imgflag&(MP_IMGFLAGMASK_RESTRICTIONS|MP_IMGFLAG_DRAW_CALLBACK);
-	MSG_DBG2("vf_get_new_image fills smpi structure. flags=0x%X\n",smpi->flags);
+	mpxp_dbg2<<"vf_get_new_image fills smpi structure. flags=0x"<<std::hex<<smpi->flags<<std::endl;
 	if(smpi->width!=w2 || smpi->height!=h){
 	    if(smpi->flags&MP_IMGFLAG_ALLOCATED){
 		if(smpi->width<w2 || smpi->height<h){
 		    // need to re-allocate buffer memory:
 		    delete smpi->planes[0];
 		    smpi->flags&=~MP_IMGFLAG_ALLOCATED;
-		    MSG_DBG2("vf.c: have to REALLOCATE buffer memory :(\n");
+		    mpxp_dbg2<<"vf.cpp: have to REALLOCATE buffer memory :("<<std::endl;
 		}
 	    }
 	    smpi->width=w2; smpi->chroma_width=(w2 + (1<<smpi->chroma_x_shift) - 1)>>smpi->chroma_x_shift;
 	    smpi->height=h; smpi->chroma_height=(h + (1<<smpi->chroma_y_shift) - 1)>>smpi->chroma_y_shift;
 	}
 	if(!smpi->bpp) smpi->setfmt(outfmt);
-	MSG_DBG2("vf_get_new_image setfmt. flags=0x%X\n",smpi->flags);
+	mpxp_dbg2<<"vf_get_new_image setfmt. flags=0x"<<std::hex<<smpi->flags<<std::endl;
 	if(!(smpi->flags&MP_IMGFLAG_ALLOCATED) && smpi->type>MP_IMGTYPE_EXPORT) {
 	    // check libvo2 first!
 	    if(vf->get_image) vf->get_image(vf,smpi);
-	    MSG_DBG2("[vf->get_image] returns xp_idx=%u\n",smpi->xp_idx);
+	    mpxp_dbg2<<"[vf->get_image] returns xp_idx="<<smpi->xp_idx<<std::endl;
 
 	    if(!(smpi->flags&MP_IMGFLAG_DIRECT)) {
 		// non-direct and not yet allocated image. allocate it!
@@ -218,7 +219,7 @@ mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt
 		    if(smpi->width!=w2) {
 			// we have to change width... check if we CAN co it:
 			int flags=vf->query_format(vf,outfmt,w,h); // should not fail
-			if(!(flags&3)) MSG_WARN("??? vf_get_new_image{vf->query_format(outfmt)} failed!\n");
+			if(!(flags&3)) mpxp_warn<<"??? vf_get_new_image{vf->query_format(outfmt)} failed!"<<std::endl;
 			if(flags&VFCAP_ACCEPT_STRIDE){
 			    smpi->width=w2;
 			    smpi->chroma_width=(w2 + (1<<smpi->chroma_x_shift) - 1)>>smpi->chroma_x_shift;
@@ -241,31 +242,30 @@ mp_image_t* __FASTCALL__ vf_get_new_image(vf_instance_t* vf, unsigned int outfmt
 		    smpi->alloc();
 	    } // if !DIRECT
 	} else {
-	    MSG_DBG2("vf_get_new_image forces xp_idx retrieving\n");
+	    mpxp_dbg2<<"vf_get_new_image forces xp_idx retrieving"<<std::endl;
 	    smpi->xp_idx=dae_curr_vdecoded(mpxp_context().engine().xp_core);
 	    smpi->flags&=~MP_IMGFLAG_ALLOCATED;
 	}
 	if(smpi->flags&MP_IMGFLAG_DRAW_CALLBACK && vf->start_slice)
 	    vf->start_slice(vf,*smpi);
 	if(!(smpi->flags&MP_IMGFLAG_TYPE_DISPLAYED)){
-	    MSG_DBG2("*** [%s] %s%s mp_image_t, %dx%dx%dbpp %s %s, %d bytes\n",
-		vf->info->name,
-		(smpi->type==MP_IMGTYPE_EXPORT)?"Exporting":
-		((smpi->flags&MP_IMGFLAG_DIRECT)?"Direct Rendering":"Allocating"),
-		(smpi->flags&MP_IMGFLAG_DRAW_CALLBACK)?" (slices)":"",
-		smpi->width,smpi->height,smpi->bpp,
-		(smpi->flags&MP_IMGFLAG_YUV)?"YUV":((smpi->flags&MP_IMGFLAG_SWAPPED)?"BGR":"RGB"),
-		(smpi->flags&MP_IMGFLAG_PLANAR)?"planar":"packed",
-		smpi->bpp*smpi->width*smpi->height/8);
-	    MSG_DBG2("(imgfmt: %x, planes: %x,%x,%x strides: %d,%d,%d, chroma: %dx%d, shift: h:%d,v:%d)\n",
-		smpi->imgfmt, smpi->planes[0], smpi->planes[1], smpi->planes[2],
-		smpi->stride[0], smpi->stride[1], smpi->stride[2],
-		smpi->chroma_width, smpi->chroma_height, smpi->chroma_x_shift, smpi->chroma_y_shift);
+	    mpxp_dbg2<<"*** ["<<vf->info->name<<"] "<<((smpi->type==MP_IMGTYPE_EXPORT)?"Exporting":
+		((smpi->flags&MP_IMGFLAG_DIRECT)?"Direct Rendering":"Allocating"))
+		<<((smpi->flags&MP_IMGFLAG_DRAW_CALLBACK)?" (slices)":"")
+		<<" mp_image_t, "<<smpi->width<<"x"<<smpi->height<<"x"<<smpi->bpp
+		<<"bpp "<<((smpi->flags&MP_IMGFLAG_YUV)?"YUV":((smpi->flags&MP_IMGFLAG_SWAPPED)?"BGR":"RGB"))
+		<<" "<<((smpi->flags&MP_IMGFLAG_PLANAR)?"planar":"packed")<<", "
+		<<(smpi->bpp*smpi->width*smpi->height/8)<<" bytes"<<std::endl;
+	    mpxp_dbg2<<"(imgfmt: "<<std::hex<<smpi->imgfmt<<", planes: "<<std::hex<<smpi->planes[0]
+		<<","<<std::hex<<smpi->planes[1]<<","<<std::hex<<smpi->planes[2]
+		<<" strides: "<<smpi->stride[0]<<","<<smpi->stride[1]<<","<<smpi->stride[2]
+		<<", chroma: "<<smpi->chroma_width<<"x"<<smpi->chroma_height
+		<<", shift: h:"<<smpi->chroma_x_shift<<",v:"<<smpi->chroma_y_shift<<")"<<std::endl;
 	    smpi->flags|=MP_IMGFLAG_TYPE_DISPLAYED;
 	}
     }
     check_pin("vfilter",vf->pin,VF_PIN);
-    MSG_DBG2("vf_get_new_image returns xp_idx=%i\n",smpi->xp_idx);
+    mpxp_dbg2<<"vf_get_new_image returns xp_idx="<<smpi->xp_idx<<std::endl;
     return smpi;
 }
 
@@ -297,7 +297,7 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,const char
     int i;
     for(i=0;;i++){
 	if(filter_list[i]==&vf_info_null){
-	    MSG_ERR("Can't find video filter: %s\n",name);
+	    mpxp_err<<"Can't find video filter: "<<name<<std::endl;
 	    return NULL; // no such filter!
 	}
 	if(!strcmp(filter_list[i]->name,name)) break;
@@ -319,13 +319,13 @@ static vf_instance_t* __FASTCALL__ vf_open_plugin(vf_instance_t* next,const char
     if(next) next->prev=vf;
     if(vf->info->open(vf,(char*)args)==MPXP_Ok) return vf; // Success!
     delete vf;
-    MSG_ERR("Can't open video filter: %s\n",name);
+    mpxp_err<<"Can't open video filter: "<<name<<std::endl;
     return NULL;
 }
 
 vf_instance_t* __FASTCALL__ vf_open_filter(vf_instance_t* next,const char *name,const char *args,libinput_t&libinput,const vf_conf_t* conf){
     if(strcmp(name,"vo2")) {
-	MSG_V("Open video filter: [%s] <%ux%u %s>\n", name,conf->w,conf->h,vo_format_name(conf->fourcc));
+	mpxp_v<<"Open video filter: ["<<name<<"] <"<<conf->w<<"x"<<conf->h<<" "<<vo_format_name(conf->fourcc)<<">"<<std::endl;
     }
     if(next) check_pin("vfilter",next->pin,VF_PIN);
     return vf_open_plugin(next,name,args,libinput,conf);
@@ -339,7 +339,7 @@ unsigned int __FASTCALL__ vf_match_csp(vf_instance_t** vfp,unsigned int* list,co
     int ret;
     if((p=list)) while(*p){
 	ret=vf->query_format(vf,*p,conf->w,conf->h);
-	MSG_V("[%s] query(%s) -> %d\n",vf->info->name,vo_format_name(*p),ret&3);
+	mpxp_v<<"["<<vf->info->name<<"] query("<<vo_format_name(*p)<<") -> "<<(ret&3)<<std::endl;
 	if(ret&2){ best=*p; break;} // no conversion -> bingo!
 	if(ret&1 && !best) best=*p; // best with conversion
 	++p;
@@ -355,7 +355,7 @@ unsigned int __FASTCALL__ vf_match_csp(vf_instance_t** vfp,unsigned int* list,co
     // try the list again, now with "scaler" :
     if((p=list)) while(*p){
 	ret=vf->query_format(vf,*p,conf->w,conf->h);
-	MSG_V("[%s] query(%s) -> %d\n",vf->info->name,vo_format_name(*p),ret&3);
+	mpxp_v<<"["<<vf->info->name<<"] query("<<vo_format_name(*p)<<") -> "<<(ret&3)<<std::endl;
 	if(ret&2){ best=*p; break;} // no conversion -> bingo!
 	if(ret&1 && !best) best=*p; // best with conversion
 	++p;
@@ -391,11 +391,11 @@ int __FASTCALL__ vf_next_config(vf_instance_t* vf,
 	vf->next=vf2;
 	flags=vf_next_query_format(vf->next,outfmt,d_width,d_height);
 	if(!flags){
-	    MSG_ERR("Can't find colorspace for %s\n",vo_format_name(outfmt));
+	    mpxp_err<<"Can't find colorspace for "<<vo_format_name(outfmt)<<std::endl;
 	    return 0; // FAIL
 	}
     }
-    MSG_V("REQ: flags=0x%X  req=0x%X  \n",flags,vf->default_reqs);
+    mpxp_v<<"REQ: flags=0x"<<std::hex<<flags<<"  req=0x"<<std::hex<<vf->default_reqs<<std::endl;
     miss=vf->default_reqs - (flags&vf->default_reqs);
     if(miss&VFCAP_ACCEPT_STRIDE){
 	// vf requires stride support but vf->next doesn't support it!
@@ -471,7 +471,7 @@ vf_instance_t* __FASTCALL__ vf_init_filter(libinput_t& libinput,const vf_conf_t*
 	else vf_last=vf_name;
 	arg=strchr(vf_last,'=');
 	if(arg) { *arg=0; arg++; }
-	MSG_V("Attach filter %s\n",vf_last);
+	mpxp_v<<"Attach filter "<<vf_last<<std::endl;
 	vfi=vf_open_plugin(vfi,vf_last,arg,libinput,conf);
 	if(!vfi) vfi=vfi_prev;
 	vfi_prev=vfi;
@@ -492,10 +492,11 @@ vf_instance_t* __FASTCALL__ vf_init_filter(libinput_t& libinput,const vf_conf_t*
     while(1)
     {
 	if(!vfi) break;
-	MSG_V("%s(%s, %s) ",vfi->info->name,vfi->prev?vfi->prev->info->name:"NULL",vfi->next?vfi->next->info->name:"NULL");
+	mpxp_v<<vfi->info->name<<"("<<(vfi->prev?vfi->prev->info->name:"NULL")
+	    <<", "<<(vfi->next?vfi->next->info->name:"NULL")<<")"<<std::endl;
 	vfi=vfi->next;
     }
-    MSG_V("\n");
+    mpxp_v<<std::endl;
 #endif
     return vfi_first;
 }
@@ -503,13 +504,13 @@ vf_instance_t* __FASTCALL__ vf_init_filter(libinput_t& libinput,const vf_conf_t*
 void __FASTCALL__ vf_showlist(vf_instance_t*vfi)
 {
   vf_instance_t *next=vfi;
-  MSG_INFO("[libvf] Using video filters chain:\n");
+  mpxp_info<<"[libvf] Using video filters chain:"<<std::endl;
   do{
-	MSG_INFO("  ");
+	mpxp_info<<"  ";
 	if(next->print_conf) next->print_conf(next);
 	else
-	    MSG_INFO("[vf_%s] %s [%dx%d,%s] \n",next->info->name,next->info->info,
-			next->conf.w,next->conf.h,vo_format_name(next->conf.fourcc));
+	    mpxp_info<<"[vf_"<<next->info->name<<"] "<<next->info->info
+		<<" ["<<next->conf.w<<"x"<<next->conf.h<<","<<vo_format_name(next->conf.fourcc)<<"]"<<std::endl;
 	next=next->next;
   }while(next);
 }
@@ -519,7 +520,7 @@ unsigned __FASTCALL__ vf_query_flags(vf_instance_t*vfi)
   unsigned flags=0xFFFFFFFF;
   vf_instance_t *next=vfi;
   do{
-	MSG_DBG2("[vf_%s] flags: %08X\n",next->info->name,next->info->flags);
+	mpxp_dbg2<<"[vf_"<<next->info->name<<"] flags: "<<std::hex<<next->info->flags<<std::endl;
 	flags &= next->info->flags;
 	next=next->next;
   }while(next);
@@ -542,17 +543,13 @@ static int __FASTCALL__ dummy_config(vf_instance_t* vf,
 static void vf_report_chain(vf_instance_t* first)
 {
     vf_instance_t *_this=first;
-    MSG_V("vf->first: %ix%i@%s\n",first->conf.w,first->conf.h,vo_format_name(first->conf.fourcc));
+    mpxp_v<<"vf->first: "<<first->conf.w<<"x"<<first->conf.h<<"@"<<vo_format_name(first->conf.fourcc)<<std::endl;
     while(1)
     {
 	if(!_this) break;
-	MSG_V("[%ux%i@%s](%s<-%s->%s)\n"
-	    ,_this->conf.w
-	    ,_this->conf.h
-	    ,vo_format_name(_this->conf.fourcc)
-	    ,_this->prev?_this->prev->info->name:"NULL"
-	    ,_this->info->name
-	    ,_this->next?_this->next->info->name:"NULL");
+	mpxp_v<<"["<<_this->conf.w<<"x"<<_this->conf.h<<"@"<<vo_format_name(_this->conf.fourcc)
+	    <<"]("<<(_this->prev?_this->prev->info->name:"NULL")<<"<-"<<_this->info->name
+	    <<"->"<<(_this->next?_this->next->info->name:"NULL")<<")"<<std::endl;
 	_this=_this->next;
     }
 }
@@ -563,10 +560,9 @@ vf_instance_t* __FASTCALL__ vf_reinit_vo(vf_instance_t* first,unsigned w,unsigne
     vf_instance_t* _this=first;
     vf_instance_t* _first=first;
     unsigned sw,sh,sfourcc;
-    MSG_V("Call vf_reinit_vo <%s: %ix%i@%s> -> <vo: %ix%i@%s>\n"
-	,_first->info->name
-	,_first->conf.w,_first->conf.h,vo_format_name(_first->conf.fourcc)
-	,w,h,vo_format_name(fmt));
+    mpxp_v<<"Call vf_reinit_vo <"<<_first->info->name<<": "<<_first->conf.w
+	<<"x"<<_first->conf.h<<"@"<<vo_format_name(_first->conf.fourcc)
+	<<"> -> <vo: "<<w<<"x"<<h<<"@"<<vo_format_name(fmt)<<">"<<std::endl;
     _this=first;
     _saved=NULL;
     while(1)
@@ -582,7 +578,7 @@ vf_instance_t* __FASTCALL__ vf_reinit_vo(vf_instance_t* first,unsigned w,unsigne
     if(strcmp(_this->info->name,"fmtcvt")==0 || strcmp(_this->info->name,"scale")==0)
     {
 	vf_instance_t* i;
-	MSG_V("Unlinking 'fmtcvt'\n");
+	mpxp_v<<"Unlinking 'fmtcvt'"<<std::endl;
 	i=_this->prev;
 	if(i) i->next=_this->next;
 	else first=_this->next;
@@ -600,24 +596,21 @@ vf_instance_t* __FASTCALL__ vf_reinit_vo(vf_instance_t* first,unsigned w,unsigne
 	_this=_this->next;
     }
     _this=_saved;
-    if(_this->prev)
-    {
+    if(_this->prev) {
 	sw=_this->prev->conf.w;
 	sh=_this->prev->conf.h;
 	sfourcc=_this->prev->conf.fourcc;
-	MSG_V("Using(%s) %ix%i@%s\n",_this->prev->info->name,sw,sh,vo_format_name(sfourcc));
-    }
-    else
-    {
+	mpxp_v<<"Using("<<_this->prev->info->name<<") "<<sw<<"x"<<sh<<"@"<<vo_format_name(sfourcc)<<std::endl;
+    } else {
 	sw=_first->conf.w;
 	sh=_first->conf.h;
 	sfourcc=_first->conf.fourcc;
-	MSG_V("Using(first:%s) %ix%i@%s\n",first->info->name,sw,sh,vo_format_name(sfourcc));
+	mpxp_v<<"Using(first:"<<first->info->name<<") "<<sw<<"x"<<sh<<"@"<<vo_format_name(sfourcc)<<std::endl;
     }
     if(w==sw && h==sh && fmt==sfourcc); /* nothing todo */
     else
     {
-	MSG_V("vf_reinit->config_vf %i %i %s=> %i %i %s\n",sw,sh,vo_format_name(sfourcc),w,h,vo_format_name(fmt));
+	mpxp_v<<"vf_reinit->config_vf "<<sw<<" "<<sh<<" "<<vo_format_name(sfourcc)<<"=> "<<w<<" "<<h<<" "<<vo_format_name(fmt)<<std::endl;
 	_saved=_this->prev;
 	vf_scaler=vf_open_filter(_this,(w==sw&&h==sh)?"fmtcvt":"scale",NULL,_this->libinput,&_first->conf);
 	if(vf_scaler)
@@ -629,14 +622,14 @@ vf_instance_t* __FASTCALL__ vf_reinit_vo(vf_instance_t* first,unsigned w,unsigne
 				w,h,
 				VOFLAG_SWSCALE,
 				sfourcc)==0){
-		MSG_WARN(MSGTR_CannotInitVO);
+		mpxp_warn<<MSGTR_CannotInitVO<<std::endl;
 		vf_scaler=NULL;
 	    }
 	    if(vf_scaler) vf_scaler->next->config_vf=sfnc;
 	}
 	if(vf_scaler)
 	{
-	    MSG_V("Insert scaler before '%s' after '%s'\n",_this->info->name,_saved?_saved->info->name:"NULL");
+	    mpxp_v<<"Insert scaler before '"<<_this->info->name<<"' after '"<<(_saved?_saved->info->name:"NULL")<<"'"<<std::endl;
 	    vf_scaler->prev=_saved;
 	    if(_saved)	_saved->next=vf_scaler;
 	    else	first=vf_scaler;
@@ -668,17 +661,17 @@ namespace	usr {
 
 void vf_help(){
     int i=0;
-    MSG_INFO( "Available video filters:\n");
+    mpxp_info<<"Available video filters:"<<std::endl;
     while(filter_list[i]){
-	MSG_INFO("\t%-10s: %s\n",filter_list[i]->name,filter_list[i]->info);
+	mpxp_info<<" "<<std::setw(10)<<filter_list[i]->name<<": "<<filter_list[i]->info<<std::endl;
 	i++;
     }
-    MSG_INFO("\n");
+    mpxp_info<<std::endl;
 }
 
 vf_stream_t* vf_init(libinput_t& libinput,const vf_conf_t* conf) {
     if(!sws_init()) {
-	MSG_ERR("MPlayerXP requires working copy of libswscaler\n");
+	mpxp_err<<"MPlayerXP requires working copy of libswscaler"<<std::endl;
 	throw std::runtime_error("libswscaler");
     }
     vf_stream_t* s = new(zeromem) vf_stream_t(libinput);
@@ -696,7 +689,7 @@ void vf_uninit(vf_stream_t* s) { vf_uninit_filter_chain(s->first); delete s; }
 
 void __FASTCALL__ vf_reinit_vo(vf_stream_t* s,unsigned w,unsigned h,unsigned fmt,int reset_cache) {
     vf_instance_t* first=s->first;
-    MSG_V("[stream: vf_reinit_vo]: %p\n",first);
+    mpxp_v<<"[stream: vf_reinit_vo]"<<std::endl;
     if(first) s->first=vf_reinit_vo(first,w,h,fmt,reset_cache);
 }
 

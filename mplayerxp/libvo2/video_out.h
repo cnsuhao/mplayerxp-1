@@ -205,7 +205,7 @@ namespace	usr {
 	    Opaque		unusable;
 	    vo_flags_e		flags;
 	    /* subtitle support */
-	    char*		osd_text;
+	    std::string		osd_text;
 	    any_t*		spudec;
 	    any_t*		vobsub;
 	    font_desc_t*	font;

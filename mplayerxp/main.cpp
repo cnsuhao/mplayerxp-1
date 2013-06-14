@@ -3,6 +3,7 @@
 using namespace	usr;
 /* MplayerXP (C) 2000-2002. by A'rpi/ESP-team (C) 2002. by Nickols_K */
 #include <algorithm>
+#include <sstream>
 #include <iostream>
 #include <iomanip>
 #include <map>
@@ -558,37 +559,41 @@ void show_long_help(const M_Config& cfg,const std::map<std::string,std::string>&
 void update_osd( float v_pts )
 {
     MPXPSystem& MPXPSys=*mpxp_context().engine().MPXPSys;
-    static char osd_text_buffer[64];
     static int osd_last_pts=-303;
 //================= Update OSD ====================
   if(mp_conf.osd_level>=2){
       int pts=(mp_conf.osd_level==3&&MPXPSys.demuxer()->movi_length!=UINT_MAX)?MPXPSys.demuxer()->movi_length-v_pts:v_pts;
       int addon=(mp_conf.osd_level==3&&MPXPSys.demuxer()->movi_length!=UINT_MAX)?-1:1;
-      char osd_text_tmp[64];
+      std::ostringstream oss;
       if(pts==osd_last_pts-addon)
       {
 	if(mp_conf.osd_level==3&&MPXPSys.demuxer()->movi_length!=UINT_MAX) ++pts;
 	else --pts;
       }
       else osd_last_pts=pts;
-      mpxp_context().video().output->osd_text=osd_text_buffer;
       if (MPXPSys.osd_show_framedrop) {
-	  sprintf(osd_text_tmp, "Framedrop: %s",mp_conf.frame_dropping>1?"hard":mp_conf.frame_dropping?"vo":"none");
+	  oss<<"Framedrop: "<<(mp_conf.frame_dropping>1?"hard":mp_conf.frame_dropping?"vo":"none");
 	  MPXPSys.osd_show_framedrop--;
       } else
 #ifdef ENABLE_DEC_AHEAD_DEBUG
-	  if(mp_conf.verbose) sprintf(osd_text_tmp,"%c %02d:%02d:%02d",MPXPSys.osd_function,pts/3600,(pts/60)%60,pts%60);
-	  else sprintf(osd_text_tmp,"%c %02d:%02d:%02d",MPXPSys.osd_function,pts/3600,(pts/60)%60,pts%60);
+	  if(mp_conf.verbose) oss<<MPXPSys.osd_function<<" "<<std::setfill('0')<<std::setw(2)<<(pts/3600)
+				    <<std::setfill('0')<<std::setw(2)<<(pts/60)
+				    <<std::setfill('0')<<std::setw(2)<<(pts%60);
+	  else  oss<<MPXPSys.osd_function<<" "<<std::setfill('0')<<std::setw(2)<<(pts/3600)
+		    <<" "<<std::setfill('0')<<std::setw(2)<<((pts/60)%60)
+		    <<" "<<std::setfill('0')<<std::setw(2)<<(pts%60);
 #else
-	  sprintf(osd_text_tmp,"%c %02d:%02d:%02d",MPXPSys.osd_function,pts/3600,(pts/60)%60,pts%60);
+	    oss<<MPXPSys.osd_function<<" "<<std::setfill('0')<<std::setw(2)<<(pts/3600)
+		<<" "<<std::setfill('0')<<std::setw(2)<<((pts/60)%60)
+		<<" "<<std::setfill('0')<<std::setw(2)<<(pts%60);
 #endif
-      if(strcmp(mpxp_context().video().output->osd_text, osd_text_tmp)) {
-	      strcpy(mpxp_context().video().output->osd_text, osd_text_tmp);
-	      vo_osd_changed(OSDTYPE_OSD);
+      if(mpxp_context().video().output->osd_text!=oss.str()) {
+	    mpxp_context().video().output->osd_text=oss.str();
+	    vo_osd_changed(OSDTYPE_OSD);
       }
   } else {
-      if(mpxp_context().video().output->osd_text) {
-      mpxp_context().video().output->osd_text=NULL;
+      if(!mpxp_context().video().output->osd_text.empty()) {
+      mpxp_context().video().output->osd_text.clear();
 	  vo_osd_changed(OSDTYPE_OSD);
       }
   }
@@ -1871,14 +1876,33 @@ main:
 	if(input_state.next_file) goto goto_next_file;
 
 	if (mp_conf.seek_to_sec) {
-	    int a,b; float d;
+	    int a,b;
+	    float d;
+	    char c;
+	    int ok=1;
+	    std::istringstream iss(mp_conf.seek_to_sec);
 
-	    if (sscanf(mp_conf.seek_to_sec, "%d:%d:%f", &a,&b,&d)==3)
-		seek_args.secs += 3600*a +60*b +d ;
-	    else if (sscanf(mp_conf.seek_to_sec, "%d:%f", &a, &d)==2)
-		seek_args.secs += 60*a +d;
-	    else if (sscanf(mp_conf.seek_to_sec, "%f", &d)==1)
-		seek_args.secs += d;
+	    iss>>a; iss>>c;
+	    if(!iss.good() || c!=':') ok=0;
+	    iss>>b; iss>>c;
+	    if(!iss.good() || c!=':') ok=0;
+	    iss>>d;
+	    if(!iss.good()) ok=0;
+	    if (ok) seek_args.secs += 3600*a +60*b +d ;
+	    else {
+		ok=1;
+		iss.str(mp_conf.seek_to_sec);
+		iss>>a; iss>>c;
+		if(!iss.good() || c!=':') ok=0;
+		iss>>b;
+		if(!iss.good()) ok=0;
+		if (ok)	seek_args.secs += 60*a +d;
+		else {
+		    iss.str(mp_conf.seek_to_sec);
+		    iss>>d;
+		    if (iss.good()) seek_args.secs += d;
+		}
+	    }
 	    mp_conf.seek_to_sec = NULL;
 	}
   /* Looping. */

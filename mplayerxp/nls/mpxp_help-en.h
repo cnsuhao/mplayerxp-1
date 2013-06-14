@@ -133,7 +133,7 @@ NULL
 #define MSGTR_DumpSelectedSteramMissing "dump: FATAL: selected stream missing!\n"
 #endif
 #ifndef MSGTR_CantOpenDumpfile
-#define MSGTR_CantOpenDumpfile "Can't open dump file!!!\n"
+#define MSGTR_CantOpenDumpfile "Can't open dump file"
 #endif
 #ifndef MSGTR_StreamDumped
 #define MSGTR_StreamDumped "stream dumped :)\n"
@@ -169,7 +169,7 @@ NULL
 #define MSGTR_CantFindVideoCodec "Can't find codec for video format"
 #endif
 #ifndef MSGTR_VOincompCodec
-#define MSGTR_VOincompCodec "Sorry, selected video_out device is incompatible with this codec.\n"
+#define MSGTR_VOincompCodec "Sorry, selected video_out device is incompatible with this codec."
 #endif
 #ifndef MSGTR_CouldntInitVideoCodec
 #define MSGTR_CouldntInitVideoCodec "FATAL: Couldn't initialize video codec :(\n"
@@ -181,32 +181,32 @@ NULL
 #define MSGTR_CantCreateEncodeFile "Cannot create file for encoding\n"
 #endif
 #ifndef MSGTR_CannotInitVO
-#define MSGTR_CannotInitVO "FATAL: Cannot initialize video driver!\n"
+#define MSGTR_CannotInitVO "FATAL: Cannot initialize video driver!"
 #endif
 #ifndef MSGTR_CannotInitAO
 #define MSGTR_CannotInitAO "couldn't open/init audio device -> NOSOUND\n"
 #endif
 
-#ifndef MSGTR_CODEC_INITAL_AV_RESYNC
-#define MSGTR_CODEC_INITAL_AV_RESYNC "i_bps==0!!! You may have initial A-V resync\nUse '-' and '+' keys to supress that\n"
+#ifndef MSGTR_CODEC_INITIAL_AV_RESYNC
+#define MSGTR_CODEC_INITIAL_AV_RESYNC "i_bps==0!!! You may have initial A-V resync\nUse '-' and '+' keys to supress that"
 #endif
 #ifndef MSGTR_CODEC_CANT_INITA
 #define MSGTR_CODEC_CANT_INITA "ADecoder init failed :(\n"
 #endif
 #ifndef MSGTR_CODEC_CANT_INITV
-#define MSGTR_CODEC_CANT_INITV "VDecoder init failed :(\n"
+#define MSGTR_CODEC_CANT_INITV "VDecoder init failed :("
 #endif
 #ifndef MSGTR_CODEC_CANT_PREINITA
 #define MSGTR_CODEC_CANT_PREINITA "ADecoder preinit failed :(\n"
 #endif
 #ifndef MSGTR_CODEC_BAD_AFAMILY
-#define MSGTR_CODEC_BAD_AFAMILY "Requested audio codec family [%s] (afm=%s) not available (enable it at compile time!)\n"
+#define MSGTR_CODEC_BAD_AFAMILY "Requested audio codec family not available"
 #endif
 #ifndef MSGTR_CODEC_XP_INT_ERR
-#define MSGTR_CODEC_XP_INT_ERR "decaudio: xp-core internal error %i>%i. Be ready to sig11...\n"
+#define MSGTR_CODEC_XP_INT_ERR "decaudio: xp-core internal error. Be ready to sig11"
 #endif
 #ifndef MSGTR_CODEC_BUF_OVERFLOW
-#define MSGTR_CODEC_BUF_OVERFLOW "AC [%s] causes buffer overflow %i>%i. Be ready to sig11...\n"
+#define MSGTR_CODEC_BUF_OVERFLOW "AC causes buffer overflow. Be ready to sig11"
 #endif
 #ifndef MSGTR_CODEC_CANT_LOAD_DLL
 #define MSGTR_CODEC_CANT_LOAD_DLL "Can't load library"
@@ -369,10 +369,10 @@ NULL
 
 // dec_video.c & dec_audio.c:
 #ifndef MSGTR_CantOpenCodec
-#define MSGTR_CantOpenCodec "could not open codec\n"
+#define MSGTR_CantOpenCodec "could not open codec"
 #endif
 #ifndef MSGTR_CantCloseCodec
-#define MSGTR_CantCloseCodec "could not close codec\n"
+#define MSGTR_CantCloseCodec "could not close codec"
 #endif
 
 #ifndef MSGTR_MissingDLLcodec
@@ -382,7 +382,7 @@ NULL
 #define MSGTR_ACMiniterror "Could not load/initialize Win32/ACM AUDIO codec (missing DLL file?)\n"
 #endif
 #ifndef MSGTR_MissingLAVCcodec
-#define MSGTR_MissingLAVCcodec "Can't find codec '%s' in libavcodec...\n"
+#define MSGTR_MissingLAVCcodec "[libavcodec] Can't find codec "
 #endif
 
 #ifndef MSGTR_NoDShowSupport
@@ -433,7 +433,7 @@ NULL
 #define MSGTR_OutOfMemory "Out of memory"
 #endif
 #ifndef MSGTR_CantAllocAudioBuf
-#define MSGTR_CantAllocAudioBuf "Cannot allocate audio out buffer\n"
+#define MSGTR_CantAllocAudioBuf "Cannot allocate audio out buffer"
 #endif
 #ifndef MSGTR_NoMemForDecodedImage
 #define MSGTR_NoMemForDecodedImage "not enough memory for decoded picture buffer (%ld bytes)\n"
@@ -446,7 +446,7 @@ NULL
 #define MSGTR_AC3only48k "Only 48000 Hz streams supported.\n"
 #endif
 #ifndef MSGTR_UnknownAudio
-#define MSGTR_UnknownAudio "Unknown/missing audio format, using nosound\n"
+#define MSGTR_UnknownAudio "Unknown/missing audio format, using nosound"
 #endif
 
 // LIRC:

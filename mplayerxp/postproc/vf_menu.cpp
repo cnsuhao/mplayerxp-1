@@ -55,7 +55,7 @@ static void __FASTCALL__ set_menu(vf_priv_t * priv,const char *name)
 	menu_t* l = priv->current;
 	priv->current = menu_open(menu,priv->libinput);
 	if(!priv->current) {
-	    MSG_WARN("[vf_menu] Failed to open menu: %s\n",menu);
+	    mpxp_warn<<"[vf_menu] Failed to open menu: "<<menu<<std::endl;
 	    priv->current = l;
 	    priv->current->show = 0;
 	} else {
@@ -80,13 +80,13 @@ static int cmd_filter(mp_cmd_t* cmd, int paused, vf_priv_t * priv)
 	break;
     case MP_CMD_MENU : {  // Convert txt cmd from the users into libmenu stuff
 	char* arg = cmd->args[0].v.s;
-	if(!priv->current) MSG_WARN("[vf_menu] menu was not initialized\n");
+	if(!priv->current) mpxp_warn<<"[vf_menu] menu was not initialized"<<std::endl;
 	if(!(strcmp(arg,"enter") == 0)) priv->current->show = 1;
 	else
 	if(!(strcmp(arg,"hide") == 0)) priv->current->show = 0;
 	else
-	    MSG_WARN("[vf_menu] Unknown menu command: %s\n",arg);
-	return 1;
+	    mpxp_warn<<"[vf_menu] Unknown menu command: "<<arg<<std::endl;
+	    return 1;
     }
     case MP_CMD_SEEK:
 	if(priv->current->show==1)

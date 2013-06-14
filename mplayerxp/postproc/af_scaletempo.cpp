@@ -233,8 +233,7 @@ static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
     int frames_stride, frames_overlap;
     int i, j;
 
-    MSG_V("[af_scaletempo] %.3f speed * %.3f scale_nominal = %.3f\n",
-	   s->speed, s->scale_nominal, s->scale);
+    mpxp_v<<"[af_scaletempo] "<<s->speed<<" speed * "<<s->scale_nominal<<" scale_nominal = "<<s->scale<<std::endl;
 
     if (s->scale == 1.0) {
       if (s->speed_tempo && s->speed_pitch)
@@ -268,7 +267,7 @@ static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
       s->buf_overlap      = (int8_t*)mp_realloc(s->buf_overlap, s->bytes_overlap);
       s->table_blend      = (int8_t*)mp_realloc(s->table_blend, s->bytes_overlap * 4);
       if(!s->buf_overlap || !s->table_blend) {
-	MSG_FATAL("[af_scaletempo] Out of memory\n");
+	mpxp_fatal<<"[af_scaletempo] Out of memory"<<std::endl;
 	return MPXP_Error;
       }
       bzero(s->buf_overlap, s->bytes_overlap);
@@ -291,7 +290,7 @@ static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
 	s->buf_pre_corr = (int8_t*)mp_realloc(s->buf_pre_corr, s->bytes_overlap);
 	s->table_window = (int8_t*)mp_realloc(s->table_window, s->bytes_overlap - nch * bps);
 	if(!s->buf_pre_corr || !s->table_window) {
-	  MSG_FATAL( "[af_scaletempo] Out of memory\n");
+	  mpxp_fatal<<"[af_scaletempo] Out of memory"<<std::endl;
 	  return MPXP_Error;
 	}
 	pw = (float*)s->table_window;
@@ -311,19 +310,13 @@ static MPXP_Rc __FASTCALL__ af_config(af_instance_t* af,const af_conf_t* arg)
       = (s->frames_search + frames_stride + frames_overlap) * bps * nch;
     s->buf_queue = (int8_t*)mp_realloc(s->buf_queue, s->bytes_queue + UNROLL_PADDING);
     if(!s->buf_queue) {
-      MSG_FATAL("[af_scaletempo] Out of memory\n");
+      mpxp_fatal<<"[af_scaletempo] Out of memory"<<std::endl;
       return MPXP_Error;
     }
 
-    MSG_V ( "[af_scaletempo] "
-	    "%.2f stride_in, %i stride_out, %i standing, "
-	    "%i overlap, %i search, %i queue\n",
-	    s->frames_stride_scaled,
-	    (int)(s->bytes_stride / nch / bps),
-	    (int)(s->bytes_standing / nch / bps),
-	    (int)(s->bytes_overlap / nch / bps),
-	    s->frames_search,
-	    (int)(s->bytes_queue / nch / bps));
+    mpxp_v<<"[af_scaletempo] "<<s->frames_stride_scaled<<" stride_in, "<<(int)(s->bytes_stride / nch / bps)
+	<<" stride_out, "<<(int)(s->bytes_standing / nch / bps)<<" standing, "<<(int)(s->bytes_overlap / nch / bps)
+	<<" overlap, "<<s->frames_search<<" search, "<<(int)(s->bytes_queue / nch / bps)<<" queue"<<std::endl;
 
     return af_test_output(af,arg);
 }
@@ -366,19 +359,19 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 	 &s->ms_search,
 	 &speedstr[0]);
     if (s->scale_nominal <= 0) {
-      MSG_ERR("[af_scaletempo] Error: scale_nominal is out of range: > 0\n");
+      mpxp_err<<"[af_scaletempo] Error: scale_nominal is out of range: > 0"<<std::endl;
       return MPXP_Error;
     }
     if (s->ms_stride <= 0) {
-      MSG_ERR("[af_scaletempo] Error: ms_stride is out of range: > 0\n");
+      mpxp_err<<"[af_scaletempo] Error: ms_stride is out of range: > 0"<<std::endl;
       return MPXP_Error;
     }
     if (s->percent_overlap < 0 || s->percent_overlap > 1) {
-      MSG_ERR("[af_scaletempo] Error: percent_overlap is out of range: [0..1]\n");
+      mpxp_err<<"[af_scaletempo] Error: percent_overlap is out of range: [0..1]"<<std::endl;
       return MPXP_Error;
     }
     if (s->ms_search < 0) {
-      MSG_ERR("[af_scaletempo] Error: ms_search is out of range: >= 0\n");
+      mpxp_err<<"[af_scaletempo] Error: ms_search is out of range: >= 0"<<std::endl;
       return MPXP_Error;
     }
     if (strlen(speedstr) > 0) {
@@ -395,7 +388,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 	s->speed_tempo = 1;
 	s->speed_pitch = 1;
       } else {
-	MSG_ERR("[af_scaletempo] Error: speed is out of range: [pitch|tempo|none|both]\n");
+	mpxp_err<<"[af_scaletempo] Error: speed is out of range: [pitch|tempo|none|both]"<<std::endl;
 	return MPXP_Error;
       }
     }
@@ -403,7 +396,9 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
     return MPXP_Ok;
   }
   case AF_CONTROL_SHOWCONF:
-    MSG_INFO("[af_scaletempo] %6.3f scale, %6.2f stride, %6.2f overlap, %6.2f search, speed = %s\n", s->scale_nominal, s->ms_stride, s->percent_overlap, s->ms_search, (s->speed_tempo?(s->speed_pitch?"tempo and speed":"tempo"):(s->speed_pitch?"pitch":"none")));
+    mpxp_info<<"[af_scaletempo] "<<s->scale_nominal<<" scale, "<<s->ms_stride
+	<<" stride, "<<s->percent_overlap<<" overlap, "<<s->ms_search
+	<<" search, speed = "<<(s->speed_tempo?(s->speed_pitch?"tempo and speed":"tempo"):(s->speed_pitch?"pitch":"none"))<<std::endl;
     return MPXP_Ok;
   }
   return MPXP_Unknown;
@@ -431,8 +426,7 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play      = play;
   af->mul.d     = 1;
   af->mul.n     = 1;
-  af->setup     = mp_calloc(1,sizeof(af_scaletempo_t));
-  if(af->setup == NULL) return MPXP_Error;
+  af->setup     = new(zeromem) af_scaletempo_t;
 
   s = reinterpret_cast<af_scaletempo_t*>(af->setup);
   s->scale = s->speed = s->scale_nominal = 1.0;

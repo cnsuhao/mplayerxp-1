@@ -85,16 +85,24 @@ namespace	usr {
 	public:
 	    mpxp_ostream(const std::string& data,mpxp_msgt_e type);
 	    virtual ~mpxp_ostream();
+
 	protected:
+	    int			newline;
 	    mpxp_msgt_e		_type;
 	    friend class	mpxp_streambuf;
 	    virtual MPXP_Rc	test_conditions();
+	    virtual MPXP_Rc	make_prefix(const any_t* caller);
+	    friend mpxp_ostream&	operator<<(mpxp_ostream&,const char*);
+	    friend mpxp_ostream&	operator<<(mpxp_ostream&,const std::string&);
 	private:
 	    unsigned	compute_idx(mpxp_msgt_e type) const;
 	    unsigned		idx;
 	    Opaque		unusable;
 	    mpxp_streambuf	buf;
     };
+
+mpxp_ostream&	operator<<(mpxp_ostream&,const char*);
+mpxp_ostream&	operator<<(mpxp_ostream&,const std::string&);
 
     class mpxp_ostream_info : public mpxp_ostream {
 	public:

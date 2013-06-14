@@ -45,7 +45,7 @@ static unsigned int __FASTCALL__ find_best(vf_instance_t* vf, unsigned int fmt,u
     else return 0;
     while(*p){
 	ret=vf_next_query_format(vf,*p,w,h);
-	MSG_DBG2("[%s] query(%s) -> %d\n",vf->info->name,vo_format_name(*p),ret&3);
+	mpxp_dbg2<<"["<<vf->info->name<<"] query("<<vo_format_name(*p)<<") -> "<<(ret&3)<<std::endl;
 	if(ret&VFCAP_CSP_SUPPORTED_BY_HW){ best=*p; break;} // no conversion -> bingo!
 	if(ret&VFCAP_CSP_SUPPORTED && !best) best=*p; // best with conversion
 	++p;
@@ -86,7 +86,7 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& mpi){
     if (!smpi.planes[1])
     {
 	if(!vf->priv->pal_msg){
-	    MSG_V("[%s] no palette given, assuming builtin grayscale one\n",vf->info->name);
+	    mpxp_v<<"["<<vf->info->name<<"] no palette given, assuming builtin grayscale one"<<std::endl;
 	    vf->priv->pal_msg=1;
 	}
 	smpi.planes[1] = (unsigned char*)gray_pal;

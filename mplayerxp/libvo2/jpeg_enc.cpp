@@ -253,14 +253,8 @@ jpeg_enc_t *jpeg_enc_init(int w, int h, int y_psize, int y_rsize,
 		w, h, y_psize, y_rsize, u_psize,
 		u_rsize, v_psize, v_rsize);
 
-	j = mp_malloc(sizeof(jpeg_enc_t));
-	if (j == NULL) return NULL;
-
-	j->s = mp_malloc(sizeof(MpegEncContext));
-	if (j->s == NULL) {
-		delete j;
-		return NULL;
-	}
+	j = new jpeg_enc_t;
+	j->s = new MpegEncContext;
 
 	/* info on how to access the pixels */
 	j->y_ps = y_psize;

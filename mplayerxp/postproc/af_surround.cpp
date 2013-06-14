@@ -92,13 +92,13 @@ static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
     af->conf.format = MPAF_F|MPAF_NE|MPAF_BPS_4;
 
     if (af->conf.nch != 4){
-      MSG_ERR("[surround] Only stereo input is supported.\n");
+      mpxp_err<<"[surround] Only stereo input is supported"<<std::endl;
       return MPXP_Detach;
     }
     // Surround filer coefficients
     fc = 2.0 * 7000.0/(float)af->conf.rate;
     if (-1 == design_fir(L, s->w, &fc, LP|HAMMING, 0)){
-      MSG_ERR("[surround] Unable to design low-pass filter.\n");
+      mpxp_err<<"[surround] Unable to design low-pass filter"<<std::endl;
       return MPXP_Error;
     }
 
@@ -111,7 +111,7 @@ static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
     s->dl = (float*)mp_calloc(LD,af->conf.format&MPAF_BPS_MASK);
     s->dr = (float*)mp_calloc(LD,af->conf.format&MPAF_BPS_MASK);
     if((NULL == s->dl) || (NULL == s->dr))
-      MSG_FATAL(MSGTR_OutOfMemory);
+      mpxp_fatal<<MSGTR_OutOfMemory<<std::endl;
 
     // Initialize delay queue index
     if(MPXP_Ok != af_from_ms(1, &s->d, &s->wi, af->conf.rate, 0.0, 1000.0))
@@ -128,14 +128,13 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
   af_surround_t *s = reinterpret_cast<af_surround_t*>(af->setup);
   switch(cmd){
   case AF_CONTROL_SHOWCONF:
-    MSG_INFO("[af_surround] delay time %f\n",s->d);
+    mpxp_info<<"[af_surround] delay time "<<s->d<<std::endl;
     return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     float d = 0;
     sscanf((char*)arg,"%f",&d);
     if ((d < 0) || (d > 1000)){
-      MSG_ERR("[surround] Invalid delay time, valid time values"
-	     " are 0ms to 1000ms current value is %0.3f ms\n",d);
+      mpxp_err<<"[surround] Invalid delay time, valid time values are 0ms to 1000ms current value is "<<d<<" ms"<<std::endl;
       return MPXP_Error;
     }
     s->d = d;
@@ -248,8 +247,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=2;
   af->mul.d=1;
-  af->setup=mp_calloc(1,sizeof(af_surround_t));
-  if(af->setup == NULL) return MPXP_Error;
+  af->setup=new(zeromem) af_surround_t;
+
   ((af_surround_t*)af->setup)->d = 20;
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;

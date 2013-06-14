@@ -69,7 +69,7 @@ static MPXP_Rc __FASTCALL__ config_af(af_instance_t* af,const af_conf_t* arg)
       float x = 2.0*M_PI*15.0/(float)af->conf.rate;
       float t = 2.0-cos(x);
       s->time = 1.0 - (t - sqrt(t*t - 1));
-      MSG_DBG2("[volume] Forgetting factor = %0.5f\n",s->time);
+      mpxp_dbg2<<"[volume] Forgetting factor = "<<s->time<<std::endl;
       af->conf.format = MPAF_F|MPAF_NE|MPAF_BPS_4;
     }
     return af_test_output(af,arg);
@@ -81,7 +81,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 
   switch(cmd){
   case AF_CONTROL_SHOWCONF:
-    MSG_INFO("[af_volume] using soft %i\n",s->soft);
+    mpxp_info<<"[af_volume] using soft "<<s->soft<<std::endl;
     return MPXP_Ok;
   case AF_CONTROL_COMMAND_LINE:{
     float v=-10.0;
@@ -122,7 +122,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
       for(i=0;i<AF_NCH;i++)
 	m=std::max(m,s->max[i]);
 	af_to_dB(1, &m, &m, 10.0);
-	MSG_INFO("[volume] The maximum volume was %0.2fdB \n", m);
+	mpxp_info<<"[volume] The maximum volume was "<<m<<"dB"<<std::endl;
     }
     return MPXP_Ok;
   }
@@ -206,8 +206,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->setup=mp_calloc(1,sizeof(af_volume_t));
-  if(af->setup == NULL) return MPXP_Error;
+  af->setup=new(zeromem) af_volume_t;
+
   // Enable volume control_af and set initial volume to 0dB.
   for(i=0;i<AF_NCH;i++){
     ((af_volume_t*)af->setup)->enable[i] = 1;

@@ -42,12 +42,10 @@ static int __FASTCALL__ put_slice(vf_instance_t* vf,const mp_image_t& smpi){
 	    vf->priv->out.write((char*)(smpi.planes[0]),smpi.stride[0]*smpi.h);
 	    vf->priv->out.write((char*)(smpi.planes[1]),smpi.stride[1]*smpi.h>>smpi.chroma_y_shift);
 	    vf->priv->out.write((char*)(smpi.planes[2]),smpi.stride[2]*smpi.h>>smpi.chroma_y_shift);
-	    MSG_V("[vf_raw] dumping %lu bytes\n"
-	    ,smpi.stride[0]*smpi.h+
-	    (((smpi.stride[1]+smpi.stride[2])*smpi.h)>>smpi.chroma_y_shift));
+	    mpxp_v<<"[vf_raw] dumping "<<(smpi.stride[0]*smpi.h+(((smpi.stride[1]+smpi.stride[2])*smpi.h)>>smpi.chroma_y_shift))<<" bytes"<<std::endl;
     } else {
 	    vf->priv->out.write((char*)(smpi.planes[0]),smpi.stride[0]*smpi.h);
-	    MSG_V("[vf_raw] dumping %lu bytes\n",smpi.stride[0]*smpi.h);
+	    mpxp_v<<"[vf_raw] dumping "<<(smpi.stride[0]*smpi.h)<<" bytes"<<std::endl;
     }
     return vf_next_put_slice(vf,*dmpi);
 }

@@ -128,23 +128,23 @@ class VESA_VO_Interface : public VO_Interface {
 	uint32_t	subdev_flags;
 };
 
-static const char * __FASTCALL__ vbeErrToStr(int err)
+static std::string __FASTCALL__ vbeErrToStr(int err)
 {
-    const char *retval;
-    static char sbuff[80];
+    std::string rc;
+    std::ostringstream oss;
     if((err & VBE_VESA_ERROR_MASK) == VBE_VESA_ERROR_MASK) {
-	sprintf(sbuff,"VESA failed = 0x4f%02x",(err & VBE_VESA_ERRCODE_MASK)>>8);
-	retval = sbuff;
+	oss<<"VESA failed = 0x4f"<<std::hex<<setsetfill('0')<<std::setw(2)<<((err & VBE_VESA_ERRCODE_MASK)>>8);
+	rc = oss.str();
     } else
 	switch(err) {
-	    case VBE_OK: retval = "No error"; break;
-	    case VBE_VM86_FAIL: retval = "vm86() syscall failed"; break;
-	    case VBE_OUT_OF_DOS_MEM: retval = "Out of DOS memory"; break;
-	    case VBE_OUT_OF_MEM: retval = MSGTR_OutOfMemory; break;
-	    case VBE_BROKEN_BIOS: retval = "Broken BIOS or DOS TSR"; break;
-	    default: sprintf(sbuff,"Unknown or internal error: %i",err); retval=sbuff; break;
+	    case VBE_OK: rc = "No error"; break;
+	    case VBE_VM86_FAIL: rc = "vm86() syscall failed"; break;
+	    case VBE_OUT_OF_DOS_MEM: rc = "Out of DOS memory"; break;
+	    case VBE_OUT_OF_MEM: rc = MSGTR_OutOfMemory; break;
+	    case VBE_BROKEN_BIOS: rc = "Broken BIOS or DOS TSR"; break;
+	    default: oss<<"Unknown or internal error: "<<err; rc=oss.str(); break;
     }
-    return retval;
+    return rc;
 }
 
 inline void PRINT_VBE_ERR(const char *name,int err) {

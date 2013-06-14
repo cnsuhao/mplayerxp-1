@@ -154,11 +154,7 @@ MPXP_Rc Asf_Networking::parse_header(Tcp& tcp) {
 	}
 	// audit: do not overflow buffer_size
 	if (unsigned(size) > std::numeric_limits<size_t>::max() - _buffer_size) return MPXP_False;
-	_buffer = (char*) mp_malloc(size+_buffer_size);
-	if(_buffer == NULL) {
-	    mpxp_fatal<<"Error can't allocate "<<(size+_buffer_size)<<" bytes buffer"<<std::endl;
-	    return MPXP_False;
-	}
+	_buffer = new char[size+_buffer_size];
 	if( chunk_buffer!=NULL ) {
 	    memcpy( _buffer, chunk_buffer, _buffer_size );
 	    delete chunk_buffer ;
@@ -218,7 +214,7 @@ MPXP_Rc Asf_Networking::parse_header(Tcp& tcp) {
 	switch(ASF_LOAD_GUID_PREFIX(streamh->type)) {
 	    case 0xF8699E40 : // audio stream
 		if(audio_streams == NULL){
-		    audio_streams = (int*)mp_malloc(sizeof(int));
+		    audio_streams = new int;
 		    n_audio = 1;
 		} else {
 		    n_audio++;
@@ -229,7 +225,7 @@ MPXP_Rc Asf_Networking::parse_header(Tcp& tcp) {
 		break;
 	    case 0xBC19EFC0 : // video stream
 		if(video_streams == NULL){
-		    video_streams = (int*)mp_malloc(sizeof(int));
+		    video_streams = new int;
 		    n_video = 1;
 		} else {
 		    n_video++;

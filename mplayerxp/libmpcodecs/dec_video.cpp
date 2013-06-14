@@ -161,7 +161,7 @@ VD_Interface::VD_Interface(sh_video_t& sh,const std::string& codecname,const std
 	try{
 	    priv.mpvdec=vi->query_interface(*this,sh,priv.psi,sh.fourcc);
 	} catch(const bad_format_exception&) {
-	    MSG_ERR(MSGTR_CODEC_CANT_INITV);
+	    mpxp_err<<MSGTR_CODEC_CANT_INITV<<std::endl;
 	    delete priv.mpvdec;
 	    goto bye;
 	}
@@ -376,7 +376,7 @@ MPXP_Rc VD_Interface::config_vf(int w, int h) const {
 		sh.src_w,sh.src_h,
 		mpxp_context().video().output->flags,
 		out_fmt)==0){
-		    MSG_WARN(MSGTR_CannotInitVO);
+		    mpxp_warn<<MSGTR_CannotInitVO<<std::endl;
 		    priv.vfilter_inited=-1;
 		    return MPXP_False;
     }
@@ -438,7 +438,7 @@ csp_again:
 	    // Remove the scale filter if we added it ourself
 	    if(strcmp(vf_get_first_name(s),"fmtcvt")==0) vf_remove_first(s);
 	}
-	MSG_WARN(MSGTR_VOincompCodec);
+	mpxp_warn<<MSGTR_VOincompCodec<<std::endl;
 	priv.vfilter_inited=-1;
 	return MPXP_False;	// failed
     }
@@ -512,7 +512,7 @@ csp_again:
 		screen_size_x,screen_size_y,
 		mpxp_context().video().output->flags,
 		out_fmt)==0){
-		    MSG_WARN(MSGTR_CannotInitVO);
+		    mpxp_warn<<MSGTR_CannotInitVO<<std::endl;
 		    priv.vfilter_inited=-1;
 		    return MPXP_False;
     }

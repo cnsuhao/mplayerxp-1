@@ -53,8 +53,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
     while((*cp == ':') && (k < AF_NCH)){
       sscanf(cp, ":%f%n" , &s->level[k][j], &n);
       s->level[k][j] = clamp(s->level[k][j],0.0f,1.0f);
-      MSG_V("[pan] Pan level from channel %i to"
-	     " channel %i = %f\n",j,k,s->level[k][j]);
+      mpxp_v<<"[pan] Pan level from channel "<<j<<" to channel "<<k<<" = "<<s->level[k][j]<<std::endl;
       cp =&cp[n];
       j++;
       if(j>=nch){
@@ -87,8 +86,7 @@ static MPXP_Rc __FASTCALL__ control_af(af_instance_t* af, int cmd, any_t* arg)
 
     // Sanity check
     if(((int*)arg)[0] <= 0 || ((int*)arg)[0] > AF_NCH){
-      MSG_ERR("[pan] The number of output channels must be"
-	     " between 1 and %i. Current value is %i\n",AF_NCH,((int*)arg)[0]);
+      mpxp_err<<"[pan] The number of output channels must be between 1 and "<<AF_NCH<<". Current value is "<<(((int*)arg)[0])<<std::endl;
       return MPXP_Error;
     }
     af->conf.nch=((int*)arg)[0];
@@ -162,8 +160,8 @@ static MPXP_Rc __FASTCALL__ af_open(af_instance_t* af){
   af->play=play;
   af->mul.n=1;
   af->mul.d=1;
-  af->setup=mp_calloc(1,sizeof(af_pan_t));
-  if(af->setup == NULL) return MPXP_Error;
+  af->setup=new(zeromem) af_pan_t;
+
   // Set initial pan to pass-through.
     check_pin("afilter",af->pin,AF_PIN);
   return MPXP_Ok;

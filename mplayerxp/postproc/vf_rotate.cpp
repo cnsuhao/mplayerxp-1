@@ -176,7 +176,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
     vf->priv->direction=args?atoi(args):0;
     if(!(vf->priv->direction==0 || vf->priv->direction==90 ||
        vf->priv->direction==180 || vf->priv->direction==270)) {
-	MSG_ERR("[vf_rotate] can rotate on 0, 90, 180, 270 degrees only\n");
+	mpxp_err<<"[vf_rotate] can rotate on 0, 90, 180, 270 degrees only"<<std::endl;
 	return MPXP_False;
     }
     if(vf->priv->direction==0) {
@@ -184,7 +184,7 @@ static MPXP_Rc __FASTCALL__ vf_open(vf_instance_t *vf,const char* args){
 	vf->put_slice=vf_next_put_slice;
 	vf->query_format=vf_next_query_format;
 	vf->config_vf=vf_next_config;
-	MSG_INFO("[vf_rotate] passthrough mode\n");
+	mpxp_info<<"[vf_rotate] passthrough mode"<<std::endl;
     }
     check_pin("vfilter",vf->pin,VF_PIN);
     return MPXP_Ok;

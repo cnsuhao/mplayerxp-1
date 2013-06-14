@@ -52,7 +52,7 @@ void decode_nuv( unsigned char *encoded, int encoded_size,
 	    {
 #ifdef KEEP_BUFFER
 		if (!previous_buffer)
-			previous_buffer = ( unsigned char * ) mp_malloc ( width * height + ( width * height ) / 2 );
+			previous_buffer = new unsigned char[width * height + ( width * height ) / 2];
 #endif
 
 		if (((encodedh->comptype == '2') ||
@@ -77,7 +77,7 @@ void decode_nuv( unsigned char *encoded, int encoded_size,
 			break;
 		    case '2': /* RTJpeg with LZO */
 			if (!buffer)
-			    buffer = ( unsigned char * ) mp_malloc ( width * height + ( width * height ) / 2 );
+			    buffer = new unsigned char[width * height + ( width * height ) / 2];
 			if (!buffer)
 			{
 			    printf ( "Error decompressing\n" );
