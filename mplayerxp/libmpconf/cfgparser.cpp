@@ -777,14 +777,14 @@ void M_Config::__show_options(unsigned ntabs,const std::string& pfx,const mpxp_o
 	    pfxlen=strlen(opts[i].name)+1;
 	    if(!pfx.empty())	{ pfxlen+=pfx.length(); newpfx=pfx; }
 	    else		newpfx="";
-	    newpfx+=opts[i].name;
-	    newpfx+=".";
+	    if(newpfx.empty()) newpfx+=std::string("-");
+	    newpfx+=std::string(opts[i].name)+".";
 	    __show_options(ntabs+2,newpfx,(const mpxp_option_t *)opts[i].p);
 	} else if(opts[i].type<=CONF_TYPE_PRINT) {
 	    std::ostringstream os;
 	    for(n=0;n<ntabs;n++) mpxp_info<<" ";
 	    if(!pfx.empty())	os<<std::left<<pfx;
-	    else		os<<" ";
+	    else		os<<" -";
 	    os<<opts[i].name;
 	    mpxp_info<<std::left<<std::setw(25)<<os.str()<<" "<<opts[i].help;
 	    if((opts[i].flags&CONF_NOCFG)==0) {
