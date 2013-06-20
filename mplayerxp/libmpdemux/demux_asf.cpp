@@ -64,13 +64,14 @@ struct asf_priv_t : public Opaque
 };
 
 // the variable string is modify in this function
-void pack_asf_string(char* string, int length) {
-  int i,j;
-  if( string==NULL ) return;
-  for( i=0, j=0; i<length && string[i]!='\0'; i+=2, j++) {
-    string[j]=string[i];
-  }
-  string[j]='\0';
+std::string pack_asf_string(const char* string, size_t length) {
+    std::string rc;
+    size_t i;
+    if( string==NULL ) return rc;
+    for( i=0; i<length && string[i]!='\0'; i+=2) {
+	rc.append(1,string[i]);
+    }
+    return rc;
 }
 
 // the variable string is modify in this function
@@ -253,32 +254,27 @@ while(!demuxer->stream->eof()){
 	// extract the title
 	if( apriv->contenth.title_size!=0 ) {
 	    bp=demuxer->stream->read(apriv->contenth.title_size);
-	    pack_asf_string(bp.cdata(), bp.size());
-	    demuxer->info().add(INFOT_NAME, bp.cdata());
+	    demuxer->info().add(INFOT_NAME, pack_asf_string((const char*)bp.data(), bp.size()).c_str());
 	}
 	// extract the author
 	if( apriv->contenth.author_size!=0 ) {
 	    bp=demuxer->stream->read(apriv->contenth.author_size);
-	    pack_asf_string(bp.cdata(),bp.size());
-	    demuxer->info().add(INFOT_AUTHOR, bp.cdata());
+	    demuxer->info().add(INFOT_AUTHOR, pack_asf_string((const char*)bp.data(), bp.size()).c_str());
 	}
 	// extract the copyright
 	if( apriv->contenth.copyright_size!=0 ) {
 	    bp=demuxer->stream->read(apriv->contenth.copyright_size);
-	    pack_asf_string(bp.cdata(), bp.size());
-	    demuxer->info().add(INFOT_COPYRIGHT, bp.cdata());
+	    demuxer->info().add(INFOT_COPYRIGHT, pack_asf_string((const char*)bp.data(), bp.size()).c_str());
 	}
 	// extract the comment
 	if( apriv->contenth.comment_size!=0 ) {
 	    bp=demuxer->stream->read(apriv->contenth.comment_size);
-	    pack_asf_string(bp.cdata(), bp.size());
-	    demuxer->info().add(INFOT_COMMENTS, bp.cdata());
+	    demuxer->info().add(INFOT_COMMENTS, pack_asf_string((const char*)bp.data(), bp.size()).c_str());
 	}
 	// extract the rating
 	if( apriv->contenth.rating_size!=0 ) {
 	    bp=demuxer->stream->read(apriv->contenth.rating_size);
-	    pack_asf_string(bp.cdata(), bp.size());
-	    demuxer->info().add(INFOT_RATING, bp.cdata());
+	    demuxer->info().add(INFOT_RATING, pack_asf_string((const char*)bp.data(), bp.size()).c_str());
 	}
 	MSG_V("\n");
       break;
@@ -286,12 +282,13 @@ while(!demuxer->stream->eof()){
     case ASF_GUID_PREFIX_stream_group: {
 	uint16_t stream_id, i;
 	uint32_t max_bitrate;
-	char *object=NULL, *ptr=NULL;
+	char *object=NULL;
+	const char *ptr=NULL;
 	MSG_V("============ ASF Stream group == START ===\n");
 	MSG_V(" object size = %d\n", (int)apriv->objh.size);
 	bp=demuxer->stream->read(apriv->objh.size );
 	// FIXME: We need some endian handling below...
-	ptr = bp.cdata();
+	ptr = (const char*)bp.data();
 	stream_count = le2me_16(*(uint16_t*)ptr);
 	ptr += sizeof(uint16_t);
 	if(stream_count > 0) streams = new uint32_t[2*stream_count];

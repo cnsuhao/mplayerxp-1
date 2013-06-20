@@ -402,7 +402,7 @@ static unsigned c2_next_packet(cache_vars_t* c,unsigned cidx,int *len,unsigned *
 static binary_packet __FASTCALL__ c2_stream_read(cache_vars_t* c,size_t total){
     binary_packet rc(total);
     int len=total,eof,mlen;
-    char *mem=rc.cdata();
+    uint8_t *mem=rc.cdata();
     unsigned buf_pos;
     unsigned cur,i,npackets;
 

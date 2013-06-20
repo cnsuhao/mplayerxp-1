@@ -147,7 +147,7 @@ static Opaque* aiff_open(Demuxer* demuxer) {
 	bp=s->read(chunk_size);
 	bp.resize(bp.size()+1);
 	bp[chunk_size]=0;
-	demuxer->info().add(INFOT_NAME, bp.cdata());
+	demuxer->info().add(INFOT_NAME, (const char*)bp.data());
 	if(priv->verc && (chunk_size&1)) s->read(type_byte);
     }
     else
@@ -156,7 +156,7 @@ static Opaque* aiff_open(Demuxer* demuxer) {
 	bp=s->read(chunk_size);
 	bp.resize(bp.size()+1);
 	bp[chunk_size]=0;
-	demuxer->info().add(INFOT_AUTHOR, bp.cdata());
+	demuxer->info().add(INFOT_AUTHOR, (const char*)bp.data());
 	if(priv->verc && (chunk_size&1)) s->read(type_byte);
     }
     else
@@ -165,7 +165,7 @@ static Opaque* aiff_open(Demuxer* demuxer) {
 	bp=s->read(chunk_size);
 	bp.resize(bp.size()+1);
 	bp[chunk_size]=0;
-	demuxer->info().add(INFOT_COPYRIGHT, bp.cdata());
+	demuxer->info().add(INFOT_COPYRIGHT, (const char*)bp.data());
 	if(priv->verc && (chunk_size&1)) s->read(type_byte);
     }
     else
@@ -174,7 +174,7 @@ static Opaque* aiff_open(Demuxer* demuxer) {
 	bp=s->read(chunk_size);
 	bp.resize(bp.size()+1);
 	bp[chunk_size]=0;
-	demuxer->info().add(INFOT_DESCRIPTION, bp.cdata());
+	demuxer->info().add(INFOT_DESCRIPTION,(const char*)bp.data());
 	if(priv->verc && (chunk_size&1)) s->read(type_byte);
     }
     else

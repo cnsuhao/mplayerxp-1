@@ -482,9 +482,9 @@ while(1){
       chunksize-=len;
       bp.resize(bp.size()+1);
       bp.cdata()[len]=0;
-      MSG_V("%-10s: %s\n",hdr,bp.cdata());
-      if(infot!=-1) demuxer->info().add(infot, bp.cdata());
-      else	    MSG_V("   %s: %s\n",hdr,bp.cdata());
+      MSG_V("%-10s: %s\n",hdr,(const char*)bp.data());
+      if(infot!=-1) demuxer->info().add(infot, (const char*)bp.data());
+      else	    MSG_V("   %s: %s\n",hdr,(const char*)bp.data());
     }
   }
   MSG_DBG2("list_end=0x%X  pos=0x%X  chunksize=0x%X  next=0x%X\n",

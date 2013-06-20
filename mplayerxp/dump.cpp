@@ -66,7 +66,7 @@ void dump_stream(Stream *stream)
   mpxp_info<<"Dumping stream to "<<name<<std::endl;
   while(!stream->eof()){
     binary_packet bp=stream->read(4096);
-    if(bp.size()>0) f.write(bp.cdata(),bp.size());
+    if(bp.size()>0) f<<bp;
   }
   f.close();
   mpxp_info<<MSGTR_StreamDumped<<std::endl;

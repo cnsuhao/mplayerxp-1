@@ -411,7 +411,7 @@ static void mpxpav64_read_fcnt(Demuxer* demuxer,unsigned fsize)
 	{
 	    binary_packet bp=s->read(len);
 	    sub_data.cp=nls_get_screen_cp(mpxp_get_environment());
-	    demuxer->info().add(infot,nls_recode2screen_cp(codepage,bp.cdata(),bp.size()));
+	    demuxer->info().add(infot,nls_recode2screen_cp(codepage,(const char*)bp.data(),bp.size()));
 	}
 	else s->skip(len);
     }
