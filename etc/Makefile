@@ -8,7 +8,6 @@ clean:
 distclean:
 	rm -f config.mak configure.log
 install:
-	$(INSTALL) -D -b -c -m 644 codecs.conf $(DESTDIR)$(CONFDIR)/codecs.conf
 	$(INSTALL) -D -b -c -m 644 menu.conf $(DESTDIR)$(CONFDIR)/menu.conf
 	$(INSTALL) -D -b -c -m 644 eqbands $(DESTDIR)$(CONFDIR)/eqbands
 uninstall:

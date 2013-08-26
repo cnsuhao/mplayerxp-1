@@ -36,7 +36,7 @@ test -z $linguas && linguas=en
 # and have - unless stated otherwise - at least 2 states : yes no
 # If autodetection is available then the third state is: auto
 ENABLED_LIST=(
-    "shared|build shared libraries",
+    "static|build static libraries",
     "gomp|use GNU OpenMP (requires gcc-4.3+)",
     "gpl_only|build only GPL code",
     "fastcall|use regparm method on x86 systems",
@@ -85,8 +85,8 @@ ENABLED_LIST=(
 DISABLED_LIST=(
     "gcov|compile gnu coverage information into PROGRAM",
     "profile|compile profiling information into PROGRAM",
-    "static|build static libraries",
     "dbg23|allow additional level of debug messages",
+    "shared|build shared libraries",
     "random_name|generates pseudo random suffix of target",
     "sdl|build with SDL video and audio output|http://www.libsdl.org",
     "sdl_image|build with SDL_image for screenshots|http://www.libsdl.org/projects/SDL_image",
@@ -334,6 +334,9 @@ print_config HAVE_ mpxp_config.h mpxp_config.mak gomp
 #####################################################
 add_cflags "-Warray-bounds -Wreturn-type -Wuninitialized -Wlogical-op -Waddress"
 check_cflags "-W -Wall -Wextra"
+
+enabled static && add_ldflags="-static"
+enabled shared && add_ldflags="-shared"
 
 echocheck CFLAGS
 echores   $CFLAGS
